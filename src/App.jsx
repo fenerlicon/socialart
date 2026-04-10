@@ -8,7 +8,7 @@ import {
   Share2, 
   MessageCircle, 
   Users, 
-  LockIcon,
+  Lock,
   ChevronDown,
   Instagram,
   Linkedin,
@@ -17,8 +17,11 @@ import {
   Layers, 
   Zap,
   Tag,
-  CreditCard as CardIcon
+  CreditCard
 } from 'lucide-react';
+
+const LockIcon = Lock;
+const CardIcon = CreditCard;
 import './App.css';
 import Home from './pages/Home';
 import Services from './pages/Services';
