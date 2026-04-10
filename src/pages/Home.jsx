@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   CreditCard,
   Smartphone,
-  Monitor
+  Monitor,
+  Layers
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
