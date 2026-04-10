@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, User, Tag, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Share2 } from 'lucide-react';
 
 function BlogDetail() {
   const { id } = useParams();

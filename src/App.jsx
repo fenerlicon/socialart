@@ -19,9 +19,6 @@ import {
   Tag,
   CreditCard
 } from 'lucide-react';
-
-const LockIcon = Lock;
-const CardIcon = CreditCard;
 import './App.css';
 import Home from './pages/Home';
 import Services from './pages/Services';
@@ -31,6 +28,9 @@ import BlogDetail from './pages/BlogDetail';
 import Admin from './pages/Admin';
 import Pricing from './pages/Pricing';
 import ClientPortal from './pages/ClientPortal';
+
+const LockIcon = Lock;
+const CardIcon = CreditCard;
 
 function App() {
   const [scrolled, setScrolled] = useState(false);
