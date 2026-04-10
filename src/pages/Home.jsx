@@ -15,7 +15,8 @@ import {
   Star,
   ShieldCheck,
   CreditCard,
-  Smartphone
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
