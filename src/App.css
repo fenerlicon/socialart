@@ -16,7 +16,7 @@
 }
 
 .header-logo-img {
-  height: 70px;
+  height: 110px;
   width: auto;
   transition: height 0.3s ease;
   display: block;
@@ -31,7 +31,7 @@
 }
 
 .header.scrolled .header-logo-img {
-  height: 55px;
+  height: 85px;
 }
 
 .header-inner {
@@ -180,8 +180,14 @@
 
 .hero-content {
   position: relative;
-  z-index: 1;
-  max-width: 900px;
+  z-index: 10;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   animation: fadeUp 1s forwards ease-out;
 }
 
@@ -208,6 +214,8 @@
   display: flex;
   gap: 1.5rem;
   justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .btn {
@@ -927,164 +935,82 @@
 }
 
 @media (max-width: 768px) {
-  /* PERFORMANCE: Kill laggy effects on mobile */
+  /* PERFORMANCE: Kill laggy effects on mobile but keep base visuals */
   * {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    text-shadow: none !important;
   }
 
   html, body {
     overflow-x: hidden;
     width: 100%;
     position: relative;
-    font-size: 14px;
+    font-size: 16px; /* Increased font size for readability */
   }
 
-  /* LAYOUT: Standardize sizing */
   .container {
-    padding: 0 15px;
+    padding: 0 20px;
     width: 100%;
     overflow: hidden;
   }
 
+  /* Header */
   .header {
     background: #000;
-    padding: 5px 0;
+    padding: 12px 0;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 1000;
-    height: 60px;
+    height: 70px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .header-inner {
-    width: 100%;
-    display: flex;
-    justify-content: space-between !important;
-    align-items: center;
-    padding: 0 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 
   .header-logo-img {
-    height: 40px !important;
+    height: 100px !important;
     width: auto;
   }
 
-  /* NAV: Use dedicated mobile state */
-  .nav-links {
-    display: none !important;
-  }
-
-  .nav-links.mobile-active {
-    display: flex !important;
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 1.2rem;
-    z-index: 2000;
-    padding: 20px;
-    transform: none !important;
-  }
-
-  .nav-links.mobile-active a {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fff;
-    width: 90%;
-    text-align: center;
-    padding: 12px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 12px;
-  }
-
-  .mobile-toggle {
-    display: flex !important;
-    width: 38px;
-    height: 38px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 8px;
-    align-items: center;
-    justify-content: center;
-    z-index: 2001;
-  }
-
-  .cta-button {
-    display: none !important;
-  }
-
-  /* HERO: Scale down drastically */
-  .hero {
-    padding: 100px 0 40px;
-    min-height: auto;
+  .header.scrolled .header-logo-img {
+    height: 80px !important;
   }
 
   .hero-title {
-    font-size: 1.8rem !important;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-    font-weight: 800;
-    word-break: normal;
+    font-size: 2.8rem !important; /* Even larger for mobile */
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    font-weight: 900;
+    text-align: center;
   }
 
   .hero-desc {
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-    padding: 0 10px;
-    line-height: 1.5;
+    font-size: 1.05rem;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
   }
 
   .hero-actions {
     flex-direction: column !important;
     width: 100%;
-    gap: 10px !important;
-    padding: 0 10px;
+    gap: 12px !important;
+    padding: 0;
   }
 
-  .hero-actions .btn {
-    width: 100% !important;
-    justify-content: center;
-    padding: 14px;
-    font-size: 1rem;
-  }
-
-  /* SECTIONS: More compact */
+  /* SECTIONS */
   .section-title {
-    font-size: 1.6rem !important;
-    margin-bottom: 0.5rem;
+    font-size: 2rem !important;
+    margin-bottom: 0.8rem;
   }
-
-  .section-subtitle {
-    font-size: 0.9rem;
-    margin-bottom: 2rem;
-  }
-
-  .stats-container {
-    flex-direction: column !important;
-    gap: 25px;
-    padding: 20px;
-    margin-top: 20px;
-  }
-
-  .footer-inner {
-    grid-template-columns: 1fr !important;
-    text-align: center;
-    gap: 30px;
-  }
-
-  .footer-logo-img { height: 60px !important; }
 
   .video-testi {
-    height: 350px;
+    height: 450px;
+  }
+  
+  .brand-track {
+    animation-duration: 25s;
+    gap: 40px;
   }
 }
