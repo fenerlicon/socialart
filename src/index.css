@@ -43,7 +43,14 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   overflow-x: hidden;
+  width: 100%;
+  position: relative;
   -webkit-font-smoothing: antialiased;
+}
+
+html {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 ::-webkit-scrollbar {
@@ -86,13 +93,14 @@ button {
 
 /* Utilities */
 .container {
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 40px;
 }
 
 @media (max-width: 768px) {
-  .container { padding: 0 20px; }
+  .container { padding: 0 20px; width: 100%; overflow: hidden; }
 }
 
 @media (min-width: 2000px) {
@@ -318,15 +326,6 @@ button {
   justify-content: center;
 }
 
-@media (max-width: 768px) {
-  .cinema-timeline { 
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 0 10px;
-  }
-}
-
 .timeline-item {
   position: relative;
   flex: 1;
@@ -397,8 +396,16 @@ button {
 @keyframes progressFill { from { width: 0; } to { width: 100%; } }
 
 @media (max-width: 768px) {
-  .cinema-timeline { flex-direction: column; align-items: center; }
-  .timeline-item { width: 100%; max-width: none; }
+  .cinema-timeline { 
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 20px;
+    padding: 0 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .timeline-item { width: 100%; max-width: none; height: 60px; }
   .hud-top { font-size: 8px; }
 }
 

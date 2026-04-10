@@ -280,7 +280,7 @@ function Home() {
               <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')}>
                 Markamı Ücretsiz Analiz Et
               </button>
-              <button className="btn btn-outline" onClick={() => scrollToSection('cases')}>
+              <button className="btn btn-outline" onClick={() => scrollToSection('showreel')}>
                 Başarı Hikayelerimizi İncele <ArrowRight size={20} />
               </button>
             </div>
@@ -409,8 +409,9 @@ function Home() {
                   const p = e.currentTarget.querySelector('.play-btn');
                   if(v) {
                     if(v.paused) {
-                      v.play();
+                      v.play().catch(err => console.error(err));
                       if(p) p.style.opacity = '0';
+                      v.muted = false; // Sesli oynat
                     } else {
                       v.pause();
                       if(p) p.style.opacity = '1';
@@ -426,8 +427,8 @@ function Home() {
                   playsInline
                   style={{ width: '100%', height: '100%', borderRadius: '16px', objectFit: 'cover' }}
                 />
-                <div className="play-btn" style={{ position: 'absolute', zIndex: 2, transition: 'opacity 0.3s' }}>
-                  <Play size={24} fill="#fff" style={{marginLeft: '4px'}} />
+                <div className="play-btn" style={{ position: 'absolute', zIndex: 10, transition: 'opacity 0.3s', pointerEvents: 'none' }}>
+                  <Play size={32} fill="#fff" style={{marginLeft: '4px'}} />
                 </div>
               </div>
               <h4 style={{fontSize: '1.4rem', marginBottom: '10px', color: 'var(--accent)'}}>İşinizi Önemsiyoruz</h4>
