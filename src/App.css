@@ -148,8 +148,12 @@
 .hero-content {
   position: relative;
   z-index: 1;
-  max-width: 800px;
+  max-width: 900px;
   animation: fadeUp 1s forwards ease-out;
+}
+
+@media (min-width: 2000px) {
+  .hero-content { max-width: 1200px; }
 }
 
 .hero-title {
@@ -469,6 +473,8 @@
   border-radius: 20px;
   background: var(--surface);
   border: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
 }
 
 .testi-text {
@@ -483,6 +489,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
+  margin-top: auto;
 }
 
 .testi-avatar {
@@ -620,13 +627,14 @@
 }
 
 .form-box {
-  max-width: 600px;
+  max-width: 700px;
   margin: 40px auto 0;
   background: var(--surface);
   padding: 40px;
-  border-radius: 20px;
-  border: 1px solid var(--surface-border);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+@media (min-width: 2000px) {
+  .form-box { max-width: 900px; }
 }
 
 .input-group {

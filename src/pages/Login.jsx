@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import { supabase } from '../lib/supabase.js';
 
 function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -9,33 +10,44 @@ function Login({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Geçici Hardcoded Doğrulama (Gerçek sistemde veritabanı bağlanacaktır)
-    setTimeout(() => {
-      const u = username.toLowerCase().trim();
-      if ((u === 'ercan' || u === 'celal') && password === 'admin123') {
-        localStorage.setItem('ajans_user', JSON.stringify({ name: u === 'ercan' ? 'Ercan Özdemir' : 'Celal Ünlü', role: 'Kurucu', permissions: 'all' }));
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        } else {
-          navigate('/admin');
-        }
-      } else if (u === 'calisan' && password === 'ajans123') {
-        localStorage.setItem('ajans_user', JSON.stringify({ name: 'Ekip Üyesi', role: 'Çalışan', permissions: 'limited' }));
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        } else {
-          navigate('/admin');
-        }
+    // Normalize Turkish characters for internal email format
+    const slugify = (str) => {
+      const chars = { 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c', 'Ğ': 'g', 'Ü': 'u', 'Ş': 's', 'İ': 'i', 'Ö': 'o', 'Ç': 'c' };
+      return str.replace(/[ğüşıöçĞÜŞİÖÇ]/g, m => chars[m]).toLowerCase().trim();
+    };
+
+    const formattedEmail = `${slugify(username)}@socialart.internal`;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: formattedEmail,
+      password: password,
+    });
+
+    if (error) {
+      setError('Kullanıcı adı veya şifre hatalı.');
+      setLoading(false);
+    } else {
+      const metadata = data.user.user_metadata;
+      const userObj = { 
+        name: metadata.display_name, 
+        role: metadata.role,
+        class: metadata.class,
+        permissions: metadata.can_assign_task ? 'all' : 'limited',
+        can_add_client: metadata.can_add_client
+      };
+      localStorage.setItem('ajans_user', JSON.stringify(userObj));
+      
+      if (onLoginSuccess) {
+        onLoginSuccess();
       } else {
-        setError('Kullanıcı adı veya şifre hatalı.');
-        setLoading(false);
+        navigate('/admin');
       }
-    }, 800); // 0.8s fake loading for premium feel
+    }
   };
 
   return (

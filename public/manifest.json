@@ -1,0 +1,19 @@
+{
+  "name": "Socialart Ajans CRM",
+  "short_name": "Socialart",
+  "description": "Socialart Ajans İş Takip ve Yönetim Sistemi",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00e5ff",
+  "icons": [
+    {
+      "src": "/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "scope": "/"
+}

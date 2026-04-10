@@ -1,8 +1,98 @@
-import React from 'react';
-import { Camera, Video, Users, Globe, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../Services.css';
 
 function Services() {
+  const [expandedId, setExpandedId] = useState(null);
+  const [lightbox, setLightbox] = useState({ open: false, media: [], index: 0 });
+
+  const toggleAccordion = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const openLightbox = (mediaList, index) => {
+    setLightbox({ open: true, media: mediaList, index });
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeLightbox = () => {
+    setLightbox({ open: false, media: [], index: 0 });
+    document.body.style.overflow = 'auto';
+  };
+
+  const nextMedia = (e) => {
+    e.stopPropagation();
+    setLightbox(prev => ({
+      ...prev,
+      index: (prev.index + 1) % prev.media.length
+    }));
+  };
+
+  const prevMedia = (e) => {
+    e.stopPropagation();
+    setLightbox(prev => ({
+      ...prev,
+      index: (prev.index - 1 + prev.media.length) % prev.media.length
+    }));
+  };
+
+  const servicesData = [
+    {
+      id: 'sosyal-medya',
+      title: 'Sosyal Medya Yönetimi',
+      icon: <Users color="var(--secondary)" />,
+      desc: 'Sosyal medya yönetimi, günümüz markaları için büyük bir öneme sahiptir. Bu platformlar, kitle ile etkili bir iletişim kurmanın yanı sıra, markaların görünürlüğünü artırarak büyümelerini destekler. Biz, markaların potansiyelini ortaya çıkarmak ve onları daha da ileriye taşımak için kapsamlı bir strateji sağlıyoruz.',
+      media: [
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/1.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/2.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/3.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/5.jpg' }
+      ]
+    },
+    {
+      id: 'fotograf',
+      title: 'Profesyonel Fotoğraf Çekimleri',
+      icon: <Camera color="var(--accent)" />,
+      desc: 'Markalara özel profesyonel fotoğraf hizmetleri sunuyoruz. Ürün, Yemek, Spor, Model, Emlak, E-ticaret, Katalog çekimleri gibi alanlarda geniş bir yelpazede kaliteli görseller sağlıyoruz. Her marka için özelleştirilmiş çözümler sunarak, ürünlerinizi en iyi şekilde sergiliyoruz.',
+      media: [
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/7.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/8.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/10.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/11.jpg' }
+      ]
+    },
+    {
+      id: 'video-prod',
+      title: 'Video Prodüksiyonu',
+      icon: <Video color="#ff0055" />,
+      desc: 'Modern medya dünyasında, yüksek kaliteli ve yaratıcı videolar oluşturmak amacıyla en güncel ekipmanları kullanıyoruz. Her projede izleyicilere benzersiz deneyimler sunmayı hedefliyoruz. Yenilikçi ve dinamik bir bakış açısıyla her videoda yeni hikayeler keşfediyoruz.',
+      media: [
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_9157.mov' },
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_8598.mov' },
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_7877.mp4' },
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_8554.mov' }
+      ]
+    },
+    {
+      id: 'sunuculu',
+      title: 'Sunuculu Tanıtım Videoları',
+      icon: <Mic color="var(--primary)" />,
+      desc: 'Ürün veya hizmetlerinizi profesyonel sunucular eşliğinde, güven veren ve ikna edici bir dille anlatıyoruz. Teknik detayları anlaşılır kılan, marka samimiyetini artıran ve dönüşüm oranlarını doğrudan etkileyen yüksek kaliteli video içerikleri üretiyoruz.',
+      media: [
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/sequence-kurumsal.mp4' },
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/sunucu-dogal.mp4' },
+        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/sunucu1.mp4' }
+      ]
+    },
+    {
+      id: 'ugc',
+      title: 'UGC İçerik & Influencer Marketing',
+      icon: <Smartphone color="#00e5ff" />,
+      desc: 'Samimi ve doğal kullanıcı içerikleri (UGC) ile markanızın güvenilirliğini artırıyoruz. Doğru influencer eşleşmeleri ve stratejik içerik planlamasıyla, ürünlerinizi doğrudan hedef kitlenizin dilinden anlatıyor, etkileşim ve satış rakamlarınızı yukarı taşıyoruz.',
+      media: []
+    }
+  ];
+
   return (
     <div>
       {/* HERO SECTION */}
@@ -12,66 +102,88 @@ function Services() {
             Hizmetlerimiz
           </h1>
           <p className="hero-desc" style={{margin: '0 auto', maxWidth: '800px'}}>
-            Dijital dünyada görünür olmak ve marka bilinirliğinizi artırmak için doğru adımları atmak şart. Biz, fotoğrafçılık ve video prodüksiyonu hizmetlerimizle, markanızın dijital dünyadaki imajını inşa ediyor ve en etkileyici şekilde öne çıkarmayı taahhüt ediyoruz.
+            Dijital dünyada görünür olmak ve marka bilinirliğinizi artırmak için doğru adımları atmak şart. Her hizmetimizde kaliteyi ve estetiği birleştiriyoruz.
           </p>
         </div>
       </section>
 
-      {/* DETAILED SERVICES LIST */}
+      {/* ACCORDION SERVICES LIST */}
       <section className="section-padding" style={{paddingTop: '20px'}}>
         <div className="container">
-          
-          <div className="service-detail-card">
-            <div className="service-detail-icon-wrap">
-              <Camera color="var(--accent)" />
-            </div>
-            <div className="service-detail-text">
-              <h2 className="service-detail-title">Profesyonel Fotoğraf Çekimleri</h2>
-              <p className="service-detail-desc">
-                Markalara özel profesyonel fotoğraf hizmetleri sunuyoruz. Ürün, Yemek, Spor, Model, Emlak, E-ticaret, Katalog çekimleri gibi alanlarda geniş bir yelpazede kaliteli görseller sağlıyoruz. Her marka için özelleştirilmiş çözümler sunarak, ürünlerinizi en iyi şekilde sergiliyoruz.
-              </p>
-            </div>
+          <div className="services-accordion">
+            {servicesData.map((service) => (
+              <div 
+                key={service.id} 
+                className={`accordion-item ${expandedId === service.id ? 'expanded' : ''}`}
+              >
+                <div 
+                  className="accordion-header" 
+                  onClick={() => toggleAccordion(service.id)}
+                >
+                  <div className="accordion-icon-wrap">
+                    {service.icon}
+                  </div>
+                  <h2 className="accordion-title">{service.title}</h2>
+                  <ChevronDown className="accordion-chevron" size={24} />
+                </div>
+                
+                <div className="accordion-content">
+                  <p className="service-desc-text">{service.desc}</p>
+                  
+                  {service.media.length > 0 && (
+                    <div className="media-gallery">
+                      {service.media.map((item, idx) => (
+                        <div key={idx} className="media-item" onClick={() => openLightbox(service.media, idx)}>
+                          {item.type === 'image' ? (
+                            <img src={item.url} alt={`${service.title} ${idx}`} className="media-img" loading="lazy" />
+                          ) : (
+                            <div style={{ position: 'relative', height: '100%' }}>
+                              <video src={item.url} className="media-video" muted playsInline loop onMouseEnter={e => e.target.play()} onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }} />
+                              <div className="video-indicator">
+                                <Play size={12} fill="currentColor" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-          
-          <div className="service-detail-card reverse">
-            <div className="service-detail-icon-wrap">
-              <Video color="#ff0055" />
-            </div>
-            <div className="service-detail-text">
-              <h2 className="service-detail-title">Video Prodüksiyonu</h2>
-              <p className="service-detail-desc">
-                Modern medya dünyasında, yüksek kaliteli ve yaratıcı videolar oluşturmak amacıyla en güncel ekipmanları kullanıyoruz. Her projede izleyicilere benzersiz deneyimler sunmayı hedefliyoruz. Yenilikçi ve dinamik bir bakış açısıyla her videoda yeni hikayeler keşfediyoruz.
-              </p>
-            </div>
-          </div>
-
-          <div className="service-detail-card">
-            <div className="service-detail-icon-wrap">
-              <Users color="var(--primary)" />
-            </div>
-            <div className="service-detail-text">
-              <h2 className="service-detail-title">Sosyal Medya Yönetimi</h2>
-              <p className="service-detail-desc">
-                Sosyal medya yönetimi, günümüz markaları için büyük bir öneme sahiptir. Bu platformlar, kitle ile etkili bir iletişim kurmanın yanı sıra, markaların görünürlüğünü artırarak büyümelerini destekler. Biz, markaların potansiyelini ortaya çıkarmak ve onları daha da ileriye taşımak için kapsamlı bir strateji sağlıyoruz.
-              </p>
-            </div>
-          </div>
-
-          <div className="service-detail-card reverse">
-            <div className="service-detail-icon-wrap">
-              <Globe color="#00e5ff" />
-            </div>
-            <div className="service-detail-text">
-              <h2 className="service-detail-title">Kurumsal Kimlik Oluşturma</h2>
-              <p className="service-detail-desc">
-                Kurumsal kimlik tasarımı, markanızın özünü yansıtır. Değerlerinizi ve hedef kitlenizi göz önünde bulundurarak size özgün tasarımlar sunuyoruz. Logo, kreatif tasarım ve SEO uyumlu içeriklerle markanızı güçlendiriyoruz.
-              </p>
-            </div>
-          </div>
-
         </div>
       </section>
       
+      {/* LIGHTBOX MODAL */}
+      {lightbox.open && (
+        <div className="lightbox-overlay" onClick={closeLightbox}>
+          <button className="lightbox-close" onClick={closeLightbox}>
+            <X size={32} />
+          </button>
+          
+          <button className="lightbox-nav prev" onClick={prevMedia}>
+            <ChevronLeft size={48} />
+          </button>
+          
+          <div className="lightbox-content" onClick={e => e.stopPropagation()}>
+            {lightbox.media[lightbox.index].type === 'image' ? (
+              <img src={lightbox.media[lightbox.index].url} alt="Lightbox Content" className="lightbox-media" />
+            ) : (
+              <video src={lightbox.media[lightbox.index].url} className="lightbox-media" controls autoPlay playsInline />
+            )}
+          </div>
+          
+          <button className="lightbox-nav next" onClick={nextMedia}>
+            <ChevronRight size={48} />
+          </button>
+
+          <div className="lightbox-counter">
+            {lightbox.index + 1} / {lightbox.media.length}
+          </div>
+        </div>
+      )}
+
       {/* MINI CTA */}
       <section className="section-padding" style={{background: 'var(--surface)', textAlign: 'center'}}>
         <div className="container">

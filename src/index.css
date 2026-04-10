@@ -20,6 +20,20 @@
   box-sizing: border-box;
 }
 
+/* Responsive Scaling for All Screens (2K/4K Optimization) */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+@media (min-width: 1800px) {
+  html { font-size: 18px; }
+}
+
+@media (min-width: 2400px) {
+  html { font-size: 22px; }
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-color);
@@ -68,9 +82,17 @@ button {
 
 /* Utilities */
 .container {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 40px;
+}
+
+@media (min-width: 2000px) {
+  .container { max-width: 1800px; }
+}
+
+@media (min-width: 2800px) {
+  .container { max-width: 2400px; }
 }
 
 .gradient-text {
@@ -82,7 +104,7 @@ button {
 }
 
 .section-padding {
-  padding: 100px 0;
+  padding: 60px 0;
 }
 
 .section-title {
@@ -100,8 +122,263 @@ button {
   margin: 0 auto 3rem auto;
 }
 
+/* 🎬 PREMIUM SHOWREEL - DIRECTOR'S CUT UI */
+.cinematic-showreel-section {
+  background: #000;
+  padding: 120px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Ambient Glow */
+.cinema-ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  filter: blur(120px);
+  z-index: 1;
+  opacity: 0.5;
+  pointer-events: none;
+  transition: all 1s ease;
+}
+
+.cinema-container {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+@media (min-width: 2000px) {
+  .cinema-container { max-width: 1900px; }
+}
+
+/* The Stage - Floating Monitor */
+.cinema-stage {
+  perspective: 2000px;
+}
+
+.cinema-frame {
+  position: relative;
+  width: 100%;
+  background: #0a0a0a;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8), 
+              0 0 0 1px rgba(255,255,255,0.05);
+  transform: rotateX(2deg);
+  transition: transform 0.8s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.cinema-frame:hover {
+  transform: rotateX(0deg) scale(1.01);
+}
+
+.cinema-video-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 500px;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.reel-intro-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.intro-glass-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(138,43,226,0.15) 0%, #000 100%);
+}
+
+.intro-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  animation: introFadeIn 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.intro-badge {
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--primary);
+  font-weight: 800;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.intro-question {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 40px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.intro-evet-btn {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 15px 50px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 30px rgba(255,255,255,0.2);
+}
+
+.intro-evet-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 50px rgba(255,255,255,0.4);
+  background: var(--primary);
+  color: #fff;
+}
+
+@keyframes introFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cinema-video {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+/* Technical HUD Overlay */
+.cinema-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 30px;
+  pointer-events: none;
+  font-family: monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 10;
+}
+
+.hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+.rec-dot { display: inline-block; width: 8px; height: 8px; background: red; border-radius: 50%; margin-right: 8px; animation: blink 1s infinite; }
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* BRAND TIMELINE NAVIGATION */
+.cinema-timeline {
+  display: flex;
+  gap: 15px;
+  margin-top: 40px;
+  justify-content: center;
+}
+
+.timeline-item {
+  position: relative;
+  flex: 1;
+  max-width: 250px;
+  height: 80px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  display: flex;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.timeline-item:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+}
+
+.timeline-item.active {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-8px);
+}
+
+.timeline-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 8px;
+  background: rgba(0,0,0,0.6);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.timeline-brand-overlay {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.timeline-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--primary);
+  width: 0;
+}
+
+.timeline-item.active .timeline-progress {
+  animation: progressFill 10s linear;
+}
+
+@keyframes progressFill { from { width: 0; } to { width: 100%; } }
+
 @media (max-width: 768px) {
-  .section-title {
-    font-size: 2rem;
-  }
+  .cinema-timeline { flex-direction: column; align-items: center; }
+  .timeline-item { width: 100%; max-width: none; }
+  .hud-top { font-size: 8px; }
+}
+
+.video-rotated-left {
+  transform: rotate(-90deg) scale(1.4); /* Enlarged video content inside the frame */
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
 }
