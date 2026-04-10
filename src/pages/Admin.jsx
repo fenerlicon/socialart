@@ -3462,7 +3462,7 @@ function Admin() {
                 <Download size={40} />
               </div>
               <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff' }}>Uygulamayı Yükleyin</h2>
-              <p style={{ color: '#888', marginTop: '10px' }}>Socialart CRM portalını mobil cihazınıza indirerek gerçek uygulama deneyimi yaşayın.</p>
+              <p style={{ color: '#888', marginTop: '10px' }}>Socialart portalını mobil cihazınıza indirerek gerçek uygulama deneyimi yaşayın.</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
