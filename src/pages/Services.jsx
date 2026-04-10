@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight, Monitor, Layers } from 'lucide-react';
 import '../Services.css';
 
 function Services() {
@@ -38,13 +38,32 @@ function Services() {
 
   const servicesData = [
     {
-      id: 'sosyal-medya',
-      title: 'Sosyal Medya Yönetimi',
-      icon: <Users color="var(--secondary)" />,
-      desc: 'Sosyal medya yönetimi, günümüz markaları için büyük bir öneme sahiptir. Bu platformlar, kitle ile etkili bir iletişim kurmanın yanı sıra, markaların görünürlüğünü artırarak büyümelerini destekler. Biz, markaların potansiyelini ortaya çıkarmak ve onları daha da ileriye taşımak için kapsamlı bir strateji sağlıyoruz.',
+      id: '360-sosyal-medya',
+      title: '360° Sosyal Medya Yönetimi',
+      icon: <Layers color="var(--primary)" />,
+      desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden ve profesyonel bir stratejiyle yönetiyoruz. Hedef kitle analizi, içerik planlaması, topluluk yönetimi ve reklam optimizasyonunu birleştirerek markanızın sesini en gür şekilde duyuruyoruz.',
       media: [
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/1.jpg' },
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/2.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/3.jpg' }
+      ]
+    },
+    {
+      id: 'studyo-cekim',
+      title: 'Stüdyo Çekim & Kiralama',
+      icon: <Monitor color="var(--accent)" />,
+      desc: 'Kendi bünyemizdeki profesyonel stüdyomuzda, en üst seviye ışık ve kamera ekipmanlarıyla markanız için stüdyo kalitesinde içerikler üretiyoruz. Ayrıca bağımsız ekipler ve markalar için tam donanımlı stüdyo kiralama hizmeti sunuyoruz. İster ürün çekimi, ister podcast, ister tanıtım filmi; profesyonel altyapımızla hizmetinizdeyiz.',
+      media: [
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/7.jpg' },
+        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/11.jpg' }
+      ]
+    },
+    {
+      id: 'sosyal-medya',
+      title: 'Performans Pazarlaması & Reklam Yönetimi',
+      icon: <Users color="var(--secondary)" />,
+      desc: 'Meta, Google ve TikTok reklamlarında data odaklı yaklaşımlarımızla her kuruşun karşılığını almanızı sağlıyoruz. Satış ve lead (potansiyel müşteri) odaklı kurgularımızla markanızı dijitalde ölçeklenebilir bir büyüme yoluna sokuyoruz.',
+      media: [
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/3.jpg' },
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/5.jpg' }
       ]

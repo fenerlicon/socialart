@@ -200,6 +200,20 @@
   box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
 }
 
+.btn-outline {
+  background: transparent;
+  color: #fff;
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(138, 43, 226, 0.4);
+}
+
 .btn-pulse {
   animation: pulseShadow 2s infinite;
 }
@@ -812,6 +826,19 @@
   background: var(--primary);
   border-color: var(--primary);
   transform: translateY(-3px);
+  box-shadow: 0 5px 15px var(--primary-glow);
+}
+
+.social-links a.instagram:hover { background: #E1306C; border-color: #E1306C; }
+.social-links a.linkedin:hover { background: #0077B5; border-color: #0077B5; }
+.social-links a.youtube:hover { background: #FF0000; border-color: #FF0000; }
+.social-links a.mail:hover { background: #ea4335; border-color: #ea4335; }
+
+.footer-logo-img {
+  height: 60px;
+  width: auto;
+  margin-bottom: 20px;
+  filter: brightness(0) invert(1);
 }
 
 .footer-bottom {
