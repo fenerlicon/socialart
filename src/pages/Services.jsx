@@ -39,9 +39,9 @@ function Services() {
   const servicesData = [
     {
       id: '360-sosyal-medya',
-      title: '360° Sosyal Medya Yönetimi',
+      title: '360° Sosyal Medya & Reklam Yönetimi',
       icon: <Layers color="var(--primary)" />,
-      desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden ve profesyonel bir stratejiyle yönetiyoruz. Hedef kitle analizi, içerik planlaması, topluluk yönetimi ve reklam optimizasyonunu birleştirerek markanızın sesini en gür şekilde duyuruyoruz.',
+      desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden yönetiyoruz. Meta, Google ve TikTok reklamlarında data odaklı yaklaşımlarımızla yüksek performanslı reklam yönetimi (Performance Marketing) sağlıyoruz. İçerik planlaması, topluluk yönetimi ve reklam optimizasyonunu birleştirerek markanızın sesini en gür şekilde duyuruyoruz.',
       media: [
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/1.jpg' },
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/2.jpg' },
@@ -54,18 +54,8 @@ function Services() {
       icon: <Monitor color="var(--accent)" />,
       desc: 'Kendi bünyemizdeki profesyonel stüdyomuzda, en üst seviye ışık ve kamera ekipmanlarıyla markanız için stüdyo kalitesinde içerikler üretiyoruz. Ayrıca bağımsız ekipler ve markalar için tam donanımlı stüdyo kiralama hizmeti sunuyoruz. İster ürün çekimi, ister podcast, ister tanıtım filmi; profesyonel altyapımızla hizmetinizdeyiz.',
       media: [
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/7.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/11.jpg' }
-      ]
-    },
-    {
-      id: 'sosyal-medya',
-      title: 'Performans Pazarlaması & Reklam Yönetimi',
-      icon: <Users color="var(--secondary)" />,
-      desc: 'Meta, Google ve TikTok reklamlarında data odaklı yaklaşımlarımızla her kuruşun karşılığını almanızı sağlıyoruz. Satış ve lead (potansiyel müşteri) odaklı kurgularımızla markanızı dijitalde ölçeklenebilir bir büyüme yoluna sokuyoruz.',
-      media: [
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/3.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/5.jpg' }
+        { type: 'image', url: '/assets/images/studio-1.png' },
+        { type: 'image', url: '/assets/images/studio-2.png' }
       ]
     },
     {

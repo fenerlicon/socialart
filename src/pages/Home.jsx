@@ -215,12 +215,12 @@ function Home() {
   };
 
   const services = [
-    { title: '360° Sosyal Medya', desc: 'Reklam, içerik planlaması ve profesyonel hesap yönetimi ile tam kapsam dijital strateji.', icon: <TrendingUp className="service-icon" style={{color: 'var(--secondary)'}} /> },
+    { title: '360° Sosyal Medya & Reklam', desc: 'İçerik planlama ve data odaklı reklam yönetimi ile tam kapsam dijital strateji.', icon: <TrendingUp className="service-icon" style={{color: 'var(--secondary)'}} /> },
     { title: 'Stüdyo Çekim & Kiralama', desc: 'Profesyonel ekipmanlarla donatılmış stüdyomuzda çekim veya kiralama hizmeti.', icon: <Monitor className="service-icon" style={{color: 'var(--accent)'}} /> },
     { title: 'YouTube Prodüksiyon', desc: 'Kanal yönetimi, video optimizasyonu ve ileri seviye kurgu hizmetleri.', icon: <Video className="service-icon" style={{color: '#ff0000'}} /> },
-    { title: 'Kreatif Çekimler', desc: 'Yemek, emlak, otel ve ürün fotoğrafçılığı ile estetiği yakalayın.', icon: <Camera className="service-icon" style={{color: 'var(--accent)'}} /> },
+    { title: 'Profesyonel Fotoğrafçılık', desc: 'Yemek, emlak, otel ve ürün fotoğrafçılığı ile markanızı estetikle parlatın.', icon: <Camera className="service-icon" style={{color: 'var(--accent)'}} /> },
     { title: 'UGC & Influencer Marketing', desc: 'Kullanıcı odaklı doğal içerikler ve stratejik influencer iş birlikleri.', icon: <Smartphone className="service-icon" style={{color: 'var(--primary)'}} /> },
-    { title: 'Performans Pazarlaması', desc: 'Data odaklı reklam yönetimi ile markanızı dijitalde ölçekleyin.', icon: <Share2 className="service-icon" style={{color: 'var(--secondary)'}} /> }
+    { title: 'Kreatif Tasarım & Branding', desc: 'Marka kimliğinizi güçlendiren modern ve dikkat çekici görsel tasarımlar.', icon: <Layers className="service-icon" style={{color: 'var(--secondary)'}} /> }
   ];
 
   const caseStudies = [
