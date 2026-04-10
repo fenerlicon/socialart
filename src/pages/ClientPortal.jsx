@@ -241,7 +241,7 @@ function ClientPortal() {
               <input 
                 type="text" 
                 required 
-                placeholder="Örn: PEUGEOT2026"
+                placeholder="Şirket Kodunuz"
                 value={loginData.code}
                 onChange={e => setLoginData({...loginData, code: e.target.value})}
                 style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.03)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none' }} 
