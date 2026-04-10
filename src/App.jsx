@@ -50,11 +50,11 @@ function App() {
             <span style={{ fontWeight: '900', fontSize: '1.4rem' }}>Social<span className="brand-dot">Art</span></span>
           </Link>
             
-            <nav className="nav-links">
-              <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Ana Sayfa</Link>
-              <Link to="/hakkimizda" className={location.pathname === '/hakkimizda' ? 'active' : ''}>Hakkımızda</Link>
-              <Link to="/hizmetlerimiz" className={location.pathname === '/hizmetlerimiz' ? 'active' : ''}>Hizmetlerimiz</Link>
-              <Link to="/blog" className={location.pathname === '/blog' ? 'active' : ''}>Blog</Link>
+            <nav className={`nav-links ${mobileMenuOpen ? 'mobile-active' : ''}`}>
+              <Link to="/" className={location.pathname === '/' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Ana Sayfa</Link>
+              <Link to="/hakkimizda" className={location.pathname === '/hakkimizda' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Hakkımızda</Link>
+              <Link to="/hizmetlerimiz" className={location.pathname === '/hizmetlerimiz' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Hizmetlerimiz</Link>
+              <Link to="/blog" className={location.pathname === '/blog' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Blog</Link>
 
               {/* Dropdown for internal scroll links */}
               <div 
