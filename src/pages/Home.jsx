@@ -403,18 +403,20 @@ function Home() {
             <div>
               <div 
                 className="video-testi" 
-                style={{ background: '#000', position: 'relative' }}
+                style={{ background: '#111', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
                 onClick={(e) => {
                   const v = e.currentTarget.querySelector('video');
-                  const p = e.currentTarget.querySelector('.play-btn');
                   if(v) {
                     if(v.paused) {
-                      v.play().catch(err => console.error(err));
-                      if(p) p.style.opacity = '0';
-                      v.muted = false; // Sesli oynat
+                      v.play().then(() => {
+                        v.muted = false;
+                        v.controls = true; // Show native controls once playing
+                      }).catch(err => {
+                        console.error("Play error:", err);
+                        v.controls = true; // Force controls if playback fails
+                      });
                     } else {
-                      v.pause();
-                      if(p) p.style.opacity = '1';
+                        v.pause();
                     }
                   }
                 }}
@@ -425,10 +427,11 @@ function Home() {
                   muted
                   loop
                   playsInline
+                  preload="metadata"
                   style={{ width: '100%', height: '100%', borderRadius: '16px', objectFit: 'cover' }}
                 />
                 <div className="play-btn" style={{ position: 'absolute', zIndex: 10, transition: 'opacity 0.3s', pointerEvents: 'none' }}>
-                  <Play size={32} fill="#fff" style={{marginLeft: '4px'}} />
+                  <Play size={48} fill="#fff" />
                 </div>
               </div>
               <h4 style={{fontSize: '1.4rem', marginBottom: '10px', color: 'var(--accent)'}}>İşinizi Önemsiyoruz</h4>
