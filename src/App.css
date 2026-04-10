@@ -110,6 +110,28 @@
   overflow: hidden;
 }
 
+.cinema-ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  filter: blur(80px);
+  z-index: 1;
+  opacity: 0.5;
+  pointer-events: none;
+  transition: all 1s ease;
+}
+
+@media (max-width: 768px) {
+  .cinema-ambient-glow {
+    filter: none; /* Disable expensive blur on mobile */
+    opacity: 0.2;
+  }
+}
+
 .hero-bg-shapes {
   position: absolute;
   top: 0;
@@ -905,7 +927,13 @@
 }
 
 @media (max-width: 768px) {
-  /* Prevent horizontal scroll */
+  /* PERFORMANCE: Kill laggy effects on mobile */
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-shadow: none !important;
+  }
+
   html, body {
     overflow-x: hidden;
     width: 100%;
@@ -913,22 +941,22 @@
     font-size: 14px;
   }
 
+  /* LAYOUT: Standardize sizing */
   .container {
     padding: 0 15px;
     width: 100%;
     overflow: hidden;
   }
 
-  /* Header */
   .header {
     background: #000;
-    padding: 8px 0;
+    padding: 5px 0;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 1000;
-    height: 70px;
+    height: 60px;
     display: flex;
     align-items: center;
     border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -939,20 +967,19 @@
     display: flex;
     justify-content: space-between !important;
     align-items: center;
-    padding: 0 15px;
+    padding: 0 10px;
   }
 
   .header-logo-img {
-    height: 45px !important;
+    height: 40px !important;
     width: auto;
   }
 
-  /* Hide regular nav links completely on mobile unless menu is open */
+  /* NAV: Use dedicated mobile state */
   .nav-links {
     display: none !important;
   }
 
-  /* Full Screen Menu when active */
   .nav-links.mobile-active {
     display: flex !important;
     position: fixed !important;
@@ -964,27 +991,27 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.2rem;
     z-index: 2000;
     padding: 20px;
     transform: none !important;
   }
 
   .nav-links.mobile-active a {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #fff;
-    width: 80%;
+    width: 90%;
     text-align: center;
     padding: 12px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.04);
     border-radius: 12px;
   }
 
   .mobile-toggle {
     display: flex !important;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     background: rgba(255,255,255,0.1);
     border-radius: 8px;
     align-items: center;
@@ -993,58 +1020,71 @@
   }
 
   .cta-button {
-    display: none !important; /* Save space on mobile header */
+    display: none !important;
   }
 
-  /* Hero Section */
+  /* HERO: Scale down drastically */
   .hero {
-    padding: 120px 0 40px;
+    padding: 100px 0 40px;
     min-height: auto;
   }
 
   .hero-title {
-    font-size: 2.2rem !important;
-    line-height: 1.1;
+    font-size: 1.8rem !important;
+    line-height: 1.2;
     margin-bottom: 1rem;
     font-weight: 800;
     word-break: normal;
-    overflow-wrap: break-word;
   }
 
   .hero-desc {
-    font-size: 1rem;
-    margin-bottom: 2rem;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
     padding: 0 10px;
+    line-height: 1.5;
   }
 
   .hero-actions {
     flex-direction: column !important;
     width: 100%;
-    gap: 12px !important;
+    gap: 10px !important;
     padding: 0 10px;
   }
 
   .hero-actions .btn {
     width: 100% !important;
     justify-content: center;
-    padding: 15px;
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  /* SECTIONS: More compact */
+  .section-title {
+    font-size: 1.6rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
   }
 
   .stats-container {
     flex-direction: column !important;
-    gap: 30px;
-    padding: 25px;
+    gap: 25px;
+    padding: 20px;
     margin-top: 20px;
   }
 
   .footer-inner {
     grid-template-columns: 1fr !important;
     text-align: center;
-    gap: 40px;
+    gap: 30px;
   }
 
-  .brand-ticker-wrap {
-    width: 100%;
-    margin: 0;
+  .footer-logo-img { height: 60px !important; }
+
+  .video-testi {
+    height: 350px;
   }
 }
