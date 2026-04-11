@@ -3,7 +3,7 @@
 :root {
   --bg-color: #050505;
   --text-color: #f1f1f1;
-  --text-muted: #a3a3a3;
+  --text-muted: #bcbcbc; /* Improved contrast for accessibility */
   --primary: #8a2be2;
   --primary-glow: rgba(138, 43, 226, 0.4);
   --secondary: #ff0055;
