@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 
 :root {
   --bg-color: #050505;
@@ -115,8 +115,10 @@ button {
   background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
+  color: var(--primary); /* Fallback for browsers that don't support text-clip or while loading */
   color: transparent;
   display: inline-block;
+  will-change: transform, opacity; /* Performance hint for GPUs */
 }
 
 .section-padding {

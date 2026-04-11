@@ -66,7 +66,7 @@ function App() {
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
-              <img src="/logo.png" alt="Socialart Ajans" className="header-logo-img" />
+              <img src="/logo.png" alt="Socialart Ajans" className="header-logo-img" fetchPriority="high" decoding="async" />
             </Link>
             
             <nav className={`nav-links ${mobileMenuOpen ? 'mobile-active' : ''}`}>

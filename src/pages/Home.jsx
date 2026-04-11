@@ -342,6 +342,8 @@ function Home() {
                     if (videoRef.current.paused) videoRef.current.play();
                     else videoRef.current.pause();
                   }}
+                  poster="/assets/images/jeep-thumb.png"
+                  fetchPriority="high"
                   style={{ cursor: 'pointer' }}
                 >
                   <source src={videoMapping[activeReel] ? videoMapping[activeReel][subClipIndex] : videoMapping[0][0]} type="video/mp4" />
@@ -433,6 +435,38 @@ function Home() {
                 <div className="play-btn" style={{ position: 'absolute', zIndex: 10, transition: 'opacity 0.3s', pointerEvents: 'none' }}>
                   <Play size={48} fill="#fff" />
                 </div>
+                
+                {/* Mobile Fullscreen Button */}
+                <button 
+                  className="mobile-video-expand"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const v = e.currentTarget.parentElement.querySelector('video');
+                    if(v) {
+                      if (v.requestFullscreen) v.requestFullscreen();
+                      else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+                      else if (v.msRequestFullscreen) v.msRequestFullscreen();
+                    }
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: '15px',
+                    right: '15px',
+                    zIndex: 20,
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.5)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <Maximize2 size={20} />
+                </button>
               </div>
               <h4 style={{fontSize: '1.4rem', marginBottom: '10px', color: 'var(--accent)'}}>İşinizi Önemsiyoruz</h4>
               <p style={{color: 'var(--text-muted)', lineHeight: '1.6'}}>"Her bir yanıyla mükemmelliği arıyoruz. İşinize sadece bir proje olarak değil, kendi markamız gibi yaklaşıyoruz. En son teknoloji ekipmanlar ve sinematik bakış açımızla, markanızın hikayesini en etkileyici şekilde anlatmak için buradayız. Sizin başarınız, bizim en büyük imzamızdır."</p>

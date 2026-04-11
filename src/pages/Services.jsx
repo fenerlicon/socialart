@@ -160,7 +160,7 @@ function Services() {
                             <div style={{ position: 'relative', height: '100%' }}>
                               <video src={item.url} className="media-video" muted playsInline loop onMouseEnter={e => e.target.play()} onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }} />
                               <div className="video-indicator">
-                                <Play size={12} fill="currentColor" />
+                                <Maximize2 size={12} fill="currentColor" />
                               </div>
                             </div>
                           )}
@@ -190,7 +190,32 @@ function Services() {
             {lightbox.media[lightbox.index].type === 'image' ? (
               <img src={lightbox.media[lightbox.index].url} alt="Lightbox Content" className="lightbox-media" />
             ) : (
-              <video src={lightbox.media[lightbox.index].url} className="lightbox-media" controls autoPlay playsInline />
+              <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <video src={lightbox.media[lightbox.index].url} className="lightbox-media" controls autoPlay playsInline />
+                <button 
+                  onClick={(e) => {
+                    const v = e.currentTarget.parentElement.querySelector('video');
+                    if(v.requestFullscreen) v.requestFullscreen();
+                    else if(v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+                  }}
+                  style={{
+                    marginTop: '15px',
+                    background: 'var(--primary)',
+                    color: '#000',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '50px',
+                    fontSize: '0.85rem',
+                    fontWeight: '800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Maximize2 size={16} /> TAM EKRAN İZLE
+                </button>
+              </div>
             )}
           </div>
           

@@ -434,6 +434,10 @@ function Admin() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         payload => {
           setChatMessages(prev => [payload.new, ...prev]);
+          // Notify other users
+          if (payload.new.user_name !== (userOverride?.name || currentUser?.name)) {
+            notifyUser(`Yeni Mesaj: ${payload.new.user_name}`, payload.new.message);
+          }
         }
       )
       .subscribe();
@@ -457,13 +461,18 @@ function Admin() {
       }, (payload) => {
         if (payload.eventType === 'INSERT') {
           setSupportMessages(prev => [payload.new, ...prev]);
-          // GLOBAL ALERT for Service Requests
-          if (payload.new.message?.includes('[TALEP]')) {
-            setNewTalepAlert({
-              clientName: payload.new.client_name,
-              message: payload.new.message
-            });
-            setTimeout(() => setNewTalepAlert(null), 8000);
+          
+          if (payload.new.sender_type === 'client') {
+            notifyUser(`Müşteri Talebi: ${payload.new.client_name}`, payload.new.message);
+            
+            // GLOBAL ALERT for Service Requests
+            if (payload.new.message?.includes('[TALEP]')) {
+              setNewTalepAlert({
+                clientName: payload.new.client_name,
+                message: payload.new.message
+              });
+              setTimeout(() => setNewTalepAlert(null), 8000);
+            }
           }
         } else {
           fetchAllData();
@@ -471,10 +480,22 @@ function Admin() {
       })
       .subscribe();
 
+    // Realtime leads subscription
+    const leadChannel = supabase
+      .channel('lead_changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' },
+        payload => {
+          fetchAllData();
+          notifyUser('Yeni Potansiyel Müşteri!', `${payload.new.name} tarafından yeni bir başvuru yapıldı.`);
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(chatChannel);
       supabase.removeChannel(logChannel);
       supabase.removeChannel(supportChannel);
+      supabase.removeChannel(leadChannel);
     };
   }, []);
 
