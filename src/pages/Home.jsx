@@ -601,12 +601,13 @@ function Home() {
                   </div>
                 )}
                 <div className="input-group">
-                  <label>Adınız Soyadınız</label>
-                  <input type="text" placeholder="Örn: Ahmet Yılmaz" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+                  <label htmlFor="fullName">Adınız Soyadınız</label>
+                  <input id="fullName" type="text" placeholder="Örn: Ahmet Yılmaz" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
                 </div>
                 <div className="input-group">
-                  <label>Telefon Numaranız</label>
+                  <label htmlFor="phone">Telefon Numaranız</label>
                   <input 
+                    id="phone"
                     type="tel" 
                     placeholder="05XX XXX XX XX" 
                     required 
@@ -617,8 +618,9 @@ function Home() {
                   />
                 </div>
                 <div className="input-group">
-                  <label>E-posta Adresiniz</label>
+                  <label htmlFor="email">E-posta Adresiniz</label>
                   <input 
+                    id="email"
                     type="email" 
                     placeholder="ornek@sirket.com" 
                     required 
@@ -627,8 +629,8 @@ function Home() {
                   />
                 </div>
                 <div className="input-group">
-                  <label>Web Siteniz / Sosyal Medya Hesabınız</label>
-                  <input type="text" placeholder="instagram.com/markaniz" required value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
+                  <label htmlFor="socialUrl">Web Siteniz / Sosyal Medya Hesabınız</label>
+                  <input id="socialUrl" type="text" placeholder="instagram.com/markaniz" required value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
                 </div>
                 <div className="input-group">
                   <label style={{marginBottom: '10px', display: 'block', fontWeight: '500'}}>İlgilendiğiniz Hizmetler (Birden fazla seçebilirsiniz)</label>
