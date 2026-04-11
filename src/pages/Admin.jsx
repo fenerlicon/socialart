@@ -160,7 +160,7 @@ function Admin() {
       if (perm === 'granted') {
         new Notification("Socialart Bildirimleri Aktif!", {
           body: "Artık işlerinizle ilgili önemli güncellemeleri buradan alacaksınız.",
-          icon: '/apple-touch-icon.png'
+          icon: '/app-icon.png'
         });
       }
     } catch (e) {
@@ -173,7 +173,7 @@ function Admin() {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       new Notification(title, {
         body,
-        icon: '/apple-touch-icon.png'
+        icon: '/app-icon.png'
       });
     }
   };

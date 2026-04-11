@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight, Monitor, Layers } from 'lucide-react';
 import '../Services.css';
 
+// Import local images to let Vite handle them
+import studio1 from '../assets/images/studio-1.png';
+import studio2 from '../assets/images/studio-2.png';
+import ugc1 from '../assets/images/4.jpg';
+import ugc2 from '../assets/images/5.jpg';
+import ugc3 from '../assets/images/6.jpg';
+
 function Services() {
   const [expandedId, setExpandedId] = useState(null);
   const [lightbox, setLightbox] = useState({ open: false, media: [], index: 0 });
@@ -54,8 +61,8 @@ function Services() {
       icon: <Monitor color="var(--accent)" />,
       desc: 'Kendi bünyemizdeki profesyonel stüdyomuzda, en üst seviye ışık ve kamera ekipmanlarıyla markanız için stüdyo kalitesinde içerikler üretiyoruz. Ayrıca bağımsız ekipler ve markalar için tam donanımlı stüdyo kiralama hizmeti sunuyoruz. İster ürün çekimi, ister podcast, ister tanıtım filmi; profesyonel altyapımızla hizmetinizdeyiz.',
       media: [
-        { type: 'image', url: '/assets/images/studio-1.png' },
-        { type: 'image', url: '/assets/images/studio-2.png' }
+        { type: 'image', url: studio1 },
+        { type: 'image', url: studio2 }
       ]
     },
     {
@@ -98,7 +105,11 @@ function Services() {
       title: 'UGC İçerik & Influencer Marketing',
       icon: <Smartphone color="#00e5ff" />,
       desc: 'Samimi ve doğal kullanıcı içerikleri (UGC) ile markanızın güvenilirliğini artırıyoruz. Doğru influencer eşleşmeleri ve stratejik içerik planlamasıyla, ürünlerinizi doğrudan hedef kitlenizin dilinden anlatıyor, etkileşim ve satış rakamlarınızı yukarı taşıyoruz.',
-      media: []
+      media: [
+        { type: 'image', url: ugc1 },
+        { type: 'image', url: ugc2 },
+        { type: 'image', url: ugc3 }
+      ]
     }
   ];
 

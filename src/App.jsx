@@ -25,6 +25,7 @@ import BlogDetail from './pages/BlogDetail';
 import Admin from './pages/Admin';
 import Pricing from './pages/Pricing';
 import ClientPortal from './pages/ClientPortal';
+import NotFound from './pages/NotFound';
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -116,6 +117,7 @@ function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/fiyatlar" element={<Pricing />} />
           <Route path="/musteri" element={<ClientPortal />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 
@@ -145,23 +147,33 @@ function App() {
               
               <div className="footer-col" style={{gridColumn: 'span 2'}}>
                 <h4>İletişim</h4>
-                <ul className="footer-links">
+                <ul className="footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <li style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-muted)' }}>
                     <Phone size={18} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '2px' }} /> 
-                    <a href="tel:+905398602130">+90 539 860 2130</a>
+                    <a href="tel:+905398602130" style={{ fontSize: '0.95rem' }}>+90 539 860 2130</a>
                   </li>
                   <li style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-muted)' }}>
                     <Mail size={18} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '2px' }} /> 
-                    <a href="mailto:hello@socialartajans.com">hello@socialartajans.com</a>
+                    <a href="mailto:hello@socialartajans.com" style={{ fontSize: '0.95rem' }}>hello@socialartajans.com</a>
                   </li>
                 </ul>
               </div>
 
               <div className="footer-col">
+                <h4>Kurumsal</h4>
+                <ul className="footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <li><Link to="/hakkimizda" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hakkımızda</Link></li>
+                  <li><Link to="/hizmetlerimiz" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hizmetlerimiz</Link></li>
+                  <li><Link to="/blog" style={{ fontSize: '0.9rem', color: '#ccc' }}>Blog</Link></li>
+                  <li><Link to="/fiyatlar" style={{ fontSize: '0.9rem', color: '#ccc' }}>Fiyatlar</Link></li>
+                </ul>
+              </div>
+
+              <div className="footer-col">
                 <h4>Erişim</h4>
-                <ul className="footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <li><Link to="/musteri" style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}><LockIcon size={14} /> Müşteri Paneli</Link></li>
-                  <li><Link to="/admin" style={{ color: '#00e5ff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}><Users size={14} /> Çalışan Paneli</Link></li>
+                <ul className="footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <li><Link to="/musteri" style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><LockIcon size={14} /> Müşteri Paneli</Link></li>
+                  <li><Link to="/admin" style={{ color: '#00e5ff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><Users size={14} /> Çalışan Paneli</Link></li>
                 </ul>
               </div>
             </div>
