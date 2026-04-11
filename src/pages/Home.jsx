@@ -367,13 +367,13 @@ function Home() {
             {/* TIMELINE NAVIGATION */}
             <div className="cinema-timeline">
               {[
-                { label: 'SEQ_01', brand: 'JEEP TURKEY', id: 0, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/jeep-logo-ai.png' },
-                { label: 'SEQ_02', brand: 'KOTON GLOBAL', id: 1, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/koton-user-logo.png' },
-                { label: 'SEQ_03', brand: 'PEUGEOT', id: 2, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/peugeot-logo-ai.png' },
-                { label: 'SEQ_04', brand: 'POLAR', id: 3, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/polar-user-logo.png' },
-                { label: 'SEQ_05', brand: 'FLORMAR', id: 4, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/flormar-logo-ai.png' },
-                { label: 'SEQ_06', brand: 'SAHNE MARİN', id: 5, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/sahnemarin-user-logo.png' },
-                { label: 'SEQ_07', brand: 'Social Art Stüdyo', id: 6, logo: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/socialart-user-logo.png' }
+                { label: 'SEQ_01', brand: 'JEEP TURKEY', id: 0, logo: '/assets/images/jeep-logo-ai.png' },
+                { label: 'SEQ_02', brand: 'KOTON GLOBAL', id: 1, logo: '/assets/images/koton-user-logo.png' },
+                { label: 'SEQ_03', brand: 'PEUGEOT', id: 2, logo: '/assets/images/peugeot-logo-ai.png' },
+                { label: 'SEQ_04', brand: 'POLAR', id: 3, logo: '/assets/images/polar-user-logo.png' },
+                { label: 'SEQ_05', brand: 'FLORMAR', id: 4, logo: '/assets/images/flormar-logo-ai.png' },
+                { label: 'SEQ_06', brand: 'SAHNE MARİN', id: 5, logo: '/assets/images/sahnemarin-user-logo.png' },
+                { label: 'SEQ_07', brand: 'Social Art Stüdyo', id: 6, logo: '/assets/images/socialart-user-logo.png' }
               ].map((item) => (
                 <div 
                   key={item.id}
@@ -713,7 +713,14 @@ function Home() {
                       })}
                     </div>
                   </div>
-                  <input type="text" required value={selectedDateStr} onChange={()=>{}} style={{height: 0, width: 0, border: 0, padding: 0, margin: 0, opacity: 0}} />
+                  <input 
+                    type="text" 
+                    required 
+                    value={selectedDateStr} 
+                    onChange={()=>{}} 
+                    style={{height: 0, width: 0, border: 0, padding: 0, margin: 0, opacity: 0, position: 'absolute'}} 
+                    aria-label="Seçilen Tarih"
+                  />
                 </div>
 
                 {/* Time Slots */}
@@ -759,7 +766,14 @@ function Home() {
                       )
                     })}
                   </div>
-                  <input type="text" required value={selectedTimeStr} onChange={()=>{}} style={{height: 0, width: 0, border: 0, padding: 0, margin: 0, opacity: 0}} />
+                  <input 
+                    type="text" 
+                    required 
+                    value={selectedTimeStr} 
+                    onChange={()=>{}} 
+                    style={{height: 0, width: 0, border: 0, padding: 0, margin: 0, opacity: 0, position: 'absolute'}} 
+                    aria-label="Seçilen Saat"
+                  />
                 </div>
                 
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '20px', fontStyle: 'italic', textAlign: 'center' }}>
