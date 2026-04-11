@@ -119,7 +119,11 @@ function Home() {
   const [blockedSlots, setBlockedSlots] = React.useState([]);
 
   React.useEffect(() => {
-    fetchBlockedSlots();
+    // Defer non-critical data fetching to break the critical request chain
+    const timer = setTimeout(() => {
+      fetchBlockedSlots();
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchBlockedSlots = async () => {

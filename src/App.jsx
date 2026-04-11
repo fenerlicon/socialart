@@ -18,14 +18,16 @@ import {
 } from 'lucide-react';
 import './App.css';
 import Home from './pages/Home';
-import Services from './pages/Services';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import BlogDetail from './pages/BlogDetail';
-import Admin from './pages/Admin';
-import Pricing from './pages/Pricing';
-import ClientPortal from './pages/ClientPortal';
-import NotFound from './pages/NotFound';
+
+// Code Splitting for non-critical pages to reduce main bundle size
+const Services = React.lazy(() => import('./pages/Services'));
+const About = React.lazy(() => import('./pages/About'));
+const Blog = React.lazy(() => import('./pages/Blog'));
+const BlogDetail = React.lazy(() => import('./pages/BlogDetail'));
+const Admin = React.lazy(() => import('./pages/Admin'));
+const Pricing = React.lazy(() => import('./pages/Pricing'));
+const ClientPortal = React.lazy(() => import('./pages/ClientPortal'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -107,18 +109,20 @@ function App() {
       )}
 
       {/* PAGE CONTENT */}
-      <main style={{flex: 1}}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/hakkimizda" element={<About />} />
-          <Route path="/hizmetlerimiz" element={<Services />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/fiyatlar" element={<Pricing />} />
-          <Route path="/musteri" element={<ClientPortal />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+      <main className="main-content">
+        <React.Suspense fallback={<div style={{ height: '100vh', background: '#000' }}></div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/hakkimizda" element={<About />} />
+            <Route path="/hizmetlerimiz" element={<Services />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/fiyatlar" element={<Pricing />} />
+            <Route path="/musteri" element={<ClientPortal />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </React.Suspense>
       </main>
 
       {/* FOOTER */}
