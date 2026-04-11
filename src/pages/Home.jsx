@@ -119,11 +119,18 @@ function Home() {
   const [blockedSlots, setBlockedSlots] = React.useState([]);
 
   React.useEffect(() => {
-    // Defer non-critical data fetching to break the critical request chain
-    const timer = setTimeout(() => {
-      fetchBlockedSlots();
-    }, 2000);
-    return () => clearTimeout(timer);
+    // Break critical request chain by only fetching when funnel is near
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        fetchBlockedSlots();
+        observer.disconnect();
+      }
+    }, { rootMargin: '200px' });
+
+    const funnelEl = document.getElementById('funnel');
+    if (funnelEl) observer.observe(funnelEl);
+
+    return () => observer.disconnect();
   }, []);
 
   const fetchBlockedSlots = async () => {
