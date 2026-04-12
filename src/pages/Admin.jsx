@@ -156,7 +156,10 @@ function Admin() {
         fetchAllData();
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
-        if (payload.new.target_name === currentUserRef.current?.name && payload.new.action === 'Dürtme!') {
+        const target = payload.new.target_name?.trim().toLowerCase();
+        const me = currentUserRef.current?.name?.trim().toLowerCase();
+        
+        if (target === me && payload.new.action === 'Dürtme!') {
           notifyUser('Hey! Bir Bildiriminiz Var 🔔', payload.new.details);
         }
         fetchAllData();
@@ -215,8 +218,9 @@ function Admin() {
   };
 
   const notifyUser = (title, body) => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      // Mobil uyumluluğu ve PWA kalıcılığı için Service Worker Registration üzerinden bildirim gönder
+    if (typeof Notification === 'undefined') return;
+    
+    if (Notification.permission === 'granted') {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification(title, {
@@ -224,6 +228,7 @@ function Admin() {
             icon: '/app-icon.png',
             vibrate: [200, 100, 200],
             badge: '/logo.png',
+            tag: 'mi-notif-' + Date.now(),
             data: { url: window.location.origin + '/admin' }
           });
         }).catch(() => {
@@ -232,6 +237,8 @@ function Admin() {
       } else {
         new Notification(title, { body, icon: '/app-icon.png' });
       }
+    } else {
+      console.warn('Notification permission not granted:', Notification.permission);
     }
   };
 
