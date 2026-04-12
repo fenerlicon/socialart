@@ -76,24 +76,63 @@ function Admin() {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    try {
-      const userJson = localStorage.getItem('ajans_user');
-      if (userJson) {
-        const parsed = JSON.parse(userJson);
-        if (parsed && parsed.name) {
-          setCurrentUser(parsed);
-          fetchAllData(parsed);
-        } else {
-          setIsChecking(false);
+    const initAuth = async () => {
+      try {
+        // 1. Önce LocalStorage (Hızlı yükleme için)
+        const userJson = localStorage.getItem('ajans_user');
+        if (userJson) {
+          const parsed = JSON.parse(userJson);
+          if (parsed && parsed.name) {
+            setCurrentUser(parsed);
+            fetchAllData(parsed);
+          }
         }
-      } else {
+
+        // 2. Supabase Oturumunu Kontrol Et (Esas kaynak)
+        // Bu adım, LocalStorage temizlense bile oturumun devam etmesini sağlar.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+          const metadata = session.user.user_metadata;
+          const userObj = { 
+            name: metadata.display_name, 
+            role: metadata.role,
+            class: metadata.class,
+            permissions: metadata.can_assign_task ? 'all' : 'limited',
+            can_add_client: metadata.can_add_client
+          };
+          localStorage.setItem('ajans_user', JSON.stringify(userObj));
+          setCurrentUser(userObj);
+          fetchAllData(userObj);
+        } else {
+          // Eğer ikisi de yoksa kontrolü bitir
+          if (!localStorage.getItem('ajans_user')) {
+             setIsChecking(false);
+          }
+        }
+      } catch (e) {
+        console.error("Auth init error:", e);
         setIsChecking(false);
       }
-    } catch (e) {
-      console.error("Localstorage parse error:", e);
-      localStorage.removeItem('ajans_user');
-      setIsChecking(false);
-    }
+    };
+
+    initAuth();
+
+    // 🔄 Oturum Değişikliklerini Dinle
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session && session.user) {
+        const metadata = session.user.user_metadata;
+        const userObj = { 
+          name: metadata.display_name, 
+          role: metadata.role,
+          permissions: metadata.can_assign_task ? 'all' : 'limited'
+        };
+        localStorage.setItem('ajans_user', JSON.stringify(userObj));
+        setCurrentUser(userObj);
+      } else if (_event === 'SIGNED_OUT') {
+        localStorage.removeItem('ajans_user');
+        setCurrentUser(null);
+      }
+    });
 
     // ⏱ Realtime: tasks tablosunu dinle
     // 🔔 Realtime Bildirim ve Veri Takibi
@@ -130,6 +169,7 @@ function Admin() {
 
     return () => {
       supabase.removeChannel(channel);
+      subscription.unsubscribe();
       clearInterval(timer);
     };
   }, []);
@@ -3735,6 +3775,19 @@ function Admin() {
           form [style*="gridTemplateColumns: 1.5fr 1fr"] {
              grid-template-columns: 1fr !important;
              gap: 15px !important;
+          }
+
+          /* Mobil Modal Fix: İçeriğin üstte kalmasını ve kaydırılamamasını engeller */
+          div[style*="position: fixed"][style*="display: flex"] {
+             align-items: flex-start !important;
+             overflow-y: auto !important;
+             -webkit-overflow-scrolling: touch;
+             padding: 40px 10px !important;
+          }
+          
+          .glass[style*="maxWidth"] {
+             margin-top: 20px !important;
+             margin-bottom: 40px !important;
           }
         }
         .mobile-only-btn { display: none; }
