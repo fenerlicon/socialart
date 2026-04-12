@@ -74,6 +74,11 @@ function Admin() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
+  const currentUserRef = React.useRef(null);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -139,7 +144,7 @@ function Admin() {
     const channel = supabase
       .channel('mi-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
-        if (payload.eventType === 'INSERT' && payload.new.assignee_name === currentUser?.name) {
+        if (payload.eventType === 'INSERT' && payload.new.assignee_name === currentUserRef.current?.name) {
           notifyUser('Yeni Görev Atandı! 🚀', payload.new.task_text);
         }
         fetchAllData();
@@ -151,7 +156,7 @@ function Admin() {
         fetchAllData();
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
-        if (payload.new.target_name === currentUser?.name && payload.new.action === 'Dürtme!') {
+        if (payload.new.target_name === currentUserRef.current?.name && payload.new.action === 'Dürtme!') {
           notifyUser('Hey! Bir Bildiriminiz Var 🔔', payload.new.details);
         }
         fetchAllData();
@@ -211,10 +216,22 @@ function Admin() {
 
   const notifyUser = (title, body) => {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: '/app-icon.png'
-      });
+      // Mobil uyumluluğu ve PWA kalıcılığı için Service Worker Registration üzerinden bildirim gönder
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(title, {
+            body,
+            icon: '/app-icon.png',
+            vibrate: [200, 100, 200],
+            badge: '/logo.png',
+            data: { url: window.location.origin + '/admin' }
+          });
+        }).catch(() => {
+          new Notification(title, { body, icon: '/app-icon.png' });
+        });
+      } else {
+        new Notification(title, { body, icon: '/app-icon.png' });
+      }
     }
   };
 
