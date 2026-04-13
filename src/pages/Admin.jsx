@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, DollarSign, Activity, FileText, MoreVertical,
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut,
-  Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck,
+  Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink,
   Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, Camera, Video, PlusCircle, Smartphone, Download,
   Bell, BellOff, Edit3
 } from 'lucide-react';
@@ -376,6 +376,7 @@ function Admin() {
 
   const [activeTab, setActiveTab] = useState('potansiyel'); // potansiyel, aktif, gorev
   const [searchTerm, setSearchTerm] = useState('');
+  const [leadSubTab, setLeadSubTab] = useState('active'); // active, archived, all
 
   const [potansiyel, setPotansiyel] = useState([]);
   const [aktifMusteriler, setAktifMusteriler] = useState([]);
@@ -393,7 +394,8 @@ function Admin() {
     reaction: '',
     status: 'Beklemede',
     selectedServices: [],
-    otherService: ''
+    otherService: '',
+    instagram_username: ''
   });
 
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -1046,7 +1048,9 @@ function Admin() {
         email: formData.email,
         phone: formData.phone,
         date: dateStr,
-        platform: formData.platform,
+        platform: formData.platform === 'Instagram DM' && formData.instagram_username 
+                  ? `Instagram DM (@${formData.instagram_username.replace('@', '')})` 
+                  : formData.platform,
         service: serviceString,
         rep: formData.rep,
         reaction: formData.reaction,
@@ -1075,7 +1079,8 @@ function Admin() {
         reaction: '',
         status: 'Beklemede',
         selectedServices: [],
-        otherService: ''
+        otherService: '',
+        instagram_username: ''
       });
     }
   };
@@ -1502,8 +1507,83 @@ function Admin() {
 
         {/* Tab 1: POTANSİYEL MÜŞTERİLER */}
         {activeTab === 'potansiyel' && (
-          <div className="glass" style={{ borderRadius: '24px', overflow: 'visible', border: '1px solid var(--surface-border)', paddingBottom: '20px' }}>
-            <div style={{ overflowX: 'visible' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Lead Filtreleme ve Arama */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+              <div className="glass" style={{ display: 'flex', padding: '6px', borderRadius: '16px', border: '1px solid var(--surface-border)', background: 'rgba(255,255,255,0.02)' }}>
+                <button
+                  onClick={() => setLeadSubTab('active')}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: leadSubTab === 'active' ? 'var(--primary)' : 'transparent',
+                    color: leadSubTab === 'active' ? '#000' : '#888',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  🚀 Nitelikli Leadler ({potansiyel.filter(p => p.status === 'Sıcak' || p.status === 'Beklemede').length})
+                </button>
+                <button
+                  onClick={() => setLeadSubTab('archived')}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: leadSubTab === 'archived' ? 'var(--secondary)' : 'transparent',
+                    color: leadSubTab === 'archived' ? '#fff' : '#888',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  📁 Arşiv / Düşük İlgi ({potansiyel.filter(p => p.status === 'Ertelendi' || p.status === 'Reddedildi' || p.status === 'Düşük Kalite').length})
+                </button>
+                <button
+                  onClick={() => setLeadSubTab('all')}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: leadSubTab === 'all' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    color: leadSubTab === 'all' ? '#fff' : '#888',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  Hepsi ({potansiyel.length})
+                </button>
+              </div>
+
+              <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
+                <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
+                <input
+                  type="text"
+                  placeholder="İsim veya hizmet ile ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--surface-border)',
+                    padding: '12px 15px 12px 45px',
+                    borderRadius: '16px',
+                    color: '#fff',
+                    outline: 'none',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="glass" style={{ borderRadius: '24px', overflow: 'visible', border: '1px solid var(--surface-border)', paddingBottom: '20px' }}>
+              <div style={{ overflowX: 'visible' }}>
               <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
@@ -1514,14 +1594,37 @@ function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {potansiyel.map((p, idx) => (
-                    <tr key={p.id} style={{ borderBottom: idx !== potansiyel.length - 1 ? '1px solid var(--surface-border)' : 'none', cursor: 'pointer', transition: 'background 0.2s' }} className="table-row-hover">
+                  {potansiyel
+                    .filter(p => {
+                      const matchesSearch = (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                            (p.service || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            (p.phone || '').includes(searchTerm);
+                      if (!matchesSearch) return false;
+                      
+                      if (leadSubTab === 'active') return p.status === 'Sıcak' || p.status === 'Beklemede';
+                      if (leadSubTab === 'archived') return p.status === 'Ertelendi' || p.status === 'Reddedildi' || p.status === 'Düşük Kalite';
+                      return true;
+                    })
+                    .map((p, idx, array) => (
+                      <tr key={p.id} style={{ borderBottom: idx !== array.length - 1 ? '1px solid var(--surface-border)' : 'none', cursor: 'pointer', transition: 'background 0.2s' }} className="table-row-hover">
                       <td style={{ padding: '20px 24px' }} onClick={() => fetchLeadHistory(p)}>
                         <div className="card-text-val" style={{ fontWeight: '700', fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: p.status === 'Sıcak' ? '#00e676' : p.status === 'Beklemede' ? '#ffab00' : '#ff0055' }}></div>
                           {p.name}
                         </div>
-                        <div className="card-text-val" style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px' }}>{p.email} | {p.phone}</div>
+                        <div className="card-text-val" style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {p.email && (
+                            <a href={`mailto:${p.email}`} title={p.email} onClick={e => e.stopPropagation()} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                              <Mail size={13} style={{ color: 'var(--primary)', marginRight: '4px' }} />
+                            </a>
+                          )}
+                          {p.phone && (
+                            <a href={`tel:${p.phone}`} title="Ara" onClick={e => e.stopPropagation()} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                              <Phone size={13} style={{ color: 'var(--primary)', marginRight: '4px' }} />
+                            </a>
+                          )}
+                          <span style={{ opacity: 0.7 }}>{p.email} | {p.phone}</span>
+                        </div>
                         <div className="card-text-val" style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '6px', fontWeight: '500' }}>Temsilci: {p.rep}</div>
                       </td>
                       <td style={{ padding: '20px 24px', color: '#ccc' }} onClick={() => fetchLeadHistory(p)}>
@@ -1531,10 +1634,79 @@ function Admin() {
                         </div>
                       </td>
                       <td style={{ padding: '20px 24px' }} onClick={() => fetchLeadHistory(p)}>
-                        <span className="card-text-val" style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.05)', display: 'inline-block' }}>
-                          <MessageSquare size={14} style={{ display: 'inline', marginRight: '8px', marginBottom: '-2px' }} />
-                          {p.platform}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span className="card-text-val" style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.05)', display: 'inline-block' }}>
+                            <MessageSquare size={14} style={{ display: 'inline', marginRight: '8px', marginBottom: '-2px' }} />
+                            {p.platform}
+                          </span>
+                          {/* İletişim Butonları (WhatsApp veya Instagram) */}
+                          {(() => {
+                            // Instagram kullanıcı adını ayıkla: "Instagram DM (@kullanici)"
+                            const igMatch = (p.platform || '').match(/@([^)]+)/);
+                            const igUser = igMatch ? igMatch[1] : null;
+
+                            if (igUser) {
+                              return (
+                                <a 
+                                  href={`https://instagram.com/${igUser}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ 
+                                    background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', 
+                                    color: '#fff', 
+                                    padding: '8px', 
+                                    borderRadius: '12px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s',
+                                    boxShadow: '0 4px 15px rgba(220, 39, 67, 0.2)'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                                  title="Instagram'da Aç"
+                                >
+                                  <Camera size={20} />
+                                </a>
+                              );
+                            }
+
+                            if (p.phone) {
+                              return (
+                                <a 
+                                  href={`https://wa.me/${(p.phone || '').replace(/\D/g, '').replace(/^0/, '90').replace(/^(?!90)/, '90')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ 
+                                    background: 'rgba(0, 230, 118, 0.15)', 
+                                    color: '#00e676', 
+                                    padding: '8px', 
+                                    borderRadius: '12px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s',
+                                    border: '1px solid rgba(0, 230, 118, 0.2)'
+                                  }}
+                                  onMouseEnter={e => {
+                                    e.currentTarget.style.background = 'rgba(0, 230, 118, 0.25)';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                  }}
+                                  onMouseLeave={e => {
+                                    e.currentTarget.style.background = 'rgba(0, 230, 118, 0.15)';
+                                    e.currentTarget.style.transform = 'none';
+                                  }}
+                                  title="WhatsApp'tan Yaz"
+                                >
+                                  <MessageCircle size={20} fill="currentColor" fillOpacity={0.1} />
+                                </a>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </td>
                       <td style={{ padding: '20px 24px' }}>
                         <div className="card-text-val" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -1559,7 +1731,7 @@ function Admin() {
                               }}
                             >
                               <span>
-                                {p.status === 'Anlaşıldı' ? '🤝 ' : p.status === 'Sıcak' ? '🔥 ' : p.status === 'Beklemede' ? '⏳ ' : p.status === 'Ertelendi' ? '📅 ' : '❌ '}
+                                {p.status === 'Anlaşıldı' ? '🤝 ' : p.status === 'Sıcak' ? '🔥 ' : p.status === 'Beklemede' ? '⏳ ' : p.status === 'Ertelendi' ? '📅 ' : p.status === 'Reddedildi' ? '❌ ' : '👎 '}
                                 {p.status}
                               </span>
                               <div style={{ transform: openStatusId === p.id ? 'rotate(180deg)' : 'none', transition: '0.2s' }}>▼</div>
@@ -1584,7 +1756,8 @@ function Admin() {
                                   { val: 'Sıcak', label: '🔥 Sıcak / Olumlu', color: '#00e676' },
                                   { val: 'Beklemede', label: '⏳ Beklemede', color: '#ffab00' },
                                   { val: 'Ertelendi', label: '📅 Ertelendi', color: '#ffab00' },
-                                  { val: 'Reddedildi', label: '❌ Reddedildi', color: '#ff0055' }
+                                  { val: 'Reddedildi', label: '❌ Reddedildi', color: '#ff0055' },
+                                  { val: 'Düşük Kalite', label: '👎 Düşük Kalite / Spam', color: '#888' }
                                 ].map(opt => (
                                   <div
                                     key={opt.val}
@@ -1637,7 +1810,8 @@ function Admin() {
               </table>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Tab 2: ÇALIŞILAN MÜŞTERİLER */}
         {activeTab === 'aktif' && (
@@ -1890,8 +2064,8 @@ function Admin() {
 
       {/* Potansiyel Müşteri Ekleme Modalı */}
       {isAddModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '600px', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '600px', position: 'relative', margin: 'auto' }}>
             <button onClick={() => setIsAddModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
               <X size={24} />
             </button>
@@ -1914,10 +2088,27 @@ function Admin() {
                 </div>
               </div>
 
+              {formData.platform === 'Instagram DM' && (
+                <div style={{ animation: 'fadeIn 0.3s' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 'bold' }}>Instagram Kullanıcı Adı</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: 'bold' }}>@</span>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="kullanici_adi"
+                      value={formData.instagram_username} 
+                      onChange={e => setFormData({ ...formData, instagram_username: e.target.value })} 
+                      style={{ width: '100%', padding: '12px 12px 12px 30px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--accent)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                    />
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>E-posta Adresi</label>
-                  <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="ornek@sirket.com" />
+                  <input type="text" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="ornek@sirket.com (İsteğe bağlı)" />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Telefon</label>
@@ -1996,8 +2187,8 @@ function Admin() {
 
       {/* Görev Atama Modalı */}
       {isTaskModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative', margin: 'auto' }}>
             <button onClick={() => setIsTaskModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
               <X size={24} />
             </button>
@@ -2108,8 +2299,8 @@ function Admin() {
 
       {/* Aktif Müşteri Ekleme Modalı */}
       {isClientModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(100px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '650px', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '650px', position: 'relative', margin: 'auto' }}>
             <button onClick={() => setIsClientModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
               <X size={24} />
             </button>
@@ -2190,8 +2381,8 @@ function Admin() {
       )}
       {/* Müşteri Detay & Geçmiş Modalı */}
       {isLeadDetailModalOpen && selectedLead && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(100px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '32px', width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 3000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '32px', width: '100%', maxWidth: '800px', position: 'relative', margin: 'auto' }}>
 
             <button onClick={() => setIsLeadDetailModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: '#888', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 10 }}>
               <X size={24} />
@@ -2238,7 +2429,7 @@ function Admin() {
                     <input 
                       value={editLeadData.email} 
                       onChange={e => setEditLeadData({...editLeadData, email: e.target.value})}
-                      placeholder="E-posta"
+                      placeholder="E-posta (İsteğe bağlı)"
                       style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff' }}
                     />
                   </div>
