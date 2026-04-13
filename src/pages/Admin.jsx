@@ -1295,27 +1295,11 @@ function Admin() {
     setIsAnalyzing(true);
     try {
       const historySummary = leadHistory.map(h => `${h.created_at}: ${h.note}`).join('\n');
-      const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin. 
-Aşağıdaki potansiyel müşteri verilerini ve görüşme geçmişini analiz et.
+      const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin...`; 
 
-MÜŞTERİ BİLGİLERİ:
-İsim: ${selectedLead.name}
-İletişim: ${selectedLead.phone} / ${selectedLead.email}
-Hizmet Talebi: ${selectedLead.service}
-Mevcut Durum/Notlar: ${selectedLead.reaction}
-
-GÖRÜŞME GEÇMİŞİ:
-${historySummary}
-
-Lütfen şu formatta (yalnızca Türkçe) bir analiz yap:
-1. Kalite Puanı (0-100 arası bir rakam)
-2. Kategori (Sıcak/Ilık/Soğuk)
-3. Önerilen Aksiyonlar (Madde madde)
-4. Satış Kapatma Stratejisi (Kısa bir paragraf)
-
-Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-3-flash:generateContent?key=${geminiKey}`, {
+      // 2026'da standart hale gelmiş en genel model ismi: gemini-pro
+      const modelName = 'gemini-pro'; 
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4092,6 +4076,25 @@ Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`;
                 style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.5)', border: '1px solid #333', borderRadius: '12px', color: '#fff', outline: 'none' }} 
               />
             </div>
+            <button 
+              onClick={async () => {
+                try {
+                  const res = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${geminiKey}`);
+                  const data = await res.json();
+                  if (data.models) {
+                    const names = data.models.map(m => m.name.replace('models/', '')).join('\n');
+                    alert('Anahtarınızla Kullanabileceğiniz Modeller:\n' + names);
+                  } else {
+                    alert('Modeller alınamadı: ' + JSON.stringify(data));
+                  }
+                } catch (e) {
+                  alert('Model listeleme hatası: ' + e.message);
+                }
+              }}
+              style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', color: '#aaa', border: '1px dashed #444', borderRadius: '12px', fontSize: '0.8rem', cursor: 'pointer', marginBottom: '10px' }}
+            >
+              API Yetkilendirmesini ve Modelleri Test Et
+            </button>
             <button 
               onClick={() => setIsAISettingsOpen(false)}
               className="btn btn-primary" 
