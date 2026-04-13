@@ -406,7 +406,9 @@ function Admin() {
     completed: '',
     active: '',
     pending: '',
-    ads_active: false
+    ads_active: false,
+    monthly_fee: '',
+    payment_day: '1'
   });
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -428,7 +430,18 @@ function Admin() {
 
   // Düzenleme & Log
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
-  const [editClientData, setEditClientData] = useState(null);
+  const [editClientData, setEditClientData] = useState({
+    id: null,
+    name: '',
+    package: '',
+    progress: 0,
+    completed: '',
+    active: '',
+    pending: '',
+    ads_active: false,
+    monthly_fee: '',
+    payment_day: '1'
+  });
   const [activityLogs, setActivityLogs] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
@@ -456,6 +469,10 @@ function Admin() {
   const [perfComment, setPerfComment] = useState('');
   const [perfMonth, setPerfMonth] = useState(new Date().getMonth() + 1);
   const [perfYear, setPerfYear] = useState(new Date().getFullYear());
+
+  // Finans States
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  const [payments, setPayments] = useState([]); // client_payments tablosundan gelebilir
 
   // Helper: Calculate stats for a specific employee
   const getEmployeePerfStats = (empName) => {
@@ -616,7 +633,9 @@ function Admin() {
         completed: completedList,
         active: activeList,
         pending: pendingList,
-        ads_active: clientFormData.ads_active
+        ads_active: clientFormData.ads_active,
+        monthly_fee: parseFloat(clientFormData.monthly_fee) || 0,
+        payment_day: parseInt(clientFormData.payment_day) || 1
       }
     ]);
 
@@ -624,7 +643,7 @@ function Admin() {
       logActivity('Yeni Aktif Müşteri Eklendi', clientFormData.name, `Paket: ${clientFormData.package} | Reklam: ${clientFormData.ads_active ? 'Aktif' : 'Pasif'}`);
       fetchAllData();
       setIsClientModalOpen(false);
-      setClientFormData({ name: '', package: '', progress: 0, completed: '', active: '', pending: '', ads_active: false });
+      setClientFormData({ name: '', package: '', progress: 0, completed: '', active: '', pending: '', ads_active: false, monthly_fee: '', payment_day: '1' });
     }
   };
 
@@ -653,7 +672,9 @@ function Admin() {
       completed: completedList,
       active: activeList,
       pending: pendingList,
-      ads_active: editClientData.ads_active
+      ads_active: editClientData.ads_active,
+      monthly_fee: parseFloat(editClientData.monthly_fee) || 0,
+      payment_day: parseInt(editClientData.payment_day) || 1
     }).eq('id', editClientData.id);
 
     if (!error) {
@@ -1003,6 +1024,26 @@ function Admin() {
     }
   };
 
+  const handleMarkAsPaid = async (client) => {
+    const currentMonth = new Date().toLocaleString('tr-TR', { month: 'long' });
+    const currentYear = new Date().getFullYear();
+    
+    try {
+      await supabase.from('client_payments').insert([{
+        client_name: client.name,
+        amount: client.monthly_fee,
+        month: currentMonth,
+        year: currentYear
+      }]);
+      
+      await logActivity('Ödeme Alındı', `${client.name} firmasından ${client.monthly_fee}₺ tutarındaki ödeme başarıyla tahsil edildi.`, client.name);
+      alert(`${client.name} ödemesi başarıyla işlendi!`);
+      fetchAllData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // İstatistikleri Taba Göre Güncelleme
   const getStats = () => {
     if (activeTab === 'potansiyel') {
@@ -1015,6 +1056,12 @@ function Admin() {
       return [
         { title: 'Aktif Yönetilen Proje', value: aktifMusteriler.length, icon: <Briefcase size={24} color="var(--secondary)" /> },
         { title: 'Ortalama İlerleme Seviyesi', value: `%${Math.round(aktifMusteriler.reduce((a, b) => a + b.progress, 0) / aktifMusteriler.length) || 0}`, icon: <Activity size={24} color="#00e676" /> },
+      ];
+    } else if (activeTab === 'finans') {
+      const totalMonthly = aktifMusteriler.reduce((acc, c) => acc + (c.monthly_fee || 0), 0);
+      return [
+        { title: 'Aylık Beklenen Gelir', value: `${totalMonthly}₺`, icon: <DollarSign size={24} color="#00e676" /> },
+        { title: 'Tahsil Edilen (Bu Ay)', value: `${payments.reduce((acc, p) => acc + p.amount, 0)}₺`, icon: <CheckSquare size={24} color="var(--primary)" /> }
       ];
     } else {
       if (currentUser && currentUser.permissions !== 'all') {
@@ -1525,6 +1572,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <Briefcase size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışılan Müşteriler
             </button>
             <button
+              onClick={() => setActiveTab('finans')}
+              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'finans' ? '#00e676' : 'transparent', color: activeTab === 'finans' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+            >
+              <DollarSign size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Finans
+            </button>
+            <button
               onClick={() => setActiveTab('gorev')}
               style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorev' ? 'var(--secondary)' : 'transparent', color: activeTab === 'gorev' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
             >
@@ -1953,7 +2006,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   completed: client.completed.join(', '),
                                   active: client.active.join(', '),
                                   pending: client.pending.join(', '),
-                                  ads_active: client.ads_active || false
+                                  ads_active: client.ads_active || false,
+                                  monthly_fee: client.monthly_fee || '',
+                                  payment_day: client.payment_day || '1'
                                 });
                                 setIsEditClientModalOpen(true);
                               }}
@@ -2145,6 +2200,43 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Tab: FİNANS */}
+        {activeTab === 'finans' && (
+          <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>Finans Paneli</h2>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <th style={{ padding: '15px', textAlign: 'left' }}>Müşteri</th>
+                    <th style={{ padding: '15px', textAlign: 'left' }}>Aylık Ücret</th>
+                    <th style={{ padding: '15px', textAlign: 'left' }}>Ödeme Günü</th>
+                    <th style={{ padding: '15px', textAlign: 'right' }}>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aktifMusteriler.map(client => (
+                    <tr key={client.id} style={{ borderBottom: '1px solid #333' }}>
+                      <td style={{ padding: '15px' }}>{client.name}</td>
+                      <td style={{ padding: '15px' }}>{client.monthly_fee || 0}₺</td>
+                      <td style={{ padding: '15px' }}>{client.payment_day || 1}. Gün</td>
+                      <td style={{ padding: '15px', textAlign: 'right' }}>
+                        <button 
+                          onClick={() => handleMarkAsPaid(client)}
+                          disabled={isMarkingPaid}
+                          style={{ background: '#00e676', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          Ödeme Alındı
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -2402,6 +2494,17 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Kapsam / Paket</label>
                   <input type="text" required value={clientFormData.package} onChange={e => setClientFormData({ ...clientFormData, package: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="E-ticaret Yönetimi vb." />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="form-group flex-1">
+                  <label>Aylık Ücret (₺)</label>
+                  <input type="number" value={clientFormData.monthly_fee} onChange={e => setClientFormData({ ...clientFormData, monthly_fee: e.target.value })} placeholder="0" style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
+                </div>
+                <div className="form-group flex-1">
+                  <label>Ödeme Günü (1-31)</label>
+                  <input type="number" min="1" max="31" value={clientFormData.payment_day} onChange={e => setClientFormData({ ...clientFormData, payment_day: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
                 </div>
               </div>
 
@@ -2731,7 +2834,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
       )}
 
       {/* Aktivite Log Tablosu */}
-      {/* Aktivite Log Tablosu */}
       {activeTab === 'log' && (
         <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--surface-border)', paddingBottom: '20px' }}>
           <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2784,21 +2886,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
 
-      {/* Ekip Sohbeti Tabı */}
+      {/* Chat Tabı */}
       {activeTab === 'chat' && (
-        <div className="glass" style={{ borderRadius: '24px', height: 'calc(100vh - 250px)', minHeight: '600px', display: 'flex', flexDirection: 'column', border: '1px solid var(--surface-border)', overflow: 'hidden' }}>
-          <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-              <MessageSquare size={24} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.3rem', fontWeight: '800' }}>Ekip Sohbeti</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Ekip üyeleriyle anlık mesajlaşın</p>
-            </div>
+        <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--surface-border)', display: 'flex', flexDirection: 'column', height: '600px' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Ekip Sohbeti</h3>
           </div>
-
-          {/* Mesaj Listesi */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', flexDirection: 'column-reverse', gap: '20px', background: 'rgba(0,0,0,0.1)' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column-reverse', gap: '15px' }}>
             {chatMessages.map((msg) => (
               <div key={msg.id} style={{ alignSelf: msg.user_name === currentUser.name ? 'flex-end' : 'flex-start', maxWidth: '70%', transition: 'all 0.3s ease' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.user_name === currentUser.name ? 'flex-end' : 'flex-start' }}>
