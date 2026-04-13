@@ -1403,6 +1403,99 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
     }
   };
 
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
+
+  const renderCalendar = () => {
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    const totalDays = daysInMonth(month, year);
+    const startDay = firstDayOfMonth(month, year);
+    const days = [];
+
+    const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+    // Empty spaces for previous month
+    for (let i = 0; i < startDay; i++) {
+      days.push(<div key={`empty-${i}`} style={{ height: '100px', background: 'rgba(255,255,255,0.01)' }}></div>);
+    }
+
+    // Actual days
+    for (let d = 1; d <= totalDays; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      
+      // Bu tarihteki görevleri filtrele (isTakip içinden)
+      const tasksOnThisDay = isTakip.reduce((acc, person) => {
+        const personTasks = person.tasks.filter(t => t.deadline === dateStr || t.created_at?.startsWith(dateStr));
+        if (personTasks.length > 0) {
+          acc.push({ name: person.rep, tasks: personTasks });
+        }
+        return acc;
+      }, []);
+
+      const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+      days.push(
+        <div key={d} style={{ 
+          height: '120px', 
+          background: isToday ? 'rgba(0,229,255,0.05)' : 'rgba(255,255,255,0.02)', 
+          border: isToday ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)',
+          borderRadius: '12px',
+          padding: '10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '5px',
+          overflow: 'hidden',
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+        onMouseLeave={e => e.currentTarget.style.background = isToday ? 'rgba(0,229,255,0.05)' : 'rgba(255,255,255,0.02)'}
+        >
+          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: isToday ? 'var(--primary)' : '#888' }}>{d}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+            {tasksOnThisDay.map((p, idx) => (
+              <div key={idx} style={{ 
+                fontSize: '0.65rem', 
+                padding: '3px 6px', 
+                background: 'var(--primary-gradient)', 
+                color: '#000', 
+                borderRadius: '6px', 
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden'
+              }}>
+                {p.name}: {p.tasks.length} İş
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>{monthNames[month]} {year}</h2>
+            <p style={{ color: '#888', fontSize: '0.85rem' }}>Ekip Müsaitlik ve İş Yükü Takvimi</p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setCurrentDate(new Date(year, month - 1))} className="icon-btn" style={{ padding: '10px' }}>Prev</button>
+            <button onClick={() => setCurrentDate(new Date(year, month + 1))} className="icon-btn" style={{ padding: '10px' }}>Next</button>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
+          {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(day => (
+            <div key={day} style={{ textAlign: 'center', padding: '10px', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.8rem' }}>{day}</div>
+          ))}
+          {days}
+        </div>
+      </div>
+    );
+  };
+
   if (isChecking) {
     return (
       <div style={{ background: '#020202', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
@@ -2205,7 +2298,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           </div>
         )}
 
-        {/* Tab: FİNANS */}
+        {/* Tab: TAKVİM */}
+        {activeTab === 'availability' && renderCalendar()}
         {activeTab === 'finans' && currentUser.permissions === 'all' && (
           <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>Finans Paneli</h2>
