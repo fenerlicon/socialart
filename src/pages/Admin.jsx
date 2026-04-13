@@ -583,11 +583,22 @@ function Admin() {
       )
       .subscribe();
 
+    // Realtime tasks subscription (takvim aninda yenilensin)
+    const tasksChannel = supabase
+      .channel('tasks_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          fetchAllData();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(chatChannel);
       supabase.removeChannel(logChannel);
       supabase.removeChannel(supportChannel);
       supabase.removeChannel(leadChannel);
+      supabase.removeChannel(tasksChannel);
     };
   }, []);
 
