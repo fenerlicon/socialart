@@ -5,7 +5,7 @@ import {
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut,
   Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink,
   Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, Camera, Video, PlusCircle, Smartphone, Download,
-  Bell, BellOff, Edit3
+  Bell, BellOff, Edit3, Bot
 } from 'lucide-react';
 import Login from './Login';
 import { supabase } from '../lib/supabase';
