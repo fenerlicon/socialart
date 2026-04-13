@@ -421,7 +421,7 @@ function Admin() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isEditingLead, setIsEditingLead] = useState(false);
-  const [editLeadData, setEditLeadData] = useState({ name: '', phone: '', email: '', service: '' });
+  const [editLeadData, setEditLeadData] = useState({ name: '', phone: '', email: '', service: '', instagram_username: '', platform: '' });
 
   // Özel Durum Dropdown
   const [openStatusId, setOpenStatusId] = useState(null);
@@ -1137,11 +1137,14 @@ function Admin() {
 
     if (!error) {
       setLeadHistory(data);
+      const igMatch = (lead.platform || '').match(/@([^)]+)/);
       setEditLeadData({
         name: lead.name,
         phone: lead.phone || '',
         email: lead.email || '',
-        service: lead.service || ''
+        service: lead.service || '',
+        instagram_username: igMatch ? igMatch[1] : '',
+        platform: lead.platform || ''
       });
       setIsLeadDetailModalOpen(true);
       setIsEditingLead(false);
@@ -1159,7 +1162,10 @@ function Admin() {
           name: editLeadData.name,
           phone: editLeadData.phone,
           email: editLeadData.email,
-          service: editLeadData.service
+          service: editLeadData.service,
+          platform: (editLeadData.platform?.includes('Instagram') && editLeadData.instagram_username)
+                    ? `Instagram DM (@${editLeadData.instagram_username.replace('@', '')})`
+                    : editLeadData.platform
         })
         .eq('id', selectedLead.id);
 
@@ -2432,7 +2438,29 @@ function Admin() {
                       placeholder="E-posta (İsteğe bağlı)"
                       style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff' }}
                     />
+                    <select 
+                      value={editLeadData.platform?.split(' (')[0]} 
+                      onChange={e => setEditLeadData({...editLeadData, platform: e.target.value})}
+                      style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff', outline: 'none' }}
+                    >
+                      <option value="WhatsApp">WhatsApp</option>
+                      <option value="Instagram DM">Instagram DM</option>
+                      <option value="Telefon">Telefon Görüşmesi</option>
+                      <option value="Mail">E-posta</option>
+                    </select>
                   </div>
+                  {editLeadData.platform?.includes('Instagram') && (
+                    <div style={{ position: 'relative', marginTop: '-5px' }}>
+                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: 'bold' }}>@</span>
+                      <input 
+                        type="text" 
+                        placeholder="Instagram Kullanıcı Adı"
+                        value={editLeadData.instagram_username} 
+                        onChange={e => setEditLeadData({ ...editLeadData, instagram_username: e.target.value })} 
+                        style={{ width: '100%', padding: '12px 12px 12px 30px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--accent)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                      />
+                    </div>
+                  )}
                   <div>
                     <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '8px' }}>İlgilenilen Hizmetler:</div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '12px', border: '1px solid #333' }}>
