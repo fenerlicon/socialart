@@ -448,6 +448,11 @@ function Admin() {
   const [ratings, setRatings] = useState([]);
   const [perfEmployee, setPerfEmployee] = useState(null);
   const [perfScore, setPerfScore] = useState(5);
+
+  // Müşteri değiştikçe eski analiz sonucunu temizle
+  useEffect(() => {
+    setAiAnalysis(null);
+  }, [selectedLead]);
   const [perfComment, setPerfComment] = useState('');
   const [perfMonth, setPerfMonth] = useState(new Date().getMonth() + 1);
   const [perfYear, setPerfYear] = useState(new Date().getFullYear());
