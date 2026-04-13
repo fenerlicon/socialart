@@ -1315,7 +1315,7 @@ Lütfen şu formatta (yalnızca Türkçe) bir analiz yap:
 
 Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
