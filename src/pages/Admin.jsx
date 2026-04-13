@@ -1295,24 +1295,20 @@ function Admin() {
     setIsAnalyzing(true);
     try {
       const historySummary = leadHistory.map(h => `${h.created_at}: ${h.note}`).join('\n');
-      const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin. 
-Aşağıdaki potansiyel müşteri verilerini ve görüşme geçmişini analiz et.
+      const prompt = `Sen SocialArt ajansının kıdemli satış stratejistisin. 
+Aşağıdaki potansiyel müşteriyi analiz et. 
 
-MÜŞTERİ BİLGİLERİ:
-İsim: ${selectedLead.name}
-Hizmet Talebi: ${selectedLead.service}
-Mevcut Durum/Notlar: ${selectedLead.reaction}
+MÜŞTERİ: ${selectedLead.name} - ${selectedLead.service}
+DURUM: ${selectedLead.reaction}
+GEÇMİŞ: ${historySummary}
 
-GÖRÜŞME GEÇMİŞİ:
-${historySummary}
+Lütfen ÇOK KISA yaz. Sadece şu bilgiler (maksimum 3-4 kısa madde):
+1. PUAN: (0-100)
+2. DURUM: (Sıcak/Ilık/Soğuk)
+3. ÖNERİ: (Tek bir kısa cümle)
+4. STRATEJİ: (Tek bir vurucu cümle)
 
-Lütfen şu formatta (yalnızca Türkçe) bir analiz yap:
-1. Kalite Puanı (0-100 arası bir rakam)
-2. Kategori (Sıcak/Ilık/Soğuk)
-3. Önerilen Aksiyonlar (Madde madde)
-4. Satış Kapatma Stratejisi (Kısa bir paragraf)
-
-Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`; 
+Gereksiz giriş/sonuç cümleleri kurma, doğrudan maddelere geç.`; 
 
       const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
       let lastError = null;
