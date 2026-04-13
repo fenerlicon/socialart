@@ -1297,24 +1297,39 @@ function Admin() {
       const historySummary = leadHistory.map(h => `${h.created_at}: ${h.note}`).join('\n');
       const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin...`; 
 
-      // Kullanıcının listesinde görünen güncel model
-      const modelName = 'gemini-2.5-flash'; 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${geminiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
+      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+      let lastError = null;
+      let success = false;
 
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error.message || 'API Hatası');
+      for (const modelName of modelsToTry) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${geminiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+            })
+          });
+
+          const data = await response.json();
+          if (data.error) {
+            lastError = data.error.message;
+            continue; // Yoğunluk varsa bir sonrakini dene
+          }
+
+          if (data.candidates && data.candidates[0].content.parts[0].text) {
+            setAiAnalysis(data.candidates[0].content.parts[0].text);
+            success = true;
+            break;
+          }
+        } catch (e) {
+          lastError = e.message;
+          continue;
+        }
       }
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        setAiAnalysis(data.candidates[0].content.parts[0].text);
-      } else {
-        throw new Error('Analiz oluşturulamadı, API boş yanıt döndürdü.');
+
+      if (!success) {
+        throw new Error(lastError || 'Tüm modeller şu an meşgul, lütfen biraz sonra tekrar deneyin.');
       }
     } catch (err) {
       console.error('Gemini error:', err);
