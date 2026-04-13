@@ -2633,7 +2633,6 @@ function Admin() {
                 <div style={{ width: '8px', height: '8px', background: '#00e676', borderRadius: '50%', animation: 'pulse 2s infinite' }}></div>
                 SİSTEM CANLI
               </div>
-              <button onClick={fetchAllData} style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.9rem' }}>Verileri Tazele</button>
             </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
