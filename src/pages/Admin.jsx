@@ -2760,75 +2760,12 @@ function Admin() {
                       <p style={{ fontSize: '0.75rem', color: '#666' }}>Resmi Destek Kanalı</p>
                     </div>
                   </div>
-                  {currentUser?.permissions === 'all' && (
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {!showClearConfirm ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowClearConfirm(true);
-                          }}
-                          style={{
-                            background: 'rgba(255,0,85,0.1)',
-                            color: 'var(--secondary)',
-                            border: '1px solid rgba(255,0,85,0.2)',
-                            padding: '8px 15px',
-                            borderRadius: '10px',
-                            fontSize: '0.8rem',
-                            fontWeight: '700',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s'
-                          }}
-                        >
-                          <Trash2 size={16} /> Kanalı Temizle
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleClearMessages();
-                            }}
-                            style={{
-                              background: 'var(--secondary)',
-                              color: '#fff',
-                              border: 'none',
-                              padding: '8px 15px',
-                              borderRadius: '10px',
-                              fontSize: '0.8rem',
-                              fontWeight: '800',
-                              cursor: 'pointer',
-                              boxShadow: '0 0 15px rgba(255,0,85,0.4)'
-                            }}
-                          >
-                            ⚠️ SİLMEYİ ONAYLA
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowClearConfirm(false);
-                            }}
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              color: '#fff',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              padding: '8px 15px',
-                              borderRadius: '10px',
-                              fontSize: '0.8rem',
-                              fontWeight: '700',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            İPTAL
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', background: '#00e676', borderRadius: '50%', boxShadow: '0 0 10px #00e676' }}></div>
+                    Sohbet Kaydı Güvenli
+                  </div>
                 </div>
+
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', flexDirection: 'column-reverse', gap: '15px', background: 'rgba(0,0,0,0.1)' }}>
                   {supportMessages.filter(m => m.client_name === selectedSupportClient).map((msg) => (
