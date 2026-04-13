@@ -1427,7 +1427,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
       
       // Bu tarihteki görevleri filtrele (isTakip içinden)
       const tasksOnThisDay = isTakip.reduce((acc, person) => {
-        const personTasks = person.tasks.filter(t => t.deadline === dateStr || t.created_at?.startsWith(dateStr));
+        const allTasks = [
+          ...(person.activeTasks || []),
+          ...(person.pendingTasks || []),
+          ...(person.completedTasks || [])
+        ];
+        const personTasks = allTasks.filter(t => t.deadline === dateStr);
         if (personTasks.length > 0) {
           acc.push({ name: person.rep, tasks: personTasks });
         }
