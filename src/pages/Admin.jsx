@@ -1571,12 +1571,14 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             >
               <Briefcase size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışılan Müşteriler
             </button>
-            <button
-              onClick={() => setActiveTab('finans')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'finans' ? '#00e676' : 'transparent', color: activeTab === 'finans' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
-            >
-              <DollarSign size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Finans
-            </button>
+            {currentUser.permissions === 'all' && (
+              <button
+                onClick={() => setActiveTab('finans')}
+                style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'finans' ? '#00e676' : 'transparent', color: activeTab === 'finans' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+              >
+                <DollarSign size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Finans
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('gorev')}
               style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorev' ? 'var(--secondary)' : 'transparent', color: activeTab === 'gorev' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
@@ -2204,7 +2206,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         )}
 
         {/* Tab: FİNANS */}
-        {activeTab === 'finans' && (
+        {activeTab === 'finans' && currentUser.permissions === 'all' && (
           <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>Finans Paneli</h2>
             <div style={{ overflowX: 'auto' }}>
