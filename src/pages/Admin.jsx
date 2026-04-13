@@ -1415,6 +1415,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
   };
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarPopup, setCalendarPopup] = useState(null); // { dateStr, persons: [{name, tasks}] }
   const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
 
@@ -1463,10 +1464,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           flexDirection: 'column',
           gap: '5px',
           overflow: 'hidden',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          cursor: tasksOnThisDay.length > 0 ? 'pointer' : 'default'
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-        onMouseLeave={e => e.currentTarget.style.background = isToday ? 'rgba(0,229,255,0.05)' : 'rgba(255,255,255,0.02)'}
+        onClick={() => tasksOnThisDay.length > 0 && setCalendarPopup({ dateStr, persons: tasksOnThisDay })}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; if(tasksOnThisDay.length > 0) e.currentTarget.style.border = '1px solid var(--primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = isToday ? 'rgba(0,229,255,0.05)' : 'rgba(255,255,255,0.02)'; e.currentTarget.style.border = isToday ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)'; }}
         >
           <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: isToday ? 'var(--primary)' : '#888' }}>{d}</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
@@ -1490,8 +1493,63 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
       );
     }
 
+    const statusColor = (s) => {
+      if (s === 'Yapıyorum') return '#00e5ff';
+      if (s === 'Yaptım') return '#00e676';
+      if (s === 'Tamamlanamadı') return '#ff1744';
+      if (s === 'Revize') return '#ffa000';
+      return '#aaa';
+    };
+
     return (
-      <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
+      <div className="glass" style={{ borderRadius: '24px', padding: '30px', position: 'relative' }}>
+        {/* Günlük Detay Popup */}
+        {calendarPopup && (
+          <div
+            onClick={() => setCalendarPopup(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#111', border: '1px solid rgba(0,229,255,0.2)', borderRadius: '24px', padding: '35px', maxWidth: '550px', width: '90%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--primary)' }}>
+                    <Calendar size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-3px' }} />
+                    {calendarPopup.dateStr}
+                  </h3>
+                  <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '4px' }}>{calendarPopup.persons.reduce((a, p) => a + p.tasks.length, 0)} görev planlı</p>
+                </div>
+                <button onClick={() => setCalendarPopup(null)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
+              </div>
+              {calendarPopup.persons.map((person, pi) => (
+                <div key={pi} style={{ marginBottom: '25px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--accent)', letterSpacing: '1px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, var(--accent), var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: '900', fontSize: '0.85rem' }}>
+                      {person.name.charAt(0)}
+                    </div>
+                    {person.name.toUpperCase()} — {person.tasks.length} görev
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {person.tasks.map((task, ti) => (
+                      <div key={ti} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                          <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1 }}>{task.task_text}</span>
+                          <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '6px', background: `${statusColor(task.status)}22`, color: statusColor(task.status), fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                            {task.status}
+                          </span>
+                        </div>
+                        {task.brand_name && <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '6px' }}>Müşteri: {task.brand_name}</div>}
+                        {task.priority && <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '2px' }}>Öncelik: {task.priority}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>{monthNames[month]} {year}</h2>
