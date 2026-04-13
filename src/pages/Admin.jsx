@@ -1443,7 +1443,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           ...(person.pendingTasks || []),
           ...(person.completedTasks || [])
         ];
-        const personTasks = allTasks.filter(t => t.deadline === dateStr);
+        const personTasks = allTasks.filter(t => t.due_date === dateStr);
         if (personTasks.length > 0) {
           acc.push({ name: person.rep, tasks: personTasks });
         }
