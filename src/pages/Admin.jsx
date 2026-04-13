@@ -1324,14 +1324,17 @@ Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`;
       });
 
       const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message || 'API Hatası');
+      }
       if (data.candidates && data.candidates[0].content.parts[0].text) {
         setAiAnalysis(data.candidates[0].content.parts[0].text);
       } else {
-        throw new Error('API yanıt vermedi.');
+        throw new Error('Analiz oluşturulamadı, API boş yanıt döndürdü.');
       }
     } catch (err) {
       console.error('Gemini error:', err);
-      alert('Yapay zeka analizi sırasında bir hata oluştu. API anahtarınızın doğruluğunu kontrol edin.');
+      alert('Yapay zeka hatası: ' + err.message);
     } finally {
       setIsAnalyzing(false);
     }
