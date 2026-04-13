@@ -1297,8 +1297,8 @@ function Admin() {
       const historySummary = leadHistory.map(h => `${h.created_at}: ${h.note}`).join('\n');
       const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin...`; 
 
-      // 2026'da standart hale gelmiş en genel model ismi: gemini-pro
-      const modelName = 'gemini-pro'; 
+      // Kullanıcının listesinde görünen güncel model
+      const modelName = 'gemini-2.5-flash'; 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
