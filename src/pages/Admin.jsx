@@ -1295,7 +1295,24 @@ function Admin() {
     setIsAnalyzing(true);
     try {
       const historySummary = leadHistory.map(h => `${h.created_at}: ${h.note}`).join('\n');
-      const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin...`; 
+      const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin. 
+Aşağıdaki potansiyel müşteri verilerini ve görüşme geçmişini analiz et.
+
+MÜŞTERİ BİLGİLERİ:
+İsim: ${selectedLead.name}
+Hizmet Talebi: ${selectedLead.service}
+Mevcut Durum/Notlar: ${selectedLead.reaction}
+
+GÖRÜŞME GEÇMİŞİ:
+${historySummary}
+
+Lütfen şu formatta (yalnızca Türkçe) bir analiz yap:
+1. Kalite Puanı (0-100 arası bir rakam)
+2. Kategori (Sıcak/Ilık/Soğuk)
+3. Önerilen Aksiyonlar (Madde madde)
+4. Satış Kapatma Stratejisi (Kısa bir paragraf)
+
+Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`; 
 
       const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
       let lastError = null;
