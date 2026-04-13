@@ -438,6 +438,10 @@ function Admin() {
   const [selectedSupportClient, setSelectedSupportClient] = useState(null);
   const [supportReplyInput, setSupportReplyInput] = useState('');
   const [newTalepAlert, setNewTalepAlert] = useState(null); // { clientName, message }
+  const [geminiKey, setGeminiKey] = useState(localStorage.getItem('gemini_api_key') || 'AIzaSyBmWTKdlFM0ftkUQ2NABqlIRpD3vfTN_mw');
+  const [isAISettingsOpen, setIsAISettingsOpen] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Performance System States
@@ -1280,6 +1284,59 @@ function Admin() {
     }
   };
 
+  const handleGeminiAnalysis = async () => {
+    if (!geminiKey) {
+      alert('Lütfen önce AI Ayarları bölümünden Google Gemini API Anahtarınızı girin.');
+      setIsAISettingsOpen(true);
+      return;
+    }
+    if (!selectedLead) return;
+
+    setIsAnalyzing(true);
+    try {
+      const historySummary = leadHistory.map(h => `${h.created_at}: ${h.note}`).join('\n');
+      const prompt = `Sen SocialArt isimli dijital pazarlama ve sosyal medya ajansının kıdemli satış stratejistisin. 
+Aşağıdaki potansiyel müşteri verilerini ve görüşme geçmişini analiz et.
+
+MÜŞTERİ BİLGİLERİ:
+İsim: ${selectedLead.name}
+İletişim: ${selectedLead.phone} / ${selectedLead.email}
+Hizmet Talebi: ${selectedLead.service}
+Mevcut Durum/Notlar: ${selectedLead.reaction}
+
+GÖRÜŞME GEÇMİŞİ:
+${historySummary}
+
+Lütfen şu formatta (yalnızca Türkçe) bir analiz yap:
+1. Kalite Puanı (0-100 arası bir rakam)
+2. Kategori (Sıcak/Ilık/Soğuk)
+3. Önerilen Aksiyonlar (Madde madde)
+4. Satış Kapatma Stratejisi (Kısa bir paragraf)
+
+Yanıtını profesyonel, vizyoner ve sonuç odaklı bir dille yaz.`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0].content.parts[0].text) {
+        setAiAnalysis(data.candidates[0].content.parts[0].text);
+      } else {
+        throw new Error('API yanıt vermedi.');
+      }
+    } catch (err) {
+      console.error('Gemini error:', err);
+      alert('Yapay zeka analizi sırasında bir hata oluştu. API anahtarınızın doğruluğunu kontrol edin.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   if (isChecking) {
     return (
       <div style={{ background: '#020202', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
@@ -1403,6 +1460,12 @@ function Admin() {
                 <Plus size={18} style={{ marginRight: '8px' }} /> Yeni Görev Ata
               </button>
             )}
+            <button 
+              onClick={() => setIsAISettingsOpen(true)}
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--surface-border)', color: '#fff', padding: '10px 15px', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Zap size={18} color="var(--accent)" /> AI Ayarları
+            </button>
           </div>
         </div>
 
@@ -2550,7 +2613,16 @@ function Admin() {
                         disabled={isUploading}
                         style={{ padding: '0 30px', height: '42px', display: 'flex', alignItems: 'center', gap: '8px' }}
                       >
-                        {isUploading ? 'Yükleniyor...' : 'Kaydet'}
+                        {isUploading ? 'Yükleniyor...' : 'Notu Kaydet'}
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={handleGeminiAnalysis}
+                        disabled={isAnalyzing}
+                        style={{ padding: '0 20px', height: '42px', background: 'linear-gradient(45deg, #2979ff, #00e5ff)', color: '#000', border: 'none', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(0,229,255,0.3)' }}
+                      >
+                        {isAnalyzing ? <div style={{ width: '16px', height: '16px', border: '2px solid #000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div> : <Zap size={16} />}
+                        {isAnalyzing ? 'Analiz Ediliyor...' : 'AI Strateji Oluştur'}
                       </button>
                       {currentUser.permissions === 'all' && (
                         <button
@@ -2564,6 +2636,23 @@ function Admin() {
                     </div>
                   </div>
                 </form>
+                
+                {aiAnalysis && (
+                  <div style={{ marginTop: '30px', animation: 'slideUp 0.4s ease' }}>
+                    <div style={{ background: 'rgba(0,229,255,0.05)', border: '1px solid var(--accent)', borderRadius: '20px', padding: '25px', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', top: 0, right: 0, width: '100px', height: '100px', background: 'var(--accent)', filter: 'blur(80px)', opacity: 0.2 }}></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h4 style={{ color: 'var(--accent)', fontSize: '1rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Bot size={20} /> YAPAY ZEKA SATIŞ STRATEJİSİ
+                        </h4>
+                        <button onClick={() => setAiAnalysis(null)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}>Kapat</button>
+                      </div>
+                      <div style={{ whiteSpace: 'pre-line', color: '#eee', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                        {aiAnalysis}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -3971,8 +4060,47 @@ function Admin() {
         }
         .mobile-only-btn { display: none; }
       `}</style>
+      {/* AI AYARLARI MODALI */}
+      {isAISettingsOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
+            <button onClick={() => setIsAISettingsOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: '#888', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+                <Zap size={24} />
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>AI Ayarları</h2>
+            </div>
+            <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '25px', lineHeight: '1.5' }}>
+              Google Gemini API anahtarınızı buraya girerek CRM panelinizi akıllandırın. Tamamen ücretsiz anahtarınızı <strong>Google AI Studio</strong> üzerinden alabilirsiniz.
+            </p>
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.85rem' }}>Gemini API Key</label>
+              <input 
+                type="password" 
+                value={geminiKey} 
+                placeholder="AIzaSy..."
+                onChange={e => {
+                  setGeminiKey(e.target.value);
+                  localStorage.setItem('gemini_api_key', e.target.value);
+                }} 
+                style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.5)', border: '1px solid #333', borderRadius: '12px', color: '#fff', outline: 'none' }} 
+              />
+            </div>
+            <button 
+              onClick={() => setIsAISettingsOpen(false)}
+              className="btn btn-primary" 
+              style={{ width: '100%', background: 'var(--accent)', color: '#000', fontWeight: '800' }}
+            >
+              Ayarları Kaydet ve Kapat
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default Admin;
