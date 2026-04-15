@@ -24,7 +24,7 @@ const Services = React.lazy(() => import('./pages/Services'));
 const About = React.lazy(() => import('./pages/About'));
 const Blog = React.lazy(() => import('./pages/Blog'));
 const BlogDetail = React.lazy(() => import('./pages/BlogDetail'));
-const Admin = React.lazy(() => import('./pages/Admin'));
+const Admin = React.lazy(() => import('./pages/StaffAdmin'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
 const ClientPortal = React.lazy(() => import('./pages/ClientPortal'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));

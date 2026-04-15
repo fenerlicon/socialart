@@ -337,6 +337,11 @@ function Admin() {
         setIsTakip(groupedTasks);
       }
 
+      // 8. Fetch staff reports
+      const { data: reportsData } = await supabase.from('staff_reports').select('*').order('created_at', { ascending: false });
+      if (reportsData) setStaffReports(reportsData);
+
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -472,7 +477,15 @@ function Admin() {
 
   // Finans States
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
-  const [payments, setPayments] = useState([]); // client_payments tablosundan gelebilir
+  const [payments, setPayments] = useState([]); 
+
+  // Staff Reports States
+  const [staffReports, setStaffReports] = useState([]);
+  const [reportInput, setReportInput] = useState('');
+  const [reportLink, setReportLink] = useState('');
+  const [reportFile, setReportFile] = useState(null);
+  const [isUploadingReport, setIsUploadingReport] = useState(false);
+
 
   // Helper: Calculate stats for a specific employee
   const getEmployeePerfStats = (empName) => {
@@ -919,6 +932,56 @@ function Admin() {
     if (!error) {
       logActivity('Randevu İptal Edildi', `${appt?.full_name || 'Bilinmeyen'} isimli kişinin randevusu iptal edildi.`);
       fetchAllData();
+    }
+  };
+
+  const handleUploadStaffReport = async (e) => {
+    e.preventDefault();
+    if (!reportInput && !reportFile && !reportLink) return;
+
+    setIsUploadingReport(true);
+    let fileUrl = null;
+    let fileName = null;
+
+    try {
+      if (reportFile) {
+        const fileExt = reportFile.name.split('.').pop();
+        const filePath = `reports/${currentUser.name}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('lead-attachments')
+          .upload(filePath, reportFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-attachments')
+          .getPublicUrl(filePath);
+        
+        fileUrl = publicUrl;
+        fileName = reportFile.name;
+      }
+
+      const { error } = await supabase.from('staff_reports').insert([{
+        staff_name: currentUser.name,
+        staff_role: currentUser.role || 'Ekip Üyesi',
+        content: reportInput,
+        file_url: fileUrl,
+        file_name: fileName,
+        external_link: reportLink
+      }]);
+
+      if (error) throw error;
+
+      setReportInput('');
+      setReportFile(null);
+      setReportLink('');
+      fetchAllData();
+      alert('Rapor başarıyla gönderildi.');
+    } catch (err) {
+      console.error('Report upload error:', err);
+      alert('HATA: Rapor yüklenemedi.');
+    } finally {
+      setIsUploadingReport(false);
     }
   };
 
@@ -1738,63 +1801,64 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             >
               <Briefcase size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışılan Müşteriler
             </button>
-            {currentUser.permissions === 'all' && (
-              <button
-                onClick={() => setActiveTab('finans')}
-                style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'finans' ? '#00e676' : 'transparent', color: activeTab === 'finans' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
-              >
-                <DollarSign size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Finans
-              </button>
-            )}
+            <button
+              onClick={() => setActiveTab('reports')}
+              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'reports' ? 'var(--primary)' : 'transparent', color: activeTab === 'reports' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+            >
+              <FileText size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> 📊 Raporlar
+            </button>
             <button
               onClick={() => setActiveTab('gorev')}
               style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorev' ? 'var(--secondary)' : 'transparent', color: activeTab === 'gorev' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
             >
               <ClipboardList size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> İş Takip Sistemi
             </button>
-            {currentUser.permissions === 'all' && (
-              <button
-                onClick={() => setActiveTab('log')}
-                style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'log' ? 'var(--primary)' : 'transparent', color: activeTab === 'log' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
-              >
-                <Activity size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Aktivite Kayıtları
-              </button>
-            )}
-            <button
-              onClick={() => setActiveTab('chat')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'chat' ? 'var(--secondary)' : 'transparent', color: activeTab === 'chat' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
-            >
-              <MessageSquare size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Ekip Sohbeti
-            </button>
-            <button
-              onClick={() => setActiveTab('availability')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'availability' ? '#ffab00' : 'transparent', color: activeTab === 'availability' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
-            >
-              <Clock size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Müsaitlik
-            </button>
-            <button
-              onClick={() => setActiveTab('support')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'support' ? '#00e676' : 'transparent', color: activeTab === 'support' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', position: 'relative' }}
-            >
-              <MessageCircle size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Müşteri Talepleri
-              {supportMessages.filter(m => !m.is_read && m.sender_type === 'client').length > 0 && (
-                <span style={{ position: 'absolute', top: '5px', right: '5px', background: 'var(--secondary)', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid var(--bg-color)' }}></span>
-              )}
-            </button>
-            {currentUser?.permissions === 'all' && (
-              <button
-                onClick={() => setActiveTab('performance')}
-                style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'performance' ? 'var(--accent)' : 'transparent', color: activeTab === 'performance' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
-              >
-                <Users size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışanlar
-              </button>
-            )}
             <button
               onClick={() => setActiveTab('gorevList')}
               style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorevList' ? 'var(--primary)' : 'transparent', color: activeTab === 'gorevList' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
             >
               <ListTodo size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Görev Listem
             </button>
+
+            {currentUser.permissions === 'all' && (
+              <>
+                <button
+                  onClick={() => setActiveTab('log')}
+                  style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'log' ? 'var(--primary)' : 'transparent', color: activeTab === 'log' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+                >
+                  <Activity size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Aktivite Kayıtları
+                </button>
+                <button
+                  onClick={() => setActiveTab('availability')}
+                  style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'availability' ? '#ffab00' : 'transparent', color: activeTab === 'availability' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+                >
+                  <Clock size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Müsaitlik
+                </button>
+                <button
+                  onClick={() => setActiveTab('performance')}
+                  style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'performance' ? 'var(--accent)' : 'transparent', color: activeTab === 'performance' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+                >
+                  <Users size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışanlar
+                </button>
+              </>
+            )}
+
+            {/* Finans ve Sohbet şimdilik gizlendi */}
+            {/* 
+            <button
+              onClick={() => setActiveTab('finans')}
+              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'finans' ? '#00e676' : 'transparent', color: activeTab === 'finans' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+            >
+              <DollarSign size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Finans
+            </button>
+            <button
+              onClick={() => setActiveTab('chat')}
+              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'chat' ? 'var(--secondary)' : 'transparent', color: activeTab === 'chat' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
+            >
+              <MessageSquare size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Ekip Sohbeti
+            </button>
+            */}
+
           </div>
         </div>
 
@@ -2374,7 +2438,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* Tab: TAKVİM */}
         {activeTab === 'availability' && renderCalendar()}
-        {activeTab === 'finans' && currentUser.permissions === 'all' && (
+        {false && activeTab === 'finans' && currentUser.permissions === 'all' && (
           <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>Finans Paneli</h2>
             <div style={{ overflowX: 'auto' }}>
@@ -3281,8 +3345,109 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
 
-      {/* Müşteri Talepleri Tabı */}
-      {activeTab === 'support' && (
+        {activeTab === 'reports' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* Rapor Gönderme Formu */}
+            <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileText size={20} color="var(--primary)" /> Bu Hafta Naptım? (Haftalık Rapor)
+              </h3>
+              <form onSubmit={handleUploadStaffReport} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <textarea
+                  value={reportInput}
+                  onChange={e => setReportInput(e.target.value)}
+                  placeholder="Bu hafta neler yaptın? Özetle..."
+                  required
+                  rows="4"
+                  style={{ width: '100%', padding: '15px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', resize: 'vertical' }}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <input
+                    type="text"
+                    value={reportLink}
+                    onChange={e => setReportLink(e.target.value)}
+                    placeholder="Varsa dosya/sunum linki (Drive, Dropbox vb.)"
+                    style={{ padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }}
+                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="file"
+                      id="report-file"
+                      onChange={e => setReportFile(e.target.files[0])}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="report-file" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '10px', color: '#ccc', cursor: 'pointer', textAlign: 'center', justifyContent: 'center' }}>
+                      <Camera size={18} /> {reportFile ? reportFile.name : 'Dosya Yükle (PDF, Resim vb.)'}
+                    </label>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isUploadingReport}
+                  className="btn btn-primary"
+                  style={{ padding: '15px', fontWeight: '800' }}
+                >
+                  {isUploadingReport ? 'GÖNDERİLİYOR...' : 'RAPORU GÖNDER'}
+                </button>
+              </form>
+            </div>
+
+            {/* Eski Raporlar Listesi */}
+            <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden' }}>
+              <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Gönderilen Raporlar</h3>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>TARİH / PERSONEL</th>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>RAPOR İÇERİĞİ</th>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>EKLER</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {staffReports.filter(r => currentUser.permissions === 'all' || r.staff_name === currentUser.name).map((report) => (
+                      <tr key={report.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                        <td style={{ padding: '15px 24px', width: '250px' }}>
+                          <div style={{ fontWeight: '700', color: 'var(--primary)' }}>{report.staff_name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#888' }}>{report.staff_role}</div>
+                          <div style={{ fontSize: '0.7rem', color: '#555', marginTop: '4px' }}>{new Date(report.created_at).toLocaleString('tr-TR')}</div>
+                        </td>
+                        <td style={{ padding: '15px 24px', fontSize: '0.9rem', color: '#eee', whiteSpace: 'pre-line' }}>
+                          {report.content}
+                        </td>
+                        <td style={{ padding: '15px 24px', width: '200px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {report.file_url && (
+                              <a href={report.file_url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
+                                <Download size={14} /> {report.file_name || 'Dosya'}
+                              </a>
+                            )}
+                            {report.external_link && (
+                              <a href={report.external_link.startsWith('http') ? report.external_link : `https://${report.external_link}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
+                                <ExternalLink size={14} /> Linke Git
+                              </a>
+                            )}
+                            {!report.file_url && !report.external_link && <span style={{ color: '#444', fontSize: '0.8rem' }}>Ek yok</span>}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {staffReports.length === 0 && (
+                      <tr>
+                        <td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Henüz rapor gönderilmemiş.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Müşteri Talepleri Tabı */}
+        {false && activeTab === 'support' && (
         <div className={`support-layout ${selectedSupportClient ? 'detail-active' : 'list-active'}`} style={{ display: 'grid', gap: '30px', height: 'calc(100vh - 250px)' }}>
 
           {/* Sol Kolon: Müşteri Listesi */}
