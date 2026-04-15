@@ -839,6 +839,10 @@ function Admin() {
   };
 
   const handleRateTask = async (task, score, comment) => {
+    if (!['Celal', 'Ercan'].includes(currentUser?.name)) {
+      alert('Bu işlem için yetkiniz yok. Sadece Celal ve Ercan puan verebilir.');
+      return;
+    }
     const { error } = await supabase.from('tasks').update({
       rating: score,
       rating_comment: comment,
@@ -3844,16 +3848,20 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic' }}>"{t.rating_comment || 'Not yok'}"</div>
                                 </div>
                               ) : (
-                                <button
-                                  onClick={() => {
-                                    const score = window.prompt(`${t.task_text} için puan (1-5):`, '5');
-                                    const comment = window.prompt('Değerlendirme notu:', '');
-                                    if (score) handleRateTask(t, parseInt(score), comment);
-                                  }}
-                                  style={{ padding: '10px 20px', borderRadius: '12px', background: 'var(--primary)', color: '#000', border: 'none', fontSize: '0.85rem', fontWeight: '900', cursor: 'pointer' }}
-                                >
-                                  Puan Ver
-                                </button>
+                                ['Celal', 'Ercan'].includes(currentUser?.name) ? (
+                                  <button
+                                    onClick={() => {
+                                      const score = window.prompt(`${t.task_text} için puan (1-5):`, '5');
+                                      const comment = window.prompt('Değerlendirme notu:', '');
+                                      if (score) handleRateTask(t, parseInt(score), comment);
+                                    }}
+                                    style={{ padding: '10px 20px', borderRadius: '12px', background: 'var(--primary)', color: '#000', border: 'none', fontSize: '0.85rem', fontWeight: '900', cursor: 'pointer' }}
+                                  >
+                                    Puan Ver
+                                  </button>
+                                ) : (
+                                  <div style={{ fontSize: '0.8rem', color: '#555', fontStyle: 'italic' }}>Henüz puanlanmamış</div>
+                                )
                               )}
                             </div>
                           </div>
