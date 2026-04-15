@@ -482,7 +482,7 @@ function Admin() {
   // Staff Reports States
   const [staffReports, setStaffReports] = useState([]);
   const [reportInput, setReportInput] = useState('');
-  const [reportLink, setReportLink] = useState('');
+  const [reportLinks, setReportLinks] = useState(['']);
   const [reportFile, setReportFile] = useState(null);
   const [isUploadingReport, setIsUploadingReport] = useState(false);
 
@@ -941,7 +941,7 @@ function Admin() {
 
   const handleUploadStaffReport = async (e) => {
     e.preventDefault();
-    if (!reportInput && !reportFile && !reportLink) return;
+    if (!reportInput && !reportFile && reportLinks.every(l => !l.trim())) return;
 
     setIsUploadingReport(true);
     let fileUrl = null;
@@ -971,14 +971,14 @@ function Admin() {
         content: reportInput,
         file_url: fileUrl,
         file_name: fileName,
-        external_link: reportLink
+        external_links: reportLinks.filter(l => l.trim())
       }]);
 
       if (error) throw error;
 
       setReportInput('');
       setReportFile(null);
-      setReportLink('');
+      setReportLinks(['']);
       fetchAllData();
       alert('Rapor başarıyla gönderildi.');
     } catch (err) {
@@ -3366,13 +3366,41 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   style={{ width: '100%', padding: '15px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', resize: 'vertical' }}
                 />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                  <input
-                    type="text"
-                    value={reportLink}
-                    onChange={e => setReportLink(e.target.value)}
-                    placeholder="Varsa dosya/sunum linki (Drive, Dropbox vb.)"
-                    style={{ padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {reportLinks.map((link, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                          type="text"
+                          value={link}
+                          onChange={e => {
+                            const newLinks = [...reportLinks];
+                            newLinks[idx] = e.target.value;
+                            setReportLinks(newLinks);
+                          }}
+                          placeholder={idx === 0 ? "Dosya/sunum linki (Drive, Dropbox vb.)" : "Ekstra link..."}
+                          style={{ flex: 1, padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }}
+                        />
+                        {reportLinks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setReportLinks(reportLinks.filter((_, i) => i !== idx))}
+                            style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', border: '1px solid rgba(255,23,68,0.2)', borderRadius: '10px', padding: '0 15px', cursor: 'pointer' }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setReportLinks([...reportLinks, ''])}
+                      style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      + Başka Link Ekle
+                    </button>
+                  </div>
+
                   <div style={{ position: 'relative' }}>
                     <input
                       type="file"
@@ -3384,6 +3412,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       <Camera size={18} /> {reportFile ? reportFile.name : 'Dosya Yükle (PDF, Resim vb.)'}
                     </label>
                   </div>
+                </div>
                 </div>
                 <button
                   type="submit"
@@ -3428,12 +3457,19 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                 <Download size={14} /> {report.file_name || 'Dosya'}
                               </a>
                             )}
+                            {/* Eski tekil link desteği */}
                             {report.external_link && (
                               <a href={report.external_link.startsWith('http') ? report.external_link : `https://${report.external_link}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
                                 <ExternalLink size={14} /> Linke Git
                               </a>
                             )}
-                            {!report.file_url && !report.external_link && <span style={{ color: '#444', fontSize: '0.8rem' }}>Ek yok</span>}
+                            {/* Yeni çoğul link desteği */}
+                            {report.external_links && report.external_links.map((link, li) => (
+                              <a key={li} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
+                                <ExternalLink size={14} /> Link {report.external_links.length > 1 ? li + 1 : ''}
+                              </a>
+                            ))}
+                            {!report.file_url && !report.external_link && (!report.external_links || report.external_links.length === 0) && <span style={{ color: '#444', fontSize: '0.8rem' }}>Ek yok</span>}
                           </div>
                         </td>
                       </tr>
