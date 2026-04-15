@@ -3354,13 +3354,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             {/* Rapor Gönderme Formu */}
             <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FileText size={20} color="var(--primary)" /> Bu Hafta Naptım? (Haftalık Rapor)
+                <FileText size={20} color="var(--primary)" /> Bugün Naptım? (Günlük Rapor)
               </h3>
               <form onSubmit={handleUploadStaffReport} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <textarea
                   value={reportInput}
                   onChange={e => setReportInput(e.target.value)}
-                  placeholder="Bu hafta neler yaptın? Özetle..."
+                  placeholder="Bugün neler yaptın? Özetle..."
                   required
                   rows="4"
                   style={{ width: '100%', padding: '15px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', resize: 'vertical' }}
