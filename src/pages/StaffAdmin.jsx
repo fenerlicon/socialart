@@ -484,6 +484,7 @@ function Admin() {
   const [reportInput, setReportInput] = useState('');
   const [reportLinks, setReportLinks] = useState(['']);
   const [reportFile, setReportFile] = useState(null);
+  const [selectedReportDate, setSelectedReportDate] = useState(new Date().toISOString().split('T')[0]);
   const [isUploadingReport, setIsUploadingReport] = useState(false);
 
 
@@ -3427,9 +3428,68 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
             {/* Eski Raporlar Listesi */}
             <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden' }}>
-              <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Gönderilen Raporlar</h3>
+                <div style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 'bold' }}>
+                  {new Date(selectedReportDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })}
+                </div>
               </div>
+
+              {/* Yatay Tarih Seçici */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                padding: '15px 25px', 
+                overflowX: 'auto', 
+                background: 'rgba(0,0,0,0.2)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}>
+                {(() => {
+                  const dates = [];
+                  for (let i = 0; i < 30; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    dates.push(d.toISOString().split('T')[0]);
+                  }
+                  return dates.map(dateStr => {
+                    const d = new Date(dateStr);
+                    const isSelected = selectedReportDate === dateStr;
+                    return (
+                      <div
+                        key={dateStr}
+                        onClick={() => setSelectedReportDate(dateStr)}
+                        style={{
+                          minWidth: '80px',
+                          padding: '12px 10px',
+                          borderRadius: '16px',
+                          background: isSelected ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.03)',
+                          color: isSelected ? '#000' : '#888',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px'
+                        }}
+                      >
+                        <span style={{ fontSize: '0.65rem', fontWeight: '900', opacity: 0.7 }}>
+                          {d.toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: '900' }}>
+                          {d.getDate()}
+                        </span>
+                        <span style={{ fontSize: '0.6rem', fontWeight: '800' }}>
+                          {d.toLocaleDateString('tr-TR', { month: 'short' }).toUpperCase()}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -3440,7 +3500,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     </tr>
                   </thead>
                   <tbody>
-                    {staffReports.filter(r => currentUser.permissions === 'all' || r.staff_name === currentUser.name).map((report) => (
+                    {staffReports.filter(r => {
+                      const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
+                      const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
+                      return isOwner && isSameDate;
+                    }).map((report) => (
                       <tr key={report.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
                         <td style={{ padding: '15px 24px', width: '250px' }}>
                           <div style={{ fontWeight: '700', color: 'var(--primary)' }}>{report.staff_name}</div>
