@@ -490,7 +490,7 @@ function Admin() {
 
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
-  const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '' });
+  const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
 
   const handleSaveShoot = async (e) => {
     e.preventDefault();
@@ -498,18 +498,18 @@ function Admin() {
       full_name: shootFormData.clientName,
       appointment_date: shootFormData.date,
       appointment_time: shootFormData.time,
-      status: 'Çekim',
+      status: shootFormData.type,
       email: shootFormData.details,
       phone: shootFormData.staffName
     }]);
 
     if (!error) {
-      logActivity('Çekim Günü Eklendi', `${shootFormData.clientName} için ${shootFormData.date} tarihinde çekim planlandı.`);
+      logActivity('Takvime Not Eklendi', `${shootFormData.clientName} (${shootFormData.type}) eklendi.`);
       setIsShootModalOpen(false);
-      setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '' });
+      setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
       fetchAllData();
     } else {
-      alert('Çekim günü eklenirken hata: ' + error.message);
+      alert('Kayıt eklenirken hata: ' + error.message);
     }
   };
 
@@ -1574,21 +1574,32 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         >
           <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: isToday ? 'var(--primary)' : '#888' }}>{d}</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
-            {apptsOnThisDay.map((appt, idx) => (
-              <div key={`appt-${idx}`} style={{ 
-                fontSize: '0.65rem', 
-                padding: '3px 6px', 
-                background: appt.status === 'Çekim' ? 'linear-gradient(135deg, #ffab00, #ff6f00)' : 'linear-gradient(135deg, #2979ff, #007bff)', 
-                color: '#fff', 
-                borderRadius: '6px', 
-                fontWeight: 'bold',
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden'
-              }}>
-                {appt.status === 'Çekim' ? '📸' : '📅'} {appt.full_name}
-              </div>
-            ))}
+            {apptsOnThisDay.map((appt, idx) => {
+              const colorMap = {
+                'Çekim': 'linear-gradient(135deg, #ffab00, #ff6f00)',
+                'Toplantı': 'linear-gradient(135deg, #2979ff, #007bff)',
+                'Not': 'linear-gradient(135deg, #9c27b0, #673ab7)',
+                'Özel': 'linear-gradient(135deg, #f44336, #d32f2f)'
+              };
+              const bg = colorMap[appt.status] || 'linear-gradient(135deg, #444, #222)';
+              const icon = appt.status === 'Çekim' ? '📸' : appt.status === 'Toplantı' ? '📅' : appt.status === 'Not' ? '📝' : '📌';
+
+              return (
+                <div key={`appt-${idx}`} style={{ 
+                  fontSize: '0.65rem', 
+                  padding: '3px 6px', 
+                  background: bg, 
+                  color: '#fff', 
+                  borderRadius: '6px', 
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden'
+                }}>
+                  {icon} {appt.full_name}
+                </div>
+              );
+            })}
             {tasksOnThisDay.map((p, idx) => (
               <div key={idx} style={{ 
                 fontSize: '0.65rem', 
@@ -1694,8 +1705,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             <p style={{ color: '#888', fontSize: '0.85rem' }}>Ekip Müsaitlik ve İş Yükü Takvimi</p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button onClick={() => setIsShootModalOpen(true)} className="btn" style={{ background: 'linear-gradient(135deg, #ffab00, #ff6f00)', color: '#000', padding: '10px 20px', borderRadius: '12px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
-              <Plus size={18} /> Çekim Günü Ekle
+            <button onClick={() => setIsShootModalOpen(true)} className="btn" style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', color: '#000', padding: '10px 20px', borderRadius: '12px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
+              <Plus size={18} /> Takvime Kayıt Ekle
             </button>
             <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.1)', margin: '0 10px' }}></div>
             <button onClick={() => setCurrentDate(new Date(year, month - 1))} className="icon-btn" style={{ padding: '10px' }}>Prev</button>
@@ -2887,42 +2898,57 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
 
-      {/* Çekim Günü Ekleme Modalı */}
+      {/* Takvime Kayıt Modalı */}
       {isShootModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
             <button onClick={() => setIsShootModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
               <X size={24} />
             </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#ffab00' }}>Çekim Günü Planla</h2>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: 'var(--primary)' }}>Takvime Kayıt Ekle</h2>
             <form onSubmit={handleSaveShoot} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Müşteri / Marka Adı</label>
-                <select required value={shootFormData.clientName} onChange={e => setShootFormData({ ...shootFormData, clientName: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }}>
-                  <option value="">Seçiniz...</option>
-                  {aktifMusteriler.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                  <option value="DİĞER / GENEL">DİĞER / GENEL</option>
-                </select>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '15px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Konu / Başlık</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="Örn: Misafir Gelecek, Çekim..." 
+                    value={shootFormData.clientName} 
+                    onChange={e => setShootFormData({ ...shootFormData, clientName: e.target.value })} 
+                    style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tür</label>
+                  <select value={shootFormData.type} onChange={e => setShootFormData({ ...shootFormData, type: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }}>
+                    <option value="Çekim">📸 Çekim</option>
+                    <option value="Toplantı">📅 Toplantı</option>
+                    <option value="Not">📝 Not / Hatırlatma</option>
+                    <option value="Özel">📌 Özel Durum</option>
+                  </select>
+                </div>
               </div>
+              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Çekim Tarihi</label>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tarih</label>
                   <input type="date" required value={shootFormData.date} onChange={e => setShootFormData({ ...shootFormData, date: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Çekim Saati</label>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Saat</label>
                   <input type="time" required value={shootFormData.time} onChange={e => setShootFormData({ ...shootFormData, time: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Gidecek Personeller</label>
-                <input type="text" placeholder="Örn: Celal, Ercan" value={shootFormData.staffName} onChange={e => setShootFormData({ ...shootFormData, staffName: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>İlgili Kişiler / Ekip</label>
+                <input type="text" placeholder="Katılacak personeller" value={shootFormData.staffName} onChange={e => setShootFormData({ ...shootFormData, staffName: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Detaylar / Notlar</label>
-                <textarea rows="3" value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', resize: 'vertical' }} placeholder="Ekipmanlar, mekan bilgisi vs." />
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Not / Detaylar</label>
+                <textarea rows="3" value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', resize: 'vertical' }} placeholder="Ekstra bilgiler..." />
               </div>
-              <button type="submit" className="btn" style={{ background: '#ffab00', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>Planı Kaydet</button>
+              <button type="submit" className="btn" style={{ background: 'var(--primary)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>Kaydet</button>
             </form>
           </div>
         </div>
