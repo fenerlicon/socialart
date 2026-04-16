@@ -1518,7 +1518,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
     const totalDays = daysInMonth(month, year);
-    const startDay = firstDayOfMonth(month, year);
+    let startDay = firstDayOfMonth(month, year);
+    // Mondy start adjustment: Standard getDay is 0 (Sun) - 6 (Sat)
+    // We want 0 (Mon) - 6 (Sun)
+    startDay = startDay === 0 ? 6 : startDay - 1; 
+
     const days = [];
 
     const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
