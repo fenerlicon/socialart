@@ -436,6 +436,7 @@ function Admin() {
 
   // Düzenleme & Log
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+  const [editingAppt, setEditingAppt] = useState(null);
   const [editClientData, setEditClientData] = useState({
     id: null,
     name: '',
@@ -506,10 +507,45 @@ function Admin() {
     if (!error) {
       logActivity('Takvime Not Eklendi', `${shootFormData.clientName} (${shootFormData.type}) eklendi.`);
       setIsShootModalOpen(false);
+      setEditingAppt(null);
       setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
       fetchAllData();
     } else {
       alert('Kayıt eklenirken hata: ' + error.message);
+    }
+  };
+
+  const handleUpdateAppt = async (e) => {
+    e.preventDefault();
+    if (!editingAppt) return;
+    const { error } = await supabase.from('appointments').update({
+      full_name: shootFormData.clientName,
+      appointment_date: shootFormData.date,
+      appointment_time: shootFormData.time,
+      status: shootFormData.type,
+      email: shootFormData.details,
+      phone: shootFormData.staffName
+    }).eq('id', editingAppt.id);
+
+    if (!error) {
+      logActivity('Takvim Kaydı Güncellendi', `${shootFormData.clientName} güncellendi.`);
+      setIsShootModalOpen(false);
+      setEditingAppt(null);
+      fetchAllData();
+    } else {
+      alert('Güncelleme hatası: ' + error.message);
+    }
+  };
+
+  const handleDeleteAppointment = async (apptId) => {
+    if (!window.confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+    const { error } = await supabase.from('appointments').delete().eq('id', apptId);
+    if (!error) {
+      logActivity('Takvimden Kayıt Silindi', 'Bir randevu veya etkinlik takvimden silindi.');
+      setCalendarPopup(null);
+      fetchAllData();
+    } else {
+      alert('Silme hatası: ' + error.message);
     }
   };
 
@@ -1685,12 +1721,34 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       <div key={ai} style={{ background: appt.status === 'Çekim' ? 'rgba(255,171,0,0.05)' : 'rgba(0,229,255,0.05)', border: appt.status === 'Çekim' ? '1px solid rgba(255,171,0,0.2)' : '1px solid rgba(0,229,255,0.2)', borderRadius: '12px', padding: '14px 16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.95rem', color: '#fff', fontWeight: '800' }}>
-                            {appt.status === 'Çekim' ? '📸 ÇEKİM: ' : '📅 '} {appt.full_name}
+                            {appt.status === 'Çekim' ? '📸 ÇEKİM: ' : appt.status === 'Toplantı' ? '📅 ' : appt.status === 'Not' ? '📝 ' : '📌 '} {appt.full_name}
                           </span>
-                          <span style={{ fontSize: '0.75rem', color: appt.status === 'Çekim' ? '#ffab00' : 'var(--primary)', fontWeight: 'bold' }}>{appt.appointment_time}</span>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: 'bold' }}>{appt.appointment_time}</span>
+                            <button 
+                              onClick={() => {
+                                setEditingAppt(appt);
+                                setShootFormData({
+                                  clientName: appt.full_name,
+                                  date: appt.appointment_date,
+                                  time: appt.appointment_time,
+                                  details: appt.email || '',
+                                  staffName: appt.phone || '',
+                                  type: appt.status
+                                });
+                                setIsShootModalOpen(true);
+                              }}
+                              style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button onClick={() => handleDeleteAppointment(appt.id)} style={{ background: 'transparent', border: 'none', color: '#ff1744', cursor: 'pointer' }}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
-                        {appt.email && <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '6px' }}>Not: {appt.email}</div>}
-                        {appt.phone && <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '2px' }}>Ekip: {appt.phone}</div>}
+                        {appt.email && <div style={{ fontSize: '0.8rem', color: '#ccc', marginTop: '6px', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '8px' }}>{appt.email}</div>}
+                        {appt.phone && <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}><Users size={12}/> {appt.phone}</div>}
                       </div>
                     ))}
                   </div>
@@ -2902,11 +2960,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
       {isShootModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
-            <button onClick={() => setIsShootModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => { setIsShootModalOpen(false); setEditingAppt(null); }} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
               <X size={24} />
             </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: 'var(--primary)' }}>Takvime Kayıt Ekle</h2>
-            <form onSubmit={handleSaveShoot} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: editingAppt ? 'var(--accent)' : 'var(--primary)' }}>{editingAppt ? 'Kaydı Düzenle' : 'Takvime Kayıt Ekle'}</h2>
+            <form onSubmit={editingAppt ? handleUpdateAppt : handleSaveShoot} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '15px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Konu / Başlık</label>
@@ -2948,7 +3006,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Not / Detaylar</label>
                 <textarea rows="3" value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', resize: 'vertical' }} placeholder="Ekstra bilgiler..." />
               </div>
-              <button type="submit" className="btn" style={{ background: 'var(--primary)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>Kaydet</button>
+              <button type="submit" className="btn" style={{ background: editingAppt ? 'var(--accent)' : 'var(--primary)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>
+                {editingAppt ? 'Güncelle' : 'Kaydet'}
+              </button>
             </form>
           </div>
         </div>
