@@ -373,7 +373,8 @@ function Admin() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('ajans_user');
     setCurrentUser(null);
   };
@@ -717,6 +718,7 @@ function Admin() {
     const oldProgress = oldClient?.progress || 0;
 
     const { error } = await supabase.from('active_clients').update({
+      name: editClientData.name,
       package: editClientData.package,
       progress: progress,
       completed: completedList,
@@ -1265,7 +1267,7 @@ function Admin() {
         const { error: clientError } = await supabase.from('active_clients').insert([
           {
             name: lead.name,
-            package: lead.project || 'Paket Belirlenmedi',
+            package: lead.service || 'Paket Belirlenmedi',
             progress: 10,
             completed: ['Anlaşma Sağlandı'],
             active: ['Strateji Oluşturma'],
@@ -4500,7 +4502,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#fff' }}>Müşteri Listelerini Düzenle</h2>
             <form onSubmit={handleUpdateAktifMusteri} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>FİRMA: {editClientData.name}</label>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Firma / Marka Adı</label>
+                <input type="text" required value={editClientData.name} onChange={e => setEditClientData({ ...editClientData, name: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
               </div>
 
               <div>
