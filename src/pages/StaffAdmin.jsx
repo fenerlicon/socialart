@@ -1681,7 +1681,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   </div>
                 </div>
               )}
-              ))}
             </div>
           </div>
         )}
