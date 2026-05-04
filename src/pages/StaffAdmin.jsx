@@ -190,7 +190,7 @@ const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel, onCardClick }) => (
       WebkitLineClamp: 2,
       WebkitBoxOrient: 'vertical'
     }}>
-      {stripHtml(t.task_text).replace(/\s+/g, ' ').trim()}
+      {stripHtml(t.task_text).trim()}
     </div>
 
     {t.revision_note && (
@@ -211,7 +211,16 @@ const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel, onCardClick }) => (
   </div>
 );
 
-const stripHtml = (html) => { if(!html) return ''; const doc = new DOMParser().parseFromString(html, 'text/html'); return doc.body.textContent || ''; };
+const stripHtml = (html) => { 
+  if(!html) return ''; 
+  // Blok etiketlerini temizlemeden önce boşlukla değiştir ki kelimeler/satırlar birbirine yapışmasın
+  const tmp = html.replace(/<br\s*\/?>/gi, ' ')
+                  .replace(/<\/p>/gi, ' ')
+                  .replace(/<\/div>/gi, ' ')
+                  .replace(/<\/h[1-6]>/gi, ' ');
+  const doc = new DOMParser().parseFromString(tmp, 'text/html'); 
+  return doc.body.textContent || ""; 
+};
 
 function Admin() {
   // const navigate = useNavigate();
@@ -2885,7 +2894,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
                               <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff', flex: 1, lineHeight: '1.4', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }} className="task-html-content">
                                 {(() => {
-                                  const clean = stripHtml(t.task_text).replace(/\s+/g, ' ').trim();
+                                  const clean = stripHtml(t.task_text).trim();
                                   return clean.length > 85 ? clean.substring(0, 85) + '...' : clean;
                                 })()}
                               </div>
