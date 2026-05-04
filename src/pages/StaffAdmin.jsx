@@ -13,6 +13,94 @@ import TextareaAutosize from 'react-textarea-autosize';
 import ReactQuill from 'react-quill-new';
 import 'react-quill/dist/quill.snow.css';
 
+const AdminStyles = () => (
+  <style>{`
+    .admin-layout {
+      display: flex;
+      min-height: calc(100vh - 120px);
+      gap: 30px;
+      margin-top: 30px;
+      position: relative;
+    }
+
+    .admin-sidebar-nav {
+      width: 280px;
+      flex-shrink: 0;
+      background: rgba(15, 15, 15, 0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: fit-content;
+      position: sticky;
+      top: 120px;
+      z-index: 100;
+    }
+
+    .admin-sidebar-nav button {
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      border: 1px solid transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .admin-sidebar-nav button:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .admin-sidebar-nav button.active {
+      background: rgba(138, 43, 226, 0.1);
+      border: 1px solid rgba(138, 43, 226, 0.2);
+      color: var(--primary);
+      box-shadow: 0 10px 20px rgba(138, 43, 226, 0.05);
+    }
+
+    .admin-sidebar-nav button svg {
+      transition: transform 0.3s;
+    }
+
+    .admin-sidebar-nav button.active svg {
+      transform: scale(1.1);
+      color: var(--primary);
+    }
+
+    .mobile-only { display: none; }
+
+    @media (max-width: 1024px) {
+      .admin-layout { flex-direction: column; gap: 20px; }
+      .admin-sidebar-nav {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        z-index: 10000;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(5, 5, 5, 0.98);
+        padding: 40px 20px;
+      }
+      .admin-sidebar-nav.open { left: 0; }
+      .mobile-only { display: flex; }
+    }
+  `}</style>
+);
+
+
 const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
   <div style={{
     padding: '25px 30px',
@@ -1957,6 +2045,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
       <div className="container">
+        <AdminStyles />
+
 
         {/* Üst Header: Sistem Durumu & Çıkış */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '20px' }}>
@@ -2069,52 +2159,52 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
             <button
               onClick={() => { setActiveTab('potansiyel'); setIsSidebarOpen(false); }}
-              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'potansiyel' ? 'var(--primary)' : 'transparent', color: activeTab === 'potansiyel' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+              className={activeTab === 'potansiyel' ? 'active' : ''}
             >
-              <Users size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Potansiyel Müşteriler
+              <Users size={18} /> Potansiyel Müşteriler
             </button>
             <button
               onClick={() => { setActiveTab('aktif'); setIsSidebarOpen(false); }}
-              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'aktif' ? 'var(--accent)' : 'transparent', color: activeTab === 'aktif' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+              className={activeTab === 'aktif' ? 'active' : ''}
             >
-              <Briefcase size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışılan Müşteriler
+              <Briefcase size={18} /> Çalışılan Müşteriler
             </button>
             <button
               onClick={() => { setActiveTab('reports'); setIsSidebarOpen(false); }}
-              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'reports' ? 'var(--primary)' : 'transparent', color: activeTab === 'reports' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+              className={activeTab === 'reports' ? 'active' : ''}
             >
-              <FileText size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> 📊 Raporlar
+              <FileText size={18} /> Raporlar
             </button>
             <button
               onClick={() => { setActiveTab('gorev'); setIsSidebarOpen(false); }}
-              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorev' ? 'var(--secondary)' : 'transparent', color: activeTab === 'gorev' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+              className={activeTab === 'gorev' ? 'active' : ''}
             >
-              <ClipboardList size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> İş Takip Sistemi
+              <ClipboardList size={18} /> İş Takip Sistemi
             </button>
             <button
               onClick={() => { setActiveTab('gorevList'); setIsSidebarOpen(false); }}
-              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorevList' ? 'var(--primary)' : 'transparent', color: activeTab === 'gorevList' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+              className={activeTab === 'gorevList' ? 'active' : ''}
             >
-              <ListTodo size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Görev Listem
+              <ListTodo size={18} /> Görev Listem
             </button>
 
             {currentUser.permissions === 'all' && (
               <>
                 <button
                   onClick={() => { setActiveTab('log'); setIsSidebarOpen(false); }}
-                  style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'log' ? 'var(--primary)' : 'transparent', color: activeTab === 'log' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+                  className={activeTab === 'log' ? 'active' : ''}
                 >
                   <Activity size={18} /> Aktivite Kayıtları
                 </button>
                 <button
                   onClick={() => { setActiveTab('availability'); setIsSidebarOpen(false); }}
-                  style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'availability' ? '#ffab00' : 'transparent', color: activeTab === 'availability' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+                  className={activeTab === 'availability' ? 'active' : ''}
                 >
                   <Clock size={18} /> Müsaitlik
                 </button>
                 <button
                   onClick={() => { setActiveTab('performance'); setIsSidebarOpen(false); }}
-                  style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'performance' ? 'var(--accent)' : 'transparent', color: activeTab === 'performance' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
+                  className={activeTab === 'performance' ? 'active' : ''}
                 >
                   <Users size={18} /> Çalışanlar
                 </button>
