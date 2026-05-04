@@ -2937,7 +2937,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   <option value="Yaptım">Yaptım</option>
                                   <option value="Tamamlanamadı">Tamamlanamadı</option>
                                 </select>
-                                <button onClick={() => handleDeleteTask(person.id, t)} style={{ background: 'none', border: 'none', color: '#ff1744', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(person.id, t); }} style={{ background: 'none', border: 'none', color: '#ff1744', cursor: 'pointer' }}><Trash2 size={12} /></button>
                               </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.6 }}>
