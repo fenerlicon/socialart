@@ -4,7 +4,7 @@ import {
   Users, DollarSign, Activity, FileText, MoreVertical,
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut,
   Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink,
-  Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, Camera, Video, PlusCircle, Smartphone, Download,
+  Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download,
   Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, FileCode, Layout
 } from 'lucide-react';
 import Login from './Login';
@@ -697,6 +697,7 @@ function Admin() {
   const [subGorevFilter, setSubGorevFilter] = useState('Hepsi');
   const [dashboardSubFilter, setDashboardSubFilter] = useState('Hepsi');
   const [dashboardBucketFilter, setDashboardBucketFilter] = useState('Hepsi');
+  const [leadStatusFilter, setLeadStatusFilter] = useState('Hepsi');
 
   // Detay & Geçmiş Modal
   const [isLeadDetailModalOpen, setIsLeadDetailModalOpen] = useState(false);
@@ -772,6 +773,15 @@ function Admin() {
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
   const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
+
+  // Calendar States
+  const [month, setMonth] = useState(new Date().getMonth());
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [calendarPopup, setCalendarPopup] = useState(null);
+  const [selectedLog, setSelectedLog] = useState(null);
+  const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
   // Action Modal States
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -1256,6 +1266,19 @@ function Admin() {
     let fileName = null;
 
     try {
+      const todayDate = new Date().toISOString().split('T')[0];
+      // Bugünün raporunu kontrol et
+      const { data: existingReports } = await supabase
+        .from('staff_reports')
+        .select('id, file_url, file_name')
+        .eq('staff_name', currentUser.name)
+        .gte('created_at', todayDate + 'T00:00:00')
+        .lte('created_at', todayDate + 'T23:59:59')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const existingReport = existingReports && existingReports[0];
+
       if (reportFile) {
         const fileExt = reportFile.name.split('.').pop();
         const filePath = `reports/${currentUser.name}_${Date.now()}.${fileExt}`;
@@ -1271,27 +1294,42 @@ function Admin() {
         
         fileUrl = publicUrl;
         fileName = reportFile.name;
+      } else if (existingReport) {
+        fileUrl = existingReport.file_url;
+        fileName = existingReport.file_name;
       }
 
-      const { error } = await supabase.from('staff_reports').insert([{
+      const reportData = {
         staff_name: currentUser.name,
         staff_role: currentUser.role || 'Ekip Üyesi',
         content: reportInput,
         file_url: fileUrl,
         file_name: fileName,
-        external_links: reportLinks.filter(l => l.trim())
-      }]);
+        external_links: reportLinks.filter(l => l.trim()),
+        created_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      let opError;
+      if (existingReport) {
+        // GÜNCELLE
+        const { error } = await supabase.from('staff_reports').update(reportData).eq('id', existingReport.id);
+        opError = error;
+      } else {
+        // YENİ EKLE
+        const { error } = await supabase.from('staff_reports').insert([reportData]);
+        opError = error;
+      }
+
+      if (opError) throw opError;
 
       setReportInput('');
       setReportFile(null);
       setReportLinks(['']);
       fetchAllData();
-      alert('Rapor başarıyla gönderildi.');
+      alert(existingReport ? 'Raporunuz başarıyla güncellendi.' : 'Rapor başarıyla gönderildi.');
     } catch (err) {
-      console.error('Report upload error:', err);
-      alert('HATA: Rapor yüklenemedi.');
+      console.error('Report operation error:', err);
+      alert('HATA: Rapor işlenemedi.');
     } finally {
       setIsUploadingReport(false);
     }
@@ -1404,19 +1442,17 @@ function Admin() {
       alert(`${perfEmployee} için performans başarısıyla kaydedildi.`);
       setPerfComment('');
       fetchAllData();
-    } else {
-      console.error('Rating save error:', error);
-      alert('Kaydedilirken bir hata oluştu.');
     }
   };
+
 
   // İstatistikleri Taba Göre Güncelleme
   const getStats = () => {
     if (activeTab === 'potansiyel') {
       return [
-        { title: 'Toplam Potansiyel Lead', value: potansiyel.length, icon: <Users size={24} color="var(--primary)" /> },
-        { title: 'Sıcak (Olumlu) Potansiyel', value: potansiyel.filter(p => p.status === 'Sıcak').length, icon: <Activity size={24} color="var(--accent)" /> },
-        { title: 'Beklemede', value: potansiyel.filter(p => p.status === 'Beklemede').length, icon: <Clock size={24} color="#ffab00" /> }
+        { title: 'Toplam Potansiyel Lead', value: potansiyel.length, icon: <Users size={24} color="var(--primary)" />, filter: 'Hepsi' },
+        { title: 'Sıcak (Olumlu) Potansiyel', value: potansiyel.filter(p => p.status === 'Sıcak').length, icon: <Activity size={24} color="var(--accent)" />, filter: 'Sıcak' },
+        { title: 'Teklif Bekleyen', value: potansiyel.filter(p => p.status === 'Teklif Bekliyor').length, icon: <Clock size={24} color="#ffab00" />, filter: 'Teklif Bekliyor' }
       ];
     } else if (activeTab === 'aktif') {
       return [
@@ -1454,10 +1490,12 @@ function Admin() {
   };
 
   const getStatusBadge = (status) => {
-    if (status === 'Sıcak') return <span style={{ display: 'inline-block', padding: '6px 12px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent)', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 'bold' }}>{status}</span>;
-    if (status === 'Beklemede' || status === 'Ertelendi') return <span style={{ display: 'inline-block', padding: '6px 12px', background: 'rgba(255, 171, 0, 0.1)', color: '#ffab00', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 'bold' }}>{status}</span>;
-    if (status === 'Reddedildi') return <span style={{ display: 'inline-block', padding: '6px 12px', background: 'rgba(255, 0, 85, 0.1)', color: 'var(--secondary)', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 'bold' }}>{status}</span>;
-    return <span>{status}</span>;
+    if (status === 'Sıcak') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent)', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
+    if (status === 'Beklemede' || status === 'Ertelendi') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(255, 171, 0, 0.1)', color: '#ffab00', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
+    if (status === 'Teklif Bekliyor') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(255, 215, 0, 0.1)', color: '#FFD700', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
+    if (status === 'Teklif İletildi') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(0, 230, 118, 0.1)', color: '#00e676', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
+    if (status === 'Reddedildi') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(255, 0, 85, 0.1)', color: 'var(--secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
+    return <span style={{ fontSize: '0.75rem', color: '#888' }}>{status}</span>;
   };
 
   const handleAddPotansiyel = async (e) => {
@@ -1779,7 +1817,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
   // Takvimin mevcut ayın 1'inden başlatılması, ay atlama hatalarını önler
   const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [calendarPopup, setCalendarPopup] = useState(null); // { dateStr, persons: [{name, tasks}] }
   const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
 
@@ -2271,7 +2308,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           <div className="stats-grid">
             {getStats().map((stat, idx) => {
               const isBucketFilter = activeTab === 'gorev' && ['Yapılan (Aktif)', 'Tamamlanan', 'Tamamlanmayan'].includes(stat.title);
-              const isActive = isBucketFilter && dashboardBucketFilter === stat.title;
+              const isLeadFilter = activeTab === 'potansiyel';
+              
+              const isActive = (isBucketFilter && dashboardBucketFilter === stat.title) || (isLeadFilter && leadStatusFilter === stat.filter);
+
               return (
                 <div 
                   key={idx} 
@@ -2279,10 +2319,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   onClick={() => {
                     if (isBucketFilter) {
                       setDashboardBucketFilter(isActive ? 'Hepsi' : stat.title);
+                    } else if (isLeadFilter) {
+                      setLeadStatusFilter(stat.filter);
                     }
                   }}
                   style={{ 
-                    cursor: isBucketFilter ? 'pointer' : 'default',
+                    cursor: (isBucketFilter || isLeadFilter) ? 'pointer' : 'default',
                     transition: 'all 0.3s',
                     border: isActive ? `2px solid ${stat.color || 'var(--primary)'}` : '1px solid rgba(255,255,255,0.05)',
                     position: 'relative',
@@ -2325,14 +2367,46 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     transition: 'all 0.3s'
                   }}
                 >
-                  🚀 Nitelikli Leadler ({potansiyel.filter(p => p.status === 'Sıcak' || p.status === 'Beklemede').length})
+                  🚀 Nitelikli Leadler ({potansiyel.filter(p => ['Sıcak', 'Beklemede'].includes(p.status)).length})
+                </button>
+                <button
+                  onClick={() => setLeadSubTab('pending_proposal')}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: leadSubTab === 'pending_proposal' ? 'rgba(255, 215, 0, 0.2)' : 'transparent',
+                    color: leadSubTab === 'pending_proposal' ? '#FFD700' : '#888',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  🧾 Teklif Bekleyen ({potansiyel.filter(p => p.status === 'Teklif Bekliyor').length})
+                </button>
+                <button
+                  onClick={() => setLeadSubTab('sent_proposal')}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: leadSubTab === 'sent_proposal' ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
+                    color: leadSubTab === 'sent_proposal' ? '#00e676' : '#888',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  📧 Teklif İletildi ({potansiyel.filter(p => p.status === 'Teklif İletildi').length})
                 </button>
                 <button
                   onClick={() => setLeadSubTab('archived')}
                   style={{
-                    padding: '10px 20px',
+                    padding: '10px 18px',
                     borderRadius: '12px',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '700',
                     border: 'none',
                     cursor: 'pointer',
@@ -2341,14 +2415,14 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     transition: 'all 0.3s'
                   }}
                 >
-                  📁 Arşiv / Düşük İlgi ({potansiyel.filter(p => p.status === 'Ertelendi' || p.status === 'Reddedildi' || p.status === 'Düşük Kalite').length})
+                  📁 Arşiv / Düşük İlgi ({potansiyel.filter(p => ['Ertelendi', 'Reddedildi', 'Düşük Kalite'].includes(p.status)).length})
                 </button>
                 <button
                   onClick={() => setLeadSubTab('all')}
                   style={{
-                    padding: '10px 20px',
+                    padding: '10px 18px',
                     borderRadius: '12px',
-                    fontSize: '0.9rem',
+                    fontSize: '0.85rem',
                     fontWeight: '700',
                     border: 'none',
                     cursor: 'pointer',
@@ -2365,7 +2439,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
                 <input
                   type="text"
-                  placeholder="İsim veya hizmet ile ara..."
+                  placeholder="İsim, hizmet veya notlar ile ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
@@ -2382,27 +2456,34 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               </div>
             </div>
 
-            <div className="glass" style={{ borderRadius: '24px', overflow: 'visible', border: '1px solid var(--surface-border)', paddingBottom: '20px' }}>
-              <div style={{ overflowX: 'visible' }}>
-              <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopLeftRadius: '24px' }}>FİRMA / LEAD</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>SON TEMAS & BEKLENEN HİZMET</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>İLETİŞİM KANALI</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopRightRadius: '24px' }}>DURUM & SON NOT</th>
-                  </tr>
-                </thead>
+            <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--surface-border)', paddingBottom: '20px' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopLeftRadius: '24px', width: '25%' }}>FİRMA / LEAD</th>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', width: '25%' }}>SON TEMAS & BEKLENEN HİZMET</th>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', width: '20%' }}>İLETİŞİM KANALI</th>
+                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopRightRadius: '24px', width: '30%' }}>DURUM & SON NOT</th>
+                    </tr>
+                  </thead>
                 <tbody>
                   {potansiyel
                     .filter(p => {
                       const matchesSearch = (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                                             (p.service || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            (p.reaction || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                                             (p.phone || '').includes(searchTerm);
                       if (!matchesSearch) return false;
                       
-                      if (leadSubTab === 'active') return p.status === 'Sıcak' || p.status === 'Beklemede';
-                      if (leadSubTab === 'archived') return p.status === 'Ertelendi' || p.status === 'Reddedildi' || p.status === 'Düşük Kalite';
+                      // Status Filter (from stats boxes)
+                      if (leadStatusFilter !== 'Hepsi' && p.status !== leadStatusFilter) return false;
+
+                      // Sub Tab Logic
+                      if (leadSubTab === 'active') return ['Sıcak', 'Beklemede'].includes(p.status);
+                      if (leadSubTab === 'pending_proposal') return p.status === 'Teklif Bekliyor';
+                      if (leadSubTab === 'sent_proposal') return p.status === 'Teklif İletildi';
+                      if (leadSubTab === 'archived') return ['Ertelendi', 'Reddedildi', 'Düşük Kalite'].includes(p.status);
                       return true;
                     })
                     .map((p, idx, array) => (
@@ -2531,7 +2612,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                               }}
                             >
                               <span>
-                                {p.status === 'Anlaşıldı' ? '🤝 ' : p.status === 'Sıcak' ? '🔥 ' : p.status === 'Beklemede' ? '⏳ ' : p.status === 'Ertelendi' ? '📅 ' : p.status === 'Reddedildi' ? '❌ ' : '👎 '}
+                                {p.status === 'Anlaşıldı' ? '🤝 ' : p.status === 'Sıcak' ? '🔥 ' : p.status === 'Teklif Bekliyor' ? '🧾 ' : p.status === 'Teklif İletildi' ? '📧 ' : p.status === 'Beklemede' ? '⏳ ' : p.status === 'Ertelendi' ? '📅 ' : p.status === 'Reddedildi' ? '❌ ' : '👎 '}
                                 {p.status}
                               </span>
                               <div style={{ transform: openStatusId === p.id ? 'rotate(180deg)' : 'none', transition: '0.2s' }}>▼</div>
@@ -2554,6 +2635,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                 {[
                                   { val: 'Anlaşıldı', label: '🤝 Anlaşıldı (Aktife Aktar)', color: 'var(--primary)' },
                                   { val: 'Sıcak', label: '🔥 Sıcak / Olumlu', color: '#00e676' },
+                                  { val: 'Teklif Bekliyor', label: '🧾 Teklif Bekliyor', color: '#FFD700' },
+                                  { val: 'Teklif İletildi', label: '📧 Teklif İletildi', color: '#00e676' },
                                   { val: 'Beklemede', label: '⏳ Beklemede', color: '#ffab00' },
                                   { val: 'Ertelendi', label: '📅 Ertelendi', color: '#ffab00' },
                                   { val: 'Reddedildi', label: '❌ Reddedildi', color: '#ff0055' },
@@ -3586,7 +3669,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               </thead>
               <tbody>
                 {activityLogs.map((log, idx) => (
-                  <tr key={log.id} style={{ borderBottom: idx !== activityLogs.length - 1 ? '1px solid var(--surface-border)' : 'none' }}>
+                  <tr 
+                    key={log.id} 
+                    onClick={() => { setSelectedLog(log); setIsLogModalOpen(true); }}
+                    className="table-row-hover"
+                    style={{ borderBottom: idx !== activityLogs.length - 1 ? '1px solid var(--surface-border)' : 'none', cursor: 'pointer' }}
+                  >
                     <td style={{ padding: '15px 24px', fontSize: '0.85rem', color: '#888' }}>
                       {new Date(log.created_at).toLocaleString('tr-TR')}
                     </td>
@@ -3600,12 +3688,22 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         padding: '4px 10px',
                         borderRadius: '6px',
                         fontSize: '0.8rem',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        whiteSpace: 'nowrap'
                       }}>{log.action}</span>
                     </td>
                     <td style={{ padding: '15px 24px' }}>
                       <div style={{ fontWeight: '600', color: '#fff' }}>{log.target_name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px' }}>{log.details}</div>
+                      <div style={{ 
+                        fontSize: '0.8rem', 
+                        color: '#888', 
+                        marginTop: '4px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        maxWidth: '400px'
+                      }}>{log.details}</div>
                     </td>
                   </tr>
                 ))}
@@ -3615,10 +3713,37 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
 
+      {/* SİSTEM AKTİVİTE DETAY MODALI */}
+      {isLogModalOpen && selectedLog && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(20px)', zIndex: 12000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass" style={{ border: '1px solid var(--primary)', borderRadius: '32px', padding: '40px', width: '100%', maxWidth: '600px', position: 'relative' }}>
+            <button onClick={() => setIsLogModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: '#fff', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <X size={28} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+               <div style={{ background: selectedLog.action.includes('Silindi') ? 'var(--secondary)' : 'var(--primary)', padding: '8px 15px', borderRadius: '10px', color: '#000', fontSize: '0.75rem', fontWeight: '900' }}>
+                 {selectedLog.action.toUpperCase()}
+               </div>
+               <div style={{ color: '#888', fontSize: '0.9rem' }}>
+                 {new Date(selectedLog.created_at).toLocaleString('tr-TR')}
+               </div>
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '10px', color: '#fff' }}>{selectedLog.target_name}</h2>
+            <div style={{ color: 'var(--primary)', fontWeight: '700', marginBottom: '25px', fontSize: '0.9rem' }}>İŞLEMİ YAPAN: {selectedLog.user_name}</div>
+            <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', color: '#eee', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
+              {selectedLog.details}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Müsaitlik Ayarları Tabı */}
       {activeTab === 'availability' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+          
+          {/* TAKVİM BURAYA GELECEK */}
+          {renderCalendar()}
 
           {/* Üst Kısım: Randevu Bekleyenler */}
           <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255, 171, 0, 0.2)' }}>
@@ -3796,10 +3921,26 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {activeTab === 'reports' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* Kalan Süre Bilgilendirmesi */}
+            <div className="glass" style={{ padding: '15px 25px', borderRadius: '16px', background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.15)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <Clock size={18} color="var(--primary)" />
+               <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                 Bugün saat <span style={{ color: 'var(--primary)' }}>23:59</span>'a kadar raporunuzu dilediğiniz kadar güncelleyebilirsiniz. 
+                 {(() => {
+                   const endOfDay = new Date();
+                   endOfDay.setHours(23, 59, 59, 999);
+                   const diff = endOfDay - now;
+                   const hours = Math.floor(diff / (1000 * 60 * 60));
+                   const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                   return <span style={{ marginLeft: '10px', opacity: 0.7 }}>(Kalan: {hours}s {mins}d)</span>;
+                 })()}
+               </span>
+            </div>
+
             {/* Rapor Gönderme Formu */}
             <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FileText size={20} color="var(--primary)" /> Bugün Naptım? (Günlük Rapor)
+                <FileText size={20} color="var(--primary)" /> {staffReports.some(r => r.staff_name === currentUser.name && r.created_at.startsWith(new Date().toISOString().split('T')[0])) ? 'Bugünkü Raporu Güncelle' : 'Bugün Naptım? (Günlük Rapor)'}
               </h3>
               <form onSubmit={handleUploadStaffReport} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <textarea
