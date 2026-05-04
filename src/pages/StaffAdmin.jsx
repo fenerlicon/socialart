@@ -2343,8 +2343,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     {stat.icon}
                   </div>
                 </div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '800', marginBottom: '4px' }}>{stat.value}</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>{stat.title}</div>
+                <div className="stat-value">{stat.value}</div>
+                <div className="stat-label">{stat.title}</div>
               </div>
               );
             })}
@@ -5221,13 +5221,38 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         .stats-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 20px;
-          margin-bottom: 40px;
+          gap: 15px;
+          margin-bottom: 30px;
+        }
+
+        .stat-card {
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          min-height: 160px;
+        }
+
+        .stat-card .stat-value {
+          font-size: 2.2rem;
+          font-weight: 800;
+          margin-bottom: 4px;
+        }
+
+        .stat-card .stat-label {
+          color: var(--text-muted);
+          font-size: 0.95rem;
+        }
+
+        @media (max-width: 1400px) {
+          .stat-card { padding: 20px; min-height: 140px; }
+          .stat-card .stat-value { font-size: 1.8rem; }
+          .stat-card .stat-label { font-size: 0.85rem; }
         }
 
         @media (min-width: 768px) {
           .stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           }
           .task-manager-grid {
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
