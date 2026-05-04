@@ -5,10 +5,13 @@ import {
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut,
   Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink,
   Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, Camera, Video, PlusCircle, Smartphone, Download,
-  Bell, BellOff, Edit3, Bot
+  Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, FileCode, Layout
 } from 'lucide-react';
 import Login from './Login';
 import { supabase } from '../lib/supabase';
+import TextareaAutosize from 'react-textarea-autosize';
+import ReactQuill from 'react-quill-new';
+import 'react-quill/dist/quill.snow.css';
 
 const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
   <div style={{
@@ -61,6 +64,15 @@ const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
     }}>
       {t.task_text}
     </div>
+    {t.revision_note && (
+      <div style={{ padding: '12px 15px', background: 'rgba(213,0,249,0.05)', border: '1px solid rgba(213,0,249,0.1)', borderRadius: '12px', fontSize: '0.85rem', color: '#ff80ab', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+        <RefreshCw size={14} style={{ marginTop: '3px', flexShrink: 0 }} />
+        <div>
+          <div style={{ fontWeight: '800', fontSize: '0.7rem', marginBottom: '3px', letterSpacing: '0.5px' }}>YÖNETİCİ REVİZYON NOTU</div>
+          {t.revision_note}
+        </div>
+      </div>
+    )}
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', paddingLeft: '42px', alignItems: 'center', paddingBottom: '5px' }}>
       <span style={{ fontSize: '0.7rem', fontWeight: '800', color: pri.color, background: `${pri.color}15`, padding: '4px 10px', borderRadius: '6px', border: `1px solid ${pri.color}33` }}>{pri.label}</span>
       <span style={{ fontSize: '0.7rem', color: '#888', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '6px' }}>{t.category || 'Proje'}</span>
@@ -70,10 +82,13 @@ const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
   </div>
 );
 
+const stripHtml = (html) => { if(!html) return ''; const doc = new DOMParser().parseFromString(html, 'text/html'); return doc.body.textContent || ''; };
+
 function Admin() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [isChecking, setIsChecking] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const currentUserRef = React.useRef(null);
 
   useEffect(() => {
@@ -122,14 +137,15 @@ function Admin() {
 
     initAuth();
 
-    // 🔄 Oturum Değişikliklerini Dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session && session.user) {
         const metadata = session.user.user_metadata;
         const userObj = { 
           name: metadata.display_name, 
           role: metadata.role,
-          permissions: metadata.can_assign_task ? 'all' : 'limited'
+          class: metadata.class,
+          permissions: metadata.can_assign_task ? 'all' : 'limited',
+          can_add_client: metadata.can_add_client
         };
         localStorage.setItem('ajans_user', JSON.stringify(userObj));
         setCurrentUser(userObj);
@@ -140,29 +156,55 @@ function Admin() {
     });
 
     // ⏱ Realtime: tasks tablosunu dinle
-    // 🔔 Realtime Bildirim ve Veri Takibi
     const channel = supabase
-      .channel('mi-realtime')
+      .channel('socialart-realtime-master')
+      // TASKS (New, Update)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
-        if (payload.eventType === 'INSERT' && payload.new.assignee_name === currentUserRef.current?.name) {
-          notifyUser('Yeni Görev Atandı! 🚀', payload.new.task_text);
+        const me = currentUserRef.current;
+        if (payload.eventType === 'INSERT') {
+          if (payload.new.assignee_name === me?.name) {
+            notifyUser('Yeni Görev Atandı! 🚀', stripHtml(payload.new.task_text));
+          } else if (me?.permissions === 'all') {
+            notifyUser('Yeni Ekip Görevi 📋', `${payload.new.assignee_name}: ${stripHtml(payload.new.task_text)}`);
+          }
+        } 
+        else if (payload.eventType === 'UPDATE') {
+          if (payload.new.status === 'completed' && payload.old?.status !== 'completed') {
+            notifyUser('Görev Tamamlandı! ✅', `${payload.new.assignee_name}: ${stripHtml(payload.new.task_text)}`);
+          }
         }
-        fetchAllData();
+        fetchAllData(me);
       })
+      // NEW LEAD (Potansiyel)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, (payload) => {
+        notifyUser('Yeni Potansiyel Müşteri! 🔥', `${payload.new.name} başvuru yaptı.`);
+        fetchAllData(currentUserRef.current);
+      })
+      // NEW ACTIVE CLIENT (Yeni Müşteri)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'active_clients' }, (payload) => {
+        notifyUser('Yeni Aktif Müşteri! 🎉', `${payload.new.name} sisteme dahil edildi.`);
+        fetchAllData(currentUserRef.current);
+      })
+      // SUPPORT MESSAGES
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'client_support_messages' }, (payload) => {
         if (payload.new.sender_type === 'client') {
-          notifyUser(`Müşteri Talebi: ${payload.new.client_name}`, payload.new.message.substring(0, 50) + '...');
+          notifyUser(`Müşteri Talebi: ${payload.new.client_name}`, payload.new.message);
+          if (payload.new.message?.includes('[TALEP]')) {
+             setNewTalepAlert({ clientName: payload.new.client_name, message: payload.new.message });
+             setTimeout(() => setNewTalepAlert(null), 10000);
+          }
         }
-        fetchAllData();
+        fetchAllData(currentUserRef.current);
       })
+      // LOGS / BUZZ
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
         const target = payload.new.target_name?.trim().toLowerCase();
-        const me = currentUserRef.current?.name?.trim().toLowerCase();
-        
-        if (target === me && payload.new.action === 'Dürtme!') {
+        const meName = currentUserRef.current?.name?.trim().toLowerCase();
+        if (target === meName && payload.new.action === 'Dürtme!') {
           notifyUser('Hey! Bir Bildiriminiz Var 🔔', payload.new.details);
         }
-        fetchAllData();
+        setActivityLogs(prev => [payload.new, ...prev].slice(0, 100));
+        fetchAllData(currentUserRef.current);
       })
       .subscribe();
 
@@ -243,11 +285,7 @@ function Admin() {
   };
 
   const handleSendBuzz = async (empName) => {
-    const msg = window.prompt(`${empName} kişisine ne iletmek istersiniz?`, "Sizi bekliyoruz! 🚀");
-    if (!msg) return;
-
-    await logActivity('Dürtme!', `${currentUser.name} sizi dürttü: "${msg}"`, empName);
-    alert(`${empName} başarıyla dürtüldü!`);
+    openActionModal('buzz', empName);
   };
 
   // Teslim tarihi geçmiş görevleri otomatik 'Tamamlanamadı' yap
@@ -265,8 +303,9 @@ function Admin() {
 
       const failIds = overdueTasks
         .filter(task => {
+          if (!task.due_date || task.due_date.trim() === '') return false;
           const due = new Date(task.due_date + 'T23:59:59');
-          return due < t;
+          return !isNaN(due.getTime()) && due < t;
         })
         .map(task => task.id);
 
@@ -303,7 +342,7 @@ function Admin() {
 
         // 4. Fetch chat messages
         const { data: chatData } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(50);
-        if (chatData) setChatMessages(chatData);
+        // if (chatData) setChatMessages(chatData);
 
         // 5. Fetch blocked slots
         const { data: blockedData } = await supabase.from('blocked_slots').select('*').order('blocked_date', { ascending: true });
@@ -349,18 +388,126 @@ function Admin() {
     }
   };
 
-  const handleStaffTaskStatusChange = async (task, newStatus) => {
-    let reason = null;
-    if (newStatus === 'Tamamlanamadı') {
-      reason = window.prompt("Bu görev neden tamamlanamadı? Lütfen kısa bir açıklama yazın:");
-      if (!reason) {
-        alert("Açıklama girmeden görevi başarısız olarak işaretleyemezsiniz.");
-        return;
+  const handleConfirmCompletion = async () => {
+    if (!compText.trim()) {
+      alert("Lütfen yapılan iş hakkında bilgi giriniz.");
+      return;
+    }
+
+    setCompUploading(true);
+    let fileUrl = null;
+    let fileName = null;
+
+    try {
+      if (compFile) {
+        const fileExt = compFile.name.split('.').pop();
+        const filePath = `task_completions/${compTask.id}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('lead-attachments')
+          .upload(filePath, compFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-attachments')
+          .getPublicUrl(filePath);
+        
+        fileUrl = publicUrl;
+        fileName = compFile.name;
       }
+
+      const updateData = { 
+        status: 'Yaptım', 
+        completion_note: compText,
+        completion_file: fileUrl,
+        completion_file_name: fileName,
+        completed_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', compTask.id);
+
+      if (error) {
+         if (error.code === '42703') {
+            await supabase.from('tasks').update({ status: 'Yaptım' }).eq('id', compTask.id);
+            alert("GÖREV TAMAMLANDI: Ancak veritabanında 'completion_note' gibi yeni sütunlar eksik olduğu için not ve dosya kaydedilemedi. Adminin veritabanı sütunlarını güncellemesi gerekiyor.");
+         } else {
+            throw error;
+         }
+      }
+
+      // Müşteri İlerleme Güncelleme
+      if (compTask.client_name) {
+        const client = aktifMusteriler.find(c => c.name === compTask.client_name);
+        if (client) {
+          const updatedCompleted = [...(client.completed || []), compTask.task_text];
+          const updatedActive = (client.active || []).filter(t => t !== compTask.task_text);
+          const updatedPending = (client.pending || []).filter(t => t !== compTask.task_text);
+          const tot = updatedCompleted.length + updatedActive.length + updatedPending.length;
+          const newProgress = tot > 0 ? Math.round((updatedCompleted.length / tot) * 100) : 0;
+
+          await supabase.from('active_clients').update({
+            completed: updatedCompleted,
+            active: updatedActive,
+            pending: updatedPending,
+            progress: newProgress,
+            current_phase: compTask.phase || client.current_phase
+          }).eq('id', client.id);
+          
+          logActivity('Üretim Tamamlandı', `Dökümanlı Teslim: ${stripHtml(compTask.task_text)}`, client.name);
+        }
+      }
+
+      logActivity('Görev Teslim Edildi', `"${stripHtml(compTask.task_text)}" görevi tamamlandı ve dökümanlar eklendi.`, compTask.client_name);
+      
+      setIsCompModalOpen(false);
+      setCompTask(null);
+      setCompText('');
+      setCompFile(null);
+      fetchAllData();
+
+    } catch (err) {
+      console.error('Completion Error:', err);
+      alert('Görev kapatılırken bir hata oluştu: ' + err.message);
+    } finally {
+      setCompUploading(false);
+    }
+  };
+
+  const handleStaffTaskStatusChange = async (task, newStatus) => {
+    const isAdmin = currentUser?.permissions === 'all';
+    
+    if (task.status === 'Yaptım' && !isAdmin) {
+      alert("Tamamlanmış bir görev üzerinde değişiklik yapamazsınız!");
+      return;
+    }
+
+    if (newStatus === 'Yaptım') {
+       setCompTask(task);
+       setCompText('');
+       setCompFile(null);
+       setIsCompModalOpen(true);
+       return;
+    }
+
+    let reason = null;
+    let revNote = null;
+
+    if (newStatus === 'Tamamlanamadı') {
+      openActionModal('fail', task);
+      return;
+    }
+
+    if (newStatus === 'Revize') {
+       openActionModal('revision', task);
+       return;
     }
 
     const updateData = { status: newStatus };
     if (reason) updateData.fail_reason = reason;
+    if (revNote) updateData.revision_note = revNote;
 
     const { error } = await supabase
       .from('tasks')
@@ -368,7 +515,7 @@ function Admin() {
       .eq('id', task.id);
 
     if (!error) {
-      logActivity('Görev Durumu Güncellendi', `"${task.task_text}" görev durumu ${newStatus} yapıldı. ${reason ? `Sebep: ${reason}` : ''}`);
+      logActivity('Görev Durumu Güncellendi', `"${stripHtml(task.task_text)}" görev durumu ${newStatus} yapıldı. ${reason ? `Sebep: ${reason}` : ''}`);
       fetchAllData();
     }
   };
@@ -412,17 +559,20 @@ function Admin() {
     completed: '',
     active: '',
     pending: '',
-    ads_active: false,
-    monthly_fee: '',
-    payment_day: '1'
+    ads_active: false
   });
 
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskFormData, setTaskFormData] = useState({ empId: '', task: '', taskType: 'pendingTasks', clientName: '', phase: '1', category: 'Proje', priority: '#2979ff', due_date: '' });
-  const [gorevFilter, setGorevFilter] = useState('Tumu');
+  const [gorevFilter, setGorevFilter] = useState('Aktif');
+  const [subGorevFilter, setSubGorevFilter] = useState('Hepsi');
+  const [dashboardSubFilter, setDashboardSubFilter] = useState('Hepsi');
+  const [dashboardBucketFilter, setDashboardBucketFilter] = useState('Hepsi');
 
   // Detay & Geçmiş Modal
   const [isLeadDetailModalOpen, setIsLeadDetailModalOpen] = useState(false);
+  const [isTaskDetailModalOpen, setIsTaskDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
   const [leadHistory, setLeadHistory] = useState([]);
   const [noteInput, setNoteInput] = useState('');
@@ -445,13 +595,9 @@ function Admin() {
     completed: '',
     active: '',
     pending: '',
-    ads_active: false,
-    monthly_fee: '',
-    payment_day: '1'
+    ads_active: false
   });
   const [activityLogs, setActivityLogs] = useState([]);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState('');
   const [blockedSlots, setBlockedSlots] = useState([]);
   const [supportMessages, setSupportMessages] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -462,6 +608,15 @@ function Admin() {
   const [isAISettingsOpen, setIsAISettingsOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
+  
+  // GÖREV TAMAMLAMA MODALI
+  const [isCompModalOpen, setIsCompModalOpen] = useState(false);
+  const [compTask, setCompTask] = useState(null);
+  const [compText, setCompText] = useState('');
+  const [compFile, setCompFile] = useState(null);
+  const [taskFile, setTaskFile] = useState(null);
+  const [taskUploading, setTaskUploading] = useState(false);
+  const [compUploading, setCompUploading] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Performance System States
@@ -477,10 +632,6 @@ function Admin() {
   const [perfMonth, setPerfMonth] = useState(new Date().getMonth() + 1);
   const [perfYear, setPerfYear] = useState(new Date().getFullYear());
 
-  // Finans States
-  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
-  const [payments, setPayments] = useState([]); 
-
   // Staff Reports States
   const [staffReports, setStaffReports] = useState([]);
   const [reportInput, setReportInput] = useState('');
@@ -492,6 +643,67 @@ function Admin() {
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
   const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
+
+  // Action Modal States
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [actionConfig, setActionConfig] = useState({ type: '', task: null, title: '', placeholder: '', secondPlaceholder: '', showSecond: false, buttonText: 'Onayla' });
+  const [actionInput, setActionInput] = useState('');
+  const [actionInput2, setActionInput2] = useState('');
+
+  const openActionModal = (type, task) => {
+    const configMap = {
+      'brief': { title: 'Görev Briefi / Yanıt', placeholder: 'Brief notunuzu veya yanıtınızı yazın...', buttonText: 'Gönder' },
+      'revision': { title: 'Revizyon Talebi', placeholder: 'Revizyon detaylarını yazın...', buttonText: 'Revize İste' },
+      'extension': { title: 'Süre Uzatma Talebi', placeholder: 'Neden ek süre gerekiyor?', secondPlaceholder: 'Yeni Tarih (YYYY-MM-DD)', showSecond: true, buttonText: 'Süre İste' },
+      'fail': { title: 'Başarısızlık Nedeni', placeholder: 'Bu görev neden tamamlanamadı?', buttonText: 'Kaydet' },
+      'rating': { title: 'Performans Puanlaması', placeholder: 'Değerlendirme notunuz...', secondPlaceholder: 'Puan (1-5)', showSecond: true, buttonText: 'Puanla' },
+      'buzz': { title: 'Dürtme!', placeholder: 'İletmek istediğiniz mesaj...', buttonText: 'Dürt' }
+    };
+
+    const cfg = configMap[type];
+    setActionConfig({ ...cfg, type, task });
+    setActionInput('');
+    setActionInput2('');
+    setIsActionModalOpen(true);
+  };
+
+  const handleActionSubmit = async () => {
+    const { type, task } = actionConfig;
+    let updateData = {};
+    let successMsg = 'İşlem Başarılı';
+
+    try {
+      if (type === 'brief') {
+        updateData = { brief_request: actionInput };
+        if (currentUser?.permissions === 'all') updateData = { task_text: actionInput };
+      } else if (type === 'revision') {
+        updateData = { status: 'Revize', revision_note: actionInput };
+      } else if (type === 'extension') {
+        updateData = { extension_request: true, extension_note: actionInput, due_date: actionInput2 || task.due_date };
+      } else if (type === 'fail') {
+        updateData = { status: 'Tamamlanamadı', fail_reason: actionInput };
+      } else if (type === 'rating') {
+        const score = parseInt(actionInput2);
+        if (isNaN(score) || score < 1 || score > 5) return alert('Lütfen 1-5 arası bir puan girin.');
+        await handleRateTask(task, score, actionInput);
+        setIsActionModalOpen(false);
+        return;
+      } else if (type === 'buzz') {
+        await logActivity('Dürtme!', `${currentUser.name} sizi dürttü: "${actionInput}"`, task); // task is name here
+        setIsActionModalOpen(false);
+        return;
+      }
+
+      const { error } = await supabase.from('tasks').update(updateData).eq('id', task.id);
+      if (!error) {
+        logActivity(`Aksiyon: ${actionConfig.title}`, `"${stripHtml(task.task_text)}" görevi için ${actionConfig.title} yapıldı.`, task.client_name);
+        fetchAllData();
+        setIsActionModalOpen(false);
+      }
+    } catch (e) {
+      alert('İşlem sırasında hata: ' + e.message);
+    }
+  };
 
   const handleSaveShoot = async (e) => {
     e.preventDefault();
@@ -595,88 +807,6 @@ function Admin() {
     return { completedCount, activeLoad, avgSpeed, monthTasks };
   };
 
-  useEffect(() => {
-    // Realtime chat subscription
-    const chatChannel = supabase
-      .channel('chat_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        payload => {
-          setChatMessages(prev => [payload.new, ...prev]);
-          // Notify other users
-          if (payload.new.user_name !== (userOverride?.name || currentUser?.name)) {
-            notifyUser(`Yeni Mesaj: ${payload.new.user_name}`, payload.new.message);
-          }
-        }
-      )
-      .subscribe();
-
-    // Realtime activity log subscription
-    const logChannel = supabase
-      .channel('log_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' },
-        payload => {
-          setActivityLogs(prev => [payload.new, ...prev]);
-        }
-      )
-      .subscribe();
-
-    const supportChannel = supabase
-      .channel('support_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'client_support_messages'
-      }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setSupportMessages(prev => [payload.new, ...prev]);
-          
-          if (payload.new.sender_type === 'client') {
-            notifyUser(`Müşteri Talebi: ${payload.new.client_name}`, payload.new.message);
-            
-            // GLOBAL ALERT for Service Requests
-            if (payload.new.message?.includes('[TALEP]')) {
-              setNewTalepAlert({
-                clientName: payload.new.client_name,
-                message: payload.new.message
-              });
-              setTimeout(() => setNewTalepAlert(null), 8000);
-            }
-          }
-        } else {
-          fetchAllData();
-        }
-      })
-      .subscribe();
-
-    // Realtime leads subscription
-    const leadChannel = supabase
-      .channel('lead_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' },
-        payload => {
-          fetchAllData();
-          notifyUser('Yeni Potansiyel Müşteri!', `${payload.new.name} tarafından yeni bir başvuru yapıldı.`);
-        }
-      )
-      .subscribe();
-
-    // Realtime tasks subscription (takvim aninda yenilensin)
-    const tasksChannel = supabase
-      .channel('tasks_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' },
-        () => {
-          fetchAllData();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(chatChannel);
-      supabase.removeChannel(logChannel);
-      supabase.removeChannel(supportChannel);
-      supabase.removeChannel(leadChannel);
-      supabase.removeChannel(tasksChannel);
-    };
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -720,9 +850,7 @@ function Admin() {
         completed: completedList,
         active: activeList,
         pending: pendingList,
-        ads_active: clientFormData.ads_active,
-        monthly_fee: parseFloat(clientFormData.monthly_fee) || 0,
-        payment_day: parseInt(clientFormData.payment_day) || 1
+        ads_active: clientFormData.ads_active
       }
     ]);
 
@@ -730,7 +858,7 @@ function Admin() {
       logActivity('Yeni Aktif Müşteri Eklendi', clientFormData.name, `Paket: ${clientFormData.package} | Reklam: ${clientFormData.ads_active ? 'Aktif' : 'Pasif'}`);
       fetchAllData();
       setIsClientModalOpen(false);
-      setClientFormData({ name: '', package: '', progress: 0, completed: '', active: '', pending: '', ads_active: false, monthly_fee: '', payment_day: '1' });
+      setClientFormData({ name: '', package: '', progress: 0, completed: '', active: '', pending: '', ads_active: false });
     }
   };
 
@@ -760,9 +888,7 @@ function Admin() {
       completed: completedList,
       active: activeList,
       pending: pendingList,
-      ads_active: editClientData.ads_active,
-      monthly_fee: parseFloat(editClientData.monthly_fee) || 0,
-      payment_day: parseInt(editClientData.payment_day) || 1
+      ads_active: editClientData.ads_active
     }).eq('id', editClientData.id);
 
     if (!error) {
@@ -775,43 +901,78 @@ function Admin() {
 
   const handleAddTask = async (e) => {
     e.preventDefault();
-    if (!taskFormData.empId || !taskFormData.task) return;
+    if (!taskFormData.empId || !taskFormData.task || !taskFormData.due_date) {
+      alert('Lütfen tüm zorunlu alanları (Personel, Görev Açıklaması ve Teslim Tarihi) doldurun.');
+      return;
+    }
 
     const person = isTakip.find(p => p.id === parseInt(taskFormData.empId));
     if (!person) return;
 
-    const statusMap = {
-      'activeTasks': 'Yapıyorum',
-      'pendingTasks': 'Sırada'
-    };
+    setTaskUploading(true);
+    let attachmentUrl = null;
+    let attachmentName = null;
 
-    const { error } = await supabase.from('tasks').insert([
-      {
-        assignee_name: person.rep,
-        assigned_by: currentUser?.name || 'Sistem',
-        task_text: taskFormData.task,
-        status: statusMap[taskFormData.taskType],
-        client_name: taskFormData.clientName || null,
-        phase: parseInt(taskFormData.phase) || 1,
-        category: taskFormData.category || 'Proje',
-        priority: taskFormData.priority || '#2979ff',
-        due_date: taskFormData.due_date || null
+    try {
+      if (taskFile) {
+        const sanitizedName = taskFile.name
+          .replace(/[ığüşöçİĞÜŞÖÇ]/g, s => ({'ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c','İ':'I','Ğ':'G','Ü':'U','Ş':'S','Ö':'O','Ç':'C'})[s])
+          .replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filePath = `task_attachments/${Date.now()}_${sanitizedName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('lead-attachments')
+          .upload(filePath, taskFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-attachments')
+          .getPublicUrl(filePath);
+        
+        attachmentUrl = publicUrl;
+        attachmentName = taskFile.name;
       }
-    ]);
 
-    if (!error) {
-      const details = `${person.rep}, ${taskFormData.clientName || 'Genel'} için yeni bir göreve başladı: "${taskFormData.task}"`;
-      logActivity('Yeni Görev Atandı', details, taskFormData.clientName);
-      fetchAllData();
-      setIsTaskModalOpen(false);
-      setTaskFormData({ empId: '', task: '', taskType: 'pendingTasks', clientName: '', phase: '1', category: 'Proje', priority: '#2979ff', due_date: '' });
-    } else {
+      const statusMap = {
+        'activeTasks': 'Yapıyorum',
+        'pendingTasks': 'Sırada'
+      };
+
+      const { error } = await supabase.from('tasks').insert([
+        {
+          assignee_name: person.rep,
+          assigned_by: currentUser?.name || 'Sistem',
+          task_text: taskFormData.task,
+          status: statusMap[taskFormData.taskType],
+          client_name: taskFormData.clientName || null,
+          phase: parseInt(taskFormData.phase) || 1,
+          category: taskFormData.category || 'Proje',
+          priority: taskFormData.priority || '#2979ff',
+          due_date: taskFormData.due_date || null,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName
+        }
+      ]);
+
+      if (!error) {
+        const details = `${person.rep}, ${taskFormData.clientName || 'Genel'} için yeni bir göreve başladı: "${stripHtml(taskFormData.task)}"`;
+        logActivity('Yeni Görev Atandı', details, taskFormData.clientName);
+        fetchAllData();
+        setIsTaskModalOpen(false);
+        setTaskFormData({ empId: '', task: '', taskType: 'pendingTasks', clientName: '', phase: '1', category: 'Proje', priority: '#2979ff', due_date: '' });
+        setTaskFile(null);
+      } else {
+        throw error;
+      }
+    } catch (error) {
       console.error('Task Assignment Error:', error);
       if (error.code === '42703') {
-        alert('HATA: Veritabanında yeni sütunlar eksik.\n\nÇözüm için Supabase SQL Editor\'e şu kodu yapıştırıp çalıştırın:\n\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority text DEFAULT \'#2979ff\';\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date text;');
+        alert('HATA: Veritabanında yeni sütunlar eksik.\n\nÇözüm için Supabase SQL Editor\'e şu kodu yapıştırıp çalıştırın:\n\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS attachment_url text;\nALTER TABLE tasks ADD COLUMN IF NOT EXISTS attachment_name text;');
       } else {
         alert('Görev atanırken bir hata oluştu: ' + error.message);
       }
+    } finally {
+      setTaskUploading(false);
     }
   };
 
@@ -819,88 +980,56 @@ function Admin() {
     const person = isTakip.find(p => p.id === personId);
     if (!person) return;
 
-    const oldStatus = currentList === 'activeTasks' ? 'Yapıyorum' : currentList === 'pendingTasks' ? 'Sırada' : taskObj.status;
+    if (taskObj.status === 'Yaptım' && currentUser?.permissions !== 'all') {
+      alert("Tamamlanmış bir görev üzerinde değişiklik yapılamaz!");
+      return;
+    }
+
+    if (newStatus === 'Revize') {
+       openActionModal('revision', taskObj);
+       return;
+    }
+
+    if (newStatus === 'Yaptım') {
+      setCompTask(taskObj);
+      setCompText('');
+      setCompFile(null);
+      setIsCompModalOpen(true);
+      return;
+    }
+    
+    if (newStatus === 'Tamamlanamadı') {
+      openActionModal('fail', taskObj);
+      return;
+    }
 
     const { error } = await supabase
       .from('tasks')
-      .update({ status: newStatus })
+      .update({ 
+        status: newStatus
+      })
       .eq('id', taskObj.id);
 
     if (!error) {
-      let logMsg = '';
-      if (newStatus === 'Yaptım') {
-        logMsg = `${person.rep}, ${taskObj.client_name || 'proje'} üzerindeki görevi başarıyla tamamladı: "${taskObj.task_text}"`;
-      } else if (newStatus === 'Yapıyorum') {
-        logMsg = `${person.rep}, ${taskObj.client_name || 'proje'} üzerindeki göreve başladı: "${taskObj.task_text}"`;
-      } else {
-        logMsg = `${person.rep}, ${taskObj.client_name || 'proje'} üzerindeki görevi sıraya aldı.`;
-      }
-
-      logActivity('Görev Durumu Güncellendi', logMsg, taskObj.client_name);
-
-      // AUTO-PROGRESS: If task is moved to 'Yaptım' and has a client, update client progress
-      if (newStatus === 'Yaptım' && taskObj.client_name) {
-        const client = aktifMusteriler.find(c => c.name === taskObj.client_name);
-        if (client) {
-          const updatedCompleted = [...(client.completed || []), taskObj.task_text];
-          const updatedActive = (client.active || []).filter(t => t !== taskObj.task_text);
-          const updatedPending = (client.pending || []).filter(t => t !== taskObj.task_text);
-
-          const tot = updatedCompleted.length + updatedActive.length + updatedPending.length;
-          const newProgress = tot > 0 ? Math.round((updatedCompleted.length / tot) * 100) : 0;
-
-          await supabase.from('active_clients').update({
-            completed: updatedCompleted,
-            active: updatedActive,
-            pending: updatedPending,
-            progress: newProgress,
-            current_phase: taskObj.phase || client.current_phase
-          }).eq('id', client.id);
-
-          // Müşteriye özel log (Client Portal için)
-          if (taskObj.phase && taskObj.phase > client.current_phase) {
-            logActivity('Aşama Güncellendi', `${client.name} markası yeni bir evreye geçti: ${taskObj.phase}. Evre`, client.name);
-          } else {
-            logActivity('Üretim Tamamlandı', `Üretim aşaması tamamlandı: ${taskObj.task_text}`, client.name);
-          }
-        }
-      }
-
+      logActivity('Görev Durumu Güncellendi', `${person.rep}, "${stripHtml(taskObj.task_text)}" görev durumunu ${newStatus} yaptı.`, taskObj.client_name);
       fetchAllData();
     }
   };
 
-  const handleRequestBrief = async (task) => {
-    if (task.brief_request) {
-      alert('Bu görev için zaten brief talebinde bulunulmuş.');
-      return;
-    }
-    const brief = window.prompt('Brief talebiniz (Açıklama giriniz):');
-    if (brief === null || brief.trim() === '') return;
-
-    const { error } = await supabase.from('tasks').update({ brief_request: brief }).eq('id', task.id);
-    if (!error) {
-      logActivity('Brief Talebi', `${currentUser.name}, "${task.task_text}" görevi için brief talebinde bulundu.`, task.client_name);
-      alert('İstekleriniz iletildi');
-      fetchAllData();
-    }
+  const getWorkloadTrend = (person) => {
+    const total = (person.completedTasks?.length || 0) + (person.activeTasks?.length || 0) + (person.pendingTasks?.length || 0);
+    return total > 0 ? Math.round((person.completedTasks.length / total) * 100) : 0;
   };
 
-  const handleRequestExtension = async (task) => {
-    if (task.extension_request) {
-      alert('Bu görev için zaten ek süre talebinde bulunulmuş.');
-      return;
-    }
-    const reason = window.prompt('Ek süre talebiniz (Neden ve istenilen tarih):');
-    if (reason === null || reason.trim() === '') return;
-
-    const { error } = await supabase.from('tasks').update({ extension_request: reason }).eq('id', task.id);
-    if (!error) {
-      logActivity('Ek Süre Talebi', `${currentUser.name}, "${task.task_text}" görevi için ek süre talebinde bulundu.`, task.client_name);
-      alert('İstekleriniz iletildi');
-      fetchAllData();
-    }
+  const getLogDiscipline = (empName) => {
+     const sevenDaysAgo = new Date();
+     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+     const logs = activityLogs.filter(l => l.user_name === empName && new Date(l.created_at) > sevenDaysAgo);
+     const distinctDays = new Set(logs.map(l => new Date(l.created_at).toDateString())).size;
+     return Math.round((distinctDays / 7) * 100);
   };
+
+
 
   const handleRateTask = async (task, score, comment) => {
     if (!['Celal', 'Ercan'].includes(currentUser?.name)) {
@@ -932,23 +1061,9 @@ function Admin() {
         .eq('id', taskObj.id);
 
       if (!error) {
-        logActivity('Görev Silindi', 'SİSTEM', `Görev: "${taskObj.task_text}"`);
+        logActivity('Görev Silindi', 'SİSTEM', `Görev: "${stripHtml(taskObj.task_text)}"`);
         fetchAllData();
       }
-    }
-  };
-
-  const handleSendChatMessage = async (e) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-
-    const { error } = await supabase.from('chat_messages').insert([{
-      user_name: currentUser.name,
-      message: chatInput.trim()
-    }]);
-
-    if (!error) {
-      setChatInput('');
     }
   };
 
@@ -1166,26 +1281,6 @@ function Admin() {
     }
   };
 
-  const handleMarkAsPaid = async (client) => {
-    const currentMonth = new Date().toLocaleString('tr-TR', { month: 'long' });
-    const currentYear = new Date().getFullYear();
-    
-    try {
-      await supabase.from('client_payments').insert([{
-        client_name: client.name,
-        amount: client.monthly_fee,
-        month: currentMonth,
-        year: currentYear
-      }]);
-      
-      await logActivity('Ödeme Alındı', `${client.name} firmasından ${client.monthly_fee}₺ tutarındaki ödeme başarıyla tahsil edildi.`, client.name);
-      alert(`${client.name} ödemesi başarıyla işlendi!`);
-      fetchAllData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // İstatistikleri Taba Göre Güncelleme
   const getStats = () => {
     if (activeTab === 'potansiyel') {
@@ -1199,11 +1294,16 @@ function Admin() {
         { title: 'Aktif Yönetilen Proje', value: aktifMusteriler.length, icon: <Briefcase size={24} color="var(--secondary)" /> },
         { title: 'Ortalama İlerleme Seviyesi', value: `%${Math.round(aktifMusteriler.reduce((a, b) => a + b.progress, 0) / aktifMusteriler.length) || 0}`, icon: <Activity size={24} color="#00e676" /> },
       ];
-    } else if (activeTab === 'finans') {
-      const totalMonthly = aktifMusteriler.reduce((acc, c) => acc + (c.monthly_fee || 0), 0);
+    } else if (activeTab === 'gorev') {
+      const allT = isTakip.reduce((acc, p) => [...acc, ...(p.activeTasks || []), ...(p.pendingTasks || []), ...(p.completedTasks || [])], []);
+      const yapilan = allT.filter(t => ['Sırada', 'Yapıyorum', 'Revize'].includes(t.status)).length;
+      const bitti = allT.filter(t => t.status === 'Yaptım').length;
+      const sorun = allT.filter(t => t.status === 'Tamamlanamadı').length;
+
       return [
-        { title: 'Aylık Beklenen Gelir', value: `${totalMonthly}₺`, icon: <DollarSign size={24} color="#00e676" /> },
-        { title: 'Tahsil Edilen (Bu Ay)', value: `${payments.reduce((acc, p) => acc + p.amount, 0)}₺`, icon: <CheckSquare size={24} color="var(--primary)" /> }
+        { title: 'Yapılan (Aktif)', value: yapilan, icon: <Zap size={24} color="var(--primary)" />, color: 'var(--primary)' },
+        { title: 'Tamamlanan', value: bitti, icon: <CheckCircle2 size={24} color="#00e676" />, color: '#00e676' },
+        { title: 'Tamamlanmayan', value: sorun, icon: <XCircle size={24} color="#ff1744" />, color: '#ff1744' }
       ];
     } else {
       if (currentUser && currentUser.permissions !== 'all') {
@@ -1214,9 +1314,12 @@ function Admin() {
           { title: 'Tamamladıklarım', value: myTasks?.completedTasks?.length || 0, icon: <CheckSquare size={24} color="#00e676" /> }
         ];
       }
+      const wonCount = aktifMusteriler.length; const rejectedCount = potansiyel.filter(p => p.status === 'Reddedildi').length; const totalDecidedLeads = wonCount + rejectedCount; const conversionRate = totalDecidedLeads > 0 ? ((wonCount / totalDecidedLeads) * 100).toFixed(1) : '0'; const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); const weeklyNewLeads = potansiyel.filter(p => new Date(p.created_at) > sevenDaysAgo).length + aktifMusteriler.filter(c => new Date(c.created_at) > sevenDaysAgo).length;
+
       return [
-        { title: 'Toplam Takip Edilen Ekip', value: isTakip.length, icon: <UserCheck size={24} color="var(--primary)" /> },
-        { title: 'Devam Eden Toplam Görev', value: isTakip.reduce((acc, curr) => acc + curr.activeTasks.length, 0), icon: <Target size={24} color="var(--accent)" /> }
+        { title: 'Dönüşüm Oranı', value: `%${conversionRate}`, icon: <TrendingUp size={24} color="#00e676" /> },
+        { title: 'Haftalık Yeni Lead', value: weeklyNewLeads, icon: <Target size={24} color="var(--primary)" /> },
+        { title: 'Toplam İş Yükü', value: isTakip.reduce((acc, curr) => acc + (curr.activeTasks?.length || 0) + (curr.pendingTasks?.length || 0), 0), icon: <Activity size={24} color="var(--accent)" /> }
       ];
     }
   };
@@ -1545,7 +1648,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
     }
   };
 
-  // Takvim ay atlamasını engellemek için günü 1'e sabitliyoruz
+  // Takvimin mevcut ayın 1'inden başlatılması, ay atlama hatalarını önler
   const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [calendarPopup, setCalendarPopup] = useState(null); // { dateStr, persons: [{name, tasks}] }
   const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
@@ -1699,7 +1802,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     {person.tasks.map((task, ti) => (
                       <div key={ti} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px 16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                          <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1 }}>{task.task_text}</span>
+                          <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1 }} dangerouslySetInnerHTML={{ __html: task.task_text }} className="task-html-content"></span>
                           <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '6px', background: `${statusColor(task.status)}22`, color: statusColor(task.status), fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                             {task.status}
                           </span>
@@ -1857,7 +1960,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* Üst Header: Sistem Durumu & Çıkış */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Mobil hamburger */}
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img src="/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
               <h1 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0 }}>Socialart <span className="gradient-text" style={{ fontSize: '0.9rem', opacity: 0.7 }}>MİY v1.0</span></h1>
@@ -1880,6 +1986,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             >
               {notifPermission === 'granted' ? <Bell size={20} fill="var(--primary)" /> : <BellOff size={20} />}
             </button>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '6px 16px', borderRadius: '50px', border: '1px solid var(--surface-border)' }}>
@@ -1914,11 +2021,23 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           </div>
         </div>
 
+        {/* Mobil Header Bar */}
+        <div className="mobile-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '60px', background: 'rgba(5, 5, 5, 0.95)', backdropFilter: 'blur(15px)', borderBottom: '1px solid var(--surface-border)', zIndex: 1000, padding: '0 20px', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'var(--primary)' }}>SocialArt <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: '400' }}>Admin</span></div>
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            style={{ color: '#fff', padding: '8px' }}
+          >
+            {isSidebarOpen ? <X size={24} /> : <MoreVertical size={24} />}
+          </button>
+        </div>
+
         {/* Kişisel Karşılama Paneli */}
-        <div className="glass" style={{ borderRadius: '24px', padding: '30px', marginBottom: '40px', border: '1px solid var(--surface-border)', background: 'linear-gradient(135deg, rgba(0,229,255,0.05) 0%, rgba(255,0,85,0.02) 100%)', position: 'relative', overflow: 'hidden' }}>
+        <div className="glass welcome-panel" style={{ borderRadius: '24px', padding: '30px', marginBottom: '40px', border: '1px solid var(--surface-border)', background: 'linear-gradient(135deg, rgba(0,229,255,0.05) 0%, rgba(255,0,85,0.02) 100%)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'var(--primary)', filter: 'blur(100px)', opacity: '0.1' }}></div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '25px', position: 'relative', zIndex: 1 }}>
+          <div className="welcome-content" style={{ display: 'flex', alignItems: 'center', gap: '25px', position: 'relative', zIndex: 1 }}>
+            
             <div style={{ width: '70px', height: '70px', borderRadius: '18px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1.8rem', fontWeight: '900', boxShadow: '0 10px 30px rgba(0,229,255,0.3)' }}>
               {currentUser?.name?.charAt(0) || '?'}
             </div>
@@ -1935,36 +2054,46 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           </div>
         </div>
 
-        {/* Tab Menüsü */}
-        <div className="tab-menu-container">
-          <div className="tab-menu">
+        {/* Ana Layout: Sol Sidebar Nav + Sağ İçerik */}
+        <div className="admin-layout">
+
+          {/* Sol Dikey Navigation */}
+          <div className={`admin-sidebar-nav${isSidebarOpen ? ' open' : ''}`}>
+            <div className="mobile-only" style={{ justifyContent: 'flex-end', padding: '20px' }}>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ color: '#fff' }}>
+                <X size={32} />
+              </button>
+            </div>
+            <div style={{ marginBottom: '12px', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#444', letterSpacing: '2px' }}>NAVİGASYON</div>
+            </div>
             <button
-              onClick={() => setActiveTab('potansiyel')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'potansiyel' ? 'var(--primary)' : 'transparent', color: activeTab === 'potansiyel' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+              onClick={() => { setActiveTab('potansiyel'); setIsSidebarOpen(false); }}
+              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'potansiyel' ? 'var(--primary)' : 'transparent', color: activeTab === 'potansiyel' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
             >
               <Users size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Potansiyel Müşteriler
             </button>
             <button
-              onClick={() => setActiveTab('aktif')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'aktif' ? 'var(--accent)' : 'transparent', color: activeTab === 'aktif' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+              onClick={() => { setActiveTab('aktif'); setIsSidebarOpen(false); }}
+              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'aktif' ? 'var(--accent)' : 'transparent', color: activeTab === 'aktif' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
             >
               <Briefcase size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışılan Müşteriler
             </button>
             <button
-              onClick={() => setActiveTab('reports')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'reports' ? 'var(--primary)' : 'transparent', color: activeTab === 'reports' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+              onClick={() => { setActiveTab('reports'); setIsSidebarOpen(false); }}
+              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'reports' ? 'var(--primary)' : 'transparent', color: activeTab === 'reports' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
             >
               <FileText size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> 📊 Raporlar
             </button>
             <button
-              onClick={() => setActiveTab('gorev')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorev' ? 'var(--secondary)' : 'transparent', color: activeTab === 'gorev' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
+              onClick={() => { setActiveTab('gorev'); setIsSidebarOpen(false); }}
+              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorev' ? 'var(--secondary)' : 'transparent', color: activeTab === 'gorev' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
             >
               <ClipboardList size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> İş Takip Sistemi
             </button>
             <button
-              onClick={() => setActiveTab('gorevList')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorevList' ? 'var(--primary)' : 'transparent', color: activeTab === 'gorevList' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+              onClick={() => { setActiveTab('gorevList'); setIsSidebarOpen(false); }}
+              style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'gorevList' ? 'var(--primary)' : 'transparent', color: activeTab === 'gorevList' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
             >
               <ListTodo size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Görev Listem
             </button>
@@ -1972,53 +2101,66 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             {currentUser.permissions === 'all' && (
               <>
                 <button
-                  onClick={() => setActiveTab('log')}
-                  style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'log' ? 'var(--primary)' : 'transparent', color: activeTab === 'log' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+                  onClick={() => { setActiveTab('log'); setIsSidebarOpen(false); }}
+                  style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'log' ? 'var(--primary)' : 'transparent', color: activeTab === 'log' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
                 >
-                  <Activity size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Aktivite Kayıtları
+                  <Activity size={18} /> Aktivite Kayıtları
                 </button>
                 <button
-                  onClick={() => setActiveTab('availability')}
-                  style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'availability' ? '#ffab00' : 'transparent', color: activeTab === 'availability' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+                  onClick={() => { setActiveTab('availability'); setIsSidebarOpen(false); }}
+                  style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'availability' ? '#ffab00' : 'transparent', color: activeTab === 'availability' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
                 >
-                  <Clock size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Müsaitlik
+                  <Clock size={18} /> Müsaitlik
                 </button>
                 <button
-                  onClick={() => setActiveTab('performance')}
-                  style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'performance' ? 'var(--accent)' : 'transparent', color: activeTab === 'performance' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
+                  onClick={() => { setActiveTab('performance'); setIsSidebarOpen(false); }}
+                  style={{ padding: '12px 16px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'performance' ? 'var(--accent)' : 'transparent', color: activeTab === 'performance' ? '#000' : '#ccc', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}
                 >
-                  <Users size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Çalışanlar
+                  <Users size={18} /> Çalışanlar
                 </button>
               </>
             )}
 
-            <button
-              onClick={() => setActiveTab('finans')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'finans' ? '#00e676' : 'transparent', color: activeTab === 'finans' ? '#000' : '#ccc', border: 'none', cursor: 'pointer' }}
-            >
-              <DollarSign size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Finans
-            </button>
+            {/*
             <button
               onClick={() => setActiveTab('support')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'support' ? 'var(--secondary)' : 'transparent', color: activeTab === 'support' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
+              style={{ display: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'support' ? 'var(--secondary)' : 'transparent', color: activeTab === 'support' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
             >
               <MessageSquare size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Müşteri Talepleri
             </button>
-            <button
-              onClick={() => setActiveTab('chat')}
-              style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '600', transition: 'all 0.2s', background: activeTab === 'chat' ? 'var(--secondary)' : 'transparent', color: activeTab === 'chat' ? '#fff' : '#ccc', border: 'none', cursor: 'pointer' }}
-            >
-              <MessageSquare size={18} style={{ display: 'inline', marginRight: '8px', marginBottom: '-4px' }} /> Ekip Sohbeti
-            </button>
+            */}
 
           </div>
-        </div>
+
+          {/* Sağ İçerik Alanı */}
+          <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* İstatistikler */}
         {!['availability', 'support', 'performance', 'gorevList', 'log', 'chat'].includes(activeTab) && (
           <div className="stats-grid">
-            {getStats().map((stat, idx) => (
-              <div key={idx} className="glass stat-card">
+            {getStats().map((stat, idx) => {
+              const isBucketFilter = activeTab === 'gorev' && ['Yapılan (Aktif)', 'Tamamlanan', 'Tamamlanmayan'].includes(stat.title);
+              const isActive = isBucketFilter && dashboardBucketFilter === stat.title;
+              return (
+                <div 
+                  key={idx} 
+                  className={`glass stat-card ${isActive ? 'active-filter' : ''}`}
+                  onClick={() => {
+                    if (isBucketFilter) {
+                      setDashboardBucketFilter(isActive ? 'Hepsi' : stat.title);
+                    }
+                  }}
+                  style={{ 
+                    cursor: isBucketFilter ? 'pointer' : 'default',
+                    transition: 'all 0.3s',
+                    border: isActive ? `2px solid ${stat.color || 'var(--primary)'}` : '1px solid rgba(255,255,255,0.05)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {isActive && (
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', borderRadius: '50%', background: stat.color }}></div>
+                  )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
                     {stat.icon}
@@ -2027,7 +2169,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <div style={{ fontSize: '2.2rem', fontWeight: '800', marginBottom: '4px' }}>{stat.value}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>{stat.title}</div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -2391,9 +2534,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   completed: client.completed.join(', '),
                                   active: client.active.join(', '),
                                   pending: client.pending.join(', '),
-                                  ads_active: client.ads_active || false,
-                                  monthly_fee: client.monthly_fee || '',
-                                  payment_day: client.payment_day || '1'
+                                  ads_active: client.ads_active || false
                                 });
                                 setIsEditClientModalOpen(true);
                               }}
@@ -2420,336 +2561,193 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* Tab 3: İŞ TAKİP SİSTEMİ */}
         {activeTab === 'gorev' && (
-          <div className="task-manager-grid">
+          <div className="task-manager-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '25px' }}>
             {[...isTakip].sort((a, b) => {
-              if (a.rep === currentUser?.name) return -1;
-              if (b.rep === currentUser?.name) return 1;
-              return 0;
-            }).map((person) => (
-              <div key={person.id} className="glass" style={{
-                padding: '30px',
-                borderRadius: '24px',
-                border: person.rep === currentUser.name ? '2px solid var(--primary)' : '1px solid var(--surface-border)',
-                position: 'relative',
-                background: person.rep === currentUser.name ? 'rgba(0,229,255,0.03)' : 'rgba(255,255,255,0.01)'
-              }}>
-                {person.rep === currentUser.name && (
-                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'var(--primary)', color: '#000', fontSize: '0.7rem', fontWeight: 'bold', padding: '4px 8px', borderRadius: '6px' }}>SİZİN PANELİNİZ</div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
-                  <div style={{ width: '56px', height: '56px', background: person.rep === currentUser.name ? 'var(--primary)' : '#333', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: person.rep === currentUser.name ? '#000' : '#fff', fontWeight: '800', fontSize: '1.5rem' }}>
-                    {person.rep.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#fff' }}>{person.rep}</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '2px' }}>{person.role}</p>
-                  </div>
-                </div>
+               if (a.rep === currentUser?.name) return -1;
+               if (b.rep === currentUser?.name) return 1;
+               return 0;
+            }).map((person) => {
+              // Tüm görevleri birleştir
+              const allTasks = [...(person.activeTasks || []), ...(person.pendingTasks || []), ...(person.completedTasks || [])];
+              
+              // 3 Ana Kategori
+              const yapilanTasks = allTasks.filter(t => ['Sırada', 'Yapıyorum', 'Revize'].includes(t.status));
+              const tamamlananTasks = allTasks.filter(t => t.status === 'Yaptım');
+              const tamamlanmayanTasks = allTasks.filter(t => t.status === 'Tamamlanamadı');
 
-                <div style={{ marginBottom: '25px' }}>
-                  <h4 style={{ color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
-                    <Activity size={16} /> Şu An Üzerinde Çalıştığı Görevler
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {person.activeTasks.map((t, i) => (
-                      <div key={t.id} style={{ background: 'rgba(0, 229, 255, 0.05)', padding: '14px 18px', borderRadius: '12px', fontSize: '0.95rem', color: '#fff', borderLeft: '3px solid var(--primary)', display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <div style={{ width: '4px', height: '20px', background: t.priority || '#2979ff', borderRadius: '2px', flexShrink: 0 }}></div>
-                          <span style={{ fontWeight: '500', wordBreak: 'break-word', flex: 1, minWidth: '150px' }}>{t.task_text}</span>
-                          <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', color: '#888', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{(t.category || 'Proje').toUpperCase()}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <select value={t.status} disabled={currentUser?.name !== t.assignee_name} onChange={e => handleTaskStatusChange(person.id, t, 'activeTasks', e.target.value)} style={{ background: '#00e676', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', fontWeight: 'bold', outline: 'none', cursor: (currentUser?.name === t.assignee_name) ? 'pointer' : 'not-allowed', opacity: (currentUser?.name === t.assignee_name) ? 1 : 0.6 }}>
-                            <option value="Yapıyorum">🔥 Yapıyorum</option>
-                            <option value="Revize">🔄 Revize</option>
-                            <option value="Yaptım">✅ Yaptım</option>
-                            <option value="Tamamlanamadı">❌ Tamamlanamadı</option>
-                          </select>
-                          {(currentUser?.name === t.assignee_name) && (
-                            <div style={{ display: 'flex', gap: '5px' }}>
-                              <button onClick={() => handleRequestBrief(t)} title="Brief İste" style={{ padding: '4px 8px', borderRadius: '6px', background: t.brief_request ? '#ff4081' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', fontSize: '0.7rem', cursor: 'pointer' }}>
-                                <FileText size={12} />
-                              </button>
-                              <button onClick={() => handleRequestExtension(t)} title="Ek Süre İste" style={{ padding: '4px 8px', borderRadius: '6px', background: t.extension_request ? '#ffab00' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', fontSize: '0.7rem', cursor: 'pointer' }}>
-                                <Clock size={12} />
-                              </button>
-                            </div>
-                          )}
-                          {currentUser?.permissions === 'all' && (
-                            <button onClick={() => handleDeleteTask(person.id, t)} style={{ background: 'transparent', border: 'none', color: '#ff0055', cursor: 'pointer', padding: '5px' }}>
-                              <Trash2 size={12} />
-                            </button>
-                          )}
-                        </div>
-                        {t.client_name && (
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.7rem', background: 'rgba(0,229,255,0.1)', color: 'var(--accent)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>{t.client_name}</span>
-                              <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', color: '#888', padding: '2px 8px', borderRadius: '4px' }}>
-                                {t.phase === 1 ? '1. Evre: Planlama' : t.phase === 2 ? '2. Evre: Prodüksiyon' : t.phase === 3 ? '3. Evre: Kreatif/Kurgu' : t.phase === 4 ? '4. Evre: Onay/Revize' : t.phase === 5 ? '5. Evre: Yayın/Rapor' : `${t.phase}. Evre`}
-                              </span>
-                            </div>
-                            {t.due_date && (
-                              <span style={{ fontSize: '0.7rem', color: t.priority || '#2979ff', fontWeight: 'bold' }}>🗓 {t.due_date}</span>
-                            )}
-                          </div>
-                        )}
+              return (
+                <div key={person.id} className="glass" style={{ 
+                  padding: '25px', 
+                  borderRadius: '24px', 
+                  border: person.rep === currentUser?.name ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '25px' 
+                }}>
+                  {/* Personel Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: '900', color: '#000' }}>{person.rep.charAt(0)}</div>
+                      <div>
+                        <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#fff' }}>{person.rep}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700' }}>{person.role?.toUpperCase()}</div>
                       </div>
-                    ))}
+                    </div>
+                    <button onClick={() => { setTaskFormData({ ...taskFormData, empId: person.id.toString() }); setIsTaskModalOpen(true); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 15px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}>+ GÖREV EKLE</button>
                   </div>
-                </div>
 
-                <div style={{ marginBottom: '25px' }}>
-                  <h4 style={{ color: '#ffab00', fontSize: '0.85rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
-                    <ListTodo size={16} /> Yapması Beklenenler (To-Do)
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {person.pendingTasks.map((t, i) => (
-                      <div key={t.id} style={{ background: 'rgba(255,255,255,0.02)', padding: '14px 18px', borderRadius: '12px', fontSize: '0.95rem', color: '#aaa', border: '1px dashed rgba(255,255,255,0.1)', borderLeft: `3px solid ${t.priority || '#2979ff'}`, display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-                            <div style={{ width: '4px', height: '20px', background: t.priority || '#2979ff', borderRadius: '2px', flexShrink: 0 }}></div>
-                            <span style={{ wordBreak: 'break-word' }}>{t.task_text}</span>
-                            <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', color: '#888', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', flexShrink: 0 }}>{(t.category || 'Proje').toUpperCase()}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                            <select value={t.status} disabled={currentUser?.name !== t.assignee_name} onChange={e => handleTaskStatusChange(person.id, t, 'pendingTasks', e.target.value)} style={{ background: '#ffab00', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', fontWeight: 'bold', outline: 'none', cursor: (currentUser?.name === t.assignee_name) ? 'pointer' : 'not-allowed', opacity: (currentUser?.name === t.assignee_name) ? 1 : 0.6 }}>
-                              <option value="Sırada">⏳ Sırada</option>
-                              <option value="Yapıyorum">🔥 Yapıyorum</option>
-                              <option value="Revize">🔄 Revize</option>
-                              <option value="Yaptım">✅ Yaptım</option>
-                              <option value="Tamamlanamadı">❌ Tamamlanamadı</option>
-                            </select>
-                            {(currentUser?.name === person.rep || currentUser?.permissions === 'all') && (
-                              <button onClick={() => handleDeleteTask(person.id, t)} style={{ background: 'transparent', border: 'none', color: '#ff0055', cursor: 'pointer', padding: '5px' }}>
-                                <Trash2 size={12} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {t.client_name && (
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.7rem', background: 'rgba(255,171,0,0.1)', color: '#ffab00', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>{t.client_name}</span>
-                              <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', color: '#888', padding: '2px 8px', borderRadius: '4px' }}>
-                                {t.phase === 1 ? '1. Evre: Planlama' : t.phase === 2 ? '2. Evre: Prodüksiyon' : t.phase === 3 ? '3. Evre: Kreatif/Kurgu' : t.phase === 4 ? '4. Evre: Onay/Revize' : t.phase === 5 ? '5. Evre: Yayın/Rapor' : `${t.phase}. Evre`}
-                              </span>
-                            </div>
-                            {t.due_date && (
-                              <span style={{ fontSize: '0.7rem', color: t.priority || '#2979ff', fontWeight: 'bold' }}>🗓 {t.due_date}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {(person.completedTasks && person.completedTasks.length > 0) && (
-                  <div>
-                    <h4 style={{ color: '#00e676', fontSize: '0.85rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
-                      <CheckCircle2 size={16} /> Tamamladıkları
+                  {(dashboardBucketFilter === 'Hepsi' || dashboardBucketFilter === 'Yapılan (Aktif)') && (
+                    <div style={{ flex: 1 }}>
+                    <h4 style={{ color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '900' }}>
+                      <Zap size={16} /> Yapılan (Aktif)
+                      <span style={{ marginLeft: 'auto', background: 'var(--primary)', color: '#000', padding: '1px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>{yapilanTasks.length}</span>
                     </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {person.completedTasks.map((t, i) => (
-                        <div key={t.id} style={{ background: 'rgba(0,230,118,0.05)', padding: '14px 18px', borderRadius: '12px', fontSize: '0.95rem', color: '#00e676', borderLeft: `3px solid ${t.priority || '#00e676'}`, display: 'flex', flexDirection: 'column', gap: '8px', opacity: 0.75, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-                              <div style={{ width: '4px', height: '18px', background: t.priority || '#00e676', borderRadius: '2px', flexShrink: 0 }}></div>
-                              <span style={{ textDecoration: 'line-through', wordBreak: 'break-word' }}>{t.task_text}</span>
-                              <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', color: '#00e676', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', border: '1px solid rgba(0,230,118,0.2)', flexShrink: 0 }}>{(t.category || 'Proje').toUpperCase()}</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                              <select value={t.status} disabled={currentUser?.name !== t.assignee_name} onChange={e => handleTaskStatusChange(person.id, t, 'completedTasks', e.target.value)} style={{ background: t.status === 'Yaptım' ? '#00e676' : '#666', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '0.8rem', fontWeight: 'bold', outline: 'none', cursor: (currentUser?.name === t.assignee_name) ? 'pointer' : 'not-allowed', opacity: (currentUser?.name === t.assignee_name) ? 1 : 0.6 }}>
-                                <option value="Sırada">⏳ Sırada</option>
-                                <option value="Yapıyorum">🔥 Yapıyorum</option>
-                                <option value="Revize">🔄 Revize</option>
-                                <option value="Yaptım">✅ Yaptım</option>
-                                <option value="Tamamlanamadı">❌ Tamamlanamadı</option>
-                              </select>
-                              {currentUser?.permissions === 'all' && (
-                                <button onClick={() => handleDeleteTask(person.id, t)} style={{ background: 'transparent', border: 'none', color: '#ff0055', cursor: 'pointer', padding: '5px' }}>
-                                  <Trash2 size={12} />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          {t.due_date && (
-                            <span style={{ fontSize: '0.7rem', color: t.priority || '#2979ff', fontWeight: 'bold', paddingLeft: '12px' }}>🗓 Teslim: {t.due_date}</span>
-                          )}
-                        </div>
+                    
+                    {/* Alt Filtreler (Sadece Aktif İçin) */}
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '15px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
+                      {['Hepsi', 'Sırada', 'Yapıyorum', 'Revize'].map(f => (
+                        <button 
+                          key={f}
+                          onClick={() => setDashboardSubFilter(f)}
+                          style={{ 
+                            fontSize: '0.65rem', 
+                            padding: '5px 10px', 
+                            borderRadius: '8px', 
+                            border: '1px solid rgba(255,255,255,0.05)', 
+                            background: dashboardSubFilter === f ? 'var(--primary)' : 'rgba(255,255,255,0.05)', 
+                            color: dashboardSubFilter === f ? '#000' : '#888', 
+                            fontWeight: '800', 
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {f}
+                        </button>
                       ))}
                     </div>
-                  </div>
-                )}
 
-              </div>
-            ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {(() => {
+                        const filtered = yapilanTasks.filter(t => dashboardSubFilter === 'Hepsi' || t.status === dashboardSubFilter);
+                        return filtered.length > 0 ? filtered.map((t) => (
+                          <div 
+                            key={t.id} 
+                            onClick={() => { setSelectedTask(t); setIsTaskDetailModalOpen(true); }}
+                            style={{ 
+                              background: 'rgba(255,255,255,0.02)', 
+                              padding: '15px', 
+                              borderRadius: '16px', 
+                              border: '1px solid rgba(255,255,255,0.05)', 
+                              borderLeft: `4px solid ${t.priority || '#2979ff'}`,
+                              cursor: 'pointer',
+                              overflow: 'hidden',
+                              transition: 'transform 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
+                              <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff', flex: 1, lineHeight: '1.4', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }} className="task-html-content">
+                                {(() => {
+                                  const clean = stripHtml(t.task_text).replace(/\s+/g, ' ').trim();
+                                  return clean.length > 85 ? clean.substring(0, 85) + '...' : clean;
+                                })()}
+                              </div>
+                              {t.attachment_url && (
+                                <div style={{ marginTop: '10px' }}>
+                                  <a
+                                    onClick={e => e.stopPropagation()}
+                                    href={t.attachment_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '8px 12px',
+                                      background: 'rgba(255,255,255,0.05)',
+                                      border: '1px solid rgba(255,255,255,0.1)',
+                                      borderRadius: '8px',
+                                      fontSize: '0.75rem',
+                                      color: 'var(--primary)',
+                                      fontWeight: '700',
+                                      transition: '0.2s'
+                                    }}
+                                  >
+                                    <FileCode size={14} />
+                                    {t.attachment_name || 'Dosya Eki'}
+                                  </a>
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <select 
+                                  onClick={e => e.stopPropagation()}
+                                  value={t.status} 
+                                  onChange={e => handleTaskStatusChange(person.id, t, 'pendingTasks', e.target.value)} 
+                                  style={{ background: t.status === 'Yapıyorum' ? 'var(--primary)' : t.status === 'Revize' ? '#d500f9' : '#ffab00', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}
+                                >
+                                  <option value="Sırada">Sırada</option>
+                                  <option value="Yapıyorum">Yapıyorum</option>
+                                  <option value="Revize">Revize</option>
+                                  <option value="Yaptım">Yaptım</option>
+                                  <option value="Tamamlanamadı">Tamamlanamadı</option>
+                                </select>
+                                <button onClick={() => handleDeleteTask(person.id, t)} style={{ background: 'none', border: 'none', color: '#ff1744', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.6 }}>
+                              <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{(t.category || 'PROJE').toUpperCase()}</span>
+                              {t.due_date && <span style={{ fontSize: '0.7rem' }}>🗓 {t.due_date}</span>}
+                            </div>
+                          </div>
+                        )) : <div style={{ color: '#444', fontSize: '0.8rem', textAlign: 'center', padding: '20px' }}>Bu kategoride aktif görev bulunmuyor.</div>;
+                      })()}
+                    </div>
+                  </div>
+
+                  )}
+                  {(dashboardBucketFilter === 'Hepsi' || dashboardBucketFilter === 'Tamamlanan') && (
+                    <div style={{ background: 'rgba(0,230,118,0.02)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(0,230,118,0.05)', flex: 1 }}>
+                    <h4 style={{ color: '#00e676', fontSize: '0.8rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '900', textTransform: 'uppercase' }}>
+                      <CheckCircle2 size={16} /> Tamamlanan
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {tamamlananTasks.slice(0, 3).map((t) => (
+                        <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#555' }}>
+                          <span style={{ textDecoration: 'line-through', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></span>
+                          <select value={t.status} onChange={e => handleTaskStatusChange(person.id, t, 'completedTasks', e.target.value)} style={{ background: 'none', color: '#00e676', border: 'none', fontSize: '0.65rem', cursor: 'pointer' }}>
+                             <option value="Yaptım">Yaptım</option>
+                             <option value="Revize">Revize</option>
+                          </select>
+                        </div>
+                      ))}
+                      {tamamlananTasks.length === 0 && <div style={{ fontSize: '0.75rem', color: '#333' }}>Henüz yok.</div>}
+                    </div>
+                  </div>
+
+                  )}
+                  {(dashboardBucketFilter === 'Hepsi' || dashboardBucketFilter === 'Tamamlanmayan') && (
+                    <div style={{ background: 'rgba(255,23,68,0.02)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,23,68,0.05)', flex: 1 }}>
+                    <h4 style={{ color: '#ff1744', fontSize: '0.8rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '900', textTransform: 'uppercase' }}>
+                      <XCircle size={16} /> Tamamlanmayan
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {tamamlanmayanTasks.map((t) => (
+                        <div key={t.id} style={{ fontSize: '0.8rem', color: '#ff1744', opacity: 0.6, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <AlertCircle size={12} /> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
+                        </div>
+                      ))}
+                      {tamamlanmayanTasks.length === 0 && <div style={{ fontSize: '0.75rem', color: '#333' }}>Yok.</div>}
+                    </div>
+                  </div>
+
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
+        
 
-        {/* Tab: TAKVİM */}
-        {activeTab === 'availability' && renderCalendar()}
-        {activeTab === 'finans' && currentUser.permissions === 'all' && (
-          <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '20px' }}>Finans Paneli</h2>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <th style={{ padding: '15px', textAlign: 'left' }}>Müşteri</th>
-                    <th style={{ padding: '15px', textAlign: 'left' }}>Aylık Ücret</th>
-                    <th style={{ padding: '15px', textAlign: 'left' }}>Ödeme Günü</th>
-                    <th style={{ padding: '15px', textAlign: 'right' }}>İşlem</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {aktifMusteriler.map(client => (
-                    <tr key={client.id} style={{ borderBottom: '1px solid #333' }}>
-                      <td style={{ padding: '15px' }}>{client.name}</td>
-                      <td style={{ padding: '15px' }}>{client.monthly_fee || 0}₺</td>
-                      <td style={{ padding: '15px' }}>{client.payment_day || 1}. Gün</td>
-                      <td style={{ padding: '15px', textAlign: 'right' }}>
-                        <button 
-                          onClick={() => handleMarkAsPaid(client)}
-                          disabled={isMarkingPaid}
-                          style={{ background: '#00e676', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-                        >
-                          Ödeme Alındı
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* Potansiyel Müşteri Ekleme Modalı */}
-      {isAddModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '600px', position: 'relative', margin: 'auto' }}>
-            <button onClick={() => setIsAddModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#fff' }}>Yeni Lead Kaydı</h2>
-            <form onSubmit={handleAddPotansiyel} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Firma / Kişi Adı</label>
-                  <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>İletişim Kanalı</label>
-                  <select value={formData.platform} onChange={e => setFormData({ ...formData, platform: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="">Seçiniz...</option>
-                    <option value="WhatsApp">WhatsApp</option>
-                    <option value="Instagram DM">Instagram DM</option>
-                    <option value="Telefon">Telefon Görüşmesi</option>
-                    <option value="Mail">E-posta</option>
-                  </select>
-                </div>
-              </div>
-
-              {formData.platform === 'Instagram DM' && (
-                <div style={{ animation: 'fadeIn 0.3s' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 'bold' }}>Instagram Kullanıcı Adı</label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: 'bold' }}>@</span>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="kullanici_adi"
-                      value={formData.instagram_username} 
-                      onChange={e => setFormData({ ...formData, instagram_username: e.target.value })} 
-                      style={{ width: '100%', padding: '12px 12px 12px 30px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--accent)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>E-posta Adresi</label>
-                  <input type="text" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="ornek@sirket.com (İsteğe bağlı)" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Telefon</label>
-                  <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="05XX XXX XX XX" />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '12px', color: '#ccc', fontSize: '0.9rem' }}>Beklenen Hizmetler (Birden fazla seçilebilir)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '12px', border: '1px solid #333' }}>
-                  {[
-                    '360° Sosyal Medya Yönetimi',
-                    'Kreatif İçerik / Çekim',
-                    'Meta & Google Reklam',
-                    'Web Tasarım / Yazılım',
-                    'Marka Kimliği Tasarımı',
-                    'Influencer Marketing',
-                    'Video Prodüksiyon',
-                    'Diğer'
-                  ].map((service) => (
-                    <label key={service} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: '#eee' }}>
-                      <input
-                        type="checkbox"
-                        checked={formData.selectedServices.includes(service)}
-                        onChange={(e) => {
-                          const updated = e.target.checked
-                            ? [...formData.selectedServices, service]
-                            : formData.selectedServices.filter(s => s !== service);
-                          setFormData({ ...formData, selectedServices: updated });
-                        }}
-                        style={{ accentColor: 'var(--primary)' }}
-                      />
-                      {service}
-                    </label>
-                  ))}
-                </div>
-                {formData.selectedServices.includes('Diğer') && (
-                  <div style={{ marginTop: '12px' }}>
-                    <input
-                      type="text"
-                      placeholder="Lütfen diğer hizmeti belirtin..."
-                      value={formData.otherService}
-                      onChange={e => setFormData({ ...formData, otherService: e.target.value })}
-                      style={{ width: '100%', padding: '10px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--primary)', borderRadius: '8px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Temsilci / İlgilenen</label>
-                  <input type="text" required value={formData.rep} onChange={e => setFormData({ ...formData, rep: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Aşama</label>
-                  <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="Sıcak">Sıcak / Olumlu</option>
-                    <option value="Beklemede">Beklemede / Kararsız</option>
-                    <option value="Ertelendi">Ertelendi</option>
-                    <option value="Reddedildi">Reddedildi</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görüşme Neden Yarım Kaldı / Müşteri Ne Dedi?</label>
-                <textarea rows="3" required value={formData.reaction} onChange={e => setFormData({ ...formData, reaction: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'vertical' }} placeholder="Fiyat çok geldi, eşiyle görüşecek vs." />
-              </div>
-
-              <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontSize: '1rem', marginTop: '10px' }}>Kaydet ve Listeye Ekle</button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Görev Atama Modalı */}
       {isTaskModalOpen && (
@@ -2824,8 +2822,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Teslim Tarihi (Ops.)</label>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Teslim Tarihi (Zorunlu)</label>
                   <input
+                    required
                     type="date"
                     value={taskFormData.due_date}
                     onChange={e => setTaskFormData({ ...taskFormData, due_date: e.target.value })}
@@ -2854,10 +2853,55 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görev Açıklaması</label>
-                <textarea rows="3" required value={taskFormData.task} onChange={e => setTaskFormData({ ...taskFormData, task: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'vertical' }} placeholder="Projeyi hızlandırmak için yeni UI tasarımını tamamla..." />
+                <div className="quill-custom"><ReactQuill theme="snow" value={taskFormData.task} onChange={content => setTaskFormData({ ...taskFormData, task: content })} placeholder="Projeyi hızlandırmak için yeni UI tasarımını tamamla..." /></div>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontSize: '1rem', marginTop: '10px' }}>Kaydet ve Listeye Ekle</button>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Brief / Konu Dosyası (TXT, PDF, Görsel)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="file"
+                    id="taskAttachment"
+                    onChange={e => setTaskFile(e.target.files[0])}
+                    style={{ display: 'none' }}
+                    accept=".txt,.pdf,image/*"
+                  />
+                  <label
+                    htmlFor="taskAttachment"
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px dashed #444',
+                      borderRadius: '10px',
+                      color: '#888',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      transition: 'all 0.3s'
+                    }}
+                  >
+                    <Upload size={18} />
+                    {taskFile ? taskFile.name : 'Dosya Seç (PDF, TXT, Resim)'}
+                  </label>
+                  {taskFile && (
+                    <button
+                      type="button"
+                      onClick={() => setTaskFile(null)}
+                      style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <button type="submit" disabled={taskUploading} className="btn btn-primary" style={{ padding: '14px', fontSize: '1rem', marginTop: '10px', opacity: taskUploading ? 0.7 : 1 }}>
+                {taskUploading ? 'Yükleniyor...' : 'Kaydet ve Listeye Ekle'}
+              </button>
             </form>
           </div>
         </div>
@@ -2883,16 +2927,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="form-group flex-1">
-                  <label>Aylık Ücret (₺)</label>
-                  <input type="number" value={clientFormData.monthly_fee} onChange={e => setClientFormData({ ...clientFormData, monthly_fee: e.target.value })} placeholder="0" style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-                </div>
-                <div className="form-group flex-1">
-                  <label>Ödeme Günü (1-31)</label>
-                  <input type="number" min="1" max="31" value={clientFormData.payment_day} onChange={e => setClientFormData({ ...clientFormData, payment_day: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-                </div>
-              </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -2926,17 +2960,17 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tamamlananlar (Virgülle Ayırın)</label>
-                <textarea rows="2" value={clientFormData.completed} onChange={e => setClientFormData({ ...clientFormData, completed: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'vertical' }} placeholder="Logolar onaylandı, Web sitesi yayında" />
+                <TextareaAutosize minRows={2} value={clientFormData.completed} onChange={e => setClientFormData({ ...clientFormData, completed: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Logolar onaylandı, Web sitesi yayında" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Şu An Yapılanlar</label>
-                  <textarea rows="2" value={clientFormData.active} onChange={e => setClientFormData({ ...clientFormData, active: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="Reels kurguları, Blog yazımı" />
+                  <TextareaAutosize minRows={2} value={clientFormData.active} onChange={e => setClientFormData({ ...clientFormData, active: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Reels kurguları, Blog yazımı" />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Bizi Bekleyenler / Plan</label>
-                  <textarea rows="2" value={clientFormData.pending} onChange={e => setClientFormData({ ...clientFormData, pending: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="Raporlama süreci, Saha çekimi" />
+                  <TextareaAutosize minRows={2} value={clientFormData.pending} onChange={e => setClientFormData({ ...clientFormData, pending: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Raporlama süreci, Saha çekimi" />
                 </div>
               </div>
 
@@ -3005,7 +3039,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Not / Detaylar</label>
-                <textarea rows="3" value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', resize: 'vertical' }} placeholder="Ekstra bilgiler..." />
+                <TextareaAutosize minRows={3} value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Ekstra bilgiler..." />
               </div>
               <button type="submit" className="btn" style={{ background: editingAppt ? 'var(--accent)' : 'var(--primary)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>
                 {editingAppt ? 'Güncelle' : 'Kaydet'}
@@ -3135,12 +3169,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   <MessageSquare size={18} color="var(--primary)" /> Süreç Notu Ekle / Güncelle
                 </h3>
                 <form onSubmit={handleAddHistoryNote} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <textarea
+                  <TextareaAutosize
+                    minRows={2}
                     value={noteInput}
                     onChange={(e) => setNoteInput(e.target.value)}
                     placeholder="Müşteriyle son görüşme ne durumda? Bir not bırakın..."
                     style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.03)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', resize: 'none' }}
-                    rows="2"
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, position: 'relative' }}>
@@ -3330,52 +3364,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
 
-      {/* Chat Tabı */}
-      {activeTab === 'chat' && (
-        <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--surface-border)', display: 'flex', flexDirection: 'column', height: '600px' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '800' }}>Ekip Sohbeti</h3>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column-reverse', gap: '15px' }}>
-            {chatMessages.map((msg) => (
-              <div key={msg.id} style={{ alignSelf: msg.user_name === currentUser.name ? 'flex-end' : 'flex-start', maxWidth: '70%', transition: 'all 0.3s ease' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.user_name === currentUser.name ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#888', fontWeight: '800' }}>{msg.user_name}</span>
-                    <span style={{ fontSize: '0.65rem', color: '#555' }}>{new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  <div style={{
-                    padding: '14px 18px',
-                    borderRadius: msg.user_name === currentUser.name ? '20px 2px 20px 20px' : '2px 20px 20px 20px',
-                    background: msg.user_name === currentUser.name ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.03)',
-                    color: msg.user_name === currentUser.name ? '#000' : '#fff',
-                    fontSize: '0.95rem',
-                    lineHeight: '1.5',
-                    boxShadow: msg.user_name === currentUser.name ? '0 5px 15px rgba(0,229,255,0.2)' : 'none',
-                    border: msg.user_name === currentUser.name ? 'none' : '1px solid rgba(255,255,255,0.05)'
-                  }}>
-                    {msg.message}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Input Alanı */}
-          <form onSubmit={handleSendChatMessage} style={{ padding: '25px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '15px', background: 'rgba(0,0,0,0.2)' }}>
-            <input
-              type="text"
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              placeholder="Örn: Merhaba ekip, bugünkü toplantı saat kaçta?"
-              style={{ flex: 1, padding: '15px 20px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', fontSize: '1rem' }}
-            />
-            <button type="submit" style={{ width: '55px', height: '55px', borderRadius: '15px', background: 'var(--primary-gradient)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#000', boxShadow: '0 5px 15px rgba(0,229,255,0.3)', transition: 'transform 0.2s' }}>
-              <Send size={24} />
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Müsaitlik Ayarları Tabı */}
       {activeTab === 'availability' && (
@@ -3756,7 +3744,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         )}
 
         {/* Müşteri Talepleri Tabı */}
-        {activeTab === 'support' && (
+        {false && activeTab === 'support' && (
         <div className={`support-layout ${selectedSupportClient ? 'detail-active' : 'list-active'}`} style={{ display: 'grid', gap: '30px', height: 'calc(100vh - 250px)' }}>
 
           {/* Sol Kolon: Müşteri Listesi */}
@@ -3971,7 +3959,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const briefRequests = [...emp.activeTasks, ...emp.pendingTasks].filter(t => t.brief_request);
                         return briefRequests.length > 0 ? briefRequests.map(t => (
                           <div key={t.id} style={{ padding: '15px', background: 'rgba(255,64,129,0.05)', borderRadius: '15px', border: '1px solid rgba(255,64,129,0.1)' }}>
-                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }}>{t.task_text}</div>
+                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
                             <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>"{t.brief_request}"</div>
 
                             {t.brief_response ? (
@@ -4015,7 +4003,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const timeRequests = [...emp.activeTasks, ...emp.pendingTasks].filter(t => t.extension_request);
                         return timeRequests.length > 0 ? timeRequests.map(t => (
                           <div key={t.id} style={{ padding: '15px', background: 'rgba(255,171,0,0.05)', borderRadius: '15px', border: '1px solid rgba(255,171,0,0.1)' }}>
-                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }}>{t.task_text}</div>
+                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
                             <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>"{t.extension_request}"</div>
 
                             {t.extension_response ? (
@@ -4062,7 +4050,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const currentTasks = [...emp.activeTasks, ...emp.pendingTasks];
                         return currentTasks.length > 0 ? currentTasks.map(t => (
                           <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></div> {t.task_text}
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></div> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
                           </div>
                         )) : <p style={{ color: '#444', fontSize: '0.8rem' }}>Şu an devam eden iş yok.</p>;
                       })()}
@@ -4078,8 +4066,18 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const emp = isTakip.find(e => e.rep === perfEmployee);
                         const doneTasks = (emp.completedTasks || []).filter(t => t.status === 'Yaptım');
                         return doneTasks.length > 0 ? doneTasks.map(t => (
-                          <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '8px 12px', background: 'rgba(0,230,118,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CheckSquare size={14} color="#00e676" /> {t.task_text}
+                          <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '10px 15px', background: 'rgba(0,230,118,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckSquare size={14} color="#00e676" /> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
+                            </div>
+                            {currentUser?.permissions === 'all' && (
+                              <button 
+                                onClick={() => handleTaskStatusChange(person.id, t, 'completedTasks', 'Revize')}
+                                style={{ background: 'rgba(213,0,249,0.1)', color: '#d500f9', border: '1px solid rgba(213,0,249,0.2)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}
+                              >
+                                REVİZE İSTE
+                              </button>
+                            )}
                           </div>
                         )) : <p style={{ color: '#444', fontSize: '0.8rem' }}>Henüz tamamlanan iş yok.</p>;
                       })()}
@@ -4097,7 +4095,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         return failedTasks.length > 0 ? failedTasks.map(t => (
                           <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '12px', background: 'rgba(255,23,68,0.03)', borderRadius: '12px' }}>
                             <div style={{ fontSize: '0.85rem', color: '#ccc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <AlertCircle size={14} color="#ff1744" /> {t.task_text}
+                              <AlertCircle size={14} color="#ff1744" /> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
                             </div>
                             {t.fail_reason && (
                               <div style={{ fontSize: '0.75rem', color: '#999', fontStyle: 'italic', paddingLeft: '22px' }}>
@@ -4150,16 +4148,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   <div style={{ display: 'flex', gap: '4px' }}>
                                     {[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill={s <= t.rating ? 'var(--primary)' : 'transparent'} color={s <= t.rating ? 'var(--primary)' : '#444'} />)}
                                   </div>
-                                  <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic' }}>"{t.rating_comment || 'Not yok'}"</div>
+                                  <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic' }}>"${t.rating_comment || 'Not yok'}"</div>
                                 </div>
                               ) : (
                                 ['Celal', 'Ercan'].includes(currentUser?.name) ? (
                                   <button
-                                    onClick={() => {
-                                      const score = window.prompt(`${t.task_text} için puan (1-5):`, '5');
-                                      const comment = window.prompt('Değerlendirme notu:', '');
-                                      if (score) handleRateTask(t, parseInt(score), comment);
-                                    }}
+                                    onClick={() => openActionModal('rating', t)}
                                     style={{ padding: '10px 20px', borderRadius: '12px', background: 'var(--primary)', color: '#000', border: 'none', fontSize: '0.85rem', fontWeight: '900', cursor: 'pointer' }}
                                   >
                                     Puan Ver
@@ -4175,6 +4169,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     })()}
                   </div>
                 </div>
+
               </div>
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', flexDirection: 'column', gap: '20px' }}>
@@ -4186,8 +4181,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         </div>
       )}
-
-      {/* Görev Listem Tabı */}
+{/* Görev Listem Tabı */}
       {activeTab === 'gorevList' && (() => {
         const isAdmin = currentUser?.permissions === 'all';
 
@@ -4203,19 +4197,58 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           ? rawTasks
           : rawTasks.filter(t => t.empName === currentUser?.name || t.assignee_name === currentUser?.name);
 
-        const filterMap = {
-          'Tumu': () => true,
-          'Tamamlanan': t => t.status === 'Yaptım',
-          'DevamEden': t => ['Yapıyorum', 'Sırada'].includes(t.status),
-          'Revize': t => t.status === 'Revize',
-          'Tamamlanamayan': t => t.status === 'Tamamlanamadı',
-        };
-        const filteredTasks = allTasks.filter(filterMap[gorevFilter] || (() => true));
-
         const totalTamamlanan = allTasks.filter(t => t.status === 'Yaptım').length;
-        const totalDevam = allTasks.filter(t => ['Yapıyorum', 'Sırada'].includes(t.status)).length;
+        const totalYapıyorum = allTasks.filter(t => t.status === 'Yapıyorum').length;
+        const totalSirada = allTasks.filter(t => t.status === 'Sırada').length;
         const totalRevize = allTasks.filter(t => t.status === 'Revize').length;
         const totalBitmis = allTasks.filter(t => t.status === 'Tamamlanamadı').length;
+        const totalAktif = totalYapıyorum + totalSirada + totalRevize;
+
+        const filterMap = {
+          'Aktif': t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status),
+          'Tamamlanan': t => t.status === 'Yaptım',
+          'Tamamlanamayan': t => t.status === 'Tamamlanamadı',
+        };
+
+        const subFilterMap = {
+          'Hepsi': t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status),
+          'Sirada': t => t.status === 'Sırada',
+          'Yapiyorum': t => t.status === 'Yapıyorum',
+          'Revize': t => t.status === 'Revize',
+        };
+
+        const filteredTasks = allTasks.filter(t => {
+          if (gorevFilter === 'Aktif') {
+            return subFilterMap[subGorevFilter](t);
+          }
+          return filterMap[gorevFilter](t);
+        });
+
+        const getWorkloadTrend = (emp) => {
+          const total = emp.activeTasks.length + emp.pendingTasks.length + emp.completedTasks.length;
+          return total > 0 ? Math.round((emp.completedTasks.length / total) * 100) : 0;
+        };
+
+        const getLogDiscipline = (repName) => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          const logs = activityLogs.filter(l => l.user_name === repName && new Date(l.created_at) > sevenDaysAgo);
+          const distinctDays = new Set(logs.map(l => new Date(l.created_at).toDateString())).size;
+          return Math.round((distinctDays / 7) * 100);
+        };
+
+        const filterButtons = [
+          { key: 'Aktif', label: 'Yapılan (Aktif)', count: totalAktif, color: 'var(--primary)' },
+          { key: 'Tamamlanan', label: 'Tamamlanan', count: totalTamamlanan, color: '#00e676' },
+          { key: 'Tamamlanamayan', label: 'Tamamlanamayan', count: totalBitmis, color: '#ff1744' },
+        ];
+
+        const subFilterButtons = [
+          { key: 'Hepsi', label: 'Hepsi', count: totalAktif, color: 'var(--primary)' },
+          { key: 'Sirada', label: 'Sırada', count: totalSirada, color: '#ffab00' },
+          { key: 'Yapiyorum', label: 'Yapıyorum', count: totalYapıyorum, color: '#00e5ff' },
+          { key: 'Revize', label: 'Revize', count: totalRevize, color: '#d500f9' },
+        ];
 
         const priorityLabel = (p) => {
           if (p === '#ff1744') return { label: 'ACİL', color: '#ff1744' };
@@ -4231,16 +4264,59 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           return map[s] || { bg: 'rgba(255,255,255,0.05)', color: '#888' };
         };
 
-        const filterButtons = [
-          { key: 'Tumu', label: 'Tümü', count: allTasks.length, color: '#aaa' },
-          { key: 'Tamamlanan', label: 'Tamamlanan', count: totalTamamlanan, color: '#00e676' },
-          { key: 'DevamEden', label: 'Devam Eden', count: totalDevam, color: '#00e5ff' },
-          { key: 'Revize', label: 'Revize', count: totalRevize, color: '#d500f9' },
-          { key: 'Tamamlanamayan', label: 'Tamamlanamayan', count: totalBitmis, color: '#ff1744' },
-        ];
-
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', animation: 'fadeIn 0.5s ease' }}>
+
+            {/* EKİP VERİMLİLİK VE LOG DİSİPLİNİ (SADECE ADMIN) */}
+            {isAdmin && (
+              <div className="glass" style={{ padding: '30px', borderRadius: '24px' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <TrendingUp size={22} color="var(--primary)" /> Ekip Verimlilik ve Log Disiplini
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                  {isTakip.map(emp => {
+                    const wt = getWorkloadTrend(emp);
+                    const ld = getLogDiscipline(emp.rep);
+                    return (
+                      <div key={emp.rep} style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-gradient)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900' }}>{emp.rep.charAt(0)}</div>
+                            <div style={{ fontWeight: '800', color: '#fff' }}>{emp.rep}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.65rem', color: '#666', fontWeight: '800' }}>ROL</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700' }}>{emp.role}</div>
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}>
+                              <span style={{ color: '#aaa', fontWeight: '700' }}>VERİMLİLİK (TAMAMLANAN)</span>
+                              <span style={{ color: '#fff', fontWeight: '900' }}>%{wt}</span>
+                            </div>
+                            <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${wt}%`, background: 'var(--primary-gradient)', borderRadius: '4px', transition: 'width 1s ease-out' }}></div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}>
+                              <span style={{ color: '#aaa', fontWeight: '700' }}>LOG DİSİPLİNİ (7 GÜN)</span>
+                              <span style={{ color: ld > 70 ? '#00e676' : ld > 40 ? '#ffab00' : '#ff1744', fontWeight: '900' }}>%{ld}</span>
+                            </div>
+                            <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${ld}%`, background: ld > 70 ? '#00e676' : ld > 40 ? '#ffab00' : '#ff1744', borderRadius: '4px', transition: 'width 1s ease-out' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Detaylı Metrik Paneli */}
             <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 2fr' : '1fr', gap: '24px' }}>
@@ -4322,7 +4398,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                             <div style={{ display: 'flex', gap: '2px', marginBottom: '4px' }}>
                               {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill={s <= t.rating ? 'var(--primary)' : 'transparent'} color={s <= t.rating ? 'var(--primary)' : '#333'} />)}
                             </div>
-                            <div style={{ fontSize: '0.7rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.task_text}</div>
+                            <div style={{ fontSize: '0.7rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
                           </div>
                         ))}
                         {allTasks.filter(t => t.rating > 0).length === 0 && <p style={{ color: '#444', fontSize: '0.8rem' }}>Henüz puanlanmış bir işiniz bulunmuyor.</p>}
@@ -4349,40 +4425,66 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   </h3>
                   <span style={{ fontSize: '0.75rem', color: '#555' }}>{filteredTasks.length} kayıt gösteriliyor</span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {filterButtons.map(fb => (
-                    <button
-                      key={fb.key}
-                      onClick={() => setGorevFilter(fb.key)}
-                      style={{
-                        padding: '7px 14px',
-                        borderRadius: '10px',
-                        border: `1px solid ${fb.color}55`,
-                        background: gorevFilter === fb.key ? fb.color : 'rgba(255,255,255,0.02)',
-                        color: gorevFilter === fb.key ? '#000' : fb.color,
-                        fontSize: '0.75rem',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      {fb.label}
-                      <span style={{
-                        background: gorevFilter === fb.key ? 'rgba(0,0,0,0.2)' : `${fb.color}22`,
-                        color: gorevFilter === fb.key ? '#000' : fb.color,
-                        borderRadius: '6px',
-                        padding: '1px 6px',
-                        fontSize: '0.7rem',
-                        fontWeight: '900'
-                      }}>{fb.count}</span>
-                    </button>
-                  ))}
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {filterButtons.map(fb => (
+                      <button
+                        key={fb.key}
+                        onClick={() => { setGorevFilter(fb.key); setSubGorevFilter('Hepsi'); }}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '12px',
+                          border: `1px solid ${fb.color}33`,
+                          background: gorevFilter === fb.key ? fb.color : 'rgba(255,255,255,0.02)',
+                          color: gorevFilter === fb.key ? '#000' : fb.color,
+                          fontSize: '0.8rem',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        {fb.label}
+                        <span style={{
+                          background: gorevFilter === fb.key ? 'rgba(0,0,0,0.2)' : `${fb.color}22`,
+                          color: gorevFilter === fb.key ? '#000' : fb.color,
+                          borderRadius: '6px',
+                          padding: '1px 8px',
+                          fontSize: '0.75rem',
+                          fontWeight: '900'
+                        }}>{fb.count}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {gorevFilter === 'Aktif' && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      {subFilterButtons.map(sfb => (
+                        <button
+                          key={sfb.key}
+                          onClick={() => setSubGorevFilter(sfb.key)}
+                          style={{
+                            padding: '5px 12px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: subGorevFilter === sfb.key ? sfb.color : 'transparent',
+                            color: subGorevFilter === sfb.key ? '#000' : '#888',
+                            fontSize: '0.7rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {sfb.label} ({sfb.count})
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-
               {/* Görev Listesi Başlangıç */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(255,255,255,0.02)' }}>
                 {isAdmin ? (
@@ -4478,8 +4580,14 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         )}
 
                         {/* YÖNETİCİ CEVAPLARI (GERİ BİLDİRİM) */}
-                        {(t.brief_response || t.extension_response) && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '15px', background: 'rgba(0,230,118,0.02)', borderRadius: '15px', border: '1px solid rgba(0,230,118,0.1)' }}>
+                        {(t.brief_response || t.extension_response || t.revision_note) && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '18px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            {t.revision_note && (
+                              <div style={{ padding: '12px', background: 'rgba(213,0,249,0.08)', borderRadius: '12px', border: '1px solid rgba(213,0,249,0.1)' }}>
+                                <div style={{ fontSize: '0.65rem', color: '#d500f9', fontWeight: '900', marginBottom: '5px', letterSpacing: '1px' }}>🔄 REVİZYON TALEBİ</div>
+                                <div style={{ fontSize: '0.85rem', color: '#eee', lineHeight: '1.4' }}>{t.revision_note}</div>
+                              </div>
+                            )}
                             {t.brief_response && (
                               <div style={{ fontSize: '0.8rem', color: '#ccc' }}>
                                 <span style={{ color: '#ff4081', fontWeight: 'bold' }}>Brief Yanıtı:</span> {t.brief_response}
@@ -4496,16 +4604,17 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         {/* Aksiyon Alanı */}
                         <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => handleRequestBrief(t)} style={{ padding: '8px 12px', borderRadius: '10px', background: t.brief_request ? '#ff4081' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                            <button onClick={() => openActionModal('brief', t)} style={{ padding: '8px 12px', borderRadius: '10px', background: t.brief_request ? '#ff4081' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
                               Brief İste
                             </button>
-                            <button onClick={() => handleRequestExtension(t)} style={{ padding: '8px 12px', borderRadius: '10px', background: t.extension_request ? '#ffab00' : 'rgba(255,255,255,0.05)', color: t.extension_request ? '#000' : '#fff', border: 'none', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                            <button onClick={() => openActionModal('extension', t)} style={{ padding: '8px 12px', borderRadius: '10px', background: t.extension_request ? '#ffab00' : 'rgba(255,255,255,0.05)', color: t.extension_request ? '#000' : '#fff', border: 'none', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
                               Süre İste
                             </button>
                           </div>
 
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <select
+                              disabled={t.status === 'Yaptım'}
                               value={t.status}
                               onChange={e => handleStaffTaskStatusChange(t, e.target.value)}
                               style={{
@@ -4517,7 +4626,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                 fontSize: '0.8rem',
                                 fontWeight: '900',
                                 outline: 'none',
-                                cursor: 'pointer'
+                                cursor: t.status === 'Yaptım' ? 'not-allowed' : 'pointer',
+                                opacity: t.status === 'Yaptım' ? 0.7 : 1
                               }}
                             >
                               <option value="Sırada">⏳ Sırada</option>
@@ -4603,30 +4713,20 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tamamlananlar (Virgülle Ayırın)</label>
-                <textarea rows="2" value={editClientData.completed} onChange={e => setEditClientData({ ...editClientData, completed: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'vertical' }} />
+                <TextareaAutosize minRows={2} value={editClientData.completed} onChange={e => setEditClientData({ ...editClientData, completed: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Şu An Yapılanlar</label>
-                  <textarea rows="2" value={editClientData.active} onChange={e => setEditClientData({ ...editClientData, active: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                  <TextareaAutosize minRows={2} value={editClientData.active} onChange={e => setEditClientData({ ...editClientData, active: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Bizi Bekleyenler / Plan</label>
-                  <textarea rows="2" value={editClientData.pending} onChange={e => setEditClientData({ ...editClientData, pending: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                  <TextareaAutosize minRows={2} value={editClientData.pending} onChange={e => setEditClientData({ ...editClientData, pending: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Aylık Ücret (₺)</label>
-                  <input type="number" value={editClientData.monthly_fee} onChange={e => setEditClientData({ ...editClientData, monthly_fee: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Ödeme Günü</label>
-                  <input type="number" min="1" max="31" value={editClientData.payment_day} onChange={e => setEditClientData({ ...editClientData, payment_day: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-                </div>
-              </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <input
@@ -4891,6 +4991,165 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           </div>
         </div>
       )}
+      
+      {/* GÖREV TAMAMLAMA VE DOSYA YÜKLEME MODALI */}
+      {isCompModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
+            <button onClick={() => setIsCompModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={24} /></div>
+              Görevi Tamamla
+            </h2>
+            <p style={{ color: '#ccc', marginBottom: '25px', fontSize: '0.9rem', lineHeight: '1.5' }}>
+               Harika iş! Görevi teslim etmek üzeresiniz. Lütfen ne yaptığınızı kısaca not edin ve varsa çıktıları (fotoğraf, video, döküman) ekleyin.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>İş Teslim Notu</label>
+                <textarea 
+                   rows="3" 
+                   value={compText} 
+                   onChange={e => setCompText(e.target.value)} 
+                   style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '12px', color: '#fff', outline: 'none', resize: 'vertical' }} 
+                   placeholder="Örn: Tasarımlar Google Drive'a yüklendi, müşteri onayı alındı."
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Kanıt / Dosya Yükle</label>
+                <div style={{ border: '1px dashed #444', padding: '20px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', textAlign: 'center' }}>
+                  <input 
+                    type="file" 
+                    id="comp-file-input"
+                    onChange={e => setCompFile(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="comp-file-input" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <Upload size={24} color="var(--primary)" />
+                    <span style={{ fontSize: '0.85rem', color: compFile ? 'var(--primary)' : '#888' }}>
+                      {compFile ? compFile.name : 'Dosya Seç (Foto, Video, PDF...)'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <button 
+                 onClick={handleConfirmCompletion} 
+                 disabled={compUploading}
+                 className="btn" 
+                 style={{ background: 'var(--primary)', color: '#000', padding: '16px', fontSize: '1.1rem', marginTop: '10px', fontWeight: '900', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+              >
+                 {compUploading ? 'Yükleniyor...' : 'Teslim Et ve Kapat'}
+                 {!compUploading && <ArrowRight size={20} />}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROFESYONEL AKSİYON MODALI */}
+      {isActionModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass" style={{ border: '1px solid var(--primary)', borderRadius: '32px', padding: '40px', width: '100%', maxWidth: '550px', position: 'relative', boxShadow: '0 0 50px rgba(0,229,255,0.1)' }}>
+            <button onClick={() => setIsActionModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: '#fff', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
+              <div style={{ width: '48px', height: '48px', background: 'var(--primary)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+                <Zap size={24} />
+              </div>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: '900', margin: 0 }}>{actionConfig.title}</h2>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#666', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px' }}>MESAJ / AÇIKLAMA</label>
+                <textarea 
+                  rows="4" 
+                  value={actionInput} 
+                  onChange={e => setActionInput(e.target.value)} 
+                  placeholder={actionConfig.placeholder}
+                  style={{ width: '100%', padding: '18px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '18px', color: '#fff', outline: 'none', resize: 'none', fontSize: '0.95rem', lineHeight: '1.5' }} 
+                />
+              </div>
+
+              {actionConfig.showSecond && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '10px', color: '#666', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px' }}>{actionConfig.secondPlaceholder?.toUpperCase()}</label>
+                  <input 
+                    type={actionConfig.type === 'extension' ? 'date' : 'text'}
+                    value={actionInput2} 
+                    onChange={e => setActionInput2(e.target.value)} 
+                    placeholder={actionConfig.secondPlaceholder}
+                    style={{ width: '100%', padding: '16px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', color: '#fff', outline: 'none', fontSize: '1rem' }} 
+                  />
+                </div>
+              )}
+
+              <button 
+                onClick={handleActionSubmit}
+                style={{ width: '100%', background: 'var(--primary)', color: '#000', padding: '18px', borderRadius: '18px', border: 'none', fontSize: '1.1rem', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: 'transform 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                {actionConfig.buttonText}
+                <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* GÖREV DETAY MODALI */}
+      {isTaskDetailModalOpen && selectedTask && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(20px)', zIndex: 12000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass" style={{ border: '1px solid var(--primary)', borderRadius: '32px', padding: '40px', width: '100%', maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => setIsTaskDetailModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: '#fff', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <X size={28} />
+            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
+               <div style={{ background: selectedTask.priority || 'var(--primary)', padding: '8px 15px', borderRadius: '10px', color: '#000', fontSize: '0.75rem', fontWeight: '900' }}>
+                 {(selectedTask.category || 'PROJE').toUpperCase()}
+               </div>
+               <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '600' }}>
+                 🗓 {selectedTask.due_date || 'Tarih Belirtilmemiş'}
+               </div>
+            </div>
+
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ display: 'block', marginBottom: '15px', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px' }}>GÖREV DETAYI</label>
+              <div 
+                style={{ color: '#fff', fontSize: '1.1rem', lineHeight: '1.8', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} 
+                dangerouslySetInnerHTML={{ __html: selectedTask.task_text }} 
+                className="task-html-content"
+              ></div>
+            </div>
+
+            {selectedTask.attachment_url && (
+              <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#666', fontSize: '0.7rem', fontWeight: '800' }}>EKLİ DOSYA</label>
+                <a 
+                  onClick={e => e.stopPropagation()}
+                  href={selectedTask.attachment_url} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}
+                >
+                  <FileCode size={20} />
+                  {selectedTask.attachment_name || 'Dosyayı Görüntüle'}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+        </div>{/* /sağ içerik */}
+        </div>{/* /admin-layout */}
+      </div>{/* /container */}
     </div>
   );
 };
