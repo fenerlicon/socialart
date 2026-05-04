@@ -2309,9 +2309,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   className={`glass stat-card ${isActive ? 'active-filter' : ''}`}
                   onClick={() => {
                     if (isBucketFilter) {
+                      setActiveTab('gorev');
                       setDashboardBucketFilter(isActive ? 'Hepsi' : stat.title);
-                    } else if (isLeadFilter) {
-                      if (stat.title === 'Toplam Potansiyel Lead') {
+                    } else if (isLeadFilter || ['Dönüşüm Oranı', 'Haftalık Yeni Lead'].includes(stat.title)) {
+                      setActiveTab('potansiyel');
+                      if (stat.title === 'Toplam Potansiyel Lead' || stat.title === 'Haftalık Yeni Lead' || stat.title === 'Dönüşüm Oranı') {
                         setLeadSubTab('all');
                         setLeadStatusFilter('Hepsi');
                       } else if (stat.title === 'Sıcak (Olumlu) Potansiyel') {
@@ -2326,6 +2328,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       } else {
                         setLeadStatusFilter(stat.filter);
                       }
+                    } else if (stat.title === 'Aktif Yönetilen Proje' || stat.title === 'Ortalama İlerleme Seviyesi') {
+                      setActiveTab('aktif');
+                    } else if (stat.title === 'Toplam İş Yükü') {
+                      setActiveTab('gorev');
                     }
                   }}
                   style={{ 
@@ -2339,13 +2345,25 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   {isActive && (
                     <div style={{ position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', borderRadius: '50%', background: stat.color }}></div>
                   )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
+                  <div style={{ 
+                    width: '42px', 
+                    height: '42px', 
+                    borderRadius: '12px', 
+                    background: 'rgba(255,255,255,0.03)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    color: stat.color || 'var(--primary)'
+                  }}>
                     {stat.icon}
                   </div>
+                  <div style={{ marginTop: 'auto' }}>
+                    <div className="stat-value" style={{ lineHeight: '1.2' }}>{stat.value}</div>
+                    <div className="stat-label" style={{ opacity: 0.6, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.title}</div>
+                  </div>
                 </div>
-                <div className="stat-value">{stat.value}</div>
-                <div className="stat-label">{stat.title}</div>
               </div>
               );
             })}
@@ -5288,39 +5306,59 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         .stats-grid {
           display: grid;
-          grid-template-columns: 1fr;
-          gap: 15px;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 20px;
           margin-bottom: 30px;
         }
 
         .stat-card {
           padding: 24px;
+          border-radius: 24px;
+          min-height: 160px;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
-          min-height: 160px;
+          position: relative;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover {
+          background: rgba(255, 255, 255, 0.04);
+          transform: translateY(-4px);
+          border-color: rgba(255, 255, 255, 0.1);
         }
 
         .stat-card .stat-value {
-          font-size: 2.2rem;
-          font-weight: 800;
+          font-size: 2.4rem;
+          font-weight: 900;
+          color: #fff;
           margin-bottom: 4px;
         }
 
         .stat-card .stat-label {
           color: var(--text-muted);
-          font-size: 0.95rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .stat-card.active-filter {
+          border: 2px solid var(--primary) !important;
+          background: rgba(0, 229, 255, 0.08);
+          box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
         }
 
         @media (max-width: 1400px) {
           .stat-card { padding: 20px; min-height: 140px; }
-          .stat-card .stat-value { font-size: 1.8rem; }
-          .stat-card .stat-label { font-size: 0.85rem; }
+          .stat-card .stat-value { font-size: 2rem; }
+          .stat-card .stat-label { font-size: 0.7rem; }
         }
 
         @media (min-width: 768px) {
           .stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
           }
           .task-manager-grid {
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
