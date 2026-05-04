@@ -11,7 +11,7 @@ import Login from './Login';
 import { supabase } from '../lib/supabase';
 import TextareaAutosize from 'react-textarea-autosize';
 import ReactQuill from 'react-quill-new';
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill-new/dist/quill.snow.css';
 
 const AdminStyles = () => (
   <style>{`
