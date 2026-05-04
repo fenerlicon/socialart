@@ -768,6 +768,7 @@ function Admin() {
   const [selectedReportDate, setSelectedReportDate] = useState(new Date().toISOString().split('T')[0]);
   const [isUploadingReport, setIsUploadingReport] = useState(false);
   const [editingReportId, setEditingReportId] = useState(null);
+  const [selectedReportDetail, setSelectedReportDetail] = useState(null);
 
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
@@ -4092,86 +4093,154 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   });
                 })()}
               </div>
+              <div style={{ padding: '25px' }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  {staffReports.filter(r => {
+                    const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
+                    const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
+                    return isOwner && isSameDate;
+                  }).map((report) => (
+                    <div 
+                      key={report.id} 
+                      className="glass" 
+                      onClick={() => setSelectedReportDetail(report)}
+                      style={{ 
+                        borderRadius: '20px', 
+                        padding: '20px', 
+                        cursor: 'pointer', 
+                        transition: 'all 0.3s',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(255,255,255,0.02)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '15px',
+                        position: 'relative'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'translateY(-5px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontWeight: '800', color: 'var(--primary)', fontSize: '1rem' }}>{report.staff_name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#888', fontWeight: '600' }}>{report.staff_role}</div>
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#555', background: 'rgba(255,255,255,0.03)', padding: '4px 8px', borderRadius: '6px' }}>
+                          {new Date(report.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>TARİH / PERSONEL</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>RAPOR İÇERİĞİ</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>EKLER</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {staffReports.filter(r => {
-                      const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
-                      const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
-                      return isOwner && isSameDate;
-                    }).map((report) => (
-                      <tr key={report.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                        <td style={{ padding: '15px 24px', width: '250px' }}>
-                          <div style={{ fontWeight: '700', color: 'var(--primary)' }}>{report.staff_name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#888' }}>{report.staff_role}</div>
-                          <div style={{ fontSize: '0.7rem', color: '#555', marginTop: '4px' }}>{new Date(report.created_at).toLocaleString('tr-TR')}</div>
-                        </td>
-                        <td style={{ padding: '15px 24px', fontSize: '0.9rem', color: '#eee', whiteSpace: 'pre-line' }}>
-                          {report.content}
-                        </td>
-                        <td style={{ padding: '15px 24px', width: '200px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {report.file_url && (
-                              <a href={report.file_url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
-                                <Download size={14} /> {report.file_name || 'Dosya'}
-                              </a>
-                            )}
-                            {/* Eski tekil link desteği */}
-                            {report.external_link && (
-                              <a href={report.external_link.startsWith('http') ? report.external_link : `https://${report.external_link}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
-                                <ExternalLink size={14} /> Linke Git
-                              </a>
-                            )}
-                            {/* Yeni çoğul link desteği */}
-                            {report.external_links && report.external_links.map((link, li) => (
-                              <a key={li} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: '700' }}>
-                                <ExternalLink size={14} /> Link {report.external_links.length > 1 ? li + 1 : ''}
-                              </a>
-                            ))}
-                            {!report.file_url && !report.external_link && (!report.external_links || report.external_links.length === 0) && <span style={{ opacity: 0.3, fontSize: '0.8rem' }}>Ek yok</span>}
-                          </div>
-                        </td>
-                        <td style={{ padding: '15px 24px', textAlign: 'right' }}>
-                          {(() => {
-                            const reportDate = (report.report_date || new Date(report.created_at).toISOString().split('T')[0]);
-                            const isToday = new Date().toISOString().split('T')[0] === reportDate;
-                            const isMyReport = report.staff_name === currentUser.name;
-                            if (isToday && isMyReport) {
-                              return (
-                                <button 
-                                  onClick={() => {
-                                    setEditingReportId(report.id);
-                                    setReportInput(report.content);
-                                    setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
-                                    document.getElementById('report-form-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }}
-                                  style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: '1px solid rgba(0,229,255,0.15)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}
-                                >
-                                  DÜZENLE
-                                </button>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </td>
-                      </tr>
-                    ))}
-                    {staffReports.length === 0 && (
-                      <tr>
-                        <td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Henüz rapor gönderilmemiş.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      <div style={{ 
+                        fontSize: '0.85rem', 
+                        color: '#bbb', 
+                        lineHeight: '1.5',
+                        display: '-webkit-box',
+                        WebkitLineClamp: '3',
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {report.content}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {(report.file_url || report.external_link || (report.external_links && report.external_links.length > 0)) ? (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FileText size={12} /> { (report.external_links?.length || 0) + (report.file_url ? 1 : 0) + (report.external_link ? 1 : 0) } Ek
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: '#444' }}>Ek yok</span>
+                          )}
+                        </div>
+                        
+                        {(() => {
+                          const reportDate = (report.report_date || new Date(report.created_at).toISOString().split('T')[0]);
+                          const isToday = new Date().toISOString().split('T')[0] === reportDate;
+                          const isMyReport = report.staff_name === currentUser.name;
+                          if (isToday && isMyReport) {
+                            return (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingReportId(report.id);
+                                  setReportInput(report.content);
+                                  setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
+                                  document.getElementById('report-form-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }}
+                                style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: 'none', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '800', cursor: 'pointer' }}
+                              >
+                                DÜZENLE
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {staffReports.filter(r => {
+                  const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
+                  const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
+                  return isOwner && isSameDate;
+                }).length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '60px 0', color: '#555' }}>
+                    <FileText size={48} style={{ opacity: 0.1, marginBottom: '15px' }} />
+                    <p>Bu tarihte henüz rapor girilmemiş.</p>
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Rapor Detay Modalı */}
+            {selectedReportDetail && (
+              <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div className="glass" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden', borderRadius: '24px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>Rapor Detayı</h3>
+                      <div style={{ fontSize: '0.9rem', color: '#888' }}>{selectedReportDetail.staff_name} • {new Date(selectedReportDetail.created_at).toLocaleString('tr-TR')}</div>
+                    </div>
+                    <button onClick={() => setSelectedReportDetail(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
+                    <div style={{ fontSize: '1.05rem', lineHeight: '1.8', color: '#eee', whiteSpace: 'pre-line', marginBottom: '30px' }}>
+                      {selectedReportDetail.content}
+                    </div>
+
+                    {(selectedReportDetail.file_url || selectedReportDetail.external_link || (selectedReportDetail.external_links && selectedReportDetail.external_links.length > 0)) && (
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                        <h4 style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '15px', fontWeight: '800' }}>EKLER VE LİNKLER</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
+                          {selectedReportDetail.file_url && (
+                            <a href={selectedReportDetail.file_url} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
+                              <Download size={16} color="var(--accent)" /> {selectedReportDetail.file_name || 'Dosya'}
+                            </a>
+                          )}
+                          {selectedReportDetail.external_link && (
+                            <a href={selectedReportDetail.external_link.startsWith('http') ? selectedReportDetail.external_link : `https://${selectedReportDetail.external_link}`} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
+                              <ExternalLink size={16} color="var(--primary)" /> Linke Git
+                            </a>
+                          )}
+                          {selectedReportDetail.external_links && selectedReportDetail.external_links.map((link, i) => (
+                            <a key={i} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
+                              <ExternalLink size={16} color="var(--primary)" /> Link {selectedReportDetail.external_links.length > 1 ? i + 1 : ''}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             </div>
           </div>
         )}
