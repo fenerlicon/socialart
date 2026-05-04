@@ -2846,8 +2846,114 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         
 
 
+      {/* YENİ POTANSİYEL EKLEME MODALI */}
+      {isAddModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
+          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '600px', position: 'relative', margin: 'auto' }}>
+            <button onClick={() => setIsAddModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#fff' }}>Yeni Potansiyel Müşteri Ekle</h2>
+            <form onSubmit={handleAddPotansiyel} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Ad Soyad</label>
+                  <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>İletişim (Tel / Instagram)</label>
+                  <input type="text" required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Platform</label>
+                  <select value={formData.platform} onChange={e => setFormData({ ...formData, platform: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
+                    <option value="">Seçiniz...</option>
+                    <option value="Instagram DM">Instagram DM</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Arama">Arama / Telefon</option>
+                    <option value="Referans">Referans</option>
+                    <option value="Diğer">Diğer</option>
+                  </select>
+                </div>
+                {formData.platform === 'Instagram DM' && (
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Instagram Kullanıcı Adı</label>
+                    <input type="text" placeholder="@kullaniciadi" value={formData.instagram_username} onChange={e => setFormData({ ...formData, instagram_username: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--primary)', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                  </div>
+                )}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>E-Posta (Opsiyonel)</label>
+                  <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '12px', color: '#ccc', fontSize: '0.9rem' }}>İlgilenilen Hizmetler</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                  {['Sosyal Medya', 'Prodüksiyon', 'Web Tasarım', 'SEO / ADS', 'Branding', 'Diğer'].map(service => (
+                    <label key={service} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#aaa', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.selectedServices.includes(service)}
+                        onChange={(e) => {
+                          const updated = e.target.checked
+                            ? [...formData.selectedServices, service]
+                            : formData.selectedServices.filter(s => s !== service);
+                          setFormData({ ...formData, selectedServices: updated });
+                        }}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                      {service}
+                    </label>
+                  ))}
+                </div>
+                {formData.selectedServices.includes('Diğer') && (
+                  <div style={{ marginTop: '12px' }}>
+                    <input
+                      type="text"
+                      placeholder="Lütfen diğer hizmeti belirtin..."
+                      value={formData.otherService}
+                      onChange={e => setFormData({ ...formData, otherService: e.target.value })}
+                      style={{ width: '100%', padding: '10px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--primary)', borderRadius: '8px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Temsilci / İlgilenen</label>
+                  <input type="text" required value={formData.rep} onChange={e => setFormData({ ...formData, rep: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Aşama</label>
+                  <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
+                    <option value="Sıcak">Sıcak / Olumlu</option>
+                    <option value="Beklemede">Beklemede / Kararsız</option>
+                    <option value="Ertelendi">Ertelendi</option>
+                    <option value="Reddedildi">Reddedildi</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görüşme Neden Yarım Kaldı / Müşteri Ne Dedi?</label>
+                <textarea rows="3" required value={formData.reaction} onChange={e => setFormData({ ...formData, reaction: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'vertical' }} placeholder="Fiyat çok geldi, eşiyle görüşecek vs." />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontSize: '1rem', marginTop: '10px' }}>Kaydet ve Listeye Ekle</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Görev Atama Modalı */}
       {isTaskModalOpen && (
+
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
           <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative', margin: 'auto' }}>
             <button onClick={() => setIsTaskModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
