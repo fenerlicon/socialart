@@ -2868,6 +2868,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     <option value="Instagram DM">Instagram DM</option>
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Arama">Arama / Telefon</option>
+                    <option value="Web Sitesi / Form">Web Sitesi / Form</option>
                     <option value="Referans">Referans</option>
                     <option value="Diğer">Diğer</option>
                   </select>
@@ -2903,6 +2904,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     'Marka Kimliği Tasarımı', 
                     'Influencer Marketing', 
                     'Video Prodüksiyon', 
+                    'Sunuculu Reklam Videosu',
+                    'Stüdyo Çekimi',
                     'Diğer'
                   ].map(service => (
                     <label key={service} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: '#fff', cursor: 'pointer' }}>
