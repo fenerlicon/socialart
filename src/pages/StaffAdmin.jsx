@@ -101,7 +101,7 @@ const AdminStyles = () => (
 );
 
 
-const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
+const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel, onCardClick }) => (
   <div style={{
     padding: '25px 30px',
     borderBottom: '1px solid rgba(255,255,255,0.03)',
@@ -110,10 +110,12 @@ const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
     flexDirection: 'column',
     gap: '15px',
     transition: 'background 0.15s',
-    minHeight: '120px'
+    minHeight: '120px',
+    cursor: 'pointer'
   }}
     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    onClick={() => onCardClick && onCardClick(t)}
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -148,10 +150,15 @@ const ManagerTaskRow = ({ t, pri, ss, now, phaseLabel }) => (
       textDecoration: t.status === 'Yaptım' ? 'line-through' : 'none',
       wordBreak: 'break-word',
       lineHeight: '1.5',
-      marginBottom: '5px'
+      marginBottom: '5px',
+      overflow: 'hidden',
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical'
     }}>
-      {t.task_text}
+      {stripHtml(t.task_text).replace(/\s+/g, ' ').trim()}
     </div>
+
     {t.revision_note && (
       <div style={{ padding: '12px 15px', background: 'rgba(213,0,249,0.05)', border: '1px solid rgba(213,0,249,0.1)', borderRadius: '12px', fontSize: '0.85rem', color: '#ff80ab', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
         <RefreshCw size={14} style={{ marginTop: '3px', flexShrink: 0 }} />
@@ -4584,7 +4591,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     <div style={{ padding: '15px 24px', background: 'rgba(0,229,255,0.05)', color: 'var(--primary)', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid rgba(0,229,255,0.1)' }}>🔥🔥 AKTİF / DEVAM EDEN GÖREVLER</div>
                     {allTasks.filter(t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status)).length > 0 ? (
                       allTasks.filter(t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status)).map((t, i) => (
-                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} />
+                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} onCardClick={task => { setSelectedTask(task); setIsTaskDetailModalOpen(true); }} />
                       ))
                     ) : <div style={{ padding: '30px', textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>Şu an aktif görev bulunmuyor.</div>}
 
@@ -4592,7 +4599,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     <div style={{ padding: '15px 24px', background: 'rgba(0,230,118,0.05)', color: '#00e676', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid rgba(0,230,118,0.1)', marginTop: '20px' }}>✅ TAMAMLANAN GÖREVLER</div>
                     {allTasks.filter(t => t.status === 'Yaptım').length > 0 ? (
                       allTasks.filter(t => t.status === 'Yaptım').map((t, i) => (
-                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} />
+                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} onCardClick={task => { setSelectedTask(task); setIsTaskDetailModalOpen(true); }} />
                       ))
                     ) : <div style={{ padding: '30px', textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>Henüz tamamlanan görev yok.</div>}
 
@@ -4600,7 +4607,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     <div style={{ padding: '15px 24px', background: 'rgba(255,23,68,0.05)', color: '#ff1744', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,23,68,0.1)', marginTop: '20px' }}>❌ BAŞARISIZ / TAMAMLANAMAYANLAR</div>
                     {allTasks.filter(t => t.status === 'Tamamlanamadı').length > 0 ? (
                       allTasks.filter(t => t.status === 'Tamamlanamadı').map((t, i) => (
-                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} />
+                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} onCardClick={task => { setSelectedTask(task); setIsTaskDetailModalOpen(true); }} />
                       ))
                     ) : <div style={{ padding: '30px', textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>Başarısız kayıt bulunmuyor.</div>}
                   </div>
