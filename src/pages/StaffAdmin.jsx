@@ -767,6 +767,7 @@ function Admin() {
   const [reportFile, setReportFile] = useState(null);
   const [selectedReportDate, setSelectedReportDate] = useState(new Date().toISOString().split('T')[0]);
   const [isUploadingReport, setIsUploadingReport] = useState(false);
+  const [editingReportId, setEditingReportId] = useState(null);
 
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
@@ -1320,6 +1321,7 @@ function Admin() {
       setReportInput('');
       setReportFile(null);
       setReportLinks(['']);
+      setEditingReportId(null);
       fetchAllData();
       alert(existingReport ? 'Raporunuz başarıyla güncellendi.' : 'Rapor başarıyla gönderildi.');
     } catch (err) {
@@ -4008,8 +4010,22 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   className="btn btn-primary"
                   style={{ padding: '15px', fontWeight: '800' }}
                 >
-                  {isUploadingReport ? 'GÖNDERİLİYOR...' : 'RAPORU GÖNDER'}
+                  {isUploadingReport ? 'GÖNDERİLİYOR...' : (editingReportId ? 'RAPORU GÜNCELLE' : 'RAPORU GÖNDER')}
                 </button>
+                {editingReportId && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setEditingReportId(null);
+                      setReportInput('');
+                      setReportLinks(['']);
+                      setReportFile(null);
+                    }}
+                    style={{ marginTop: '10px', background: 'rgba(255,255,255,0.05)', color: '#888', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                  >
+                    Vazgeç (Yeni Rapor Yaz)
+                  </button>
+                )}
               </form>
             </div>
 
@@ -4120,8 +4136,31 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                 <ExternalLink size={14} /> Link {report.external_links.length > 1 ? li + 1 : ''}
                               </a>
                             ))}
-                            {!report.file_url && !report.external_link && (!report.external_links || report.external_links.length === 0) && <span style={{ color: '#444', fontSize: '0.8rem' }}>Ek yok</span>}
+                            {!report.file_url && !report.external_link && (!report.external_links || report.external_links.length === 0) && <span style={{ opacity: 0.3, fontSize: '0.8rem' }}>Ek yok</span>}
                           </div>
+                        </td>
+                        <td style={{ padding: '15px 24px', textAlign: 'right' }}>
+                          {(() => {
+                            const reportDate = (report.report_date || new Date(report.created_at).toISOString().split('T')[0]);
+                            const isToday = new Date().toISOString().split('T')[0] === reportDate;
+                            const isMyReport = report.staff_name === currentUser.name;
+                            if (isToday && isMyReport) {
+                              return (
+                                <button 
+                                  onClick={() => {
+                                    setEditingReportId(report.id);
+                                    setReportInput(report.content);
+                                    setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: '1px solid rgba(0,229,255,0.15)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}
+                                >
+                                  DÜZENLE
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
                         </td>
                       </tr>
                     ))}
