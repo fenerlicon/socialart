@@ -3930,7 +3930,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             <div className="glass" style={{ padding: '15px 25px', borderRadius: '16px', background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.15)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                <Clock size={18} color="var(--primary)" />
                <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
-                 Bugün saat <span style={{ color: 'var(--primary)' }}>23:59</span>'a kadar raporunuzu dilediğiniz kadar güncelleyebilirsiniz. 
+                 Bugün saat <span style={{ color: 'var(--primary)' }}>23:59</span>&apos;a kadar raporunuzu dilediğiniz kadar güncelleyebilirsiniz. 
                  {(() => {
                    const endOfDay = new Date();
                    endOfDay.setHours(23, 59, 59, 999);
@@ -4241,7 +4241,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 </div>
               </div>
             )}
-            </div>
           </div>
         )}
 
