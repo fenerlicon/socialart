@@ -81,7 +81,7 @@ const AdminStyles = () => (
     .mobile-only { display: none; }
 
     @media (max-width: 1024px) {
-      .admin-layout { flex-direction: column; gap: 20px; }
+      .admin-layout { flex-direction: column; gap: 20px; margin-top: 80px; }
       .admin-sidebar-nav {
         position: fixed;
         top: 0;
@@ -96,6 +96,40 @@ const AdminStyles = () => (
       }
       .admin-sidebar-nav.open { left: 0; }
       .mobile-only { display: flex; }
+      
+      /* Grid ve Kart Düzeltmeleri */
+      div[style*="gridTemplateColumns: repeat(4, 1fr)"],
+      div[style*="gridTemplateColumns: 1fr 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 15px !important;
+      }
+      
+      div[style*="gridTemplateColumns: 2.5fr 1fr"],
+      div[style*="gridTemplateColumns: 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      .welcome-panel {
+        padding: 20px !important;
+        margin-bottom: 20px !important;
+      }
+      
+      .welcome-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px !important;
+      }
+      
+      .welcome-content > div:last-child {
+        text-align: center !important;
+        margin: 0 !important;
+      }
+
+      /* Tab butonları fix */
+      div[style*="display: flex"][style*="gap: 10px"] {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
     }
   `}</style>
 );
