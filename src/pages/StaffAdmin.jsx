@@ -3942,7 +3942,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
 
             {/* Rapor Gönderme Formu */}
-            <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
+            <div id="report-form-area" className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <FileText size={20} color="var(--primary)" /> {staffReports.some(r => r.staff_name === currentUser.name && r.created_at.startsWith(new Date().toISOString().split('T')[0])) ? 'Bugünkü Raporu Güncelle' : 'Bugün Naptım? (Günlük Rapor)'}
               </h3>
@@ -4151,7 +4151,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                     setEditingReportId(report.id);
                                     setReportInput(report.content);
                                     setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    document.getElementById('report-form-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                   }}
                                   style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: '1px solid rgba(0,229,255,0.15)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}
                                 >
