@@ -4188,12 +4188,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
                   const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
                   return isOwner && isSameDate;
-                }).length === 0 && (
+                }).length === 0 && 
                   <div style={{ textAlign: 'center', padding: '60px 0', color: '#555' }}>
                     <FileText size={48} style={{ opacity: 0.1, marginBottom: '15px' }} />
                     <p>Bu tarihte henüz rapor girilmemiş.</p>
                   </div>
-                )}
+                }
               </div>
             </div>
 
