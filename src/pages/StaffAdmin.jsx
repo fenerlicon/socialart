@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import {
   Users, DollarSign, Activity, FileText, MoreVertical,
   Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut,
@@ -470,7 +470,7 @@ function Admin() {
         if (logData) setActivityLogs(logData);
 
         // 4. Fetch chat messages
-        const { data: chatData } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(50);
+        await supabase.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(50);
         // if (chatData) setChatMessages(chatData);
 
         // 5. Fetch blocked slots
@@ -747,12 +747,8 @@ function Admin() {
   const [taskFile, setTaskFile] = useState(null);
   const [taskUploading, setTaskUploading] = useState(false);
   const [compUploading, setCompUploading] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-
   // Performance System States
-  const [ratings, setRatings] = useState([]);
   const [perfEmployee, setPerfEmployee] = useState(null);
-  const [perfScore, setPerfScore] = useState(5);
 
   // Müşteri değiştikçe eski analiz sonucunu temizle
   useEffect(() => {
@@ -761,6 +757,8 @@ function Admin() {
   const [perfComment, setPerfComment] = useState('');
   const [perfMonth, setPerfMonth] = useState(new Date().getMonth() + 1);
   const [perfYear, setPerfYear] = useState(new Date().getFullYear());
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [perfScore, setPerfScore] = useState(5);
 
   // Staff Reports States
   const [staffReports, setStaffReports] = useState([]);
@@ -775,11 +773,8 @@ function Admin() {
   const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
 
   // Calendar States
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [year, setYear] = useState(new Date().getFullYear());
   const [calendarPopup, setCalendarPopup] = useState(null);
   const [selectedLog, setSelectedLog] = useState(null);
-  const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
@@ -1489,14 +1484,6 @@ function Admin() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    if (status === 'Sıcak') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent)', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
-    if (status === 'Beklemede' || status === 'Ertelendi') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(255, 171, 0, 0.1)', color: '#ffab00', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
-    if (status === 'Teklif Bekliyor') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(255, 215, 0, 0.1)', color: '#FFD700', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
-    if (status === 'Teklif İletildi') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(0, 230, 118, 0.1)', color: '#00e676', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
-    if (status === 'Reddedildi') return <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '50px', background: 'rgba(255, 0, 85, 0.1)', color: 'var(--secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>{status}</span>;
-    return <span style={{ fontSize: '0.75rem', color: '#888' }}>{status}</span>;
-  };
 
   const handleAddPotansiyel = async (e) => {
     e.preventDefault();
@@ -4136,7 +4123,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         )}
 
         {/* Müşteri Talepleri Tabı */}
-        {false && activeTab === 'support' && (
+        {activeTab === 'support' && (
         <div className={`support-layout ${selectedSupportClient ? 'detail-active' : 'list-active'}`} style={{ display: 'grid', gap: '30px', height: 'calc(100vh - 250px)' }}>
 
           {/* Sol Kolon: Müşteri Listesi */}
@@ -4464,7 +4451,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                             </div>
                             {currentUser?.permissions === 'all' && (
                               <button 
-                                onClick={() => handleTaskStatusChange(person.id, t, 'completedTasks', 'Revize')}
+                                onClick={() => handleTaskStatusChange(emp.id, t, 'completedTasks', 'Revize')}
                                 style={{ background: 'rgba(213,0,249,0.1)', color: '#d500f9', border: '1px solid rgba(213,0,249,0.2)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}
                               >
                                 REVİZE İSTE

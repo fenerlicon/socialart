@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight, Monitor, Layers } from 'lucide-react';
+import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight, Monitor, Layers, Maximize2 } from 'lucide-react';
 import '../Services.css';
 
 // Import local images to let Vite handle them
@@ -12,6 +12,16 @@ import ugc3 from '../assets/images/6.jpg';
 function Services() {
   const [expandedId, setExpandedId] = useState(null);
   const [lightbox, setLightbox] = useState({ open: false, media: [], index: 0 });
+  
+  // Side effect to handle body scroll lock
+  React.useEffect(() => {
+    if (lightbox.open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [lightbox.open]);
 
   const toggleAccordion = (id) => {
     setExpandedId(expandedId === id ? null : id);
@@ -19,12 +29,10 @@ function Services() {
 
   const openLightbox = (mediaList, index) => {
     setLightbox({ open: true, media: mediaList, index });
-    document.body.style.overflow = 'hidden';
   };
 
   const closeLightbox = () => {
     setLightbox({ open: false, media: [], index: 0 });
-    document.body.style.overflow = 'auto';
   };
 
   const nextMedia = (e) => {
