@@ -1545,7 +1545,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
     }
   };
 
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Takvim ay atlamasını engellemek için günü 1'e sabitliyoruz
+  const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [calendarPopup, setCalendarPopup] = useState(null); // { dateStr, persons: [{name, tasks}] }
   const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
@@ -1767,8 +1768,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <Plus size={18} /> Takvime Kayıt Ekle
             </button>
             <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.1)', margin: '0 10px' }}></div>
-            <button onClick={() => setCurrentDate(new Date(year, month - 1))} className="icon-btn" style={{ padding: '10px' }}>Prev</button>
-            <button onClick={() => setCurrentDate(new Date(year, month + 1))} className="icon-btn" style={{ padding: '10px' }}>Next</button>
+            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="icon-btn" style={{ padding: '10px' }}>Prev</button>
+            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="icon-btn" style={{ padding: '10px' }}>Next</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
