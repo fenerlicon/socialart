@@ -3929,7 +3929,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                  {(() => {
                    const endOfDay = new Date();
                    endOfDay.setHours(23, 59, 59, 999);
-                   const diff = endOfDay - now;
+                   const diff = endOfDay - new Date();
                    const hours = Math.floor(diff / (1000 * 60 * 60));
                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                    return <span style={{ marginLeft: '10px', opacity: 0.7 }}>(Kalan: {hours}s {mins}d)</span>;
