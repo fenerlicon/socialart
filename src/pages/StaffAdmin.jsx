@@ -1447,7 +1447,8 @@ function Admin() {
       return [
         { title: 'Toplam Potansiyel Lead', value: potansiyel.length, icon: <Users size={24} color="var(--primary)" />, filter: 'Hepsi' },
         { title: 'Sıcak (Olumlu) Potansiyel', value: potansiyel.filter(p => p.status === 'Sıcak').length, icon: <Activity size={24} color="var(--accent)" />, filter: 'Sıcak' },
-        { title: 'Teklif Bekleyen', value: potansiyel.filter(p => p.status === 'Teklif Bekliyor').length, icon: <Clock size={24} color="#ffab00" />, filter: 'Teklif Bekliyor' }
+        { title: 'Teklif Bekleyen', value: potansiyel.filter(p => p.status === 'Teklif Bekliyor').length, icon: <Clock size={24} color="#ffab00" />, filter: 'Teklif Bekliyor' },
+        { title: 'Teklif İletildi', value: potansiyel.filter(p => p.status === 'Teklif İletildi').length, icon: <Send size={24} color="#00e676" />, filter: 'Teklif İletildi' }
       ];
     } else if (activeTab === 'aktif') {
       return [
@@ -2307,7 +2308,21 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     if (isBucketFilter) {
                       setDashboardBucketFilter(isActive ? 'Hepsi' : stat.title);
                     } else if (isLeadFilter) {
-                      setLeadStatusFilter(stat.filter);
+                      if (stat.title === 'Toplam Potansiyel Lead') {
+                        setLeadSubTab('all');
+                        setLeadStatusFilter('Hepsi');
+                      } else if (stat.title === 'Sıcak (Olumlu) Potansiyel') {
+                        setLeadSubTab('active');
+                        setLeadStatusFilter('Sıcak');
+                      } else if (stat.title === 'Teklif Bekleyen') {
+                        setLeadSubTab('pending_proposal');
+                        setLeadStatusFilter('Teklif Bekliyor');
+                      } else if (stat.title === 'Teklif İletildi') {
+                        setLeadSubTab('sent_proposal');
+                        setLeadStatusFilter('Teklif İletildi');
+                      } else {
+                        setLeadStatusFilter(stat.filter);
+                      }
                     }
                   }}
                   style={{ 
@@ -2341,7 +2356,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
               <div className="glass" style={{ display: 'flex', padding: '6px', borderRadius: '16px', border: '1px solid var(--surface-border)', background: 'rgba(255,255,255,0.02)' }}>
                 <button
-                  onClick={() => setLeadSubTab('active')}
+                  onClick={() => { setLeadSubTab('active'); setLeadStatusFilter('Hepsi'); }}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '12px',
@@ -2357,7 +2372,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   🚀 Nitelikli Leadler ({potansiyel.filter(p => ['Sıcak', 'Beklemede'].includes(p.status)).length})
                 </button>
                 <button
-                  onClick={() => setLeadSubTab('pending_proposal')}
+                  onClick={() => { setLeadSubTab('pending_proposal'); setLeadStatusFilter('Hepsi'); }}
                   style={{
                     padding: '10px 18px',
                     borderRadius: '12px',
@@ -2373,7 +2388,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   🧾 Teklif Bekleyen ({potansiyel.filter(p => p.status === 'Teklif Bekliyor').length})
                 </button>
                 <button
-                  onClick={() => setLeadSubTab('sent_proposal')}
+                  onClick={() => { setLeadSubTab('sent_proposal'); setLeadStatusFilter('Hepsi'); }}
                   style={{
                     padding: '10px 18px',
                     borderRadius: '12px',
@@ -2389,7 +2404,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   📧 Teklif İletildi ({potansiyel.filter(p => p.status === 'Teklif İletildi').length})
                 </button>
                 <button
-                  onClick={() => setLeadSubTab('archived')}
+                  onClick={() => { setLeadSubTab('archived'); setLeadStatusFilter('Hepsi'); }}
                   style={{
                     padding: '10px 18px',
                     borderRadius: '12px',
@@ -2405,7 +2420,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   📁 Arşiv / Düşük İlgi ({potansiyel.filter(p => ['Ertelendi', 'Reddedildi', 'Düşük Kalite'].includes(p.status)).length})
                 </button>
                 <button
-                  onClick={() => setLeadSubTab('all')}
+                  onClick={() => { setLeadSubTab('all'); setLeadStatusFilter('Hepsi'); }}
                   style={{
                     padding: '10px 18px',
                     borderRadius: '12px',
