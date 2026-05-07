@@ -140,6 +140,49 @@ button {
   margin: 0 auto 3rem auto;
 }
 
+/* 🔘 BUTTON UTILITIES */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(138, 43, 226, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(138, 43, 226, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--surface-border);
+  color: #fff;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 /* 🎬 PREMIUM SHOWREEL - DIRECTOR'S CUT UI */
 .cinematic-showreel-section {
   background: #000;

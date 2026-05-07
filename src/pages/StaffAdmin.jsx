@@ -2248,6 +2248,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <Briefcase size={18} /> Çalışılan Müşteriler
             </button>
             <button
+              onClick={() => { window.location.href = '/email-marketing'; setIsSidebarOpen(false); }}
+              className={activeTab === 'email_marketing' ? 'active' : ''}
+            >
+              <Mail size={18} /> E-Mail Marketing
+            </button>
+            <button
               onClick={() => { setActiveTab('reports'); setIsSidebarOpen(false); }}
               className={activeTab === 'reports' ? 'active' : ''}
             >

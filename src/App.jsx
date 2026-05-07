@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import EmailMarketing from './pages/EmailMarketing';
 import { 
   Menu, 
   X, 
@@ -71,7 +72,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/admin', '/musteri'].includes(location.pathname) && (
+      {!['/admin', '/musteri', '/email-marketing'].includes(location.pathname) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -127,13 +128,14 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/fiyatlar" element={<Pricing />} />
             <Route path="/musteri" element={<ClientPortal />} />
+            <Route path="/email-marketing" element={<EmailMarketing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </React.Suspense>
       </main>
 
       {/* FOOTER */}
-      {!['/admin', '/musteri'].includes(location.pathname) && (
+      {!['/admin', '/musteri', '/email-marketing'].includes(location.pathname) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
