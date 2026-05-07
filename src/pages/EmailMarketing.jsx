@@ -53,7 +53,8 @@ function EmailMarketing() {
       setExistingEmails(set);
     } catch (err) {
       console.error(err);
-      setMessage('Veritabanı hatası!');
+      setMessage(`Veritabanı bağlantı hatası: ${err.message || 'Bilinmeyen hata'}`);
+      setStatus('error');
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ function EmailMarketing() {
       setStats(prev => ({ ...prev, duplicate: prev.duplicate + prev.unique, unique: 0 }));
     } catch (err) {
       console.error(err);
-      setMessage('Kayıt hatası!');
+      setMessage(`Kayıt hatası: ${err.message || 'Bilinmeyen hata'}`);
       setStatus('error');
     } finally {
       setLoading(false);
@@ -302,12 +303,18 @@ function EmailMarketing() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="glass" style={{ padding: '25px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h4 style={{ marginBottom: '20px' }}>Durum</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h4 style={{ margin: 0 }}>Durum</h4>
+                <button onClick={fetchExisting} disabled={loading} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
+                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Yenile
+                </button>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <span style={{ color: '#555' }}>Toplam:</span> <span>{stats.total}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#555' }}>Sistemde Mevcut:</span> <span style={{ color: '#ffab00' }}>{stats.duplicate}</span>
+                <span style={{ color: '#555' }}>Sistemde Mevcut:</span> 
+                <span style={{ color: '#ffab00' }}>{existingEmails.size}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', fontWeight: 'bold' }}>
                 <span>Yeni (Eklenecek):</span> <span style={{ color: '#00e676' }}>{stats.unique}</span>

@@ -49,8 +49,14 @@ async function createTable() {
       -- Enable RLS
       ALTER TABLE public.email_marketing_leads ENABLE ROW LEVEL SECURITY;
 
-      -- Allow all for now (Adjust as needed for production)
-      CREATE POLICY "Allow all access" ON public.email_marketing_leads FOR ALL USING (true);
+      -- Drop existing policy if exists
+      DROP POLICY IF EXISTS "Allow all access" ON public.email_marketing_leads;
+      DROP POLICY IF EXISTS "Allow anon select" ON public.email_marketing_leads;
+      DROP POLICY IF EXISTS "Allow anon insert" ON public.email_marketing_leads;
+
+      -- Specific policies for anon/authenticated
+      CREATE POLICY "Allow anon select" ON public.email_marketing_leads FOR SELECT TO anon, authenticated USING (true);
+      CREATE POLICY "Allow anon insert" ON public.email_marketing_leads FOR INSERT TO anon, authenticated WITH CHECK (true);
     `;
 
     await client.query(sql);
