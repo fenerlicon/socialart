@@ -301,17 +301,17 @@ function Home() {
         <div className="container" style={{ position: 'relative' }}>
           <div className="hero-content">
             <h1 className="hero-title">
-              İstanbul'un Veri Odaklı <span className="gradient-text">Growth Marketing</span> Ajansı
+              İstanbul'un Öncü <span className="gradient-text">Sosyal Medya & Reklam</span> Ajansı
             </h1>
             <p className="hero-desc">
-              Herkes tasarım yapar, herkes reels çeker. Biz ise markanız için çalışan bir <strong>growth sistemi</strong> kuruyoruz. Meta Ads, Creative Production ve SEO & GEO optimizasyonu ile dönüşüm psikolojisini birleştirerek ölçeklenebilir büyüme sağlıyoruz.
+              Sadece reels çekmiyoruz, markanız için çalışan bir sistem kuruyoruz. Meta Ads, Creative Production ve SEO optimizasyonu ile ölçeklenebilir sonuçlar sağlıyoruz.
             </p>
             <div className="hero-actions">
-              <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')} aria-label="Growth Analizini Başlat">
-                Growth Analizini Başlat
+              <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')} aria-label="Analiz Al">
+                Ücretsiz Analiz Al
               </button>
               <button className="btn btn-outline" onClick={() => scrollToSection('showreel')}>
-                Neler Başardık? <ArrowRight size={20} />
+                Showreel İzle <ArrowRight size={20} />
               </button>
             </div>
             <div style={{ marginTop: '20px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -513,41 +513,7 @@ function Home() {
         </div>
       </section>
 
-      {/* WHY GROWTH SYSTEM? */}
-      <section className="section-padding" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(15,15,15,1) 100%)' }}>
-        <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', marginBottom: '80px' }}>
-            <h2 className="section-title">En Kritik <span className="gradient-text">Büyüme Hamlesi</span></h2>
-            <p className="section-subtitle">Tasarım yapmak veya reels çekmek artık bir ayrıcalık değil, standart. Gerçek büyüme; veri, kreatif testler ve dönüşüm psikolojisinin birleştiği noktada başlar.</p>
-          </div>
 
-          <div className="services-grid">
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '60px', height: '60px', background: 'rgba(138,43,226,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
-                <BarChart3 size={30} color="var(--primary)" />
-              </div>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '15px' }}>Veri Odaklı Testler</h3>
-              <p style={{ color: 'var(--text-muted)', lineHeight: '1.7' }}>Creative testing süreçlerimizle hangi görselin veya metnin en yüksek dönüşümü getirdiğini varsayımlarla değil, verilerle kanıtlıyoruz.</p>
-            </div>
-
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '60px', height: '60px', background: 'rgba(0,229,255,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
-                <Layers size={30} color="#00e5ff" />
-              </div>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '15px' }}>Funnel & Dönüşüm</h3>
-              <p style={{ color: 'var(--text-muted)', lineHeight: '1.7' }}>Sadece trafik çekmiyoruz. Kullanıcıyı yakalayan, eğiten ve satın almaya ikna eden çok katmanlı satış hunileri (funnel) kuruyoruz.</p>
-            </div>
-
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '60px', height: '60px', background: 'rgba(255,0,85,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
-                <Zap size={30} color="var(--secondary)" />
-              </div>
-              <h3 style={{ fontSize: '1.5rem', marginBottom: '15px' }}>AI Destekli Growth</h3>
-              <p style={{ color: 'var(--text-muted)', lineHeight: '1.7' }}>Yapay zeka sistemlerini SEO ve GEO (Generative Engine Optimization) süreçlerimize entegre ederek markanızı yarının arama motorlarına bugünden hazırlıyoruz.</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* SERVICES PREVIEW */}
       <section className="section-padding" id="services" style={{ paddingTop: '20px' }}>
