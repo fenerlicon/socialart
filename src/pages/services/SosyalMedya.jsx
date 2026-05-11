@@ -11,7 +11,7 @@ function SosyalMedya() {
       <section className="hero" style={{ paddingTop: '150px', paddingBottom: '80px' }}>
         <div className="container">
           <div style={{ maxWidth: '800px' }}>
-            <div className="campaign-badge" style={{ marginBottom: '20px' }}>TOPLULUK & ETKİLEŞİM</div>
+
             <h1 className="hero-title" style={{ fontSize: '3.5rem', lineHeight: '1.1' }}>
               Stratejik <span className="gradient-text">Sosyal Medya</span> Yönetimi
             </h1>

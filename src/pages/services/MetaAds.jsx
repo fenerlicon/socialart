@@ -11,7 +11,7 @@ function MetaAds() {
       <section className="hero" style={{ paddingTop: '150px', paddingBottom: '80px' }}>
         <div className="container">
           <div style={{ maxWidth: '800px' }}>
-            <div className="campaign-badge" style={{ marginBottom: '20px' }}>BÜYÜME ODAKLI</div>
+
             <h1 className="hero-title" style={{ fontSize: '3.5rem', lineHeight: '1.1' }}>
               Meta Ads Yönetimi ile <span className="gradient-text">ROAS Odaklı</span> Ölçekleme
             </h1>

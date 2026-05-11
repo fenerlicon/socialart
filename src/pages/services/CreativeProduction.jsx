@@ -11,7 +11,7 @@ function CreativeProduction() {
       <section className="hero" style={{ paddingTop: '150px', paddingBottom: '80px' }}>
         <div className="container">
           <div style={{ maxWidth: '800px' }}>
-            <div className="campaign-badge" style={{ marginBottom: '20px' }}>ESTETİK & PERFORMANS</div>
+
             <h1 className="hero-title" style={{ fontSize: '3.5rem', lineHeight: '1.1' }}>
               Creative Production ile <span className="gradient-text">Görsel Gücünüzü</span> Sergileyin
             </h1>
