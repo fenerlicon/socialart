@@ -39,6 +39,7 @@ import MetaAds from './pages/services/MetaAds';
 import CreativeProduction from './pages/services/CreativeProduction';
 import SEOGEO from './pages/services/SEOGEO';
 import SosyalMedya from './pages/services/SosyalMedya';
+import UGCInfluencer from './pages/services/UGCInfluencer';
 import { UGCApplication, JobApplication } from './pages/ApplicationForms';
 
 const LockIcon = Lock;
@@ -116,7 +117,7 @@ function App() {
                   <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
                     <PlayCircle size={18} style={{ marginRight: '12px', color: '#ff0055' }} /> Sunuculu Reklam Videoları
                   </Link>
-                  <Link to="/ugc-basvuru" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/ugc-influencer-isbirligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
                     <Users size={18} style={{ marginRight: '12px', color: '#00e676' }} /> UGC & Influencer İşbirliği
                   </Link>
                 </div>
@@ -177,6 +178,7 @@ function App() {
             <Route path="/creative-production" element={<CreativeProduction />} />
             <Route path="/seo-geo-optimizasyonu" element={<SEOGEO />} />
             <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
+            <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
