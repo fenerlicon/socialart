@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, BarChart3, Target, ArrowRight, CheckCircle2, Zap, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AnalysisForm from '../../components/AnalysisForm';
 
 function MetaAds() {
   const navigate = useNavigate();

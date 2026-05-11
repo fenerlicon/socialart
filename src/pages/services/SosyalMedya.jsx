@@ -1,6 +1,7 @@
 import React from 'react';
 import { Share2, Users, MessageSquare, ArrowRight, CheckCircle2, TrendingUp, Sparkles, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AnalysisForm from '../../components/AnalysisForm';
 
 function SosyalMedya() {
   const navigate = useNavigate();

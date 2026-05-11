@@ -1,6 +1,7 @@
 import React from 'react';
 import { Globe, Search, Zap, ArrowRight, Brain, Cpu, Layout, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AnalysisForm from '../../components/AnalysisForm';
 
 function SEOGEO() {
   const navigate = useNavigate();

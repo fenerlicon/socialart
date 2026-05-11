@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, Video, TrendingUp, ArrowRight, CheckCircle2, Heart, Sparkles, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AnalysisForm from '../../components/AnalysisForm';
 
 function UGCInfluencer() {
   const navigate = useNavigate();

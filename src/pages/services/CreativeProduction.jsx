@@ -1,6 +1,7 @@
 import React from 'react';
 import { Camera, Video, Play, ArrowRight, CheckCircle2, Sparkles, Zap, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AnalysisForm from '../../components/AnalysisForm';
 
 function CreativeProduction() {
   const navigate = useNavigate();
