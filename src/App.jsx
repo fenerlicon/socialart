@@ -39,6 +39,7 @@ import CreativeProduction from './pages/services/CreativeProduction';
 import SEOGEO from './pages/services/SEOGEO';
 import SosyalMedya from './pages/services/SosyalMedya';
 import UGCInfluencer from './pages/services/UGCInfluencer';
+import SunuculuReklam from './pages/services/SunuculuReklam';
 
 const UGCApplication = React.lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
 const JobApplication = React.lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.JobApplication })));
@@ -119,7 +120,7 @@ function App() {
                   <Link to="/sosyal-medya-yonetimi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <Share2 size={18} style={{ marginRight: '12px', color: 'var(--primary)' }} /> Sosyal Medya Yönetimi
                   </Link>
-                  <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                  <Link to="/sunuculu-reklam-videolari" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <PlayCircle size={18} style={{ marginRight: '12px', color: '#ff0055' }} /> Sunuculu Reklam Videoları
                   </Link>
                   <Link to="/ugc-influencer-isbirligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
@@ -184,6 +185,7 @@ function App() {
             <Route path="/seo-geo-optimizasyonu" element={<SEOGEO />} />
             <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
             <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
+            <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -197,9 +199,9 @@ function App() {
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
               <div className="footer-col">
                 <Link to="/" className="brand-logo" style={{ marginBottom: '10px', display: 'block' }}>
-                  <img src="/logo.png" alt="Socialart Ajans" className="footer-logo-img" width="150" height="50" loading="lazy" />
+                  <img src="/logo.png" alt="Socialart Ajans" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} loading="lazy" />
                 </Link>
-                <p style={{marginTop: '-20px', marginBottom: '30px'}}>Site → Ücretsiz Analiz → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
+                <p style={{marginTop: '10px', marginBottom: '30px'}}>Site → Ücretsiz Analiz → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
                 <div className="social-links">
                   <a href="https://instagram.com/socialartajans" target="_blank" rel="noreferrer" className="instagram" aria-label="Instagram sayfamız">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
