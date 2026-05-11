@@ -851,7 +851,7 @@
   align-items: center;
   gap: 100px;
   padding-right: 100px;
-  animation: scrollBrands 80s linear infinite;
+  animation: scrollBrands 100s linear infinite;
   white-space: nowrap;
 }
 
@@ -1307,17 +1307,51 @@
 }
 
 @media (max-width: 768px) {
-  /* PERFORMANCE: Kill laggy effects on mobile but keep base visuals */
-  * {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+  .cinema-ambient-glow {
+    filter: none; /* Disable expensive blur on mobile */
+    opacity: 0.2;
   }
 
+  .header-logo-img {
+    height: 80px !important; /* Mobile logo size increase */
+  }
+
+  .header.scrolled .header-logo-img {
+    height: 50px !important;
+  }
+
+  /* Prevent horizontal scroll globally */
   html, body {
     overflow-x: hidden;
     width: 100%;
     position: relative;
-    font-size: 16px; /* Increased font size for readability */
+  }
+
+  .section-padding {
+    padding: 60px 0;
+  }
+
+  .hero-title {
+    font-size: 2.8rem !important;
+    line-height: 1.2;
+  }
+
+  .hero-desc {
+    font-size: 1.1rem;
+  }
+
+  /* Service Pages Specific Mobile Layouts */
+  .service-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+    text-align: left;
+  }
+
+  .feature-list-card {
+    width: 100% !important;
+    margin-top: 20px !important;
+    position: static !important;
+    transform: none !important;
   }
 
   .container {

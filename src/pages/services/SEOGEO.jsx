@@ -2,6 +2,7 @@ import React from 'react';
 import { Globe, Search, Zap, ArrowRight, Brain, Cpu, Layout, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
+import FAQAccordion from '../../components/FAQAccordion';
 
 function SEOGEO() {
   const navigate = useNavigate();
@@ -31,8 +32,8 @@ function SEOGEO() {
       {/* Narrative Section: SEO vs GEO */}
       <section className="section-padding">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-            <div>
+          <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
+            <div className="service-text-content">
               <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '30px' }}>GEO: <span className="gradient-text">Yeni Nesil Görünürlük</span></h2>
               <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '20px' }}>
                 Geleneksel SEO (Search Engine Optimization) artık tek başına yeterli değil. Artık kullanıcılar sadece Google'da "en iyi ajans" aramıyor; ChatGPT'ye "İstanbul'daki en iyi büyüme odaklı dijital pazarlama ajansı hangisi?" diye soruyor.
@@ -41,17 +42,17 @@ function SEOGEO() {
                 <strong>GEO (Generative Engine Optimization)</strong>, markanızın yapay zeka tarafından üretilen yanıtlarda (SGE) yer almasını sağlar. Biz, markanızı hem arama motorları hem de yapay zeka asistanları için optimize ediyoruz.
               </p>
             </div>
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="feature-list-card" style={{ padding: '30px', borderRadius: '32px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ background: 'rgba(0,229,255,0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(0,229,255,0.1)' }}>
-                     <h4 style={{ color: '#00e5ff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><Search size={20} /> Geleneksel SEO</h4>
+                     <h4 style={{ color: '#00e5ff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem' }}><Search size={20} /> Geleneksel SEO</h4>
                      <p style={{ fontSize: '0.9rem', color: '#888' }}>Anahtar kelime odaklı, meta tag ve backlink stratejileri ile Google sıralama odaklı çalışma.</p>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Zap size={24} color="var(--primary)" />
                   </div>
                   <div style={{ background: 'rgba(138,43,226,0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(138,43,226,0.1)' }}>
-                     <h4 style={{ color: 'var(--primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><Brain size={20} /> Modern GEO</h4>
+                     <h4 style={{ color: 'var(--primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem' }}><Brain size={20} /> Modern GEO</h4>
                      <p style={{ fontSize: '0.9rem', color: '#888' }}>Otorite inşası, yapılandırılmış veri (schema) ve AI modelleme stratejileri ile yapay zeka asistanları odaklı çalışma.</p>
                   </div>
                </div>
@@ -107,23 +108,21 @@ function SEOGEO() {
       {/* FAQ Section */}
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>SEO sonuçlarını ne zaman görürüm?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>SEO uzun vadeli bir yatırımdır. Teknik düzeltmeler hemen etkisini gösterse de, rekabetçi kelimelerde kalıcı sonuçlar genellikle 4-8 ay arasında alınmaya başlanır.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>GEO çalışması SEO'yu etkiler mi?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Evet, olumlu etkiler. GEO için yaptığımız otorite ve schema çalışmaları, Google'ın sitenizi daha iyi anlamasını sağladığı için geleneksel SEO puanınızı da artırır.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Schema Markup nedir?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Schema Markup, web sitenizin koduna eklenen ve arama motorlarına içeriğinizin ne hakkında olduğunu (örneğin bir hizmet, SSS veya organizasyon olduğunu) anlatan bir mikro veri türüdür.</p>
-              </div>
-            </div>
-          </div>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+          <FAQAccordion items={[
+            {
+              question: "SEO sonuçlarını ne zaman görürüm?",
+              answer: "SEO uzun vadeli bir yatırımdır. Teknik düzeltmeler hemen etkisini gösterse de, rekabetçi kelimelerde kalıcı sonuçlar genellikle 4-8 ay arasında alınmaya başlanır."
+            },
+            {
+              question: "GEO çalışması SEO'yu etkiler mi?",
+              answer: "Evet, olumlu etkiler. GEO için yaptığımız otorite ve schema çalışmaları, Google'ın sitenizi daha iyi anlamasını sağladığı için geleneksel SEO puanınızı da artırır."
+            },
+            {
+              question: "Schema Markup nedir?",
+              answer: "Schema Markup, web sitenizin koduna eklenen ve arama motorlarına içeriğinizin ne hakkında olduğunu (örneğin bir hizmet, SSS veya organizasyon olduğunu) anlatan bir mikro veri türüdür."
+            }
+          ]} />
         </div>
       </section>
 

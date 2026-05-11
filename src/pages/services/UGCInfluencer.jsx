@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Video, TrendingUp, ArrowRight, CheckCircle2, Heart, Sparkles, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
+import FAQAccordion from '../../components/FAQAccordion';
 
 function UGCInfluencer() {
   const navigate = useNavigate();
@@ -31,8 +32,8 @@ function UGCInfluencer() {
       {/* Narrative Section */}
       <section className="section-padding">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-            <div>
+          <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
+            <div className="service-text-content">
               <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '30px' }}>Tüketiciler Markalara Değil, <span className="gradient-text">İnsanlara Güvenir.</span></h2>
               <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '20px' }}>
                 Günümüzde reklam körlüğü en yüksek seviyede. İnsanlar, kusursuz stüdyo çekimlerinden ziyade, kendi gibi bir kullanıcının (UGC) ürün deneyimini izlemeyi tercih ediyor.
@@ -41,27 +42,27 @@ function UGCInfluencer() {
                 Biz, markanızın hedef kitlesiyle birebir aynı profildeki içerik üreticilerini ve mikro/makro influencer'ları buluyoruz. Ürününüzü en doğal haliyle senaryolaştırıp, reklam maliyetlerinizi düşüren yüksek performanslı kreatifler teslim ediyoruz.
               </p>
             </div>
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            <div className="feature-list-card" style={{ padding: '30px', borderRadius: '32px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>İçerik Üreticisi / Influencer Eşleştirme</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>İçerik Üreticisi / Influencer Eşleştirme</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Doğal & Etkileşim Odaklı Senaryolar</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Doğal & Etkileşim Odaklı Senaryolar</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Ürün ve Kutu Açılışı (Unboxing)</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Ürün ve Kutu Açılışı (Unboxing)</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Reklam Performansı Yüksek Formatlar</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Reklam Performansı Yüksek Formatlar</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Telif ve Kullanım Hakları Yönetimi</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Telif ve Kullanım Hakları Yönetimi</span>
                   </div>
                </div>
             </div>
@@ -77,7 +78,7 @@ function UGCInfluencer() {
             <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                <Video size={35} color="var(--primary)" style={{ marginBottom: '20px' }} />
                <h3 style={{ marginBottom: '15px' }}>UGC İçerik Üretimi</h3>
-               <p style={{ color: '#888', fontSize: '0.95rem' }}>Sosyal medya reklamlarınız (Meta, TikTok) için özel olarak çekilmiş, yüksek dönüşüm getiren doğal görünümlü videolar.</p>
+               <p style={{ color: '#888', fontSize: '0.95rem' }}>Sosyal medya reklamlarınız (Meta, Google vb.) için özel olarak çekilmiş, yüksek dönüşüm getiren doğal görünümlü videolar.</p>
             </div>
             <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                <Users size={35} color="var(--secondary)" style={{ marginBottom: '20px' }} />
@@ -101,23 +102,21 @@ function UGCInfluencer() {
       {/* FAQ Section */}
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>UGC ile Influencer Marketing arasındaki fark nedir?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>UGC, kullanıcının kendi hesabında paylaşma zorunluluğu olmayan, sadece reklamlarınızda kullanmanız için üretilen içeriktir. Influencer Marketing ise içeriğin influencer'ın kendi kitlesine gösterilmesi amacı taşır.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>İçerik üreticilerini siz mi buluyorsunuz?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Evet. Kendi bünyemizde yüzlerce onaylanmış içerik üreticisi bulunuyor. Ürününüzü inceleyip, demografisine ve tarzına en uygun kişileri seçiyoruz.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Ürünleri nasıl gönderiyoruz?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Ajans merkezimize ürünleri ulaştırdığınızda, biz içerik üreticilerine dağıtımını yapıyor ve süreç bitiminde dilerseniz ürünleri size geri gönderiyoruz.</p>
-              </div>
-            </div>
-          </div>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+          <FAQAccordion items={[
+            {
+              question: "UGC ile Influencer Marketing arasındaki fark nedir?",
+              answer: "UGC, kullanıcının kendi hesabında paylaşma zorunluluğu olmayan, sadece reklamlarınızda kullanmanız için üretilen içeriktir. Influencer Marketing ise içeriğin influencer'ın kendi kitlesine gösterilmesi amacı taşır."
+            },
+            {
+              question: "İçerik üreticilerini siz mi buluyorsunuz?",
+              answer: "Evet. Kendi bünyemizde yüzlerce onaylanmış içerik üreticisi bulunuyor. Ürününüzü inceleyip, demografisine ve tarzına en uygun kişileri seçiyoruz."
+            },
+            {
+              question: "Ürünleri nasıl gönderiyoruz?",
+              answer: "Ajans merkezimize ürünleri ulaştırdığınızda, biz içerik üreticilerine dağıtımını yapıyor ve süreç bitiminde dilerseniz ürünleri size geri gönderiyoruz."
+            }
+          ]} />
         </div>
       </section>
 

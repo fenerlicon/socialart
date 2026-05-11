@@ -2,6 +2,7 @@ import React from 'react';
 import { Share2, Users, MessageSquare, ArrowRight, CheckCircle2, TrendingUp, Sparkles, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
+import FAQAccordion from '../../components/FAQAccordion';
 
 function SosyalMedya() {
   const navigate = useNavigate();
@@ -31,8 +32,8 @@ function SosyalMedya() {
       {/* Narrative Section */}
       <section className="section-padding">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-            <div>
+          <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
+            <div className="service-text-content">
               <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '30px' }}>Sıradan Yönetim Değil, <span className="gradient-text">Growth Odaklı Yaklaşım.</span></h2>
               <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '20px' }}>
                 Sosyal medya yönetimi artık sadece "estetik bir grid" dizmekten çok daha fazlasıdır. Algoritmaların sürekli değiştiği bu dönemde, asıl mesele kullanıcıyı yakalamak ve markaya olan bağı güçlendirmektir.
@@ -41,27 +42,27 @@ function SosyalMedya() {
                 Biz, markanızın hedef kitlesini derinlemesine analiz ederek, onların ilgi alanlarına ve tüketim alışkanlıklarına uygun içerik türleri (Reels, Carousel, Static) geliştiriyoruz. <strong>Sosyal Medya Yönetimi</strong> süreçlerimizi reklam stratejilerimizle birleştirerek organik ve ücretli büyüme arasında köprü kuruyoruz.
               </p>
             </div>
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            <div className="feature-list-card" style={{ padding: '30px', borderRadius: '32px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Aylık İçerik Takvimi & Planlama</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Aylık İçerik Takvimi & Planlama</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Stratejik Hashtag & Trend Analizi</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Stratejik Hashtag & Trend Analizi</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Topluluk Yönetimi & Moderasyon</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Topluluk Yönetimi & Moderasyon</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Detaylı Performans Raporlaması</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Detaylı Performans Raporlaması</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                     <CheckCircle2 color="var(--primary)" size={24} />
-                     <span style={{ fontSize: '1.1rem' }}>Rakip Analizi & Benchmark</span>
+                     <CheckCircle2 color="var(--primary)" size={20} />
+                     <span style={{ fontSize: '1.05rem' }}>Rakip Analizi & Benchmark</span>
                   </div>
                </div>
             </div>
@@ -114,23 +115,21 @@ function SosyalMedya() {
       {/* FAQ Section */}
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Hangi platformlar için hizmet veriyorsunuz?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Başta Instagram, TikTok, LinkedIn, YouTube ve Facebook olmak üzere markanızın hedef kitlesinin bulunduğu tüm dijital platformlarda aktif yönetim yapıyoruz.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Çekimleri siz mi yapıyorsunuz?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Evet, bünyemizdeki kreatif ekibimiz ve kendi stüdyomuzla tüm video ve fotoğraf prodüksiyon süreçlerini profesyonel olarak yönetiyoruz.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Aylık kaç içerik paylaşıyorsunuz?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Bu tamamen seçtiğiniz pakete ve markanızın ihtiyacına göre değişir. Ancak genellikle haftalık 3-5 arası içerik ve günlük hikaye paylaşımları içeren bir planlama yapıyoruz.</p>
-              </div>
-            </div>
-          </div>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+          <FAQAccordion items={[
+            {
+              question: "Hangi platformlar için hizmet veriyorsunuz?",
+              answer: "Başta Instagram, LinkedIn, YouTube ve Facebook olmak üzere markanızın hedef kitlesinin bulunduğu tüm dijital platformlarda aktif yönetim yapıyoruz."
+            },
+            {
+              question: "Çekimleri siz mi yapıyorsunuz?",
+              answer: "Evet, bünyemizdeki kreatif ekibimiz ve kendi stüdyomuzla tüm video ve fotoğraf prodüksiyon süreçlerini profesyonel olarak yönetiyoruz."
+            },
+            {
+              question: "Aylık kaç içerik paylaşıyorsunuz?",
+              answer: "Bu tamamen seçtiğiniz pakete ve markanızın ihtiyacına göre değişir. Ancak genellikle haftalık 2-4 arası içerik ve günlük hikaye paylaşımları içeren bir planlama yapıyoruz."
+            }
+          ]} />
         </div>
       </section>
 

@@ -33,6 +33,7 @@ import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
 import AnalysisForm from '../components/AnalysisForm';
+import FAQAccordion from '../components/FAQAccordion';
 
 const AnimatedMetric = ({ value, suffix = '', prefix = '', label, desc, color }) => {
   const [count, setCount] = React.useState(0);
@@ -409,17 +410,29 @@ function Home() {
       {/* 8. SIKÇA SORULAN SORULAR */}
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
-          <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-          <div style={{ maxWidth: '800px', margin: '40px auto 0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="glass" style={{ padding: '25px', borderRadius: '20px' }}>
-              <h3 style={{ color: 'var(--primary)', marginBottom: '10px', fontSize: '1.2rem' }}>Meta Ads nedir?</h3>
-              <p style={{ color: '#aaa' }}>Facebook ve Instagram üzerinden hedefli reklamlar vererek potansiyel müşterilerinize ulaşmanızı sağlar.</p>
-            </div>
-            <div className="glass" style={{ padding: '25px', borderRadius: '20px' }}>
-              <h3 style={{ color: 'var(--primary)', marginBottom: '10px', fontSize: '1.2rem' }}>Hangi bütçe ile başlamalıyım?</h3>
-              <p style={{ color: '#aaa' }}>Sektöre göre değişmekle birlikte, verimli bir test süreci için günlük 500-1000 TL arası bir bütçe öneriyoruz.</p>
-            </div>
-          </div>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+          <FAQAccordion items={[
+            {
+              question: "ROAS nedir ve neden önemlidir?",
+              answer: "Return on Ad Spend (Reklam Harcaması Getirisi), reklam için harcadığınız her 1 TL karşılığında ne kadar kazandığınızı gösterir. 14.2x ROAS, 1 TL harcayıp 14.2 TL kazandığınız anlamına gelir. Sürdürülebilir büyüme için en kritik metrik budur."
+            },
+            {
+              question: "Hizmet süreci nasıl başlıyor?",
+              answer: "Ücretsiz analiz formunu doldurduğunuzda ekibimiz markanızı, rakiplerinizi ve pazar payınızı inceler. Ardından size özel bir strateji toplantısı planlarız, yol haritamızı ve garanti şartlarımızı netleştiririz."
+            },
+            {
+              question: "UGC ve Influencer iş birlikleri ne kazandırır?",
+              answer: "Doğal ve kullanıcı tarafından üretilen içerikler (UGC), markanıza olan güveni %80 oranında artırır. Tüketiciler profesyonel reklamlardan ziyade gerçek insan deneyimlerine güvenir, bu da dönüşüm oranınızı katlar."
+            },
+            {
+              question: "Hangi platformlarda reklam veriyorsunuz?",
+              answer: "Ağırlıklı olarak Meta (Facebook, Instagram) ve Google Ads üzerinde yüksek performanslı kampanyalar yönetiyoruz. Ayrıca GEO (AI Search) optimizasyonu ile markanızı yeni nesil arama motorlarına hazırlıyoruz."
+            },
+            {
+              question: "Onboarding süreci ne kadar sürer?",
+              answer: "Anlaşma sağlandıktan sonra teknik kurulumlar ve ilk kreatif stratejilerin hazırlanması genellikle 5-7 iş günü sürer. Bu sürenin sonunda reklamlarımızı test etmeye ve veri toplamaya başlarız."
+            }
+          ]} />
         </div>
       </section>
 

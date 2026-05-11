@@ -2,6 +2,7 @@ import React from 'react';
 import { TrendingUp, BarChart3, Target, ArrowRight, CheckCircle2, Zap, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
+import FAQAccordion from '../../components/FAQAccordion';
 
 function MetaAds() {
   const navigate = useNavigate();
@@ -31,8 +32,8 @@ function MetaAds() {
       {/* Content Section 1: Philosophy */}
       <section className="section-padding">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-            <div>
+          <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
+            <div className="service-text-content">
               <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '30px' }}>Neden Bizimle <span className="gradient-text">Çalışmalısınız?</span></h2>
               <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '20px' }}>
                 Meta Ads dünyasında artık "teknik hedefleme" devri kapandı. Facebook algoritması artık o kadar akıllı ki, doğru kitleyi bulmak için sizin yerinize çalışıyor. Bugünün en büyük farkı, algoritmayı besleyecek <strong>doğru kreatif</strong> ve <strong>doğru veri</strong> yapısını kurmaktır.
@@ -41,33 +42,33 @@ function MetaAds() {
                 İstanbul merkezli growth marketing ajansımızda, sadece reklam setleri açmıyoruz. Markanızın her aşamasındaki dönüşüm psikolojisini analiz ediyor, kreatif testing metodolojimizle en düşük CPM ve en yüksek ROAS değerlerine ulaşmanızı sağlıyoruz.
               </p>
             </div>
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                <div style={{ display: 'flex', gap: '20px' }}>
-                  <div style={{ width: '50px', height: '50px', background: 'rgba(138,43,226,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <BarChart3 size={24} color="var(--primary)" />
+            <div className="feature-list-card" style={{ padding: '30px', borderRadius: '32px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                <div style={{ display: 'flex', gap: '15px' }}>
+                  <div style={{ width: '40px', height: '40px', background: 'rgba(138,43,226,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <BarChart3 size={20} color="var(--primary)" />
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Creative Testing</h4>
-                    <p style={{ color: '#777', fontSize: '0.95rem' }}>Hangi görselin çalıştığını tahmin etmiyoruz, bilimsel yöntemlerle test ediyoruz.</p>
+                    <h4 style={{ fontSize: '1.1rem', marginBottom: '6px' }}>Creative Testing</h4>
+                    <p style={{ color: '#777', fontSize: '0.9rem' }}>Hangi görselin çalıştığını tahmin etmiyoruz, bilimsel yöntemlerle test ediyoruz.</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '20px' }}>
-                  <div style={{ width: '50px', height: '50px', background: 'rgba(0,229,255,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Target size={24} color="#00e5ff" />
+                <div style={{ display: 'flex', gap: '15px' }}>
+                  <div style={{ width: '40px', height: '40px', background: 'rgba(0,229,255,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Target size={20} color="#00e5ff" />
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Funnel Optimizasyonu</h4>
-                    <p style={{ color: '#777', fontSize: '0.95rem' }}>Reklamdan sonraki sayfadaki kullanıcı davranışını optimize ederek dönüşümü artırıyoruz.</p>
+                    <h4 style={{ fontSize: '1.1rem', marginBottom: '6px' }}>Funnel Optimizasyonu</h4>
+                    <p style={{ color: '#777', fontSize: '0.9rem' }}>Reklamdan sonraki sayfadaki kullanıcı davranışını optimize ederek dönüşümü artırıyoruz.</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '20px' }}>
-                  <div style={{ width: '50px', height: '50px', background: 'rgba(255,0,85,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Zap size={24} color="var(--secondary)" />
+                <div style={{ display: 'flex', gap: '15px' }}>
+                  <div style={{ width: '40px', height: '40px', background: 'rgba(255,0,85,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Zap size={20} color="var(--secondary)" />
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Hızlı Ölçekleme</h4>
-                    <p style={{ color: '#777', fontSize: '0.95rem' }}>Kazanan kreatifleri bulduğumuzda bütçenizi verimli şekilde büyüterek satışları katlıyoruz.</p>
+                    <h4 style={{ fontSize: '1.1rem', marginBottom: '6px' }}>Hızlı Ölçekleme</h4>
+                    <p style={{ color: '#777', fontSize: '0.9rem' }}>Kazanan kreatifleri bulduğumuzda bütçenizi verimli şekilde büyüterek satışları katlıyoruz.</p>
                   </div>
                 </div>
               </div>
@@ -127,23 +128,21 @@ function MetaAds() {
       {/* FAQ Section */}
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Bütçem ne kadar olmalı?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Minimum bütçe sektörünüze ve hedeflerinize göre değişir. Ancak sağlıklı bir test süreci için günlük minimum 500 TL - 1000 TL arası bir bütçe ile başlanmasını öneriyoruz.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>ROAS garantisi veriyor musunuz?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Dijital pazarlamada kesin garanti vermek dürüstçe değildir. Ancak vaka çalışmalarımızda genellikle ilk 3 ay içinde ROAS değerlerini 2x ile 5x arasında artırdığımızı görüyoruz.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Raporlama nasıl yapılıyor?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Haftalık ve aylık detaylı raporlar sunuyoruz. Raporlarımızda sadece tıklama sayılarını değil, asıl önemli olan satış başı maliyet ve net kar oranlarını paylaşıyoruz.</p>
-              </div>
-            </div>
-          </div>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+          <FAQAccordion items={[
+            {
+              question: "Bütçem ne kadar olmalı?",
+              answer: "Minimum bütçe sektörünüze ve hedeflerinize göre değişir. Ancak sağlıklı bir test süreci için günlük minimum 500 TL - 1000 TL arası bir bütçe ile başlanmasını öneriyoruz. Veri toplandıkça bu bütçeyi ölçekliyoruz."
+            },
+            {
+              question: "ROAS garantisi veriyor musunuz?",
+              answer: "Dijital pazarlamada kesin garanti vermek dürüstçe değildir. Ancak vaka çalışmalarımızda genellikle ilk 3 ay içinde ROAS değerlerini 2x ile 5x arasında artırdığımızı görüyoruz. Sizin için de hedefimiz sürdürülebilir karlılık."
+            },
+            {
+              question: "Raporlama nasıl yapılıyor?",
+              answer: "Haftalık ve aylık detaylı raporlar sunuyoruz. Raporlarımızda sadece tıklama sayılarını değil, asıl önemli olan satış başı maliyet (CPA) ve net reklam getirisi (ROAS) oranlarını şeffaf bir şekilde paylaşıyoruz."
+            }
+          ]} />
         </div>
       </section>
 

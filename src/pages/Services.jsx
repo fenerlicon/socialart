@@ -56,7 +56,7 @@ function Services() {
       id: '360-sosyal-medya',
       title: '360° Sosyal Medya & Reklam Yönetimi',
       icon: <Layers color="var(--primary)" />,
-      desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden yönetiyoruz. Meta, Google ve TikTok reklamlarında data odaklı yaklaşımlarımızla yüksek performanslı reklam yönetimi (Performance Marketing) sağlıyoruz. İçerik planlaması, topluluk yönetimi ve reklam optimizasyonunu birleştirerek markanızın sesini en gür şekilde duyuruyoruz.',
+      desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden yönetiyoruz. Meta ve Google reklamlarında data odaklı yaklaşımlarımızla yüksek performanslı reklam yönetimi (Performance Marketing) sağlıyoruz. İçerik planlaması, topluluk yönetimi ve reklam optimizasyonunu birleştirerek markanızın sesini en gür şekilde duyuruyoruz.',
       media: [
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/1.jpg' },
         { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/2.jpg' },

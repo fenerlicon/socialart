@@ -118,95 +118,211 @@ const AnalysisForm = ({ defaultService = "" }) => {
   };
 
   return (
-    <div className="form-box" style={{ maxWidth: '800px', margin: '0 auto', background: 'rgba(15, 15, 15, 0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.05)', padding: '40px', borderRadius: '32px' }}>
-      {formSuccess ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-          <div style={{ width: '80px', height: '80px', background: 'rgba(0,230,118,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <ShieldCheck size={48} color="#00e676" />
+    <div className="form-box-wrapper" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div className="form-box" style={{ 
+        background: 'rgba(15, 15, 15, 0.7)', 
+        backdropFilter: 'blur(15px)', 
+        border: '1px solid rgba(255,255,255,0.1)', 
+        padding: '30px', 
+        borderRadius: '32px',
+        boxShadow: '0 25px 50px rgba(0,0,0,0.4)'
+      }}>
+        {formSuccess ? (
+          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+            <div style={{ width: '80px', height: '80px', background: 'rgba(0,230,118,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <ShieldCheck size={48} color="#00e676" />
+            </div>
+            <h4 style={{ fontSize: '1.8rem', marginBottom: '10px', fontWeight: '800' }}>Harika! Talebiniz Alındı.</h4>
+            <p style={{ color: '#aaa', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto' }}>Ekibimiz belirttiğiniz saatte ({selectedDateStr}) sizi arayacak veya e-posta yoluyla strateji raporunuzu iletecek.</p>
+            <button className="btn btn-primary" style={{ marginTop: '30px' }} onClick={() => setFormSuccess(false)}>Yeni Form Doldur</button>
           </div>
-          <h4 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>Harika! Talebiniz Alındı.</h4>
-          <p style={{ color: '#aaa', lineHeight: '1.6' }}>Ekibimiz belirttiğiniz saatte ({selectedDateStr}) sizi arayacak veya e-posta yoluyla strateji raporunuzu iletecek.</p>
-          <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => setFormSuccess(false)}>Yeni Form Doldur</button>
-        </div>
-      ) : (
-        <form onSubmit={handleFormSubmit}>
-          {formError && (
-            <div style={{ background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid rgba(255,0,85,0.2)' }}>
-              {formError}
-            </div>
-          )}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div className="input-group">
-              <label>Adınız Soyadınız</label>
-              <input type="text" placeholder="Örn: Ahmet Yılmaz" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
-            </div>
-            <div className="input-group">
-              <label>Telefon Numaranız</label>
-              <input type="tel" placeholder="05XX XXX XX XX" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div className="input-group">
-              <label>E-posta Adresiniz</label>
-              <input type="email" placeholder="ornek@sirket.com" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-            </div>
-            <div className="input-group">
-              <label>Web Siteniz / Sosyal Medya</label>
-              <input type="text" placeholder="instagram.com/markaniz" required value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} />
-            </div>
-          </div>
-
-          <div className="input-group">
-            <label style={{marginBottom: '10px', display: 'block'}}>İlgilendiğiniz Hizmetler</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              {[
-                "Video prodüksiyon", "Fotoğraf çekimi", "Sunuculu Reklam", "Sosyal Medya & Reklam", "Grafik Tasarım", "UGC & Influencer"
-              ].map((srv, i) => (
-                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input type="checkbox" checked={formData.services.includes(srv)} onChange={() => handleCheckboxChange(srv)} /> {srv}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="input-group" style={{ background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', marginTop: '20px' }}>
-            <label style={{marginBottom: '15px', display: 'block', fontWeight: 'bold'}}>📅 Toplantı Tarihi ve Saati</label>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {/* Mini Calendar */}
-              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.9rem' }}>
-                  <button type="button" onClick={handlePrevMonth}>&lt;</button>
-                  <span>{monthNames[displayedMonth.getMonth()]}</span>
-                  <button type="button" onClick={handleNextMonth}>&gt;</button>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', fontSize: '0.7rem', textAlign: 'center' }}>
-                  {Array.from({length: startDayIndex}).map((_, i) => <div key={i}></div>)}
-                  {Array.from({length: daysInMonth}).map((_, i) => {
-                    const d = i + 1;
-                    const keyStr = `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const isSelected = selectedDateStr === keyStr;
-                    return (
-                      <div key={d} onClick={() => setSelectedDateStr(keyStr)} style={{ padding: '5px 0', cursor: 'pointer', background: isSelected ? 'var(--primary)' : 'transparent', borderRadius: '4px' }}>{d}</div>
-                    );
-                  })}
-                </div>
+        ) : (
+          <form onSubmit={handleFormSubmit} className="analysis-form-actual">
+            {formError && (
+              <div style={{ background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', padding: '15px', borderRadius: '12px', marginBottom: '25px', border: '1px solid rgba(255,0,85,0.2)', textAlign: 'center', fontWeight: 'bold' }}>
+                {formError}
               </div>
+            )}
+            
+            {/* INPUT GRID */}
+            <div className="form-grid-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label>Adınız Soyadınız</label>
+                <input type="text" placeholder="Örn: Ahmet Yılmaz" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} style={{ width: '100%' }} />
+              </div>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label>Telefon Numaranız</label>
+                <input 
+                  type="tel" 
+                  placeholder="05XX XXX XX XX" 
+                  required 
+                  value={formData.phone} 
+                  onChange={e => {
+                    const onlyNums = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({...formData, phone: onlyNums});
+                  }} 
+                  style={{ width: '100%' }} 
+                />
+              </div>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label>E-posta Adresiniz</label>
+                <input 
+                  type="email" 
+                  placeholder="ornek@sirket.com" 
+                  required 
+                  value={formData.email} 
+                  onChange={e => {
+                    e.target.setCustomValidity('');
+                    setFormData({...formData, email: e.target.value});
+                  }}
+                  onInvalid={e => e.target.setCustomValidity('Lütfen geçerli bir e-posta adresi giriniz (örn: isim@sirket.com)')}
+                  style={{ width: '100%' }} 
+                />
+              </div>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label>Web Siteniz / Sosyal Medya</label>
+                <input type="text" placeholder="instagram.com/markaniz" required value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} style={{ width: '100%' }} />
+              </div>
+            </div>
 
-              {/* Time Slots */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', maxHeight: '150px', overflowY: 'auto' }}>
-                {timeSlots.map(time => (
-                  <div key={time} onClick={() => setSelectedTimeStr(time)} style={{ padding: '8px', fontSize: '0.8rem', textAlign: 'center', borderRadius: '6px', background: selectedTimeStr === time ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', cursor: 'pointer' }}>{time.split(' ')[0]}</div>
+            {/* SERVICES SECTION */}
+            <div className="input-group" style={{ marginBottom: '30px' }}>
+              <label style={{marginBottom: '15px', display: 'block', fontWeight: '800', color: '#fff', fontSize: '1.1rem'}}>İlgilendiğiniz Hizmetler</label>
+              <div className="services-checkbox-grid" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
+                gap: '12px', 
+                background: 'rgba(255,255,255,0.03)', 
+                padding: '20px', 
+                borderRadius: '20px', 
+                border: '1px solid rgba(255,255,255,0.08)' 
+              }}>
+                {[
+                  "Video prodüksiyon", "Fotoğraf çekimi", "Sunuculu Reklam", "Sosyal Medya & Reklam", "Grafik Tasarım", "UGC & Influencer"
+                ].map((srv, i) => (
+                  <label key={i} className="checkbox-item" style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '12px', 
+                    cursor: 'pointer', 
+                    fontSize: '0.95rem',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    transition: 'background 0.2s',
+                    background: formData.services.includes(srv) ? 'rgba(255,255,255,0.05)' : 'transparent'
+                  }}>
+                    <input 
+                      type="checkbox" 
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                      checked={formData.services.includes(srv)} 
+                      onChange={() => handleCheckboxChange(srv)} 
+                    /> 
+                    <span style={{ color: formData.services.includes(srv) ? '#fff' : '#aaa' }}>{srv}</span>
+                  </label>
                 ))}
               </div>
             </div>
-          </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', padding: '15px', marginTop: '30px' }}>
-            {loading ? 'Gönderiliyor...' : 'Randevu Oluştur'}
-          </button>
-        </form>
-      )}
+            {/* APPOINTMENT PICKER */}
+            <div className="appointment-picker-container" style={{ 
+              background: 'rgba(0,0,0,0.4)', 
+              padding: '25px', 
+              borderRadius: '24px', 
+              border: '1px solid rgba(255,255,255,0.08)',
+              marginTop: '30px'
+            }}>
+              <label style={{marginBottom: '20px', display: 'block', fontWeight: '800', color: '#fff', fontSize: '1.1rem'}}>📅 Toplantı Tarihi ve Saati Seçin</label>
+              
+              <div className="picker-grid" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                gap: '30px' 
+              }}>
+                {/* Mini Calendar */}
+                <div className="calendar-ui" style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <button type="button" onClick={handlePrevMonth} className="cal-btn" style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer' }}>&lt;</button>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{monthNames[displayedMonth.getMonth()]} {displayedMonth.getFullYear()}</span>
+                    <button type="button" onClick={handleNextMonth} className="cal-btn" style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer' }}>&gt;</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center' }}>
+                    {['Pz', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pa'].map(d => <div key={d} style={{ fontSize: '0.75rem', color: '#666', fontWeight: 'bold', marginBottom: '10px' }}>{d}</div>)}
+                    {Array.from({length: startDayIndex}).map((_, i) => <div key={`empty-${i}`}></div>)}
+                    {Array.from({length: daysInMonth}).map((_, i) => {
+                      const d = i + 1;
+                      const keyStr = `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                      const isSelected = selectedDateStr === keyStr;
+                      const isToday = today.getFullYear() === displayedMonth.getFullYear() && today.getMonth() === displayedMonth.getMonth() && today.getDate() === d;
+                      
+                      return (
+                        <div 
+                          key={d} 
+                          onClick={() => setSelectedDateStr(keyStr)} 
+                          style={{ 
+                            padding: '10px 0', 
+                            cursor: 'pointer', 
+                            fontSize: '0.95rem',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            background: isSelected ? 'var(--primary)' : isToday ? 'rgba(255,255,255,0.1)' : 'transparent', 
+                            color: isSelected ? '#fff' : '#eee',
+                            borderRadius: '10px',
+                            border: isToday && !isSelected ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {d}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Time Slots */}
+                <div className="time-slots-ui">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px' }}>
+                    {timeSlots.map(time => {
+                      const isSelected = selectedTimeStr === time;
+                      return (
+                        <div 
+                          key={time} 
+                          onClick={() => setSelectedTimeStr(time)} 
+                          style={{ 
+                            padding: '12px 5px', 
+                            fontSize: '0.85rem', 
+                            textAlign: 'center', 
+                            borderRadius: '12px', 
+                            background: isSelected ? 'var(--secondary)' : 'rgba(255,255,255,0.04)', 
+                            color: isSelected ? '#fff' : '#ccc',
+                            border: `1px solid ${isSelected ? 'var(--secondary)' : 'rgba(255,255,255,0.08)'}`,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontWeight: isSelected ? 'bold' : '500'
+                          }}
+                        >
+                          {time.split(' ')[0]}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ 
+              width: '100%', 
+              padding: '18px', 
+              marginTop: '40px', 
+              fontSize: '1.2rem', 
+              fontWeight: '800',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              borderRadius: '16px'
+            }}>
+              {loading ? 'Gönderiliyor...' : 'Ücretsiz Analiz İstiyorum'}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 };

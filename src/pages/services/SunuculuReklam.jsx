@@ -35,6 +35,14 @@ const SunuculuReklam = () => {
           <p style={{ maxWidth: '800px', margin: '0 auto', color: '#aaa', fontSize: '1.2rem', lineHeight: '1.6' }}>
             Markanızı profesyonel bir yüzle temsil edin. Stüdyo ortamında, profesyonel sunucular ve senaryo ekibimizle markanızın güvenilirliğini ve satışlarını artırıyoruz.
           </p>
+          <div style={{ marginTop: '40px' }}>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => document.getElementById('form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              Hemen Teklif Alın <ArrowRight size={20} style={{ marginLeft: '10px' }} />
+            </button>
+          </div>
         </div>
       </section>
 

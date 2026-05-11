@@ -1,34 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, Loader } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 function Blog() {
-  const posts = [
-    {
-      id: "sosyal-medya-algoritma",
-      title: "Sosyal Medya Algoritmaları 2026'da Bizi Neler Bekliyor?",
-      date: "06 Nisan 2026",
-      readTime: "5 dk okuma",
-      excerpt: "Büyük platformlardaki en son algoritma değişiklikleri ve markanız için almanız gereken aksiyonlar. Yapay zeka destekli içeriklerin yükselişi ve daha fazlası...",
-      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      id: "kisa-video-gucu",
-      title: "Kısa Video Formatlarının Gücü (Reels, TikTok, Shorts)",
-      date: "28 Mart 2026",
-      readTime: "4 dk okuma",
-      excerpt: "Etkileşiminizi ve marka bilinirliğinizi artırmak için kısa video formatlarını nasıl optimize etmelisiniz? Viral olmanın matematiği çözüldü mü?",
-      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      id: "kampanya-kurgusu",
-      title: "Etkili Bir Kampanya Kurgusu Nasıl Hazırlanır?",
-      date: "14 Mart 2026",
-      readTime: "7 dk okuma",
-      excerpt: "Baştan sona dönüşüm getiren bir reklam kampanya stratejisinin olmazsa olmaz adımları. Funnel kurgusundan kreatif optimizasyonuna kadar her şey.",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800"
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBlogs() {
+      try {
+        const { data, error } = await supabase
+          .from('blogs')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        setPosts(data || []);
+      } catch (err) {
+        console.error('Blogları çekerken hata oluştu:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
+    
+    fetchBlogs();
+  }, []);
 
   return (
     <>
@@ -87,41 +84,52 @@ function Blog() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '40px' }}>
-            {posts.map((post) => (
-              <div key={post.id} className="glass blog-card">
-                <div className="blog-image-wrap">
-                  <img src={post.image} alt={post.title} className="blog-image" />
-                  <div className="blog-overlay">
-                    <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: '800', letterSpacing: '1px' }}>OKUMAYA BAŞLA</span>
-                  </div>
-                </div>
-                
-                <div style={{ padding: '30px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', gap: '15px', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '15px', fontWeight: '600' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Calendar size={14} color="var(--primary)" /> {post.date}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} color="var(--primary)" /> {post.readTime}</span>
-                  </div>
-                  
-                  <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', fontWeight: '800', lineHeight: '1.3' }}>{post.title}</h3>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '25px', flex: 1, lineHeight: '1.6', fontSize: '0.95rem' }}>
-                    {post.excerpt}
-                  </p>
-                  
-                  <Link to={`/blog/${post.id}`} style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '10px', 
-                    color: 'var(--primary)', 
-                    fontWeight: '800', 
-                    fontSize: '0.9rem',
-                    textDecoration: 'none',
-                    marginTop: 'auto'
-                  }}>
-                    Devamını Oku <ArrowRight size={18} />
-                  </Link>
-                </div>
+            {loading ? (
+              <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '50px' }}>
+                <Loader className="spin" size={40} color="var(--primary)" style={{ margin: '0 auto', animation: 'spin 1s linear infinite' }} />
+                <p style={{ marginTop: '15px', color: '#aaa' }}>Bloglar yükleniyor...</p>
               </div>
-            ))}
+            ) : posts.length === 0 ? (
+              <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '50px', color: '#aaa' }}>
+                Henüz blog yazısı bulunmuyor.
+              </div>
+            ) : (
+              posts.map((post) => (
+                <div key={post.slug} className="glass blog-card">
+                  <div className="blog-image-wrap">
+                    <img src={post.cover_image} alt={post.title} className="blog-image" />
+                    <div className="blog-overlay">
+                      <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: '800', letterSpacing: '1px' }}>OKUMAYA BAŞLA</span>
+                    </div>
+                  </div>
+                  
+                  <div style={{ padding: '30px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', gap: '15px', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '15px', fontWeight: '600' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Calendar size={14} color="var(--primary)" /> {new Date(post.created_at).toLocaleDateString('tr-TR')}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} color="var(--primary)" /> {post.read_time}</span>
+                    </div>
+                    
+                    <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', fontWeight: '800', lineHeight: '1.3' }}>{post.title}</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '25px', flex: 1, lineHeight: '1.6', fontSize: '0.95rem' }}>
+                      {post.excerpt}
+                    </p>
+                    
+                    <Link to={`/blog/${post.slug}`} style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px', 
+                      color: 'var(--primary)', 
+                      fontWeight: '800', 
+                      fontSize: '0.9rem',
+                      textDecoration: 'none',
+                      marginTop: 'auto'
+                    }}>
+                      Devamını Oku <ArrowRight size={18} />
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

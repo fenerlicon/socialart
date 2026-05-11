@@ -2,6 +2,7 @@ import React from 'react';
 import { Camera, Video, Play, ArrowRight, CheckCircle2, Sparkles, Zap, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
+import FAQAccordion from '../../components/FAQAccordion';
 
 function CreativeProduction() {
   const navigate = useNavigate();
@@ -31,12 +32,12 @@ function CreativeProduction() {
       {/* Philosophy Section */}
       <section className="section-padding">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
+          <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
+            <div className="feature-list-card" style={{ padding: '20px', borderRadius: '32px', position: 'relative', overflow: 'hidden' }}>
                <img src="/assets/images/socialart-studio.png" alt="Social Art Stüdyo" style={{ width: '100%', borderRadius: '20px', marginBottom: '20px' }} />
-               <div style={{ position: 'absolute', top: '50px', left: '50px', background: 'var(--primary)', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', boxShadow: '0 10px 30px rgba(138,43,226,0.3)' }}>Kendi Stüdyomuzla Hizmetinizdeyiz</div>
+               <div style={{ position: 'absolute', top: '30px', left: '30px', background: 'var(--primary)', padding: '8px 16px', borderRadius: '10px', fontWeight: 'bold', fontSize: '0.9rem', boxShadow: '0 10px 30px rgba(138,43,226,0.3)' }}>Kendi Stüdyomuzla Hizmetinizdeyiz</div>
             </div>
-            <div>
+            <div className="service-text-content">
               <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '30px' }}>Sadece Video Çekmiyoruz, <span className="gradient-text">Hikaye İnşa Ediyoruz.</span></h2>
               <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '20px' }}>
                 Tasarım herkesin yapabildiği bir şeydir, ancak izleyiciyi 3 saniyede yakalayıp 60 saniyede ikna etmek bir sanattır. Biz buna <strong>Performance Creative</strong> diyoruz.
@@ -104,23 +105,21 @@ function CreativeProduction() {
       {/* FAQ Section */}
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Kendi stüdyonuz var mı?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Evet, İstanbul'da tam donanımlı profesyonel bir çekim stüdyomuz bulunmaktadır. Müşterilerimiz için hem stüdyo çekim hizmeti veriyor hem de stüdyo kiralama imkanı sunuyoruz.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>UGC içerik nedir?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>UGC (User Generated Content), markanızı kullanan gerçek bir kullanıcı gibi görünen içerik üreticilerinin çektiği videolardır. Bu videolar, reklam setlerinde en yüksek güveni ve dönüşümü sağlar.</p>
-              </div>
-              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Çekim sonrası revize hakkımız var mı?</h4>
-                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Kesinlikle. Her projede konsept aşamasında anlaşılan detaylar çerçevesinde ücretsiz revize haklarınız bulunmaktadır. Sizin memnuniyetiniz bizim için esastır.</p>
-              </div>
-            </div>
-          </div>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+          <FAQAccordion items={[
+            {
+              question: "Kendi stüdyonuz var mı?",
+              answer: "Evet, İstanbul'da tam donanımlı profesyonel bir çekim stüdyomuz bulunmaktadır. Müşterilerimiz için hem stüdyo çekim hizmeti veriyor hem de stüdyo kiralama imkanı sunuyoruz."
+            },
+            {
+              question: "UGC içerik nedir?",
+              answer: "UGC (User Generated Content), markanızı kullanan gerçek bir kullanıcı gibi görünen içerik üreticilerinin çektiği videolardır. Bu videolar, reklam setlerinde en yüksek güveni ve dönüşümü sağlar."
+            },
+            {
+              question: "Çekim sonrası revize hakkımız var mı?",
+              answer: "Kesinlikle. Her projede konsept aşamasında anlaşılan detaylar çerçevesinde ücretsiz revize haklarınız bulunmaktadır. Sizin memnuniyetiniz bizim için esastır."
+            }
+          ]} />
         </div>
       </section>
 
