@@ -587,9 +587,9 @@ function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4", name: "UGC Örneği 1" },
-              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/aguzellik-video.mp4", name: "Sunuculu Reklam 1" },
-              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4", name: "UGC Örneği 2" }
+              { url: "/assets/videos/video1.mov", name: "Özel Tanıtım 1" },
+              { url: "/assets/videos/video2.mp4", name: "Özel Tanıtım 2" },
+              { url: "/assets/videos/video3.mp4", name: "Özel Tanıtım 3" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ 
                 borderRadius: '40px', 
@@ -602,7 +602,7 @@ function Home() {
                 flexDirection: 'column'
               }}>
                 <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                  <h4 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.2rem', fontWeight: 'bold' }}>{item.name}</h4>
+                  <h4 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 'bold', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{item.name}</h4>
                 </div>
                 <div style={{ 
                   borderRadius: '30px', 
