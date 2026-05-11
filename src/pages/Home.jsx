@@ -19,10 +19,19 @@ import {
   Monitor,
   Layers,
   Zap,
-  Rocket
+  Rocket,
+  CheckCircle,
+  Phone,
+  Mail,
+  PlayCircle,
+  ChevronDown,
+  MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import jeepLogo from '../assets/images/jeep-logo.webp';
+import peugeotLogo from '../assets/images/peugeot-logo.png';
+import kotonLogo from '../assets/images/koton-logo.png';
 
 function Home() {
   const navigate = useNavigate();
@@ -352,17 +361,17 @@ function Home() {
             {[
               {
                 url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/jeep-reel.mp4",
-                logo: "/assets/images/jeep-logo.webp",
+                logo: jeepLogo,
                 name: "Jeep"
               },
               {
                 url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
-                logo: "/assets/images/peugeot-logo.png",
+                logo: peugeotLogo,
                 name: "Peugeot"
               },
               {
                 url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4",
-                logo: "/assets/images/koton-logo.png",
+                logo: kotonLogo,
                 name: "Koton"
               }
             ].map((item, idx) => (
