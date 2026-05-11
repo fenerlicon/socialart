@@ -140,7 +140,7 @@ function About() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             {[
-              { icon: <Award size={24} />, title: "Uman Ekip", desc: "Sektörde yılların birikimine sahip profesyonel kadro." },
+              { icon: <Award size={24} />, title: "Uzman Ekip", desc: "Sektörde yılların birikimine sahip profesyonel kadro." },
               { icon: <Video size={24} />, title: "Modern Ekipman", desc: "4K ve üstü sinematik prodüksiyon standartları." },
               { icon: <Users size={24} />, title: "Butik Yaklaşım", desc: "Her markaya özel, terzi usulü hazırlanan stratejiler." },
               { icon: <Heart size={24} />, title: "Tutkuyla Çalışıyoruz", desc: "İşinizi kendi işimiz gibi sahipleniyoruz." }
