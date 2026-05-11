@@ -123,6 +123,8 @@ button {
 
 .section-padding {
   padding: 60px 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 800px;
 }
 
 .section-title {
@@ -138,6 +140,8 @@ button {
   font-size: 1.125rem;
   max-width: 600px;
   margin: 0 auto 3rem auto;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 200px;
 }
 
 /* 🔘 BUTTON UTILITIES */

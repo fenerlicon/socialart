@@ -5,6 +5,12 @@
     
     <title>SocialArt Ajans | Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://zpulnweiosxphibipxdp.supabase.co">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://zpulnweiosxphibipxdp.supabase.co">
+
     <!-- Critical CSS to prevent FCP delay -->
     <style>
       :root {
@@ -39,7 +45,12 @@
         background: linear-gradient(90deg, var(--primary), var(--secondary), #00e5ff);
         -webkit-background-clip: text;
         background-clip: text;
+        color: var(--primary); /* Fallback */
         color: transparent;
+      }
+      @media (max-width: 768px) {
+        .hero { padding-top: 100px; min-height: 60vh; }
+        .hero-title { font-size: 2.8rem !important; }
       }
     </style>
     
