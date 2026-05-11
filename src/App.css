@@ -1,4 +1,4 @@
-﻿.app-layout {
+.app-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -95,10 +95,11 @@
     transform: translateX(0);
   }
   
-  .nav-links a, .nav-links span {
+  .nav-links a, .nav-links span, .nav-item-wrapper {
     font-size: 1.4rem !important;
     width: 100%;
     text-align: center;
+    justify-content: center !important;
     padding: 10px 0;
   }
 
