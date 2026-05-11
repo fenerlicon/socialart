@@ -249,6 +249,28 @@ function Home() {
 
       if (apptError) throw apptError;
 
+      // 3. Bildirim Gönder (Email/Discord)
+      try {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'appointment',
+            data: { 
+              fullName: formData.fullName,
+              phone: formData.phone,
+              email: formData.email,
+              url: formData.url,
+              services: formData.services,
+              date: selectedDateStr,
+              time: selectedTimeStr
+            }
+          })
+        });
+      } catch (emailErr) {
+        console.error('Notification error:', emailErr);
+      }
+
       setFormSuccess(true);
       setFormData({ fullName: '', phone: '', email: '', url: '', services: [] });
       setSelectedDateStr('');

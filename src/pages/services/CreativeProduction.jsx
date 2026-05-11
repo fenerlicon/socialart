@@ -123,18 +123,17 @@ function CreativeProduction() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="section-padding" style={{ textAlign: 'center' }}>
+      {/* Final CTA & Analysis Form */}
+      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
-          <div className="glass" style={{ padding: '80px 40px', borderRadius: '48px', border: '1px solid var(--secondary)', background: 'linear-gradient(135deg, rgba(255,0,85,0.1) 0%, transparent 100%)' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Vizyonunuzu <span className="gradient-text">Ekrana Taşıyalım</span></h2>
-            <p style={{ fontSize: '1.2rem', color: '#aaa', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}>
-              Markanızın görsel dilini profesyonel bir dokunuşla değiştirmeye hazır mısınız?
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Üretime <span className="gradient-text">Başlayalım</span></h2>
+            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
+              Markanızın görsel dünyasını birlikte inşa edelim. Ücretsiz analiz ve çekim planlaması için randevunuzu oluşturun.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>
-              Prodüksiyon Teklifi Al <ArrowRight size={20} style={{ marginLeft: '10px' }} />
-            </button>
           </div>
+          
+          <AnalysisForm defaultService="Video prodüksiyon" />
         </div>
       </section>
     </div>

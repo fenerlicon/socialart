@@ -126,18 +126,17 @@ function SEOGEO() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="section-padding" style={{ textAlign: 'center' }}>
+      {/* Final CTA & Analysis Form */}
+      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
-          <div className="glass" style={{ padding: '80px 40px', borderRadius: '48px', border: '1px solid #00e5ff', background: 'linear-gradient(135deg, rgba(0,229,255,0.1) 0%, transparent 100%)' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Geleceği <span className="gradient-text">Bugünden Yakalayın</span></h2>
-            <p style={{ fontSize: '1.2rem', color: '#aaa', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}>
-              Markanızı arama motorlarının ve yapay zeka sistemlerinin favorisi haline getirelim.
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Geleceğe <span className="gradient-text">Hazır Mısınız?</span></h2>
+            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
+              Yapay zeka çağında markanızın görünürlüğünü garantiye alalım. Ücretsiz teknik analiz için randevunuzu oluşturun.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>
-              SEO & GEO Analizi İste <ArrowRight size={20} style={{ marginLeft: '10px' }} />
-            </button>
           </div>
+          
+          <AnalysisForm defaultService="SEO & GEO Hizmeti" />
         </div>
       </section>
     </div>

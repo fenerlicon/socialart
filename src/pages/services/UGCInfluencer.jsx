@@ -120,18 +120,17 @@ function UGCInfluencer() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="section-padding" style={{ textAlign: 'center' }}>
+      {/* Final CTA & Analysis Form */}
+      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
-          <div className="glass" style={{ padding: '80px 40px', borderRadius: '48px', border: '1px solid var(--primary)', background: 'linear-gradient(135deg, rgba(138,43,226,0.1) 0%, transparent 100%)' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Satışlarınızı <span className="gradient-text">Doğallıkla Artırın</span></h2>
-            <p style={{ fontSize: '1.2rem', color: '#aaa', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}>
-              Markanızı tüketicilerin dilinden anlatan içerik stratejileri için hemen iletişime geçin.
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Güven <span className="gradient-text">İnşa Edelim</span></h2>
+            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
+              Markanızın samimiyetini artıracak içerikleri birlikte planlayalım. Ücretsiz analiz için randevunuzu oluşturun.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>
-              Strateji Görüşmesi Planla <ArrowRight size={20} style={{ marginLeft: '10px' }} />
-            </button>
           </div>
+          
+          <AnalysisForm defaultService="UGC & Influencer" />
         </div>
       </section>
     </div>

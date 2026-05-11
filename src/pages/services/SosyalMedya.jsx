@@ -133,18 +133,17 @@ function SosyalMedya() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="section-padding" style={{ textAlign: 'center' }}>
+      {/* Final CTA & Analysis Form */}
+      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
-          <div className="glass" style={{ padding: '80px 40px', borderRadius: '48px', border: '1px solid var(--accent)', background: 'linear-gradient(135deg, rgba(0,229,255,0.1) 0%, transparent 100%)' }}>
-            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Sosyal Medyada <span className="gradient-text">Fark Yaratın</span></h2>
-            <p style={{ fontSize: '1.2rem', color: '#aaa', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}>
-              Markanızın dijital sesini güçlendirmeye ve topluluğunuzu büyütmeye bugün başlayın.
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Topluluğunuzu <span className="gradient-text">Büyütelim</span></h2>
+            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
+              Dijitaldeki sesinizi birlikte güçlendirelim. Ücretsiz hesap analizi ve strateji planlaması için randevunuzu oluşturun.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>
-              Strateji Görüşmesi Planla <ArrowRight size={20} style={{ marginLeft: '10px' }} />
-            </button>
           </div>
+          
+          <AnalysisForm defaultService="Sosyal Medya & Reklam" />
         </div>
       </section>
     </div>

@@ -146,18 +146,17 @@ function MetaAds() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="section-padding" style={{ textAlign: 'center' }}>
+      {/* Final CTA & Analysis Form */}
+      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
-          <div className="glass" style={{ padding: '80px 40px', borderRadius: '48px', border: '1px solid var(--primary)', background: 'linear-gradient(135deg, rgba(138,43,226,0.1) 0%, transparent 100%)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Büyümeye <span className="gradient-text">Hazır Mısınız?</span></h2>
-            <p style={{ fontSize: '1.2rem', color: '#aaa', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}>
-              Markanızın reklam performansını bir üst seviyeye taşıyalım. Ücretsiz analiz için hemen randevu alın.
+            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
+              Markanızın reklam performansını bir üst seviyeye taşıyalım. Ücretsiz analiz ve toplantı için hemen randevunuzu oluşturun.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>
-              Analiz Formunu Doldur <ArrowRight size={20} style={{ marginLeft: '10px' }} />
-            </button>
           </div>
+          
+          <AnalysisForm defaultService="Sosyal Medya & Reklam" />
         </div>
       </section>
     </div>
