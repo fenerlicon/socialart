@@ -472,45 +472,11 @@ function Home() {
       {/* 7. MARKANIZ İÇİN ÜCRETSİZ ANALİZ */}
       <section className="funnel-form-section" id="funnel">
         <div className="container">
-          <h2 className="section-title">Markanız İçin <span className="gradient-text">Ücretsiz Analiz</span></h2>
-          <p className="section-subtitle">Uzman ekibimiz mevcut durumunuzu analiz etsin ve size özel büyüme raporu sunsun.</p>
-          <div className="form-box">
-            {formSuccess ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                <ShieldCheck size={48} color="#00e676" />
-                <h4>Talebiniz Alındı!</h4>
-                <p>Ekibimiz en kısa sürede sizinle iletişime geçecek.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleFormSubmit}>
-                <div className="input-group"><label>Adınız Soyadınız</label><input type="text" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} /></div>
-                <div className="input-group"><label>Telefon</label><input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
-                <div className="input-group"><label>Email</label><input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
-                <div className="input-group"><label>Web/Sosyal Medya</label><input type="text" required value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} /></div>
-                <div className="input-group" style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '15px' }}>
-                  <label style={{marginBottom: '10px', display: 'block'}}>📅 Randevu Planla</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '10px' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <button type="button" onClick={handlePrevMonth}>&lt;</button>
-                        <span>{monthNames[displayedMonth.getMonth()]}</span>
-                        <button type="button" onClick={handleNextMonth}>&gt;</button>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', fontSize: '0.7rem' }}>
-                        {Array.from({length: daysInMonth}).map((_, i) => (
-                          <div key={i} onClick={() => setSelectedDateStr(`${displayedMonth.getFullYear()}-${displayedMonth.getMonth()+1}-${i+1}`)} style={{ padding: '4px', cursor: 'pointer', background: selectedDateStr.includes(`-${i+1}`) ? 'var(--primary)' : 'transparent', borderRadius: '4px', textAlign: 'center' }}>{i+1}</div>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px', maxHeight: '150px', overflowY: 'auto' }}>
-                      {timeSlots.map(t => <div key={t} onClick={() => setSelectedTimeStr(t)} style={{ padding: '8px', fontSize: '0.8rem', background: selectedTimeStr === t ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', borderRadius: '6px', cursor: 'pointer', textAlign: 'center' }}>{t.split(' ')[0]}</div>)}
-                    </div>
-                  </div>
-                </div>
-                <button type="submit" className="cta-button" style={{width: '100%', marginTop: '20px'}} disabled={loading}>{loading ? 'Gönderiliyor...' : 'Ücretsiz Analiz İstiyorum'}</button>
-              </form>
-            )}
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h2 className="section-title">Markanız İçin <span className="gradient-text">Ücretsiz Analiz</span></h2>
+            <p className="section-subtitle">Uzman ekibimiz mevcut durumunuzu analiz etsin ve size özel büyüme raporu sunsun.</p>
           </div>
+          <AnalysisForm />
         </div>
       </section>
 
