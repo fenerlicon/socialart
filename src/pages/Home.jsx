@@ -339,95 +339,51 @@ function Home() {
         </div>
       </section>
       {/* PREMIUM SHOWREEL - DIRECTOR'S CUT */}
-      <section className="cinematic-showreel-section" id="showreel">
-        <div className="cinema-ambient-glow" style={{ 
-          background: activeReel === 0 ? 'radial-gradient(circle, rgba(138,43,226,0.3) 0%, transparent 70%)' : 
-                      activeReel === 1 ? 'radial-gradient(circle, rgba(255,0,85,0.3) 0%, transparent 70%)' :
-                      'radial-gradient(circle, rgba(0,229,255,0.3) 0%, transparent 70%)'
-        }}></div>
-
-        <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+      {/* PREMIUM SHOWREEL - DIRECTOR'S CUT */}
+      <section className="cinematic-showreel-section section-padding" id="showreel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '10%', right: '5%', width: '400px', height: '400px', background: 'var(--primary-glow)', filter: 'blur(150px)', opacity: '0.1', zIndex: 0 }}></div>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '80px' }}>
             <h2 className="section-title">Director's <span className="gradient-text">Showreel</span></h2>
             <p className="section-subtitle">Üst segment prodüksiyon ve sinematik reklam çekimi vizyonumuz.</p>
           </div>
 
-          <div className="cinema-stage">
-            <div className="cinema-frame">
-
-
-              <div className="cinema-video-wrapper">
-
-
-                <video 
-                  ref={videoRef}
-                  key={`${activeReel}-${subClipIndex}`}
-                  autoPlay 
-                  muted
-                  onEnded={() => {
-                    const nextIndex = subClipIndex + 1;
-                    if (videoMapping[activeReel] && nextIndex < videoMapping[activeReel].length) {
-                      setSubClipIndex(nextIndex);
-                    } else if (videoMapping[activeReel] && videoMapping[activeReel].length > 1) {
-                      setSubClipIndex(0); // Loop back to first subclip
-                    }
-                  }}
-                  loop={videoMapping[activeReel] && videoMapping[activeReel].length === 1}
-                  playsInline 
-                  className={`cinema-video ${activeReel === 5 ? 'video-rotated-left' : ''}`}
-                  onClick={() => {
-                    if (videoRef.current.paused) videoRef.current.play();
-                    else videoRef.current.pause();
-                  }}
-                  poster="/assets/images/jeep-thumb.png"
-                  fetchPriority="high"
-                  style={{ cursor: 'pointer' }}
-                >
-                  <source src={videoMapping[activeReel] ? videoMapping[activeReel][subClipIndex] : videoMapping[0][0]} type="video/mp4" />
-                </video>
-              </div>
-
-              <div className="cinema-controls-bottom">
-                <button className="btn-fullscreen-minimal" onClick={() => {
-                  const v = document.querySelector('.cinema-video');
-                  if(v) v.requestFullscreen();
-                }} title="Tam Ekran" aria-label="Videoyu tam ekran yap">
-                  <Maximize2 size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* TIMELINE NAVIGATION */}
-            <div className="cinema-timeline">
-              {[
-                { label: 'SEQ_01', brand: 'JEEP TURKEY', id: 0, logo: '/assets/images/jeep-logo-ai.png' },
-                { label: 'SEQ_02', brand: 'KOTON GLOBAL', id: 1, logo: '/assets/images/koton-user-logo.png' },
-                { label: 'SEQ_03', brand: 'PEUGEOT', id: 2, logo: '/assets/images/peugeot-logo-ai.png' },
-                { label: 'SEQ_04', brand: 'POLAR', id: 3, logo: '/assets/images/polar-user-logo.png' },
-                { label: 'SEQ_05', brand: 'FLORMAR', id: 4, logo: '/assets/images/flormar-logo-ai.png' },
-                { label: 'SEQ_06', brand: 'SAHNE MARİN', id: 5, logo: '/assets/images/sahnemarin-user-logo.png' },
-                { label: 'SEQ_07', brand: 'Social Art Stüdyo', id: 6, logo: '/assets/images/socialart-user-logo.png' }
-              ].map((item) => (
-                <div 
-                  key={item.id}
-                  className={`timeline-item ${activeReel === item.id ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveReel(item.id);
-                    setSubClipIndex(0);
-                  }}
-                  style={{
-                    backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 60%), url(${item.logo})`,
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    backgroundColor: item.id === 3 ? '#fff' : '#000', // White for Polar user logo
-                    border: activeReel === item.id ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <div className="timeline-progress"></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
+            {[
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/jeep-reel.mp4",
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/polar-1.mp4",
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/flormar.mp4"
+            ].map((url, idx) => (
+              <div key={`dir-${idx}`} className="glass" style={{ 
+                borderRadius: '40px', 
+                padding: '15px', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                maxWidth: '320px', 
+                margin: '0 auto',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+              }}>
+                <div style={{ 
+                  borderRadius: '30px', 
+                  overflow: 'hidden', 
+                  aspectRatio: '9/16', 
+                  background: '#000',
+                  position: 'relative',
+                  border: '8px solid #1a1a1a'
+                }}>
+                  <video 
+                    src={url} 
+                    className="mobile-video"
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '18px', background: '#1a1a1a', borderRadius: '10px', zIndex: 2 }}></div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -616,7 +572,7 @@ function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
               "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4",
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/socialart-studio.mp4",
               "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4"
             ].map((url, idx) => (
               <div key={idx} className="glass" style={{ 
