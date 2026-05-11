@@ -36,43 +36,66 @@ export default async function handler(req, res) {
 
     // 2. Email Notification (via Resend)
     if (process.env.RESEND_API_KEY) {
-       const resendResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
-        },
-        body: JSON.stringify({
-          from: 'SocialArt Bildirim <onboarding@resend.dev>', // Resend onaylı değilse sadece bu adresten gönderir
-          to: ['hello@socialartajans.com'], // Senin mail adresin
+      let emailPayload;
+
+      if (type === 'appointment') {
+        // Transactional Appointment Email
+        emailPayload = {
+          from: 'SocialArt Bildirim <tugba@socialartajans.com>',
+          to: ['hello@socialartajans.com'],
           subject: `🔥 Yeni Randevu: ${data.fullName}`,
           html: `
-            <div style="font-family: 'Helvetica', sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
               <div style="background: #8a2be2; padding: 30px; text-align: center;">
                 <h1 style="color: #fff; margin: 0; font-size: 24px;">Yeni Lead Yakalandı!</h1>
               </div>
               <div style="padding: 30px; background: #fff;">
-                <p style="font-size: 16px; color: #333;">Siteden yeni bir randevu talebi geldi. Detaylar aşağıdadır:</p>
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>İsim:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.fullName}</td></tr>
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Telefon:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.phone}</td></tr>
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Email:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.email}</td></tr>
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>URL/Platform:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.url}</td></tr>
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Hizmetler:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.services.join(', ')}</td></tr>
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Randevu Tarihi:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.date}</td></tr>
-                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Randevu Saati:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.time}</td></tr>
-                </table>
-                <div style="margin-top: 30px; text-align: center;">
-                  <a href="https://socialart-ajans.vercel.app/admin" style="background: #ff0055; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">Müşteri Paneline Git</a>
+                <p><strong>İsim:</strong> ${data.fullName}</p>
+                <p><strong>Telefon:</strong> ${data.phone}</p>
+                <p><strong>Hizmetler:</strong> ${data.services.join(', ')}</p>
+                <p><strong>Zaman:</strong> ${data.date} - ${data.time}</p>
+                <div style="margin-top: 20px; text-align: center;">
+                  <a href="https://www.socialartmedya.com/admin" style="background: #ff0055; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">Panele Git</a>
                 </div>
               </div>
             </div>
           `
-        })
-      });
-      
-      const resendData = await resendResponse.json();
-      console.log('Resend Response:', resendData);
+        };
+      } else if (type === 'marketing') {
+        // Marketing Campaign Email
+        emailPayload = {
+          from: 'SocialArt <tugba@socialartajans.com>', // Tugba'nın maili olarak güncellendi
+          to: [data.to],
+          subject: data.subject,
+          html: `
+            <div style="font-family: sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+              <div style="background: #000; padding: 20px; text-align: center;">
+                <img src="https://www.socialartmedya.com/logo.png" alt="SocialArt" style="width: 150px;" />
+              </div>
+              <div style="padding: 40px 20px;">
+                ${data.content.replace(/\n/g, '<br />')}
+              </div>
+              <div style="background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #777;">
+                © ${new Date().getFullYear()} SocialArt Ajans. Tüm hakları saklıdır.<br />
+                Bu maili bir iş ortağımız olduğunuz için alıyorsunuz.
+              </div>
+            </div>
+          `
+        };
+      }
+
+      if (emailPayload) {
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+          },
+          body: JSON.stringify(emailPayload)
+        });
+        const resendData = await resendResponse.json();
+        console.log('Resend Response:', resendData);
+      }
     }
 
     return res.status(200).json({ success: true });

@@ -18,13 +18,9 @@ import {
   Zap,
   Users,
   Briefcase,
-  FileText,
-  ClipboardList,
-  ListTodo,
-  Activity,
-  Clock,
   Menu,
-  X
+  X,
+  SendHorizontal
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -37,9 +33,12 @@ function EmailMarketing() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const navigate = useNavigate();
+  
+  // Campaign State
+  const [campaign, setCampaign] = useState({ subject: '', content: '' });
+  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0, isActive: false });
 
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXX/exec';
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchExisting();
@@ -50,15 +49,13 @@ function EmailMarketing() {
     try {
       const { data, error } = await supabase.from('email_marketing_leads').select('email, status');
       if (error) throw error;
-      
       const set = new Set(data.map(item => (item.email || '').toLowerCase().trim()).filter(Boolean));
       setExistingEmails(set);
-      
       const sentCount = data ? data.filter(item => item.status === 'sent').length : 0;
       setStats(prev => ({ ...prev, sent: sentCount }));
     } catch (err) {
       console.error(err);
-      setMessage(`Veritabanı bağlantı hatası: ${err.message || 'Bilinmeyen hata'}`);
+      setMessage(`Veritabanı bağlantı hatası!`);
       setStatus('error');
     } finally {
       setLoading(false);
@@ -68,7 +65,6 @@ function EmailMarketing() {
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setLoading(true);
     Papa.parse(file, {
       header: true,
@@ -79,34 +75,17 @@ function EmailMarketing() {
         results.data.forEach(row => {
           const email = (row.email || row.Email || row.mail || row.MAIL || '').toLowerCase().trim();
           if (!email || !email.includes('@')) return;
-          
-          const lead = {
-            email,
-            name: row.name || row.Name || row.ad || row.AD || '',
-            source: 'CSV Upload'
-          };
-
-          if (existingEmails.has(email)) {
-            dups.push(lead);
-          } else {
-            unique.push(lead);
-          }
+          const lead = { email, name: row.name || row.Name || row.ad || row.AD || '', source: 'CSV Upload' };
+          if (existingEmails.has(email)) dups.push(lead); else unique.push(lead);
         });
-
         setCsvData(results.data);
         setFilteredLeads(unique);
-        setStats(prev => ({ 
-          ...prev, 
-          total: unique.length + dups.length, 
-          duplicate: dups.length, 
-          unique: unique.length 
-        }));
+        setStats(prev => ({ ...prev, total: unique.length + dups.length, duplicate: dups.length, unique: unique.length }));
         setStatus('success');
         setMessage('CSV başarıyla okundu.');
         setLoading(false);
       },
-      error: (err) => {
-        console.error(err);
+      error: () => {
         setStatus('error');
         setMessage('CSV okuma hatası!');
         setLoading(false);
@@ -128,7 +107,6 @@ function EmailMarketing() {
       setFilteredLeads([]);
       fetchExisting();
     } catch (err) {
-      console.error(err);
       setMessage(`Kayıt hatası: ${err.message}`);
       setStatus('error');
     } finally {
@@ -136,310 +114,184 @@ function EmailMarketing() {
     }
   };
 
-  const handleMarkAsSent = async () => {
-    const leadsToUpdate = [...filteredLeads, ...csvData.filter(row => {
-      const email = (row.email || row.Email || row.mail || row.MAIL || '').toLowerCase().trim();
-      return existingEmails.has(email);
-    }).map(row => ({
-      email: (row.email || row.Email || row.mail || row.MAIL || '').toLowerCase().trim(),
-      name: row.name || row.Name || row.ad || row.AD || '',
-      source: 'CSV Upload'
-    }))];
+  const handleSendCampaign = async () => {
+    if (!campaign.subject || !campaign.content) {
+      setMessage('Lütfen konu ve içerik giriniz!');
+      setStatus('error');
+      return;
+    }
 
-    if (leadsToUpdate.length === 0) return;
+    // Determine target list: Either the uploaded CSV or the unique leads
+    const targets = filteredLeads.length > 0 ? filteredLeads : Array.from(existingEmails).map(email => ({ email }));
     
-    setLoading(true);
-    try {
-      const { error } = await supabase.from('email_marketing_leads').upsert(
-        leadsToUpdate.map(l => ({ 
-          email: l.email, 
-          name: l.name, 
-          source: l.source, 
-          status: 'sent',
-          last_synced_at: new Date().toISOString()
-        })),
-        { onConflict: 'email' }
-      );
-
-      if (error) throw error;
-      
-      setMessage(`${leadsToUpdate.length} email 'Gönderildi' olarak işaretlendi.`);
-      setStatus('success');
-      fetchExisting();
-      setFilteredLeads([]);
-      setCsvData([]);
-    } catch (err) {
-      console.error(err);
-      setMessage(`Güncelleme hatası: ${err.message}`);
+    if (targets.length === 0) {
+      setMessage('Gönderilecek lead bulunamadı!');
       setStatus('error');
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
 
-  const handleTrigger = async () => {
-    if (filteredLeads.length === 0 && stats.unique === 0) return;
+    if (!window.confirm(`${targets.length} kişiye kampanya gönderilecek. Onaylıyor musunuz?`)) return;
+
     setLoading(true);
-    try {
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({ leads: filteredLeads, type: 'email_marketing' })
-      });
-      setMessage('Google Script tetiklendi!');
-      setStatus('success');
-    } catch (err) {
-      console.error(err);
-      setMessage('Trigger hatası!');
-      setStatus('error');
-    } finally {
-      setLoading(false);
+    setSendProgress({ current: 0, total: targets.length, isActive: true });
+
+    let sentSuccess = 0;
+    for (let i = 0; i < targets.length; i++) {
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'marketing',
+            data: {
+              to: targets[i].email,
+              subject: campaign.subject,
+              content: campaign.content
+            }
+          })
+        });
+        if (response.ok) {
+          sentSuccess++;
+          // Mark as sent in DB
+          await supabase.from('email_marketing_leads').update({ status: 'sent' }).eq('email', targets[i].email);
+        }
+      } catch (err) {
+        console.error(`Send error for ${targets[i].email}:`, err);
+      }
+      setSendProgress(prev => ({ ...prev, current: i + 1 }));
+      // Small delay to avoid rate limits
+      await new Promise(r => setTimeout(r, 200));
     }
+
+    setMessage(`Kampanya tamamlandı! ${sentSuccess}/${targets.length} başarılı.`);
+    setStatus('success');
+    setSendProgress({ current: 0, total: 0, isActive: false });
+    setLoading(false);
+    fetchExisting();
   };
 
   return (
-    <div className="admin-page-layout" style={{ minHeight: '100vh', background: '#050505', color: '#fff', fontFamily: 'sans-serif' }}>
+    <div className="admin-page-layout" style={{ minHeight: '100vh', background: '#050505', color: '#fff' }}>
       <style>{`
-        .admin-page-layout {
-          display: flex;
-          padding: 30px;
-          gap: 30px;
-        }
-        .admin-sidebar-nav {
-          width: 280px;
-          flex-shrink: 0;
-          background: rgba(15, 15, 15, 0.4);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 24px;
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          height: calc(100vh - 60px);
-          position: sticky;
-          top: 30px;
-        }
-        .admin-sidebar-nav .sidebar-link {
-          padding: 14px 18px;
-          border-radius: 14px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          transition: all 0.3s;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: rgba(255,255,255,0.6);
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          text-decoration: none;
-          text-align: left;
-        }
-        .admin-sidebar-nav .sidebar-link:hover {
-          background: rgba(255,255,255,0.05);
-          color: #fff;
-        }
-        .admin-sidebar-nav .sidebar-link.active {
-          background: var(--primary);
-          color: #000;
-          box-shadow: 0 10px 20px rgba(138, 43, 226, 0.2);
-        }
-        .main-content-area {
-          flex-grow: 1;
-          max-width: 1200px;
-        }
-        @media (max-width: 1024px) {
-          .admin-page-layout {
-            padding: 20px;
-            flex-direction: column;
-            margin-top: 60px;
-          }
-          .admin-sidebar-nav {
-            position: fixed;
-            left: -320px;
-            top: 0;
-            height: 100vh;
-            width: 300px;
-            background: #050505;
-            z-index: 10001;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
-            display: flex !important;
-          }
-          .admin-sidebar-nav.open {
-            left: 0;
-          }
-          .main-content-area {
-            width: 100%;
-          }
-          .marketing-grid {
-            grid-template-columns: 1fr !important;
-            gap: 20px !important;
-          }
-        }
-        .marketing-grid {
-          display: grid;
-          grid-template-columns: 1fr 320px;
-          gap: 30px;
-        }
-        .mobile-header {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 60px;
-          background: rgba(10, 10, 10, 0.8);
-          backdrop-filter: blur(10px);
-          z-index: 1000;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        @media (max-width: 1024px) {
-          .mobile-header {
-            display: flex;
-          }
-        }
+        .admin-page-layout { display: flex; padding: 30px; gap: 30px; }
+        .admin-sidebar-nav { width: 280px; flex-shrink: 0; background: rgba(15, 15, 15, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 8px; height: calc(100vh - 60px); position: sticky; top: 30px; }
+        .sidebar-link { padding: 14px 18px; border-radius: 14px; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.6); text-decoration: none; }
+        .sidebar-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .sidebar-link.active { background: var(--primary); color: #000; box-shadow: 0 10px 20px rgba(138, 43, 226, 0.2); }
+        .main-content-area { flex-grow: 1; max-width: 1200px; }
+        .glass { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; }
+        .marketing-grid { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }
+        .input-dark { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: #fff; margin-bottom: 15px; outline: none; }
+        .input-dark:focus { border-color: var(--primary); }
+        .btn-marketing { background: var(--primary); color: #000; font-weight: bold; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
+        .btn-marketing:disabled { opacity: 0.5; cursor: not-allowed; }
+        @media (max-width: 1024px) { .admin-page-layout { flex-direction: column; padding: 20px; } .admin-sidebar-nav { width: 100%; height: auto; position: relative; top: 0; } .marketing-grid { grid-template-columns: 1fr; } }
       `}</style>
 
-      {/* Mobile Header */}
-      <div className="mobile-header">
-        <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'var(--primary)' }}>SOCIALART</div>
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
-        >
-          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
       {/* Sidebar */}
-      <div className={`admin-sidebar-nav ${isSidebarOpen ? 'open' : ''}`}>
+      <div className="admin-sidebar-nav">
         <div style={{ marginBottom: '30px', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '35px', height: '35px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>SA</div>
-            <span style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.5px' }}>SOCIAL<span style={{ color: 'var(--primary)' }}>ART</span></span>
+            <span style={{ fontSize: '1.2rem', fontWeight: '800' }}>SOCIAL<span style={{ color: 'var(--primary)' }}>ART</span></span>
           </div>
         </div>
-        <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'rgba(255,255,255,0.2)', letterSpacing: '2px', padding: '0 16px', marginBottom: '10px' }}>NAVİGASYON</div>
-        <Link to="/admin" className="sidebar-link">
-          <Users size={18} /> Panel Giriş
-        </Link>
-        <div className="sidebar-link active">
-          <Mail size={18} /> E-Mail Marketing
-        </div>
-        <Link to="/admin" className="sidebar-link">
-          <Briefcase size={18} /> Müşteriler
-        </Link>
-        <Link to="/admin" className="sidebar-link">
-          <ClipboardList size={18} /> İş Takibi
-        </Link>
-        <div style={{ marginTop: 'auto', padding: '10px' }}>
-          <Link to="/" className="sidebar-link" style={{ color: 'var(--secondary)' }}>
-            <XCircle size={18} /> Siteye Dön
-          </Link>
-        </div>
+        <Link to="/admin" className="sidebar-link"><Briefcase size={18} /> Admin Panel</Link>
+        <div className="sidebar-link active"><Mail size={18} /> E-Mail Marketing</div>
+        <Link to="/" className="sidebar-link" style={{ marginTop: 'auto', color: 'var(--secondary)' }}><XCircle size={18} /> Çıkış Yap</Link>
       </div>
 
       {/* Main Content */}
       <div className="main-content-area">
         <header style={{ marginBottom: '40px' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>
-            E-Mail <span className="gradient-text">Marketing</span>
-          </h1>
-          <p style={{ color: '#888' }}>CSV lead yönetimi ve toplu gönderim otomasyonu.</p>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>E-Mail <span className="gradient-text">Marketing</span> (Resend)</h1>
+          <p style={{ color: '#888' }}>Toplu mail gönderimi ve lead yönetimi.</p>
         </header>
 
         <div className="marketing-grid">
-          <div className="glass" style={{ padding: '20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', overflow: 'hidden' }}>
-            <div style={{ border: '2px dashed rgba(255,255,255,0.1)', padding: '40px 10px', borderRadius: '20px', textAlign: 'center', marginBottom: '30px' }}>
-              <Upload size={48} color="var(--primary)" style={{ marginBottom: '20px' }} />
-              <h3 style={{ fontSize: '1.2rem' }}>CSV Dosyasını Buraya Bırakın</h3>
-              <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '20px' }}>İsim ve Email sütunlarını içeren bir dosya seçin.</p>
-              <input type="file" accept=".csv" onChange={handleFile} style={{ display: 'none' }} id="file-up" />
-              <label htmlFor="file-up" className="btn btn-primary" style={{ cursor: 'pointer', padding: '10px 20px' }}>
-                Dosya Seç
-              </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* CSV Upload */}
+            <div className="glass">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0 }}><Upload size={20} style={{ marginRight: '10px' }} /> Veri Yükle</h3>
+                {stats.unique > 0 && <button onClick={handleSync} className="btn-marketing" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>Veritabanına Kaydet</button>}
+              </div>
+              <div style={{ border: '2px dashed rgba(255,255,255,0.1)', padding: '30px', borderRadius: '20px', textAlign: 'center' }}>
+                <input type="file" accept=".csv" onChange={handleFile} style={{ display: 'none' }} id="csv-up" />
+                <label htmlFor="csv-up" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  <Download size={32} color="var(--primary)" />
+                  <span style={{ color: '#aaa' }}>{stats.total > 0 ? `${stats.total} Lead Yüklendi` : 'CSV Dosyası Seçin'}</span>
+                </label>
+              </div>
             </div>
 
-            {message && (
-              <div style={{ padding: '15px', borderRadius: '12px', background: status === 'error' ? 'rgba(255,23,68,0.1)' : 'rgba(0,230,118,0.1)', color: status === 'error' ? '#ff1744' : '#00e676', marginBottom: '20px', fontSize: '0.9rem' }}>
-                {message}
+            {/* Campaign Composer */}
+            <div className="glass">
+              <h3 style={{ marginBottom: '20px' }}><Zap size={20} style={{ marginRight: '10px', color: 'var(--accent)' }} /> Kampanya Oluştur</h3>
+              <input 
+                type="text" 
+                className="input-dark" 
+                placeholder="E-Mail Konusu (Subject)" 
+                value={campaign.subject}
+                onChange={e => setCampaign({...campaign, subject: e.target.value})}
+              />
+              <textarea 
+                className="input-dark" 
+                style={{ minHeight: '200px', resize: 'vertical' }}
+                placeholder="E-Mail İçeriği (HTML destekler)"
+                value={campaign.content}
+                onChange={e => setCampaign({...campaign, content: e.target.value})}
+              ></textarea>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ color: '#555', fontSize: '0.85rem' }}>* Gönderici: tugba@socialartajans.com</div>
+                <button 
+                  onClick={handleSendCampaign} 
+                  disabled={loading || sendProgress.isActive} 
+                  className="btn-marketing"
+                >
+                  <SendHorizontal size={18} /> {loading ? 'Gönderiliyor...' : 'Kampanyayı Başlat'}
+                </button>
               </div>
-            )}
 
-            {filteredLeads.length > 0 && (
-              <div style={{ maxHeight: '400px', overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
-                  <thead style={{ background: 'rgba(255,255,255,0.03)', position: 'sticky', top: 0 }}>
-                    <tr>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem' }}>İsim</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem' }}>E-Posta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLeads.slice(0, 50).map((l, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td style={{ padding: '12px', fontSize: '0.85rem' }}>{l.name}</td>
-                        <td style={{ padding: '12px', color: 'var(--primary)', fontSize: '0.85rem' }}>{l.email}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+              {sendProgress.isActive && (
+                <div style={{ marginTop: '20px' }}>
+                  <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'var(--primary)', width: `${(sendProgress.current / sendProgress.total) * 100}%`, transition: '0.3s' }}></div>
+                  </div>
+                  <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.8rem', color: 'var(--primary)' }}>
+                    İlerleme: {sendProgress.current} / {sendProgress.total}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="glass" style={{ padding: '25px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h4 style={{ margin: 0 }}>Durum</h4>
-                <button onClick={fetchExisting} disabled={loading} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
-                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Yenile
-                </button>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#555' }}>Sistemde Kayıtlı:</span> <span>{existingEmails.size}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--primary)' }}>
-                <span style={{ fontWeight: 'bold' }}>Gönderilen Mailler:</span> <span style={{ fontWeight: 'bold' }}>{stats.sent}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', fontWeight: 'bold' }}>
-                <span>Yeni (Eklenecek):</span> <span style={{ color: '#00e676' }}>{stats.unique}</span>
+            <div className="glass">
+              <h4 style={{ margin: '0 0 20px 0' }}>İstatistikler</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#888' }}>Toplam Kayıtlı:</span> <span>{existingEmails.size}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#888' }}>Gönderilen:</span> <span style={{ color: 'var(--primary)' }}>{stats.sent}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                  <span style={{ fontWeight: 'bold' }}>Hazır:</span> <span style={{ fontWeight: 'bold', color: '#00e676' }}>{existingEmails.size - stats.sent}</span>
+                </div>
               </div>
             </div>
 
-            <button onClick={handleSync} disabled={loading || filteredLeads.length === 0} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              {loading ? <RefreshCw className="animate-spin" /> : <Download size={18} />}
-              &nbsp; Veritabanına Kaydet
-            </button>
-
-            <button onClick={handleMarkAsSent} disabled={loading || (filteredLeads.length === 0 && csvData.length === 0)} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', borderColor: '#00e5ff', color: '#00e5ff', background: 'rgba(0,229,255,0.05)' }}>
-              <CheckCircle2 size={18} /> &nbsp; Gönderildi Olarak İşaretle
-            </button>
-            
-            <button onClick={handleTrigger} disabled={loading || (filteredLeads.length === 0 && stats.unique === 0)} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--secondary)', color: 'var(--secondary)' }}>
-              <Zap size={18} /> &nbsp; Google Script Trigger
-            </button>
+            {message && (
+              <div style={{ padding: '15px', borderRadius: '15px', background: status === 'error' ? 'rgba(255,0,85,0.1)' : 'rgba(0,230,118,0.1)', color: status === 'error' ? 'var(--secondary)' : '#00e676', fontSize: '0.85rem' }}>
+                {status === 'error' ? <AlertCircle size={16} style={{ marginRight: '8px' }} /> : <CheckCircle2 size={16} style={{ marginRight: '8px' }} />}
+                {message}
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      <style>{`
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
