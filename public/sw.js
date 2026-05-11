@@ -1,13 +1,13 @@
 const CACHE_NAME = 'socialart-v1';
 
 // Install event
-self.addEventListener('install', (event) => {
+self.addEventListener('install', (_event) => {
   self.skipWaiting();
 });
 
 // Activate event
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+self.addEventListener('activate', (_event) => {
+  _event.waitUntil(self.clients.claim());
 });
 
 // Fetch event (Network first)

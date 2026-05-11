@@ -166,7 +166,7 @@ function Pricing() {
 
         <div className="glass" style={{ marginTop: '80px', borderRadius: '32px', padding: '50px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', marginBottom: '20px' }}>Size Özel Bir Plan mı Lazım?</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 30px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 80px' }}>
             Kurumsal markalar veya çok kanallı projeleriniz için size özel bir strateji ve fiyatlandırma hazırlayabiliriz.
           </p>
           <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>Hemen Bizimle İletişime Geçin</button>

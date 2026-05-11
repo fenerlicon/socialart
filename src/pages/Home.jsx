@@ -17,20 +17,62 @@ import {
   CreditCard,
   Smartphone,
   Monitor,
-  Layers
+  Layers,
+  Zap,
+  Rocket
 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 function Home() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // SEO Schema
+  const schemaMarkup = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "SocialArt Ajans",
+    "url": "https://www.socialartmedya.com",
+    "logo": "https://www.socialartmedya.com/logo.png",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "İstanbul",
+      "addressCountry": "TR"
+    },
+    "description": "İstanbul merkezli büyüme odaklı (growth) dijital pazarlama ajansı.",
+    "sameAs": [
+      "https://www.instagram.com/socialartmedya"
+    ]
+  };
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Meta Ads nedir?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Meta Ads, Facebook ve Instagram üzerinden hedefli reklamlar vererek potansiyel müşterilerinize ulaşmanızı sağlar."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "SEO ve GEO farkı nedir?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SEO geleneksel arama motorları için yapılırken, GEO (Generative Engine Optimization) yapay zeka sistemlerinin markanız hakkında doğru bilgi vermesini sağlar."
+        }
+      }
+    ]
+  };
+
   const [selectedDateStr, setSelectedDateStr] = React.useState('');
   const [selectedTimeStr, setSelectedTimeStr] = React.useState('');
   const [activeReel, setActiveReel] = React.useState(0);
   const [subClipIndex, setSubClipIndex] = React.useState(0);
-  const [showReelIntro, setShowReelIntro] = React.useState(false);
   const videoRef = React.useRef(null);
 
   // Reset subclip when switching main reel
@@ -235,33 +277,6 @@ function Home() {
     { title: 'Kreatif Tasarım & Branding', desc: 'Marka kimliğinizi güçlendiren modern ve dikkat çekici görsel tasarımlar.', icon: <Layers className="service-icon" style={{color: 'var(--secondary)'}} /> }
   ];
 
-  const caseStudies = [
-    {
-      brand: 'PEUGEOT Turkey',
-      industry: 'Otomotiv',
-      growth: '%450',
-      label: 'Test Sürüşü Talebi Artışı',
-      before: 'Aylık 200 Talep',
-      after: 'Aylık 1.100 Talep'
-    },
-    {
-      brand: 'Flormar',
-      industry: 'Kozmetik',
-      growth: '%300',
-      label: 'ROAS İyileşmesi (ROI)',
-      before: '2.5 ROAS',
-      after: '7.5 ROAS'
-    },
-    {
-      brand: 'Z Trendyol Satıcısı',
-      industry: 'E-Ticaret',
-      growth: '1M',
-      label: 'Video Görüntülenme',
-      before: '20.000 İzlenme',
-      after: '1.200.000 İzlenme'
-    }
-  ];
-
   const partners = [
     "KOTON", "JEEP", "PEUGEOT", "Gurme Bahçeşehir", "Eray Gıda", "Flormar",
     "Sahne Marin", "EGE CUNDA BALIK", "Smart Enerji", "Polar", "Enova Eğitim",
@@ -272,6 +287,10 @@ function Home() {
 
   return (
     <>
+      {/* SEO Schema Injection */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+
       {/* HERO */}
       <section className="hero">
         <div className="hero-bg-shapes">
@@ -282,18 +301,24 @@ function Home() {
         <div className="container" style={{ position: 'relative' }}>
           <div className="hero-content">
             <h1 className="hero-title">
-              Hedef Kitlenizi <span className="gradient-text">Müşteriye</span> Dönüştürün
+              İstanbul'un Veri Odaklı <span className="gradient-text">Growth Marketing</span> Ajansı
             </h1>
             <p className="hero-desc">
-              Doğru strateji, güçlü içerik ve data odaklı reklamlarla markanızın dijitaldeki potansiyelini zirveye taşıyalım. Ücretsiz hesap analizinizi anında başlatın.
+              Herkes tasarım yapar, herkes reels çeker. Biz ise markanız için çalışan bir <strong>growth sistemi</strong> kuruyoruz. Meta Ads, Creative Production ve SEO & GEO optimizasyonu ile dönüşüm psikolojisini birleştirerek ölçeklenebilir büyüme sağlıyoruz.
             </p>
             <div className="hero-actions">
-              <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')}>
-                Markamı Ücretsiz Analiz Et
+              <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')} aria-label="Growth Analizini Başlat">
+                Growth Analizini Başlat
               </button>
               <button className="btn btn-outline" onClick={() => scrollToSection('showreel')}>
-                Başarı Hikayelerimizi İncele <ArrowRight size={20} />
+                Neler Başardık? <ArrowRight size={20} />
               </button>
+            </div>
+            <div style={{ marginTop: '20px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <span>#DijitalPazarlamaAjansı</span>
+              <span>#MetaAds</span>
+              <span>#CreativeProduction</span>
+              <span>#SEO&GEO</span>
             </div>
           </div>
         </div>
@@ -338,6 +363,7 @@ function Home() {
                   ref={videoRef}
                   key={`${activeReel}-${subClipIndex}`}
                   autoPlay 
+                  muted
                   onEnded={() => {
                     const nextIndex = subClipIndex + 1;
                     if (videoMapping[activeReel] && nextIndex < videoMapping[activeReel].length) {
@@ -365,7 +391,7 @@ function Home() {
                 <button className="btn-fullscreen-minimal" onClick={() => {
                   const v = document.querySelector('.cinema-video');
                   if(v) v.requestFullscreen();
-                }} title="Tam Ekran">
+                }} title="Tam Ekran" aria-label="Videoyu tam ekran yap">
                   <Maximize2 size={16} />
                 </button>
               </div>
@@ -450,6 +476,7 @@ function Home() {
                 {/* Mobile Fullscreen Button */}
                 <button 
                   className="mobile-video-expand"
+                  aria-label="Videoyu tam ekran yap"
                   onClick={(e) => {
                     e.stopPropagation();
                     const v = e.currentTarget.parentElement.querySelector('video');
@@ -514,21 +541,140 @@ function Home() {
         </div>
       </section>
 
+      {/* WHY GROWTH SYSTEM? */}
+      <section className="section-padding" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(15,15,15,1) 100%)' }}>
+        <div className="container">
+          <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', marginBottom: '80px' }}>
+            <h2 className="section-title">En Kritik <span className="gradient-text">Büyüme Hamlesi</span></h2>
+            <p className="section-subtitle">Tasarım yapmak veya reels çekmek artık bir ayrıcalık değil, standart. Gerçek büyüme; veri, kreatif testler ve dönüşüm psikolojisinin birleştiği noktada başlar.</p>
+          </div>
+
+          <div className="services-grid">
+            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '60px', height: '60px', background: 'rgba(138,43,226,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
+                <BarChart3 size={30} color="var(--primary)" />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '15px' }}>Veri Odaklı Testler</h3>
+              <p style={{ color: 'var(--text-muted)', lineHeight: '1.7' }}>Creative testing süreçlerimizle hangi görselin veya metnin en yüksek dönüşümü getirdiğini varsayımlarla değil, verilerle kanıtlıyoruz.</p>
+            </div>
+
+            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '60px', height: '60px', background: 'rgba(0,229,255,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
+                <Layers size={30} color="#00e5ff" />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '15px' }}>Funnel & Dönüşüm</h3>
+              <p style={{ color: 'var(--text-muted)', lineHeight: '1.7' }}>Sadece trafik çekmiyoruz. Kullanıcıyı yakalayan, eğiten ve satın almaya ikna eden çok katmanlı satış hunileri (funnel) kuruyoruz.</p>
+            </div>
+
+            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '60px', height: '60px', background: 'rgba(255,0,85,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
+                <Zap size={30} color="var(--secondary)" />
+              </div>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '15px' }}>AI Destekli Growth</h3>
+              <p style={{ color: 'var(--text-muted)', lineHeight: '1.7' }}>Yapay zeka sistemlerini SEO ve GEO (Generative Engine Optimization) süreçlerimize entegre ederek markanızı yarının arama motorlarına bugünden hazırlıyoruz.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* SERVICES PREVIEW */}
       <section className="section-padding" id="services" style={{ paddingTop: '20px' }}>
         <div className="container">
-          <h2 className="section-title">Neler Yapıyoruz?</h2>
+          <h2 className="section-title">Hizmetlerimiz</h2>
           <div className="services-grid">
-            {services.map((srv, idx) => (
-              <div className="service-card" key={idx} style={{ background: 'var(--surface)' }}>
-                {srv.icon}
-                <h3 className="service-title">{srv.title}</h3>
-                <p className="service-desc">{srv.desc}</p>
+            <Link to="/creative-production" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <Users className="service-icon" style={{color: 'var(--accent)'}} />
+              <h3 className="service-title">Sunuculu Reklam Videosu</h3>
+              <p className="service-desc">Markanızı anlatan profesyonel sunucularla yüksek güven ve dönüşüm sağlayan reklamlar.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/creative-production" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <Camera className="service-icon" style={{color: 'var(--primary)'}} />
+              <h3 className="service-title">Video Prodüksiyon</h3>
+              <p className="service-desc">Sinematik reklam filmleri ve sosyal medya için yüksek kaliteli video içerik üretimi.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/meta-ads-yonetimi" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <TrendingUp className="service-icon" style={{color: 'var(--secondary)'}} />
+              <h3 className="service-title">Meta Ads Yönetimi</h3>
+              <p className="service-desc">Data odaklı reklam stratejileri ile ROAS odaklı ölçeklenebilir büyüme sistemleri.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* PRESENTER VIDEOS SECTION - Mobile Feel */}
+      <section className="section-padding" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '10%', right: '5%', width: '400px', height: '400px', background: 'var(--primary-glow)', filter: 'blur(150px)', opacity: '0.1', zIndex: 0 }}></div>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+            <h2 className="section-title">Sunuculu <span className="gradient-text">Reklam Videolarımız</span></h2>
+            <p className="section-subtitle">Ürününüzü profesyonel bir sunucu eşliğinde, yüksek güven veren bir dille stüdyo ortamında tanıtıyoruz.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
+            {[
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4",
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
+              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4"
+            ].map((url, idx) => (
+              <div key={idx} className="glass" style={{ 
+                borderRadius: '40px', 
+                padding: '15px', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                maxWidth: '320px', 
+                margin: '0 auto',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+              }}>
+                <div style={{ 
+                  borderRadius: '30px', 
+                  overflow: 'hidden', 
+                  aspectRatio: '9/16', 
+                  background: '#000',
+                  position: 'relative',
+                  border: '8px solid #1a1a1a'
+                }}>
+                  <video 
+                    src={url} 
+                    className="mobile-video"
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '18px', background: '#1a1a1a', borderRadius: '10px', zIndex: 2 }}></div>
+                </div>
               </div>
             ))}
           </div>
-          <div style={{textAlign: 'center', marginTop: '40px'}}>
-             <button className="btn btn-outline" onClick={() => navigate('/hizmetlerimiz')}>Tüm Hizmetlerimizi İncele <ArrowRight size={20} /></button>
+          <div style={{textAlign: 'center', marginTop: '60px'}}>
+             <button className="btn btn-outline" onClick={() => navigate('/creative-production')}>Tüm Prodüksiyon Çözümleri <ArrowRight size={20} /></button>
+          </div>
+        </div>
+      </section>
+
+
+      {/* FAQ SECTION FOR SEO/GEO */}
+      <section className="section-padding" style={{ background: '#000' }}>
+        <div className="container">
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
+            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Meta Ads nedir ve neden gereklidir?</h4>
+                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Meta Ads, Facebook ve Instagram üzerinden hedefli reklamlar vererek potansiyel müşterilerinize ulaşmanızı sağlar. Doğru segmentasyon ve kreatif testlerle en düşük maliyetle en yüksek dönüşümü almanıza yardımcı olur.</p>
+              </div>
+              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Reklam kreatifi neden önemli?</h4>
+                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Teknik ayarlar ne kadar iyi olursa olsun, kullanıcının dikkatini çeken ve ikna eden tek şey kreatiftir. Yüksek performanslı bir kreatif, reklam maliyetlerinizi %80'e kadar düşürebilir.</p>
+              </div>
+              <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>SEO ve GEO farkı nedir?</h4>
+                <p style={{ color: '#aaa', fontSize: '0.95rem' }}>SEO geleneksel arama motorları (Google gibi) için yapılırken, GEO (Generative Engine Optimization) ChatGPT, Perplexity ve Gemini gibi yapay zeka sistemlerinin markanız hakkında doğru ve olumlu bilgi vermesini sağlamak için yapılır.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -572,6 +718,35 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* JOIN US SECTION - UGC & JOB APPLICATIONS */}
+      <section className="section-padding" style={{ background: '#0a0a0a' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+            <h2 className="section-title">Yaratıcı Ekibimize <span className="gradient-text">Katılın</span></h2>
+            <p className="section-subtitle">SocialArt sadece bir ajans değil, bir topluluk. İster içerik üreticisi olun ister profesyonel, gelin birlikte büyüyelim.</p>
+          </div>
+
+          <div className="services-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+            <div className="glass" style={{ padding: '50px', borderRadius: '32px', textAlign: 'center', border: '1px solid rgba(138,43,226,0.2)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(138,43,226,0.2) 0%, transparent 70%)', zIndex: 0 }}></div>
+              <Zap size={60} color="var(--primary)" style={{ marginBottom: '25px', position: 'relative', zIndex: 1 }} />
+              <h3 style={{ fontSize: '1.8rem', marginBottom: '15px', position: 'relative', zIndex: 1 }}>UGC & Influencer</h3>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '30px', position: 'relative', zIndex: 1 }}>Markalarımız için yüzünüzle veya sesinizle içerik üretin. Kreatif topluluğumuza dahil olun.</p>
+              <button className="btn btn-primary" style={{ width: '100%', position: 'relative', zIndex: 1 }} onClick={() => navigate('/ugc-basvuru')}>Başvuru Yap <ArrowRight size={20} /></button>
+            </div>
+
+            <div className="glass" style={{ padding: '50px', borderRadius: '32px', textAlign: 'center', border: '1px solid rgba(0,229,255,0.2)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(0,229,255,0.2) 0%, transparent 70%)', zIndex: 0 }}></div>
+              <Rocket size={60} color="#00e5ff" style={{ marginBottom: '25px', position: 'relative', zIndex: 1 }} />
+              <h3 style={{ fontSize: '1.8rem', marginBottom: '15px', position: 'relative', zIndex: 1 }}>Kariyer</h3>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '30px', position: 'relative', zIndex: 1 }}>Editör, yönetmen veya stratejist misiniz? SocialArt ekibinde profesyonel kariyerinize başlayın.</p>
+              <button className="btn btn-outline" style={{ width: '100%', position: 'relative', zIndex: 1 }} onClick={() => navigate('/is-basvurusu')}>İş Başvurusu <ArrowRight size={20} /></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* FUNNEL CTA: ÜCRETSİZ ANALİZ */}
       <section className="funnel-form-section" id="funnel">
@@ -672,9 +847,9 @@ function Home() {
                   
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                      <button type="button" onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', opacity: (displayedMonth.getFullYear() === today.getFullYear() && displayedMonth.getMonth() === today.getMonth()) ? 0.3 : 1, fontSize: '1.2rem', padding: '0 10px' }}>&lt;</button>
+                      <button type="button" onClick={handlePrevMonth} aria-label="Önceki Ay" style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', opacity: (displayedMonth.getFullYear() === today.getFullYear() && displayedMonth.getMonth() === today.getMonth()) ? 0.3 : 1, fontSize: '1.2rem', padding: '0 10px' }}>&lt;</button>
                       <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{monthNames[displayedMonth.getMonth()]} {displayedMonth.getFullYear()}</div>
-                      <button type="button" onClick={handleNextMonth} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.2rem', padding: '0 10px' }}>&gt;</button>
+                      <button type="button" onClick={handleNextMonth} aria-label="Sonraki Ay" style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.2rem', padding: '0 10px' }}>&gt;</button>
                     </div>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '5px', textAlign: 'center', marginBottom: '10px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>

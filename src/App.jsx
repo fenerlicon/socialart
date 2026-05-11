@@ -15,7 +15,11 @@ import {
   Layers, 
   Zap,
   Tag,
-  CreditCard
+  CreditCard,
+  TrendingUp,
+  Camera,
+  Globe,
+  Rocket
 } from 'lucide-react';
 import './App.css';
 import Home from './pages/Home';
@@ -29,6 +33,13 @@ const Admin = React.lazy(() => import('./pages/StaffAdmin'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
 const ClientPortal = React.lazy(() => import('./pages/ClientPortal'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
+
+// Service Detail Pages (Direct import to avoid lazy load issues)
+import MetaAds from './pages/services/MetaAds';
+import CreativeProduction from './pages/services/CreativeProduction';
+import SEOGEO from './pages/services/SEOGEO';
+import SosyalMedya from './pages/services/SosyalMedya';
+import { UGCApplication, JobApplication } from './pages/ApplicationForms';
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -76,13 +87,36 @@ function App() {
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
-              <img src="data:image/png;base64,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" alt="Socialart Ajans" className="header-logo-img" width="405" height="135" fetchPriority="high" decoding="async" />
+              <img src="/logo.png" alt="Socialart Ajans" className="header-logo-img" width="405" height="135" fetchPriority="high" decoding="async" />
             </Link>
             
             <nav className={`nav-links ${mobileMenuOpen ? 'mobile-active' : ''}`}>
               <Link to="/" className={location.pathname === '/' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Ana Sayfa</Link>
+              
+              {/* Hizmetler Dropdown */}
+              <div 
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '100%', padding: '0 0.5rem' }} 
+                onMouseEnter={(e) => { const el = e.currentTarget.querySelector('.hizmet-dropdown'); if(el){ el.style.opacity = '1'; el.style.visibility = 'visible'; el.style.transform = 'translateY(0)'; } }} 
+                onMouseLeave={(e) => { const el = e.currentTarget.querySelector('.hizmet-dropdown'); if(el){ el.style.opacity = '0'; el.style.visibility = 'hidden'; el.style.transform = 'translateY(-10px)'; } }}
+              >
+                <span style={{ cursor: 'pointer', color: '#f1f1f1', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>Hizmetler <ChevronDown size={14} /></span>
+                <div className="hizmet-dropdown" style={{ position: 'absolute', top: '100%', left: '0', transform: 'translateY(-10px)', background: 'rgba(15,15,15,0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '12px', minWidth: '240px', zIndex: 100, boxShadow: '0 20px 40px rgba(0,0,0,0.6)', opacity: '0', visibility: 'hidden', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)', marginTop: '10px' }}>
+                  <Link to="/meta-ads-yonetimi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
+                    <TrendingUp size={18} style={{ marginRight: '12px', color: 'var(--secondary)' }} /> Meta Ads Yönetimi
+                  </Link>
+                  <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
+                    <Camera size={18} style={{ marginRight: '12px', color: 'var(--accent)' }} /> Creative Production
+                  </Link>
+                  <Link to="/seo-geo-optimizasyonu" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
+                    <Globe size={18} style={{ marginRight: '12px', color: '#00e5ff' }} /> SEO & GEO
+                  </Link>
+                  <Link to="/sosyal-medya-yonetimi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => setMobileMenuOpen(false)}>
+                    <Share2 size={18} style={{ marginRight: '12px', color: 'var(--primary)' }} /> Sosyal Medya Yönetimi
+                  </Link>
+                </div>
+              </div>
+
               <Link to="/hakkimizda" className={location.pathname === '/hakkimizda' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Hakkımızda</Link>
-              <Link to="/hizmetlerimiz" className={location.pathname === '/hizmetlerimiz' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Hizmetlerimiz</Link>
               <Link to="/blog" className={location.pathname.startsWith('/blog') ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Blog</Link>
 
               {/* Dropdown for internal scroll links */}
@@ -91,24 +125,25 @@ function App() {
                 onMouseEnter={(e) => { const el = e.currentTarget.querySelector('.dropdown-container'); if(el){ el.style.opacity = '1'; el.style.visibility = 'visible'; el.style.transform = 'translateY(0)'; } }} 
                 onMouseLeave={(e) => { const el = e.currentTarget.querySelector('.dropdown-container'); if(el){ el.style.opacity = '0'; el.style.visibility = 'hidden'; el.style.transform = 'translateY(-10px)'; } }}
               >
-                <span style={{ cursor: 'pointer', color: '#f1f1f1', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>Keşfet <ChevronDown size={14} /></span>
+                <span style={{ cursor: 'pointer', color: '#f1f1f1', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>Kurumsal <ChevronDown size={14} /></span>
                 <div className="dropdown-container" style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translate(40%, -10px)', background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '8px', minWidth: '190px', zIndex: 100, boxShadow: '0 20px 40px rgba(0,0,0,0.6)', opacity: '0', visibility: 'hidden', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)', marginTop: '10px' }}>
                   <a href="#showreel" onClick={(e) => { e.preventDefault(); scrollToSection('showreel'); }} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', fontWeight: '500' }} onMouseEnter={(e) => {e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.color = '#f1f1f1'; e.currentTarget.style.background = 'transparent'}}><PlayCircle size={18} style={{marginRight: '12px', color: 'var(--primary)'}} /> Marka Showreel</a>
-                  <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection('services'); }} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', margin: '4px 0', fontWeight: '500' }} onMouseEnter={(e) => {e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.color = '#f1f1f1'; e.currentTarget.style.background = 'transparent'}}><Layers size={18} style={{marginRight: '12px', color: '#00e5ff'}} /> Hizmet Ağımız</a>
-                  <a href="#kampanyalar" onClick={(e) => { e.preventDefault(); scrollToSection('kampanyalar'); }} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', fontWeight: '500' }} onMouseEnter={(e) => {e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.color = '#f1f1f1'; e.currentTarget.style.background = 'transparent'}}><Zap size={18} style={{marginRight: '12px', color: 'var(--secondary)'}} /> Size Özel Fırsatlar</a>
                   <Link to="/fiyatlar" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', marginTop: '4px', fontWeight: '500' }} onMouseEnter={(e) => {e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.color = '#f1f1f1'; e.currentTarget.style.background = 'transparent'}}><Tag size={18} style={{marginRight: '12px', color: '#ffab00'}} /> Planlar ve Ücretler</Link>
                   <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }}></div>
                   <Link to="/musteri" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', fontWeight: '700' }} onMouseEnter={(e) => {e.currentTarget.style.background = 'rgba(138,43,226,0.1)'}} onMouseLeave={(e) => {e.currentTarget.style.background = 'transparent'}}><LockIcon size={18} style={{marginRight: '12px'}} /> Müşteri Girişi</Link>
                   <Link to="/admin" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#00e5ff', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', fontWeight: '700', marginTop: '4px' }} onMouseEnter={(e) => {e.currentTarget.style.background = 'rgba(0,229,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.background = 'transparent'}}><Users size={18} style={{marginRight: '12px'}} /> Çalışan Girişi</Link>
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '8px 0' }}></div>
+                  <Link to="/ugc-basvuru" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', fontWeight: '500' }} onMouseEnter={(e) => {e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.color = '#f1f1f1'; e.currentTarget.style.background = 'transparent'}}><Zap size={18} style={{marginRight: '12px', color: 'var(--accent)'}} /> UGC & INF Başvurusu</Link>
+                  <Link to="/is-basvurusu" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', cursor: 'pointer', fontSize: '0.95rem', borderRadius: '8px', transition: 'all 0.2s', fontWeight: '500', marginTop: '4px' }} onMouseEnter={(e) => {e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}} onMouseLeave={(e) => {e.currentTarget.style.color = '#f1f1f1'; e.currentTarget.style.background = 'transparent'}}><Rocket size={18} style={{marginRight: '12px', color: 'var(--primary)'}} /> İş Başvurusu</Link>
                 </div>
               </div>
             </nav>
             
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <button className="cta-button" onClick={() => scrollToSection('funnel')}>
+              <button className="cta-button" onClick={() => scrollToSection('funnel')} aria-label="Ücretsiz Analiz Al">
                 Ücretsiz Analiz Al
               </button>
-              <button className="mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ display: 'none' }}>
+              <button className="mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ display: 'none' }} aria-label={mobileMenuOpen ? 'Menüyü Kapat' : 'Menüyü Aç'}>
                 {mobileMenuOpen ? <X size={24} color="#fff" /> : <Menu size={24} color="#fff" />}
               </button>
             </div>
@@ -128,7 +163,16 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/fiyatlar" element={<Pricing />} />
             <Route path="/musteri" element={<ClientPortal />} />
+            <Route path="/ugc-basvuru" element={<UGCApplication />} />
+            <Route path="/is-basvurusu" element={<JobApplication />} />
             <Route path="/email-marketing" element={<EmailMarketing />} />
+            
+            {/* Service Detail Routes */}
+            <Route path="/meta-ads-yonetimi" element={<MetaAds />} />
+            <Route path="/creative-production" element={<CreativeProduction />} />
+            <Route path="/seo-geo-optimizasyonu" element={<SEOGEO />} />
+            <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </React.Suspense>
@@ -141,7 +185,7 @@ function App() {
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
               <div className="footer-col">
                 <Link to="/" className="brand-logo" style={{ marginBottom: '10px', display: 'block' }}>
-                  <img src="data:image/png;base64,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" alt="Socialart Ajans" className="footer-logo-img" width="150" height="50" />
+                  <img src="/logo.png" alt="Socialart Ajans" className="footer-logo-img" width="150" height="50" />
                 </Link>
                 <p style={{marginTop: '-20px', marginBottom: '30px'}}>Site → Ücretsiz Analiz → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
                 <div className="social-links">

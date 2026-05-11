@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -6,7 +5,7 @@ dotenv.config();
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
 async function checkColumns() {
-    const { data, error } = await supabase
+    const { data, error: _error } = await supabase
         .from('client_support_messages')
         .select('*')
         .limit(1);

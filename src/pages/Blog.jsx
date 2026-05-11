@@ -10,7 +10,7 @@ function Blog() {
       date: "06 Nisan 2026",
       readTime: "5 dk okuma",
       excerpt: "Büyük platformlardaki en son algoritma değişiklikleri ve markanız için almanız gereken aksiyonlar. Yapay zeka destekli içeriklerin yükselişi ve daha fazlası...",
-      image: "C:/Users/Arda Furkan Aslanbaş/.gemini/antigravity/brain/5d2f4a43-3adf-45f3-b31a-8e94e55e6446/blog_cover_social_media_1775892898145.png"
+      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800"
     },
     {
       id: "kisa-video-gucu",

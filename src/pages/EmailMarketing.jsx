@@ -31,8 +31,9 @@ import { Link, useNavigate } from 'react-router-dom';
 function EmailMarketing() {
   const [loading, setLoading] = useState(false);
   const [existingEmails, setExistingEmails] = useState(new Set());
+  const [csvData, setCsvData] = useState([]);
   const [filteredLeads, setFilteredLeads] = useState([]);
-  const [stats, setStats] = useState({ total: 0, duplicate: 0, unique: 0 });
+  const [stats, setStats] = useState({ total: 0, duplicate: 0, unique: 0, sent: 0 });
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -47,10 +48,14 @@ function EmailMarketing() {
   async function fetchExisting() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('email_marketing_leads').select('email');
+      const { data, error } = await supabase.from('email_marketing_leads').select('email, status');
       if (error) throw error;
+      
       const set = new Set(data.map(item => (item.email || '').toLowerCase().trim()).filter(Boolean));
       setExistingEmails(set);
+      
+      const sentCount = data ? data.filter(item => item.status === 'sent').length : 0;
+      setStats(prev => ({ ...prev, sent: sentCount }));
     } catch (err) {
       console.error(err);
       setMessage(`Veritabanı bağlantı hatası: ${err.message || 'Bilinmeyen hata'}`);
@@ -88,8 +93,14 @@ function EmailMarketing() {
           }
         });
 
+        setCsvData(results.data);
         setFilteredLeads(unique);
-        setStats({ total: unique.length + dups.length, duplicate: dups.length, unique: unique.length });
+        setStats(prev => ({ 
+          ...prev, 
+          total: unique.length + dups.length, 
+          duplicate: dups.length, 
+          unique: unique.length 
+        }));
         setStatus('success');
         setMessage('CSV başarıyla okundu.');
         setLoading(false);
@@ -107,17 +118,59 @@ function EmailMarketing() {
     if (filteredLeads.length === 0) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('email_marketing_leads').insert(
-        filteredLeads.map(l => ({ ...l, status: 'active' }))
+      const { error } = await supabase.from('email_marketing_leads').upsert(
+        filteredLeads.map(l => ({ ...l, status: 'active' })),
+        { onConflict: 'email' }
       );
       if (error) throw error;
       setMessage(`${filteredLeads.length} lead kaydedildi.`);
       setStatus('success');
       setFilteredLeads([]);
-      setStats(prev => ({ ...prev, duplicate: prev.duplicate + prev.unique, unique: 0 }));
+      fetchExisting();
     } catch (err) {
       console.error(err);
-      setMessage(`Kayıt hatası: ${err.message || 'Bilinmeyen hata'}`);
+      setMessage(`Kayıt hatası: ${err.message}`);
+      setStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAsSent = async () => {
+    const leadsToUpdate = [...filteredLeads, ...csvData.filter(row => {
+      const email = (row.email || row.Email || row.mail || row.MAIL || '').toLowerCase().trim();
+      return existingEmails.has(email);
+    }).map(row => ({
+      email: (row.email || row.Email || row.mail || row.MAIL || '').toLowerCase().trim(),
+      name: row.name || row.Name || row.ad || row.AD || '',
+      source: 'CSV Upload'
+    }))];
+
+    if (leadsToUpdate.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('email_marketing_leads').upsert(
+        leadsToUpdate.map(l => ({ 
+          email: l.email, 
+          name: l.name, 
+          source: l.source, 
+          status: 'sent',
+          last_synced_at: new Date().toISOString()
+        })),
+        { onConflict: 'email' }
+      );
+
+      if (error) throw error;
+      
+      setMessage(`${leadsToUpdate.length} email 'Gönderildi' olarak işaretlendi.`);
+      setStatus('success');
+      fetchExisting();
+      setFilteredLeads([]);
+      setCsvData([]);
+    } catch (err) {
+      console.error(err);
+      setMessage(`Güncelleme hatası: ${err.message}`);
       setStatus('error');
     } finally {
       setLoading(false);
@@ -211,6 +264,10 @@ function EmailMarketing() {
           }
           .admin-page-layout {
             padding: 15px;
+            flex-direction: column;
+          }
+          .admin-sidebar-nav {
+             display: none;
           }
         }
       `}</style>
@@ -242,15 +299,6 @@ function EmailMarketing() {
           </Link>
         </div>
       </div>
-
-      {/* Mobile Toggle */}
-      <button 
-        className="mobile-only" 
-        onClick={() => setIsSidebarOpen(true)}
-        style={{ position: 'fixed', bottom: '20px', right: '20px', background: 'var(--primary)', color: '#000', padding: '15px', borderRadius: '50%', border: 'none', zIndex: 999, display: 'none' }}
-      >
-        <Menu size={24} />
-      </button>
 
       {/* Main Content */}
       <div className="main-content-area">
@@ -310,11 +358,10 @@ function EmailMarketing() {
                 </button>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#555' }}>Toplam:</span> <span>{stats.total}</span>
+                <span style={{ color: '#555' }}>Sistemde Kayıtlı:</span> <span>{existingEmails.size}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#555' }}>Sistemde Mevcut:</span> 
-                <span style={{ color: '#ffab00' }}>{existingEmails.size}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--primary)' }}>
+                <span style={{ fontWeight: 'bold' }}>Gönderilen Mailler:</span> <span style={{ fontWeight: 'bold' }}>{stats.sent}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', fontWeight: 'bold' }}>
                 <span>Yeni (Eklenecek):</span> <span style={{ color: '#00e676' }}>{stats.unique}</span>
@@ -324,6 +371,10 @@ function EmailMarketing() {
             <button onClick={handleSync} disabled={loading || filteredLeads.length === 0} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
               {loading ? <RefreshCw className="animate-spin" /> : <Download size={18} />}
               &nbsp; Veritabanına Kaydet
+            </button>
+
+            <button onClick={handleMarkAsSent} disabled={loading || (filteredLeads.length === 0 && csvData.length === 0)} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', borderColor: '#00e5ff', color: '#00e5ff', background: 'rgba(0,229,255,0.05)' }}>
+              <CheckCircle2 size={18} /> &nbsp; Gönderildi Olarak İşaretle
             </button>
             
             <button onClick={handleTrigger} disabled={loading || (filteredLeads.length === 0 && stats.unique === 0)} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--secondary)', color: 'var(--secondary)' }}>
@@ -340,11 +391,6 @@ function EmailMarketing() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
-        }
-        @media (max-width: 1024px) {
-          .mobile-only {
-            display: block !important;
-          }
         }
       `}</style>
     </div>
