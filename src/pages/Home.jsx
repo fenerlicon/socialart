@@ -33,6 +33,48 @@ import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
 
+const AnimatedMetric = ({ value, suffix = '', prefix = '', label, desc, color }) => {
+  const [count, setCount] = React.useState(0);
+  const [hasAnimated, setHasAnimated] = React.useState(false);
+  const metricRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !hasAnimated) {
+        setHasAnimated(true);
+        let start = 0;
+        const duration = 2000;
+        const steps = 60;
+        const increment = value / steps;
+        const stepTime = duration / steps;
+
+        const timer = setInterval(() => {
+          start += increment;
+          if (start >= value) {
+            setCount(value);
+            clearInterval(timer);
+          } else {
+            setCount(start);
+          }
+        }, stepTime);
+      }
+    }, { threshold: 0.1 });
+
+    if (metricRef.current) observer.observe(metricRef.current);
+    return () => observer.disconnect();
+  }, [value, hasAnimated]);
+
+  return (
+    <div ref={metricRef} className={`metric-card ${hasAnimated ? 'animate-in' : ''}`}>
+      <div className="metric-value" style={{ color }}>
+        {prefix}{value % 1 === 0 ? Math.floor(count) : count.toFixed(1)}{suffix}
+      </div>
+      <div className="metric-label">{label}</div>
+      <p className="metric-desc">{desc}</p>
+    </div>
+  );
+};
+
 function Home() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -303,33 +345,19 @@ function Home() {
         </div>
       </section>
 
-      {/* 2. METRIC SHOW (NEW) */}
-      <section className="section-padding" style={{ background: '#050505' }}>
+      {/* 2. METRIC SHOW (ANIMATED) */}
+      <section className="section-padding" style={{ background: '#050505', position: 'relative', overflow: 'hidden' }}>
         <div className="container">
-          <div className="glass" style={{ padding: '60px 40px', borderRadius: '48px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-            <h2 className="section-title" style={{marginBottom: '50px'}}>Growth <span className="gradient-text">Metrics</span></h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
-              <div>
-                <div style={{ fontSize: '4rem', fontWeight: '900', color: 'var(--primary)', lineHeight: '1' }}>14.2x</div>
-                <div style={{ fontSize: '1.2rem', color: '#fff', marginTop: '10px', fontWeight: 'bold' }}>Ortalama ROAS</div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '5px' }}>Reklam harcaması geri dönüşü</p>
-              </div>
-              <div>
-                <div style={{ fontSize: '4rem', fontWeight: '900', color: 'var(--accent)', lineHeight: '1' }}>10M+</div>
-                <div style={{ fontSize: '1.2rem', color: '#fff', marginTop: '10px', fontWeight: 'bold' }}>Aylık İzlenme</div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '5px' }}>Kreatiflerimizin toplam erişimi</p>
-              </div>
-              <div>
-                <div style={{ fontSize: '4rem', fontWeight: '900', color: 'var(--secondary)', lineHeight: '1' }}>%85</div>
-                <div style={{ fontSize: '1.2rem', color: '#fff', marginTop: '10px', fontWeight: 'bold' }}>Dönüşüm Artışı</div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '5px' }}>İlk 3 aydaki performans ivmesi</p>
-              </div>
-              <div>
-                <div style={{ fontSize: '4rem', fontWeight: '900', color: '#fff', lineHeight: '1' }}>50+</div>
-                <div style={{ fontSize: '1.2rem', color: '#fff', marginTop: '10px', fontWeight: 'bold' }}>Aktif Marka</div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '5px' }}>Birlikte büyüdüğümüz iş ortakları</p>
-              </div>
-            </div>
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 className="section-title">Growth <span className="gradient-text">Metrics</span></h2>
+            <p className="section-subtitle">Data odaklı yaklaşımımızla markaları dijitalde devleştiriyoruz.</p>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '30px' }}>
+            <AnimatedMetric value={14.2} suffix="x" label="Ortalama ROAS" desc="Reklam harcaması geri dönüşü" color="var(--primary)" />
+            <AnimatedMetric value={10} suffix="M+" label="Aylık İzlenme" desc="Kreatiflerimizin toplam erişimi" color="var(--accent)" />
+            <AnimatedMetric value={85} suffix="%" prefix="%" label="Dönüşüm Artışı" desc="İlk 3 aydaki performans ivmesi" color="var(--secondary)" />
+            <AnimatedMetric value={50} suffix="+" label="Aktif Marka" desc="Birlikte büyüdüğümüz iş ortakları" color="#fff" />
           </div>
         </div>
       </section>
