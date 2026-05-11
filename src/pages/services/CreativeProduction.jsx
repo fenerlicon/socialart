@@ -32,7 +32,7 @@ function CreativeProduction() {
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
             <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
-               <img src="/assets/images/small-studio-view.png" alt="Social Art Stüdyo" style={{ width: '100%', borderRadius: '20px', marginBottom: '20px' }} />
+               <img src="/assets/images/socialart-studio.png" alt="Social Art Stüdyo" style={{ width: '100%', borderRadius: '20px', marginBottom: '20px' }} />
                <div style={{ position: 'absolute', top: '50px', left: '50px', background: 'var(--primary)', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', boxShadow: '0 10px 30px rgba(138,43,226,0.3)' }}>Kendi Stüdyomuzla Hizmetinizdeyiz</div>
             </div>
             <div>

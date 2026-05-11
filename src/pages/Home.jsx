@@ -361,17 +361,17 @@ function Home() {
             {[
               {
                 url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/jeep-reel.mp4",
-                logo: jeepLogo,
+                logo: "/assets/images/jeep-logo.webp",
                 name: "Jeep"
               },
               {
                 url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
-                logo: peugeotLogo,
+                logo: "/assets/images/peugeot-logo.png",
                 name: "Peugeot"
               },
               {
                 url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4",
-                logo: kotonLogo,
+                logo: "/assets/images/koton-logo.png",
                 name: "Koton"
               }
             ].map((item, idx) => (
@@ -530,15 +530,15 @@ function Home() {
           <h2 className="section-title">Hizmetlerimiz</h2>
           <div className="services-grid">
             <Link to="/creative-production" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
-              <Users className="service-icon" style={{color: 'var(--accent)'}} />
-              <h3 className="service-title">Sunuculu Reklam Videosu</h3>
-              <p className="service-desc">Markanızı anlatan profesyonel sunucularla yüksek güven ve dönüşüm sağlayan reklamlar.</p>
-              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
-            </Link>
-            <Link to="/creative-production" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
-              <Camera className="service-icon" style={{color: 'var(--primary)'}} />
+              <Video className="service-icon" style={{color: 'var(--accent)'}} />
               <h3 className="service-title">Video Prodüksiyon</h3>
               <p className="service-desc">Sinematik reklam filmleri ve sosyal medya için yüksek kaliteli video içerik üretimi.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/ugc-influencer-isbirligi" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <Smartphone className="service-icon" style={{color: 'var(--primary)'}} />
+              <h3 className="service-title">UGC & Influencer</h3>
+              <p className="service-desc">Kullanıcı odaklı doğal içerikler ve stratejik influencer iş birlikleri ile güven inşa edin.</p>
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
             </Link>
             <Link to="/meta-ads-yonetimi" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
@@ -546,6 +546,29 @@ function Home() {
               <h3 className="service-title">Meta Ads Yönetimi</h3>
               <p className="service-desc">Data odaklı reklam stratejileri ile ROAS odaklı ölçeklenebilir büyüme sistemleri.</p>
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/sosyal-medya-yonetimi" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <Share2 className="service-icon" style={{color: 'var(--primary)'}} />
+              <h3 className="service-title">Sosyal Medya</h3>
+              <p className="service-desc">Kreatif içerik yönetimi ve aktif topluluk etkileşimi ile dijital otoritenizi inşa edin.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/seo-geo-optimizasyonu" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <Globe className="service-icon" style={{color: '#00e5ff'}} />
+              <h3 className="service-title">SEO & GEO</h3>
+              <p className="service-desc">Arama motorları ve haritalarda görünürlüğünüzü artırarak organik büyüme yakalayın.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/creative-production" className="service-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
+              <Users className="service-icon" style={{color: '#ff0055'}} />
+              <h3 className="service-title">Sunuculu Reklam</h3>
+              <p className="service-desc">Profesyonel sunucularla hazırlanan yüksek ikna kabiliyetine sahip video kreatifler.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '50px' }}>
+            <Link to="/fiyatlar" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '15px 40px' }}>
+              Tüm Planları ve Detayları Gör <ArrowRight size={18} />
             </Link>
           </div>
         </div>

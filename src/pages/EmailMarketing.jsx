@@ -251,26 +251,73 @@ function EmailMarketing() {
           max-width: 1200px;
         }
         @media (max-width: 1024px) {
+          .admin-page-layout {
+            padding: 20px;
+            flex-direction: column;
+            margin-top: 60px;
+          }
           .admin-sidebar-nav {
             position: fixed;
-            left: -300px;
+            left: -320px;
             top: 0;
             height: 100vh;
-            z-index: 1000;
-            transition: 0.3s;
+            width: 300px;
+            background: #050505;
+            z-index: 10001;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+            display: flex !important;
           }
           .admin-sidebar-nav.open {
             left: 0;
           }
-          .admin-page-layout {
-            padding: 15px;
-            flex-direction: column;
+          .main-content-area {
+            width: 100%;
           }
-          .admin-sidebar-nav {
-             display: none;
+          .marketing-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+          }
+        }
+        .marketing-grid {
+          display: grid;
+          grid-template-columns: 1fr 320px;
+          gap: 30px;
+        }
+        .mobile-header {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 60px;
+          background: rgba(10, 10, 10, 0.8);
+          backdrop-filter: blur(10px);
+          z-index: 1000;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        @media (max-width: 1024px) {
+          .mobile-header {
+            display: flex;
           }
         }
       `}</style>
+
+      {/* Mobile Header */}
+      <div className="mobile-header">
+        <div style={{ fontWeight: '900', fontSize: '1.2rem', color: 'var(--primary)' }}>SOCIALART</div>
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
+        >
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
 
       {/* Sidebar */}
       <div className={`admin-sidebar-nav ${isSidebarOpen ? 'open' : ''}`}>
@@ -309,38 +356,38 @@ function EmailMarketing() {
           <p style={{ color: '#888' }}>CSV lead yönetimi ve toplu gönderim otomasyonu.</p>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '30px' }}>
-          <div className="glass" style={{ padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ border: '2px dashed rgba(255,255,255,0.1)', padding: '60px', borderRadius: '20px', textAlign: 'center', marginBottom: '30px' }}>
+        <div className="marketing-grid">
+          <div className="glass" style={{ padding: '20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', overflow: 'hidden' }}>
+            <div style={{ border: '2px dashed rgba(255,255,255,0.1)', padding: '40px 10px', borderRadius: '20px', textAlign: 'center', marginBottom: '30px' }}>
               <Upload size={48} color="var(--primary)" style={{ marginBottom: '20px' }} />
-              <h3>CSV Dosyasını Buraya Bırakın</h3>
-              <p style={{ color: '#555', fontSize: '0.9rem', marginBottom: '20px' }}>İsim ve Email sütunlarını içeren bir dosya seçin.</p>
+              <h3 style={{ fontSize: '1.2rem' }}>CSV Dosyasını Buraya Bırakın</h3>
+              <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '20px' }}>İsim ve Email sütunlarını içeren bir dosya seçin.</p>
               <input type="file" accept=".csv" onChange={handleFile} style={{ display: 'none' }} id="file-up" />
-              <label htmlFor="file-up" className="btn btn-primary" style={{ cursor: 'pointer' }}>
+              <label htmlFor="file-up" className="btn btn-primary" style={{ cursor: 'pointer', padding: '10px 20px' }}>
                 Dosya Seç
               </label>
             </div>
 
             {message && (
-              <div style={{ padding: '15px', borderRadius: '12px', background: status === 'error' ? 'rgba(255,23,68,0.1)' : 'rgba(0,230,118,0.1)', color: status === 'error' ? '#ff1744' : '#00e676', marginBottom: '20px' }}>
+              <div style={{ padding: '15px', borderRadius: '12px', background: status === 'error' ? 'rgba(255,23,68,0.1)' : 'rgba(0,230,118,0.1)', color: status === 'error' ? '#ff1744' : '#00e676', marginBottom: '20px', fontSize: '0.9rem' }}>
                 {message}
               </div>
             )}
 
             {filteredLeads.length > 0 && (
-              <div style={{ maxHeight: '400px', overflow: 'auto', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div style={{ maxHeight: '400px', overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
                   <thead style={{ background: 'rgba(255,255,255,0.03)', position: 'sticky', top: 0 }}>
                     <tr>
-                      <th style={{ padding: '12px', textAlign: 'left' }}>İsim</th>
-                      <th style={{ padding: '12px', textAlign: 'left' }}>E-Posta</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem' }}>İsim</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem' }}>E-Posta</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredLeads.slice(0, 50).map((l, i) => (
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td style={{ padding: '12px' }}>{l.name}</td>
-                        <td style={{ padding: '12px', color: 'var(--primary)' }}>{l.email}</td>
+                        <td style={{ padding: '12px', fontSize: '0.85rem' }}>{l.name}</td>
+                        <td style={{ padding: '12px', color: 'var(--primary)', fontSize: '0.85rem' }}>{l.email}</td>
                       </tr>
                     ))}
                   </tbody>

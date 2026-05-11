@@ -73,62 +73,69 @@ const AdminStyles = () => (
       transition: transform 0.3s;
     }
 
-    .admin-sidebar-nav button.active svg {
-      transform: scale(1.1);
-      color: var(--primary);
-    }
-
-    .mobile-only { display: none; }
-
     @media (max-width: 1024px) {
       .admin-layout { flex-direction: column; gap: 20px; margin-top: 80px; }
       .admin-sidebar-nav {
-        position: fixed;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
-        z-index: 10000;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        background: rgba(5, 5, 5, 0.98);
-        padding: 40px 20px;
+        position: fixed; top: 0; left: -320px; height: 100vh; width: 300px;
+        background: #050505; z-index: 10001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 20px; overflow-y: auto; box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        display: flex !important;
+        flex-direction: column;
+        gap: 5px;
       }
       .admin-sidebar-nav.open { left: 0; }
-      .mobile-only { display: flex; }
+      .mobile-header { display: flex !important; }
+      .mobile-only { display: flex !important; }
+      .welcome-panel { margin-top: 40px; }
       
-      /* Grid ve Kart Düzeltmeleri */
-      div[style*="gridTemplateColumns: repeat(4, 1fr)"],
-      div[style*="gridTemplateColumns: 1fr 1fr 1fr 1fr"] {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 15px !important;
+      /* Grid and Card Fixes */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
       }
-      
-      div[style*="gridTemplateColumns: 2.5fr 1fr"],
-      div[style*="gridTemplateColumns: 1fr 1fr 1fr"] {
-        grid-template-columns: 1fr !important;
+      .stat-card {
+        padding: 15px !important;
+        min-height: 120px !important;
+      }
+      .stat-card .stat-value {
+        font-size: 1.6rem !important;
       }
 
-      .welcome-panel {
-        padding: 20px !important;
-        margin-bottom: 20px !important;
+      /* Calendar Mobile Fix */
+      .calendar-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px 0;
+        margin: 0 -10px;
       }
-      
+      .calendar-grid {
+        min-width: 700px !important;
+        padding: 0 10px;
+      }
+      .calendar-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+        padding: 0 5px;
+      }
+      .calendar-header .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .stats-grid {
+        grid-template-columns: 1fr !important;
+      }
       .welcome-content {
         flex-direction: column;
         text-align: center;
         gap: 15px !important;
       }
-      
-      .welcome-content > div:last-child {
+      .welcome-content div:last-child {
+        margin-left: 0 !important;
         text-align: center !important;
-        margin: 0 !important;
-      }
-
-      /* Tab butonları fix */
-      div[style*="display: flex"][style*="gap: 10px"] {
-        flex-wrap: wrap;
-        justify-content: center;
       }
     }
   `}</style>
@@ -2035,25 +2042,29 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
           </div>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div className="calendar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>{monthNames[month]} {year}</h2>
             <p style={{ color: '#888', fontSize: '0.85rem' }}>Ekip Müsaitlik ve İş Yükü Takvimi</p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => setIsShootModalOpen(true)} className="btn" style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', color: '#000', padding: '10px 20px', borderRadius: '12px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}>
               <Plus size={18} /> Takvime Kayıt Ekle
             </button>
-            <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.1)', margin: '0 10px' }}></div>
-            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="icon-btn" style={{ padding: '10px' }}>Prev</button>
-            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="icon-btn" style={{ padding: '10px' }}>Next</button>
+            <div className="desktop-only" style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.1)', margin: '0 10px' }}></div>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="icon-btn" style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer' }}>Geri</button>
+              <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="icon-btn" style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer' }}>İleri</button>
+            </div>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
-          {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(day => (
-            <div key={day} style={{ textAlign: 'center', padding: '10px', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.8rem' }}>{day}</div>
-          ))}
-          {days}
+        <div className="calendar-container">
+          <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
+            {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(day => (
+              <div key={day} style={{ textAlign: 'center', padding: '10px', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.8rem' }}>{day}</div>
+            ))}
+            {days}
+          </div>
         </div>
       </div>
     );
@@ -5534,7 +5545,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           }
 
           /* General grid stack */
-          .stats-grid, .task-manager-grid, .task-list-grid {
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 12px !important;
+          }
+          .task-manager-grid, .task-list-grid {
             grid-template-columns: 1fr !important;
             gap: 15px !important;
           }
