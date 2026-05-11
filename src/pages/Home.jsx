@@ -587,9 +587,9 @@ function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              { url: "/assets/videos/video1.mov", name: "Özel Tanıtım 1" },
-              { url: "/assets/videos/video2.mp4", name: "Özel Tanıtım 2" },
-              { url: "/assets/videos/video3.mp4", name: "Özel Tanıtım 3" }
+              { url: "/assets/videos/video1.mov", name: "MioCasa Halı" },
+              { url: "/assets/videos/video2.mp4", name: "ArayanVar" },
+              { url: "/assets/videos/video3.mp4", name: "Social Art" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ 
                 borderRadius: '40px', 
