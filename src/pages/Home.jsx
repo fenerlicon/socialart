@@ -386,7 +386,7 @@ function Home() {
                 flexDirection: 'column'
               }}>
                 <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                  <img src={item.logo} alt={item.name} style={{ maxHeight: '40px', maxWidth: '150px', objectFit: 'contain' }} />
+                  <img src={item.logo} alt={item.name} width="150" height="40" style={{ height: '40px', width: '150px', objectFit: 'contain' }} />
                 </div>
                 <div style={{ 
                   borderRadius: '30px', 
@@ -487,8 +487,8 @@ function Home() {
                   <Maximize2 size={20} />
                 </button>
               </div>
-              <h4 style={{fontSize: '1.4rem', marginBottom: '10px', color: 'var(--accent)'}}>İşinizi Önemsiyoruz</h4>
-              <p style={{color: 'var(--text-muted)', lineHeight: '1.6'}}>"Her bir yanıyla mükemmelliği arıyoruz. İşinize sadece bir proje olarak değil, kendi markamız gibi yaklaşıyoruz. En son teknoloji ekipmanlar ve sinematik bakış açımızla, markanızın hikayesini en etkileyici şekilde anlatmak için buradayız. Sizin başarınız, bizim en büyük imzamızdır."</p>
+                <h3 style={{fontSize: '1.4rem', marginBottom: '10px', color: 'var(--accent)'}}>İşinizi Önemsiyoruz</h3>
+                <p style={{color: 'rgba(255,255,255,0.7)', lineHeight: '1.6'}}>"Her bir yanıyla mükemmelliği arıyoruz. İşinize sadece bir proje olarak değil, kendi markamız gibi yaklaşıyoruz. En son teknoloji ekipmanlar ve sinematik bakış açımızla, markanızın hikayesini en etkileyici şekilde anlatmak için buradayız. Sizin başarınız, bizim en büyük imzamızdır."</p>
             </div>
             
             <div className="testi-card">
@@ -600,7 +600,7 @@ function Home() {
                 flexDirection: 'column'
               }}>
                 <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                  <h4 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 'bold', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{item.name}</h4>
+                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 'bold', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{item.name}</h3>
                 </div>
                 <div style={{ 
                   borderRadius: '30px', 
@@ -638,15 +638,15 @@ function Home() {
             <h2 className="section-title" style={{ textAlign: 'center' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
             <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Meta Ads nedir ve neden gereklidir?</h4>
+                <h3 style={{ color: 'var(--primary)', marginBottom: '10px', fontSize: '1.2rem' }}>Meta Ads nedir ve neden gereklidir?</h3>
                 <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Meta Ads, Facebook ve Instagram üzerinden hedefli reklamlar vererek potansiyel müşterilerinize ulaşmanızı sağlar. Doğru segmentasyon ve kreatif testlerle en düşük maliyetle en yüksek dönüşümü almanıza yardımcı olur.</p>
               </div>
               <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>Reklam kreatifi neden önemli?</h4>
+                <h3 style={{ color: 'var(--primary)', marginBottom: '10px', fontSize: '1.2rem' }}>Reklam kreatifi neden önemli?</h3>
                 <p style={{ color: '#aaa', fontSize: '0.95rem' }}>Teknik ayarlar ne kadar iyi olursa olsun, kullanıcının dikkatini çeken ve ikna eden tek şey kreatiftir. Yüksek performanslı bir kreatif, reklam maliyetlerinizi %80'e kadar düşürebilir.</p>
               </div>
               <div className="glass" style={{ padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '10px' }}>SEO ve GEO farkı nedir?</h4>
+                <h3 style={{ color: 'var(--primary)', marginBottom: '10px', fontSize: '1.2rem' }}>SEO ve GEO farkı nedir?</h3>
                 <p style={{ color: '#aaa', fontSize: '0.95rem' }}>SEO geleneksel arama motorları (Google gibi) için yapılırken, GEO (Generative Engine Optimization) ChatGPT, Perplexity ve Gemini gibi yapay zeka sistemlerinin markanız hakkında doğru ve olumlu bilgi vermesini sağlamak için yapılır.</p>
               </div>
             </div>
