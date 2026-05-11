@@ -266,6 +266,19 @@ function Home() {
         </div>
       </section>
 
+      {/* PARTNERS TICKER (Moved above Showreel for social proof) */}
+      <section className="brands-section" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#000', paddingTop: '20px', paddingBottom: '20px' }}>
+        <div className="container">
+          <div className="brand-ticker-wrap">
+            <div className="brand-track">
+              {partners.map((p, i) => <div className="brand-item" key={`t1-${i}`}>{p}</div>)}
+              {/* Duplicate for seamless scrolling */}
+              {partners.map((p, i) => <div className="brand-item" key={`t2-${i}`}>{p}</div>)}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 1. DIRECTOR'S SHOWREEL */}
       <section className="section-padding" id="showreel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
@@ -512,16 +525,6 @@ function Home() {
         </div>
       </section>
 
-      {/* PARTNERS TICKER (Moved to bottom as secondary social proof) */}
-      <section className="brands-section" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: '#000' }}>
-        <div className="container">
-          <div className="brand-ticker-wrap">
-            <div className="brand-track">
-              {partners.map((p, i) => <div className="brand-item" key={`t1-${i}`}>{p}</div>)}
-            </div>
-          </div>
-        </div>
-      </section>
     </>
   );
 }
