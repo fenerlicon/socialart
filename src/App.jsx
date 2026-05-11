@@ -33,12 +33,13 @@ const Pricing = React.lazy(() => import('./pages/Pricing'));
 const ClientPortal = React.lazy(() => import('./pages/ClientPortal'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
-// Service Detail Pages (Direct import to avoid lazy load issues)
-const MetaAds = React.lazy(() => import('./pages/services/MetaAds'));
-const CreativeProduction = React.lazy(() => import('./pages/services/CreativeProduction'));
-const SEOGEO = React.lazy(() => import('./pages/services/SEOGEO'));
-const SosyalMedya = React.lazy(() => import('./pages/services/SosyalMedya'));
-const UGCInfluencer = React.lazy(() => import('./pages/services/UGCInfluencer'));
+// Service Detail Pages (Direct import for reliability)
+import MetaAds from './pages/services/MetaAds';
+import CreativeProduction from './pages/services/CreativeProduction';
+import SEOGEO from './pages/services/SEOGEO';
+import SosyalMedya from './pages/services/SosyalMedya';
+import UGCInfluencer from './pages/services/UGCInfluencer';
+
 const UGCApplication = React.lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
 const JobApplication = React.lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.JobApplication })));
 const EmailMarketing = React.lazy(() => import('./pages/EmailMarketing'));
