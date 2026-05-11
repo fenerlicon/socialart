@@ -35,32 +35,44 @@ export default async function handler(req, res) {
     }
 
     // 2. Email Notification (via Resend)
-    // Add RESEND_API_KEY to Vercel Env
     if (process.env.RESEND_API_KEY) {
-       await fetch('https://api.resend.com/emails', {
+       const resendResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
         },
         body: JSON.stringify({
-          from: 'SocialArt <onboarding@resend.dev>',
-          to: ['hello@socialartajans.com'], // Hedef mail adresi
-          subject: `Yeni Randevu: ${data.fullName}`,
-          html: `<div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #8a2be2;">Yeni Randevu Talebi</h2>
-            <p><strong>İsim:</strong> ${data.fullName}</p>
-            <p><strong>Telefon:</strong> ${data.phone}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-            <p><strong>URL:</strong> ${data.url}</p>
-            <p><strong>Hizmetler:</strong> ${data.services.join(', ')}</p>
-            <p><strong>Tarih:</strong> ${data.date}</p>
-            <p><strong>Saat:</strong> ${data.time}</p>
-            <hr />
-            <p style="font-size: 0.8rem; color: #777;">Bu mesaj SocialArt web sitesi üzerinden otomatik olarak oluşturulmuştur.</p>
-          </div>`
+          from: 'SocialArt Bildirim <onboarding@resend.dev>', // Resend onaylı değilse sadece bu adresten gönderir
+          to: ['hello@socialartajans.com'], // Senin mail adresin
+          subject: `🔥 Yeni Randevu: ${data.fullName}`,
+          html: `
+            <div style="font-family: 'Helvetica', sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
+              <div style="background: #8a2be2; padding: 30px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 24px;">Yeni Lead Yakalandı!</h1>
+              </div>
+              <div style="padding: 30px; background: #fff;">
+                <p style="font-size: 16px; color: #333;">Siteden yeni bir randevu talebi geldi. Detaylar aşağıdadır:</p>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>İsim:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.fullName}</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Telefon:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.phone}</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Email:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.email}</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>URL/Platform:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.url}</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Hizmetler:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.services.join(', ')}</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Randevu Tarihi:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.date}</td></tr>
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #eee;"><b>Randevu Saati:</b></td><td style="padding: 10px 0; border-bottom: 1px solid #eee;">${data.time}</td></tr>
+                </table>
+                <div style="margin-top: 30px; text-align: center;">
+                  <a href="https://socialart-ajans.vercel.app/admin" style="background: #ff0055; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">Müşteri Paneline Git</a>
+                </div>
+              </div>
+            </div>
+          `
         })
       });
+      
+      const resendData = await resendResponse.json();
+      console.log('Resend Response:', resendData);
     }
 
     return res.status(200).json({ success: true });
