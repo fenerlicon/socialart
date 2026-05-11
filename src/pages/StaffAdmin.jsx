@@ -473,6 +473,12 @@ function Admin() {
       const { data: clientsData } = await supabase.from('active_clients').select('*').order('created_at', { ascending: false });
       if (clientsData) setAktifMusteriler(clientsData);
 
+      // Fetch Applications
+      const { data: ugcData } = await supabase.from('ugc_applications').select('*').order('created_at', { ascending: false });
+      if (ugcData) setUgcApps(ugcData);
+      const { data: jobData } = await supabase.from('job_applications').select('*').order('created_at', { ascending: false });
+      if (jobData) setJobApps(jobData);
+
       // 3. Fetch activity logs (only if admin)
       if (user?.permissions === 'all') {
         const { data: logData } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200);
@@ -671,6 +677,8 @@ function Admin() {
 
   const [potansiyel, setPotansiyel] = useState([]);
   const [aktifMusteriler, setAktifMusteriler] = useState([]);
+  const [ugcApps, setUgcApps] = useState([]);
+  const [jobApps, setJobApps] = useState([]);
   const [isTakip, setIsTakip] = useState([]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -2260,6 +2268,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <FileText size={18} /> Raporlar
             </button>
             <button
+              onClick={() => { setActiveTab('basvurular'); setIsSidebarOpen(false); }}
+              className={activeTab === 'basvurular' ? 'active' : ''}
+            >
+              <Target size={18} /> Başvurular
+            </button>
+            <button
               onClick={() => { setActiveTab('gorev'); setIsSidebarOpen(false); }}
               className={activeTab === 'gorev' ? 'active' : ''}
             >
@@ -2310,7 +2324,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* İstatistikler */}
-        {!['availability', 'support', 'performance', 'gorevList', 'log', 'chat'].includes(activeTab) && (
+        {!['availability', 'support', 'performance', 'gorevList', 'log', 'chat', 'basvurular'].includes(activeTab) && (
           <div className="stats-grid">
             {getStats().map((stat, idx) => {
               const isBucketFilter = activeTab === 'gorev' && ['Yapılan (Aktif)', 'Tamamlanan', 'Tamamlanmayan'].includes(stat.title);
@@ -2382,6 +2396,77 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Tab: BAŞVURULAR */}
+        {activeTab === 'basvurular' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Gelen Başvurular</h2>
+            </div>
+            
+            <div className="glass" style={{ padding: '25px', borderRadius: '24px' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Camera size={20} /> UGC & Influencer Başvuruları
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Ad Soyad</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>İletişim</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Instagram</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Şehir</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Tarih</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ugcApps.length === 0 && <tr><td colSpan="5" style={{ padding: '15px', textAlign: 'center', color: '#666' }}>Henüz başvuru yok.</td></tr>}
+                    {ugcApps.map(app => (
+                      <tr key={app.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                        <td style={{ padding: '15px', fontWeight: 'bold' }}>{app.full_name}</td>
+                        <td style={{ padding: '15px' }}>{app.phone}<br/><span style={{fontSize:'0.8rem', color:'#888'}}>{app.email}</span></td>
+                        <td style={{ padding: '15px' }}><a href={`https://instagram.com/${app.instagram_url?.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>{app.instagram_url}</a></td>
+                        <td style={{ padding: '15px' }}>{app.city}</td>
+                        <td style={{ padding: '15px', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="glass" style={{ padding: '25px', borderRadius: '24px' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Briefcase size={20} /> Kariyer / İş Başvuruları
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Ad Soyad</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Pozisyon</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>İletişim</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Portfolyo</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Tarih</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {jobApps.length === 0 && <tr><td colSpan="5" style={{ padding: '15px', textAlign: 'center', color: '#666' }}>Henüz başvuru yok.</td></tr>}
+                    {jobApps.map(app => (
+                      <tr key={app.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                        <td style={{ padding: '15px', fontWeight: 'bold' }}>{app.full_name}</td>
+                        <td style={{ padding: '15px', color: 'var(--accent)', fontWeight: 'bold' }}>{app.position}</td>
+                        <td style={{ padding: '15px' }}>{app.phone}<br/><span style={{fontSize:'0.8rem', color:'#888'}}>{app.email}</span></td>
+                        <td style={{ padding: '15px' }}>{app.portfolio_url && <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>İncele</a>}</td>
+                        <td style={{ padding: '15px', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
