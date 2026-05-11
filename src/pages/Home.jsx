@@ -350,19 +350,35 @@ function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/jeep-reel.mp4",
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/polar-1.mp4",
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/flormar.mp4"
-            ].map((url, idx) => (
+              {
+                url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/jeep-reel.mp4",
+                logo: "/assets/images/jeep-logo.webp",
+                name: "Jeep"
+              },
+              {
+                url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4",
+                logo: "/assets/images/peugeot-logo.png",
+                name: "Peugeot"
+              },
+              {
+                url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4",
+                logo: "/assets/images/koton-logo.png",
+                name: "Koton"
+              }
+            ].map((item, idx) => (
               <div key={`dir-${idx}`} className="glass" style={{ 
                 borderRadius: '40px', 
                 padding: '15px', 
                 border: '1px solid rgba(255,255,255,0.1)', 
                 maxWidth: '320px', 
                 margin: '0 auto',
-                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column'
               }}>
+                <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                  <img src={item.logo} alt={item.name} style={{ maxHeight: '40px', maxWidth: '150px', objectFit: 'contain' }} />
+                </div>
                 <div style={{ 
                   borderRadius: '30px', 
                   overflow: 'hidden', 
@@ -372,7 +388,7 @@ function Home() {
                   border: '8px solid #1a1a1a'
                 }}>
                   <video 
-                    src={url} 
+                    src={item.url} 
                     className="mobile-video"
                     autoPlay 
                     muted 
@@ -571,18 +587,23 @@ function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4",
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/socialart-studio.mp4",
-              "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4"
-            ].map((url, idx) => (
+              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4", name: "UGC Örneği 1" },
+              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/aguzellik-video.mp4", name: "Sunuculu Reklam 1" },
+              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/presenter-reel.mp4", name: "UGC Örneği 2" }
+            ].map((item, idx) => (
               <div key={idx} className="glass" style={{ 
                 borderRadius: '40px', 
                 padding: '15px', 
                 border: '1px solid rgba(255,255,255,0.1)', 
                 maxWidth: '320px', 
                 margin: '0 auto',
-                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column'
               }}>
+                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <h4 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.2rem', fontWeight: 'bold' }}>{item.name}</h4>
+                </div>
                 <div style={{ 
                   borderRadius: '30px', 
                   overflow: 'hidden', 
@@ -592,7 +613,7 @@ function Home() {
                   border: '8px solid #1a1a1a'
                 }}>
                   <video 
-                    src={url} 
+                    src={item.url} 
                     className="mobile-video"
                     autoPlay 
                     muted 
