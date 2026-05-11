@@ -196,7 +196,7 @@ function App() {
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
               <div className="footer-col">
                 <Link to="/" className="brand-logo" style={{ marginBottom: '10px', display: 'block' }}>
-                  <img src="/logo.png" alt="Socialart Ajans" className="footer-logo-img" width="150" height="50" />
+                  <img src="/logo.png" alt="Socialart Ajans" className="footer-logo-img" width="150" height="50" loading="lazy" />
                 </Link>
                 <p style={{marginTop: '-20px', marginBottom: '30px'}}>Site → Ücretsiz Analiz → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
                 <div className="social-links">

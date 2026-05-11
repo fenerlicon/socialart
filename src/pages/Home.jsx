@@ -386,7 +386,7 @@ function Home() {
                 flexDirection: 'column'
               }}>
                 <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                  <img src={item.logo} alt={item.name} width="150" height="40" style={{ height: '40px', width: '150px', objectFit: 'contain' }} />
+                  <img src={item.logo} alt={item.name} width="150" height="40" loading="lazy" style={{ height: '40px', width: '150px', objectFit: 'contain' }} />
                 </div>
                 <div style={{ 
                   borderRadius: '30px', 
@@ -403,6 +403,7 @@ function Home() {
                     muted 
                     loop 
                     playsInline
+                    preload="none"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '18px', background: '#1a1a1a', borderRadius: '10px', zIndex: 2 }}></div>
