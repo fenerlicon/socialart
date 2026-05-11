@@ -32,6 +32,7 @@ import { supabase } from '../lib/supabase';
 import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
+import AnalysisForm from '../components/AnalysisForm';
 
 const AnimatedMetric = ({ value, suffix = '', prefix = '', label, desc, color }) => {
   const [count, setCount] = React.useState(0);
@@ -196,81 +197,6 @@ function Home() {
     if (funnelEl) observer.observe(funnelEl);
     return () => observer.disconnect();
   }, []);
-
-  const fetchBlockedSlots = async () => {
-    const { data } = await supabase.from('blocked_slots').select('*');
-    if (data) setBlockedSlots(data);
-  };
-
-  const handleCheckboxChange = (srv) => {
-    setFormData(prev => ({
-      ...prev,
-      services: prev.services.includes(srv) 
-        ? prev.services.filter(s => s !== srv)
-        : [...prev.services, srv]
-    }));
-  };
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedDateStr || !selectedTimeStr) {
-      setFormError('Lütfen bir toplantı tarihi ve saati seçiniz.');
-      return;
-    }
-    if (formData.services.length === 0) {
-      setFormError('Lütfen ilgilendiğiniz hizmetlerden en az bir tanesini seçiniz.');
-      return;
-    }
-    setLoading(true);
-    setFormError('');
-    try {
-      const dateStr = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
-      const { error: leadError } = await supabase.from('leads').insert([{
-        name: formData.fullName, phone: formData.phone, email: formData.email,
-        date: dateStr, platform: formData.url, service: formData.services.join(', '),
-        rep: 'Sistem (Otomatik)', status: 'Beklemede',
-        reaction: `Siteden form dolduruldu. Randevu Hedefi: ${selectedDateStr} ${selectedTimeStr}`
-      }]);
-      if (leadError) throw leadError;
-      const { error: apptError } = await supabase.from('appointments').insert([{
-        full_name: formData.fullName, phone: formData.phone, email: formData.email,
-        url: formData.url, services: formData.services.join(', '),
-        appointment_date: selectedDateStr, appointment_time: selectedTimeStr, status: 'Beklemede'
-      }]);
-      if (apptError) throw apptError;
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'appointment',
-            data: { 
-              fullName: formData.fullName, phone: formData.phone, email: formData.email,
-              url: formData.url, services: formData.services, date: selectedDateStr, time: selectedTimeStr
-            }
-          })
-        });
-      } catch (emailErr) {}
-      setFormSuccess(true);
-      setFormData({ fullName: '', phone: '', email: '', url: '', services: [] });
-      setSelectedDateStr('');
-      setSelectedTimeStr('');
-    } catch (err) {
-      setFormError('Bir hata oluştu. Lütfen tekrar deneyiniz.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace('#', '');
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [location]);
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
