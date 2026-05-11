@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, User, Share2, Loader } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, User, Share2, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 function BlogDetail() {
