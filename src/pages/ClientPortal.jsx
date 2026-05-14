@@ -184,7 +184,12 @@ function ClientPortal() {
       .single();
 
     if (error || !data) {
-      setLoginError('Şirket kodu veya şifre hatalı.');
+      console.error("Login Error:", error?.message || "No data returned");
+      if (error?.message?.includes('quota') || error?.message?.includes('restricted')) {
+        setLoginError('Sistem altyapı limitlerine ulaştı (Kota aşımı). Lütfen yöneticiyle iletişime geçin.');
+      } else {
+        setLoginError('Şirket kodu veya şifre hatalı.');
+      }
       return;
     }
 

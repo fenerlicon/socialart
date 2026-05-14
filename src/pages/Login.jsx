@@ -29,7 +29,14 @@ function Login({ onLoginSuccess }) {
     });
 
     if (error) {
-      setError('Kullanıcı adı veya şifre hatalı.');
+      console.error("Login Error:", error.message);
+      if (error.message.includes("quota") || error.message.includes("restricted")) {
+        setError("Sistem altyapı limitlerine ulaştı (Kota aşımı). Lütfen daha sonra tekrar deneyin veya yöneticiyle iletişime geçin.");
+      } else if (error.message.includes("Invalid login credentials")) {
+        setError('Kullanıcı adı veya şifre hatalı.');
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
     } else {
       const metadata = data.user.user_metadata;
