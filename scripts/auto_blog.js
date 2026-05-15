@@ -43,14 +43,28 @@ async function generateBlogPost() {
       contents: [{ parts: [{ text: prompt }] }]
     });
 
+    if (!response.data || !response.data.candidates) {
+      console.error("Full AI Response Error:", JSON.stringify(response.data));
+      throw new Error("AI response format invalid");
+    }
+
     const resultText = response.data.candidates[0].content.parts[0].text;
+    console.log("Raw AI Response:", resultText);
+
     // Extract JSON from markdown code block if present
     const jsonMatch = resultText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Could not parse JSON from AI response");
+    if (!jsonMatch) {
+      console.error("Failed to find JSON in AI response:", resultText);
+      throw new Error("Could not parse JSON from AI response");
+    }
     
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("AI Generation Error:", error.response?.data || error.message);
+    if (error.response) {
+      console.error("AI API Error Details:", JSON.stringify(error.response.data));
+    } else {
+      console.error("AI Generation Error:", error.message);
+    }
     throw error;
   }
 }
