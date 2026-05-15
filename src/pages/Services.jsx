@@ -91,10 +91,10 @@ function Services() {
       icon: <Video color="#ff0055" />,
       desc: 'Modern medya dünyasında, yüksek kaliteli ve yaratıcı videolar oluşturmak amacıyla en güncel ekipmanları kullanıyoruz. Her projede izleyicilere benzersiz deneyimler sunmayı hedefliyoruz. Yenilikçi ve dinamik bir bakış açısıyla her videoda yeni hikayeler keşfediyoruz.',
       media: [
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_9157.mov' },
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_8598.mov' },
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_7877.mp4' },
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/IMG_8554.mov' }
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_9157.mov' },
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_8598.mov' },
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_7877.mp4' },
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_8554.mov' }
       ]
     },
     {
@@ -103,9 +103,9 @@ function Services() {
       icon: <Mic color="var(--primary)" />,
       desc: 'Ürün veya hizmetlerinizi profesyonel sunucular eşliğinde, güven veren ve ikna edici bir dille anlatıyoruz. Teknik detayları anlaşılır kılan, marka samimiyetini artıran ve dönüşüm oranlarını doğrudan etkileyen yüksek kaliteli video içerikleri üretiyoruz.',
       media: [
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/sequence-kurumsal.mp4' },
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/sunucu-dogal.mp4' },
-        { type: 'video', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/sunucu1.mp4' }
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/sequence-kurumsal.mp4' },
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/sunucu-dogal.mp4' },
+        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/sunucu1.mp4' }
       ]
     },
     {
