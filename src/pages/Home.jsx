@@ -257,9 +257,9 @@ function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/jeep-reel.mp4", logo: "/assets/images/jeep-logo.webp", name: "Jeep" },
-              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/peugeot-1.mp4", logo: "/assets/images/peugeot-logo.png", name: "Peugeot" },
-              { url: "https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/videos/koton-reel.mp4", logo: "/assets/images/koton-logo.png", name: "Koton" }
+              { url: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/site-assets/videos/jeep-reel.mp4`, logo: "/assets/images/jeep-logo.webp", name: "Jeep" },
+              { url: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/site-assets/videos/peugeot-1.mp4`, logo: "/assets/images/peugeot-logo.png", name: "Peugeot" },
+              { url: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/site-assets/videos/koton-reel.mp4`, logo: "/assets/images/koton-logo.png", name: "Koton" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}><img src={item.logo} alt={item.name} width="150" height="40" loading="lazy" style={{ height: '40px', objectFit: 'contain' }} /></div>

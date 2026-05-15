@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import './App.css';
 import Home from './pages/Home';
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Code Splitting for non-critical pages to reduce main bundle size
 const Services = React.lazy(() => import('./pages/Services'));
@@ -254,6 +255,7 @@ function App() {
           </div>
         </footer>
       )}
+      <SpeedInsights />
     </div>
   );
 }
