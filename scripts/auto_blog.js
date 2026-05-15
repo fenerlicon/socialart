@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-client');
+const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
 
 // Environment variables (to be set in GitHub Actions Secrets)
