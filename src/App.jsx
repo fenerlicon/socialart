@@ -76,9 +76,14 @@ function App() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+
   const scrollToSection = (id) => {
     if (location.pathname !== '/') {
-      navigate('/#' + id);
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
     } else {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth' });

@@ -1,251 +1,265 @@
-import React, { useState } from 'react';
-import { Camera, Video, Users, ArrowRight, Mic, Smartphone, ChevronDown, Play, X, ChevronLeft, ChevronRight, Monitor, Layers, Maximize2 } from 'lucide-react';
-import '../Services.css';
+import React from 'react';
+import { Camera, Video, Users, ArrowRight, Mic, Smartphone, Layers, Monitor, TrendingUp, Globe, Star, CheckCircle, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-// Import local images to let Vite handle them
-import studio1 from '../assets/images/studio-1.png';
-import studio2 from '../assets/images/studio-2.png';
-import ugc1 from '../assets/images/4.jpg';
-import ugc2 from '../assets/images/5.jpg';
-import ugc3 from '../assets/images/6.jpg';
+const servicesData = [
+  {
+    id: '360-sosyal-medya',
+    title: '360° Sosyal Medya & Reklam Yönetimi',
+    icon: <Layers size={32} color="var(--primary)" />,
+    color: 'var(--primary)',
+    glow: 'rgba(138, 43, 226, 0.15)',
+    desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden yönetiyoruz. Meta ve Google reklamlarında data odaklı yaklaşımlarımızla yüksek performanslı reklam yönetimi sağlıyoruz.',
+    features: ['Meta & Google Ads Yönetimi', 'İçerik Planlaması & Üretimi', 'Topluluk Yönetimi', 'Haftalık Raporlama'],
+    link: '/sosyal-medya-yonetimi'
+  },
+  {
+    id: 'meta-ads',
+    title: 'Meta Ads Yönetimi',
+    icon: <TrendingUp size={32} color="#ff0055" />,
+    color: '#ff0055',
+    glow: 'rgba(255, 0, 85, 0.15)',
+    desc: 'Facebook ve Instagram reklamlarında veriye dayalı stratejilerle markanızın hedef kitlesine ulaşıyoruz. ROAS odaklı kampanya yönetimi ile reklam bütçenizin her kuruşunu verimli kullanıyoruz.',
+    features: ['Hedef Kitle Analizi', 'Reklam Kreatif Tasarımı', 'A/B Test Optimizasyonu', 'ROAS Takibi & Raporlama'],
+    link: '/meta-ads-yonetimi'
+  },
+  {
+    id: 'studyo-cekim',
+    title: 'Stüdyo Çekim & Kiralama',
+    icon: <Monitor size={32} color="var(--accent)" />,
+    color: 'var(--accent)',
+    glow: 'rgba(0, 229, 255, 0.15)',
+    desc: 'Kendi bünyemizdeki profesyonel stüdyomuzda, en üst seviye ışık ve kamera ekipmanlarıyla markanız için stüdyo kalitesinde içerikler üretiyoruz. Bağımsız ekipler için tam donanımlı stüdyo kiralama hizmeti de sunuyoruz.',
+    features: ['Profesyonel Işık Ekipmanları', 'Tam Donanımlı Stüdyo', 'Kiralama Seçeneği', '4K Çekim Kalitesi'],
+    link: '/creative-production'
+  },
+  {
+    id: 'fotograf',
+    title: 'Profesyonel Fotoğraf Çekimleri',
+    icon: <Camera size={32} color="#00e676" />,
+    color: '#00e676',
+    glow: 'rgba(0, 230, 118, 0.15)',
+    desc: 'Markalara özel profesyonel fotoğraf hizmetleri sunuyoruz. Ürün, Yemek, Spor, Model, Emlak, E-ticaret, Katalog çekimleri gibi geniş bir yelpazede kaliteli görseller sağlıyoruz.',
+    features: ['Ürün & Katalog Çekimi', 'Yemek Fotoğrafçılığı', 'Model & Lifestyle', 'E-ticaret Görselleri'],
+    link: '/creative-production'
+  },
+  {
+    id: 'video-prod',
+    title: 'Video Prodüksiyonu',
+    icon: <Video size={32} color="#ff0055" />,
+    color: '#ff0055',
+    glow: 'rgba(255, 0, 85, 0.15)',
+    desc: 'Modern medya dünyasında yüksek kaliteli ve yaratıcı videolar oluşturuyoruz. Her projede izleyicilere benzersiz deneyimler sunmayı hedefliyoruz. Yenilikçi ve dinamik bakış açısıyla her videoda yeni hikayeler keşfediyoruz.',
+    features: ['Sinematik Reklam Filmleri', 'Kurumsal Tanıtım Videoları', 'Sosyal Medya Reels & TikTok', 'Drone Çekimleri'],
+    link: '/creative-production'
+  },
+  {
+    id: 'sunuculu',
+    title: 'Sunuculu Tanıtım Videoları',
+    icon: <Mic size={32} color="var(--primary)" />,
+    color: 'var(--primary)',
+    glow: 'rgba(138, 43, 226, 0.15)',
+    desc: 'Ürün veya hizmetlerinizi profesyonel sunucular eşliğinde güven veren ve ikna edici bir dille anlatıyoruz. Dönüşüm oranlarını doğrudan etkileyen yüksek kaliteli video içerikleri üretiyoruz.',
+    features: ['Profesyonel Sunucu Kadrosu', 'Satış Odaklı Senaryo', 'Stüdyo Kalitesi Çekim', 'Hızlı Teslimat'],
+    link: '/sunuculu-reklam-videolari'
+  },
+  {
+    id: 'seo-geo',
+    title: 'SEO & GEO Optimizasyonu',
+    icon: <Globe size={32} color="#00e5ff" />,
+    color: '#00e5ff',
+    glow: 'rgba(0, 229, 255, 0.15)',
+    desc: 'Arama motorlarında üst sıralara çıkmanızı ve yapay zeka destekli arama sonuçlarında (GEO) öne çıkmanızı sağlıyoruz. Organik trafiğinizi artırarak markanızı kalıcı dijital varlığa kavuşturuyoruz.',
+    features: ['Teknik SEO Analizi', 'Anahtar Kelime Stratejisi', 'GEO (Generative Engine Optimization)', 'Aylık SEO Raporu'],
+    link: '/seo-geo-optimizasyonu'
+  },
+  {
+    id: 'ugc',
+    title: 'UGC İçerik & Influencer Marketing',
+    icon: <Users size={32} color="#ffab00" />,
+    color: '#ffab00',
+    glow: 'rgba(255, 171, 0, 0.15)',
+    desc: 'Samimi ve doğal kullanıcı içerikleri (UGC) ile markanızın güvenilirliğini artırıyoruz. Doğru influencer eşleşmeleri ve stratejik içerik planlamasıyla etkileşim ve satış rakamlarınızı yukarı taşıyoruz.',
+    features: ['UGC İçerik Üreticileri', 'Influencer Eşleştirme', 'Kampanya Yönetimi', 'Performans Analizi'],
+    link: '/ugc-influencer-isbirligi'
+  }
+];
 
 function Services() {
-  const [expandedId, setExpandedId] = useState(null);
-  const [lightbox, setLightbox] = useState({ open: false, media: [], index: 0 });
-  
-  // Side effect to handle body scroll lock
-  React.useEffect(() => {
-    if (lightbox.open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    return () => { document.body.style.overflow = 'auto'; };
-  }, [lightbox.open]);
-
-  const toggleAccordion = (id) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
-  const openLightbox = (mediaList, index) => {
-    setLightbox({ open: true, media: mediaList, index });
-  };
-
-  const closeLightbox = () => {
-    setLightbox({ open: false, media: [], index: 0 });
-  };
-
-  const nextMedia = (e) => {
-    e.stopPropagation();
-    setLightbox(prev => ({
-      ...prev,
-      index: (prev.index + 1) % prev.media.length
-    }));
-  };
-
-  const prevMedia = (e) => {
-    e.stopPropagation();
-    setLightbox(prev => ({
-      ...prev,
-      index: (prev.index - 1 + prev.media.length) % prev.media.length
-    }));
-  };
-
-  const servicesData = [
-    {
-      id: '360-sosyal-medya',
-      title: '360° Sosyal Medya & Reklam Yönetimi',
-      icon: <Layers color="var(--primary)" />,
-      desc: '360 derece sosyal medya yönetimi ile markanızın dijital dünyadaki tüm temas noktalarını tek elden yönetiyoruz. Meta ve Google reklamlarında data odaklı yaklaşımlarımızla yüksek performanslı reklam yönetimi (Performance Marketing) sağlıyoruz. İçerik planlaması, topluluk yönetimi ve reklam optimizasyonunu birleştirerek markanızın sesini en gür şekilde duyuruyoruz.',
-      media: [
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/1.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/2.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/3.jpg' }
-      ]
-    },
-    {
-      id: 'studyo-cekim',
-      title: 'Stüdyo Çekim & Kiralama',
-      icon: <Monitor color="var(--accent)" />,
-      desc: 'Kendi bünyemizdeki profesyonel stüdyomuzda, en üst seviye ışık ve kamera ekipmanlarıyla markanız için stüdyo kalitesinde içerikler üretiyoruz. Ayrıca bağımsız ekipler ve markalar için tam donanımlı stüdyo kiralama hizmeti sunuyoruz. İster ürün çekimi, ister podcast, ister tanıtım filmi; profesyonel altyapımızla hizmetinizdeyiz.',
-      media: [
-        { type: 'image', url: studio1 },
-        { type: 'image', url: studio2 }
-      ]
-    },
-    {
-      id: 'fotograf',
-      title: 'Profesyonel Fotoğraf Çekimleri',
-      icon: <Camera color="var(--accent)" />,
-      desc: 'Markalara özel profesyonel fotoğraf hizmetleri sunuyoruz. Ürün, Yemek, Spor, Model, Emlak, E-ticaret, Katalog çekimleri gibi alanlarda geniş bir yelpazede kaliteli görseller sağlıyoruz. Her marka için özelleştirilmiş çözümler sunarak, ürünlerinizi en iyi şekilde sergiliyoruz.',
-      media: [
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/7.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/8.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/10.jpg' },
-        { type: 'image', url: 'https://zpulnweiosxphibipxdp.supabase.co/storage/v1/object/public/site-assets/images/11.jpg' }
-      ]
-    },
-    {
-      id: 'video-prod',
-      title: 'Video Prodüksiyonu',
-      icon: <Video color="#ff0055" />,
-      desc: 'Modern medya dünyasında, yüksek kaliteli ve yaratıcı videolar oluşturmak amacıyla en güncel ekipmanları kullanıyoruz. Her projede izleyicilere benzersiz deneyimler sunmayı hedefliyoruz. Yenilikçi ve dinamik bir bakış açısıyla her videoda yeni hikayeler keşfediyoruz.',
-      media: [
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_9157.mov' },
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_8598.mov' },
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_7877.mp4' },
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/IMG_8554.mov' }
-      ]
-    },
-    {
-      id: 'sunuculu',
-      title: 'Sunuculu Tanıtım Videoları',
-      icon: <Mic color="var(--primary)" />,
-      desc: 'Ürün veya hizmetlerinizi profesyonel sunucular eşliğinde, güven veren ve ikna edici bir dille anlatıyoruz. Teknik detayları anlaşılır kılan, marka samimiyetini artıran ve dönüşüm oranlarını doğrudan etkileyen yüksek kaliteli video içerikleri üretiyoruz.',
-      media: [
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/sequence-kurumsal.mp4' },
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/sunucu-dogal.mp4' },
-        { type: 'video', url: 'https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/sunucu1.mp4' }
-      ]
-    },
-    {
-      id: 'ugc',
-      title: 'UGC İçerik & Influencer Marketing',
-      icon: <Smartphone color="#00e5ff" />,
-      desc: 'Samimi ve doğal kullanıcı içerikleri (UGC) ile markanızın güvenilirliğini artırıyoruz. Doğru influencer eşleşmeleri ve stratejik içerik planlamasıyla, ürünlerinizi doğrudan hedef kitlenizin dilinden anlatıyor, etkileşim ve satış rakamlarınızı yukarı taşıyoruz.',
-      media: [
-        { type: 'image', url: ugc1 },
-        { type: 'image', url: ugc2 },
-        { type: 'image', url: ugc3 }
-      ]
-    }
-  ];
-
   return (
-    <div>
-      {/* HERO SECTION */}
-      <section className="services-page-hero">
-        <div className="container">
-          <h1 className="hero-title" style={{fontSize: '4rem', marginBottom: '20px'}}>
-            Hizmetlerimiz
+    <div style={{ background: '#050505', minHeight: '100vh' }}>
+
+      {/* HERO */}
+      <section style={{
+        padding: '160px 0 80px',
+        textAlign: 'center',
+        background: 'radial-gradient(ellipse at center top, rgba(138,43,226,0.12) 0%, transparent 60%)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(138,43,226,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,0,85,0.05) 0%, transparent 50%)',
+          pointerEvents: 'none'
+        }} />
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: 'rgba(138,43,226,0.1)', border: '1px solid rgba(138,43,226,0.3)',
+            color: 'var(--primary)', padding: '8px 20px', borderRadius: '100px',
+            fontSize: '0.85rem', fontWeight: '700', marginBottom: '24px', letterSpacing: '1px'
+          }}>
+            <Zap size={14} /> 360° DİJİTAL ÇÖZÜMLER
+          </div>
+          <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: '900', marginBottom: '20px', lineHeight: 1.1 }}>
+            Markanız İçin <span className="gradient-text">Her Şey</span>
           </h1>
-          <p className="hero-desc" style={{margin: '0 auto', maxWidth: '800px'}}>
-            Dijital dünyada görünür olmak ve marka bilinirliğinizi artırmak için doğru adımları atmak şart. Her hizmetimizde kaliteyi ve estetiği birleştiriyoruz.
+          <p style={{ maxWidth: '680px', margin: '0 auto', color: '#aaa', fontSize: '1.15rem', lineHeight: '1.7' }}>
+            Dijital dünyada görünür olmak ve marka bilinirliğinizi artırmak için ihtiyaç duyduğunuz her hizmeti tek çatı altında sunuyoruz.
           </p>
         </div>
       </section>
 
-      {/* ACCORDION SERVICES LIST */}
-      <section className="section-padding" style={{paddingTop: '20px'}}>
+      {/* STATS BAR */}
+      <section style={{ padding: '0 0 80px' }}>
         <div className="container">
-          <div className="services-accordion">
-            {servicesData.map((service) => (
-              <div 
-                key={service.id} 
-                className={`accordion-item ${expandedId === service.id ? 'expanded' : ''}`}
-              >
-                <div 
-                  className="accordion-header" 
-                  onClick={() => toggleAccordion(service.id)}
-                >
-                  <div className="accordion-icon-wrap">
-                    {service.icon}
-                  </div>
-                  <h2 className="accordion-title">{service.title}</h2>
-                  <ChevronDown className="accordion-chevron" size={24} />
-                </div>
-                
-                <div className="accordion-content">
-                  <p className="service-desc-text">{service.desc}</p>
-                  
-                  {service.media.length > 0 && (
-                    <div className="media-gallery">
-                      {service.media.map((item, idx) => (
-                        <div key={idx} className="media-item" onClick={() => openLightbox(service.media, idx)}>
-                          {item.type === 'image' ? (
-                            <img src={item.url} alt={`${service.title} ${idx}`} className="media-img" loading="lazy" />
-                          ) : (
-                            <div style={{ position: 'relative', height: '100%' }}>
-                              <video src={item.url} className="media-video" muted playsInline loop onMouseEnter={e => e.target.play()} onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }} />
-                              <div className="video-indicator">
-                                <Maximize2 size={12} fill="currentColor" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '1px', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            {[
+              { val: '8+', label: 'Hizmet Alanı' },
+              { val: '50+', label: 'Aktif Marka' },
+              { val: '3M+', label: 'Organik Erişim' },
+              { val: '%94', label: 'Müşteri Memnuniyeti' }
+            ].map((s, i) => (
+              <div key={i} style={{
+                padding: '30px 24px', textAlign: 'center',
+                background: 'rgba(255,255,255,0.02)',
+              }}>
+                <div style={{ fontSize: '2.2rem', fontWeight: '900', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{s.val}</div>
+                <div style={{ color: '#888', fontSize: '0.85rem', marginTop: '4px', fontWeight: '500' }}>{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
-      
-      {/* LIGHTBOX MODAL */}
-      {lightbox.open && (
-        <div className="lightbox-overlay" onClick={closeLightbox}>
-          <button className="lightbox-close" onClick={closeLightbox}>
-            <X size={32} />
-          </button>
-          
-          <button className="lightbox-nav prev" onClick={prevMedia}>
-            <ChevronLeft size={48} />
-          </button>
-          
-          <div className="lightbox-content" onClick={e => e.stopPropagation()}>
-            {lightbox.media[lightbox.index].type === 'image' ? (
-              <img src={lightbox.media[lightbox.index].url} alt="Lightbox Content" className="lightbox-media" />
-            ) : (
-              <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <video src={lightbox.media[lightbox.index].url} className="lightbox-media" controls autoPlay playsInline />
-                <button 
-                  onClick={(e) => {
-                    const v = e.currentTarget.parentElement.querySelector('video');
-                    if(v.requestFullscreen) v.requestFullscreen();
-                    else if(v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+
+      {/* SERVICES GRID */}
+      <section style={{ padding: '0 0 120px' }}>
+        <div className="container">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+            gap: '24px'
+          }}>
+            {servicesData.map((service) => (
+              <Link
+                key={service.id}
+                to={service.link}
+                style={{ textDecoration: 'none' }}
+              >
+                <div style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '24px',
+                  padding: '36px',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '20px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-6px)';
+                    e.currentTarget.style.borderColor = service.color;
+                    e.currentTarget.style.boxShadow = `0 20px 60px ${service.glow}`;
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
                   }}
-                  style={{
-                    marginTop: '15px',
-                    background: 'var(--primary)',
-                    color: '#000',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '50px',
-                    fontSize: '0.85rem',
-                    fontWeight: '800',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer'
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
                   }}
                 >
-                  <Maximize2 size={16} /> TAM EKRAN İZLE
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <button className="lightbox-nav next" onClick={nextMedia}>
-            <ChevronRight size={48} />
-          </button>
+                  {/* Glow BG */}
+                  <div style={{
+                    position: 'absolute', top: 0, right: 0,
+                    width: '180px', height: '180px',
+                    background: `radial-gradient(circle, ${service.glow} 0%, transparent 70%)`,
+                    pointerEvents: 'none'
+                  }} />
 
-          <div className="lightbox-counter">
-            {lightbox.index + 1} / {lightbox.media.length}
+                  {/* Icon */}
+                  <div style={{
+                    width: '60px', height: '60px',
+                    background: service.glow,
+                    border: `1px solid ${service.color}30`,
+                    borderRadius: '16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {service.icon}
+                  </div>
+
+                  {/* Title */}
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0, lineHeight: '1.3' }}>
+                    {service.title}
+                  </h2>
+
+                  {/* Desc */}
+                  <p style={{ color: '#888', fontSize: '0.9rem', lineHeight: '1.7', margin: 0, flexGrow: 1 }}>
+                    {service.desc}
+                  </p>
+
+                  {/* Features */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {service.features.map((f, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircle size={14} color={service.color} style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.85rem', color: '#ccc' }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    color: service.color, fontSize: '0.85rem', fontWeight: '700',
+                    marginTop: '4px'
+                  }}>
+                    Detaylı İncele <ArrowRight size={14} />
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
-      )}
+      </section>
 
-      {/* MINI CTA */}
-      <section className="section-padding" style={{background: 'var(--surface)', textAlign: 'center'}}>
-        <div className="container">
-          <h2 className="section-title">Dijitalde Öne Çıkın</h2>
-          <p className="section-subtitle" style={{margin: '0 auto 30px auto'}}>
-            İletişime geçin, ihtiyaçlarınızı birlikte değerlendirelim. Markanıza özel, etkili ve yaratıcı çözümlerle sizi dijitalde zirveye taşıyalım.
+      {/* CTA SECTION */}
+      <section style={{
+        padding: '100px 0',
+        background: 'linear-gradient(135deg, rgba(138,43,226,0.08) 0%, rgba(255,0,85,0.08) 100%)',
+        borderTop: '1px solid rgba(255,255,255,0.05)'
+      }}>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
+            {[...Array(5)].map((_, i) => <Star key={i} size={20} fill="#ffab00" color="#ffab00" />)}
+          </div>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: '900', marginBottom: '16px' }}>
+            Markanızı Dijitalde <span className="gradient-text">Zirveye</span> Taşıyalım
+          </h2>
+          <p style={{ color: '#888', maxWidth: '560px', margin: '0 auto 40px', fontSize: '1.05rem', lineHeight: '1.7' }}>
+            İletişime geçin, ihtiyaçlarınızı birlikte değerlendirelim. Markanıza özel yaratıcı çözümler üretelim.
           </p>
-          <a href="/#funnel" className="btn btn-primary">
-            Ücretsiz Analiz Alın <ArrowRight size={20} />
+          <a href="/#funnel" className="btn btn-primary" style={{ fontSize: '1rem', padding: '16px 40px', display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: '#fff', borderRadius: '50px', fontWeight: '700', textDecoration: 'none' }}>
+            Ücretsiz Analiz Al <ArrowRight size={20} />
           </a>
         </div>
       </section>
