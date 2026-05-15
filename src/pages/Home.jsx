@@ -337,9 +337,9 @@ function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "MioCasa Halı" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "ArayanVar" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
@@ -383,13 +383,13 @@ function Home() {
               <ShieldCheck size={30} color="var(--primary)" />
               <h3 className="campaign-title">%50 İade Garantisi!</h3>
               <p className="campaign-desc">Minimum 6 aylık iş birliğinde memnun kalmazsanız, ücretinizin yarısını iade ediyoruz!</p>
-              <button className="btn btn-outline" style={{width: '100%', color: '#fff'}} onClick={() => scrollToSection('funnel')}>Detayları İncele</button>
+              <button className="btn btn-outline" style={{width: '100%', color: '#fff'}} onClick={() => scrollToSection('funnel')}>Toplantı Planlayın</button>
             </div>
             <div className="campaign-card" style={{border: '1px solid rgba(255,0,85,0.3)'}}>
               <CreditCard size={30} color="var(--secondary)" />
               <h3 className="campaign-title">6 Taksit Avantajı</h3>
               <p className="campaign-desc">Tüm projelerimizde maliyetlerinizi düşünen 6 taksite kadar ödeme kolaylığı!</p>
-              <button className="btn btn-primary" style={{width: '100%'}} onClick={() => scrollToSection('funnel')}>Teklif Alın <ArrowRight size={20} /></button>
+              <button className="btn btn-primary" style={{width: '100%'}} onClick={() => scrollToSection('funnel')}>Toplantı Planlayın <ArrowRight size={20} /></button>
             </div>
           </div>
         </div>

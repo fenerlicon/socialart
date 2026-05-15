@@ -5,7 +5,12 @@ import { supabase } from '../lib/supabase';
 
 const stripCdata = (str) => {
   if (!str) return '';
-  return str.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+  return str
+    .replace(/<!\[CDATA\[/gi, '')
+    .replace(/\]\]>/gi, '')
+    .replace(/&lt;!\[CDATA\[/gi, '')
+    .replace(/\]\]&gt;/gi, '')
+    .trim();
 };
 
 function BlogDetail() {

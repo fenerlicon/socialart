@@ -22,7 +22,7 @@ function SosyalMedya() {
             </p>
             <div className="hero-actions" style={{ marginTop: '40px' }}>
               <button className="btn btn-primary" onClick={() => window.scrollTo({ top: document.getElementById('funnel')?.offsetTop - 100, behavior: 'smooth' })}>
-                Sosyal Medya Teklifi Al
+                Ekibimizle Toplantı Planlayın
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Video, Users, Target, Rocket, Award, Heart } from 'lucide-react';
+import { Camera, Video, Users, Target, Rocket, Award, Heart, ArrowRight } from 'lucide-react';
 
 function About() {
   return (
@@ -152,6 +152,19 @@ function About() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+      
+      {/* CTA SECTION */}
+      <section style={{ padding: '100px 0', background: 'linear-gradient(135deg, rgba(138,43,226,0.05) 0%, rgba(255,0,85,0.05) 100%)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>Hikayenizi Birlikte <span className="gradient-text">Yazalım</span></h2>
+          <p style={{ color: '#aaa', maxWidth: '600px', margin: '0 auto 40px', fontSize: '1.2rem', lineHeight: '1.7' }}>
+            Markanızın dijital dünyadaki potansiyelini keşfetmek ve sinematik bir başarı hikayesi kurgulamak için uzman ekibimiz hazır.
+          </p>
+          <a href="/#funnel" className="btn btn-primary" style={{ padding: '18px 45px', fontSize: '1.1rem' }}>
+            Ekibimizle Toplantı Planlayın <ArrowRight size={22} style={{ marginLeft: '10px' }} />
+          </a>
         </div>
       </section>
     </>

@@ -169,7 +169,7 @@ function Pricing() {
           <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 80px' }}>
             Kurumsal markalar veya çok kanallı projeleriniz için size özel bir strateji ve fiyatlandırma hazırlayabiliriz.
           </p>
-          <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>Hemen Bizimle İletişime Geçin</button>
+          <button className="btn btn-primary" onClick={() => navigate('/#funnel')}>Ekibimizle Toplantı Planlayın</button>
         </div>
 
       </div>

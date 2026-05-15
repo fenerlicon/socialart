@@ -789,7 +789,7 @@ function Admin() {
   const [reportInput, setReportInput] = useState('');
   const [reportLinks, setReportLinks] = useState(['']);
   const [reportFile, setReportFile] = useState(null);
-  const [selectedReportDate, setSelectedReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedReportDate, setSelectedReportDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [isUploadingReport, setIsUploadingReport] = useState(false);
   const [editingReportId, setEditingReportId] = useState(null);
   const [selectedReportDetail, setSelectedReportDetail] = useState(null);
@@ -1287,14 +1287,21 @@ function Admin() {
     let fileName = null;
 
     try {
-      const todayDate = new Date().toISOString().split('T')[0];
-      // Bugünün raporunu kontrol et
+      const todayDate = new Date().toLocaleDateString('en-CA');
+      
+      // Bugünün raporunu kontrol et (Yerel saat dilimine göre 00:00 - 23:59 arası)
+      // Not: created_at DB'de UTC saklanır, bu yüzden karşılaştırma yaparken ISO aralığı kullanıyoruz.
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
       const { data: existingReports } = await supabase
         .from('staff_reports')
         .select('id, file_url, file_name')
         .eq('staff_name', currentUser.name)
-        .gte('created_at', todayDate + 'T00:00:00')
-        .lte('created_at', todayDate + 'T23:59:59')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString())
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -1327,6 +1334,7 @@ function Admin() {
         file_url: fileUrl,
         file_name: fileName,
         external_links: reportLinks.filter(l => l.trim()),
+        report_date: todayDate, // Yerel tarih damgası
         created_at: new Date().toISOString()
       };
 
@@ -4184,7 +4192,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   for (let i = 0; i < 30; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
-                    dates.push(d.toISOString().split('T')[0]);
+                    dates.push(d.toLocaleDateString('en-CA'));
                   }
                   return dates.map(dateStr => {
                     const d = new Date(dateStr);
@@ -4230,7 +4238,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 }}>
                   {staffReports.filter(r => {
                     const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
-                    const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
+                    const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toLocaleDateString('en-CA') === selectedReportDate);
                     return isOwner && isSameDate;
                   }).map((report) => (
                     <div 
@@ -4287,8 +4295,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         </div>
                         
                         {(() => {
-                          const reportDate = (report.report_date || new Date(report.created_at).toISOString().split('T')[0]);
-                          const isToday = new Date().toISOString().split('T')[0] === reportDate;
+                          const reportDate = (report.report_date || new Date(report.created_at).toLocaleDateString('en-CA'));
+                          const isToday = new Date().toLocaleDateString('en-CA') === reportDate;
                           const isMyReport = report.staff_name === currentUser.name;
                           if (isToday && isMyReport) {
                             return (

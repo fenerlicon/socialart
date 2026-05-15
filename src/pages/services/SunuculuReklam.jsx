@@ -40,7 +40,7 @@ const SunuculuReklam = () => {
               className="btn btn-primary" 
               onClick={() => document.getElementById('form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             >
-              Hemen Teklif Alın <ArrowRight size={20} style={{ marginLeft: '10px' }} />
+              Ekibimizle Toplantı Planlayın <ArrowRight size={20} style={{ marginLeft: '10px' }} />
             </button>
           </div>
         </div>

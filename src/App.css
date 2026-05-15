@@ -16,7 +16,7 @@
 }
 
 .header-logo-img {
-  height: 140px;
+  height: 160px; /* Increased from 140px */
   width: auto;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   display: block;
@@ -25,13 +25,13 @@
 /* Desktop logo optimizasyonu - sadece masaüstü */
 @media (min-width: 993px) {
   .header-logo-img {
-    height: 200px;
+    height: 240px; /* Increased from 200px */
   }
 }
 
 @media (min-width: 1400px) {
   .header-logo-img {
-    height: 240px;
+    height: 280px; /* Increased from 240px */
   }
 }
 
@@ -44,7 +44,7 @@
 }
 
 .header.scrolled .header-logo-img {
-  height: 85px;
+  height: 100px; /* Increased from 85px */
 }
 
 .header-inner {
@@ -243,7 +243,7 @@
   }
 
   .header-logo-img {
-    height: 60px !important;
+    height: 75px !important; /* Increased from 60px */
     position: relative;
     z-index: 1001;
   }
@@ -460,23 +460,24 @@
 }
 
 .hero-title {
-  font-size: 5rem;
-  font-weight: 800;
-  line-height: 1.25;
-  margin-bottom: 2.5rem;
-  letter-spacing: -1px;
+  font-size: 5.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 3.5rem;
+  letter-spacing: -2px;
 }
 
 .hero-desc {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   color: var(--text-muted);
-  margin-bottom: 3.5rem;
-  line-height: 1.7;
+  margin-bottom: 4.5rem;
+  line-height: 1.8;
+  max-width: 850px;
 }
 
 .hero-actions {
   display: flex;
-  gap: 1.5rem;
+  gap: 2rem;
   justify-content: center;
   align-items: center;
   width: 100%;
