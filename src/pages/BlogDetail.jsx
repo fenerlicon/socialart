@@ -108,7 +108,7 @@ function BlogDetail() {
           <div style={{ padding: '80px 40px', background: 'radial-gradient(circle at center, rgba(138,43,226,0.1) 0%, transparent 70%)', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 style={{ fontSize: '2.5rem', marginBottom: '20px', fontWeight: '800' }}>Markanızı Büyütmeye Hazır mısınız?</h3>
             <p style={{ color: '#aaa', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px auto', fontSize: '1.1rem' }}>Uzman ekibimiz markanıza özel dijital pazarlama ve büyüme stratejileri geliştirmek için hazır. Hemen ücretsiz analiz talebinde bulunun.</p>
-            <a href="/#funnel" className="btn btn-primary" style={{ padding: '18px 40px', fontSize: '1.1rem' }}>Ücretsiz Analiz İstiyorum <ArrowRight size={20} style={{ marginLeft: '10px' }} /></a>
+            <a href="/#funnel" className="btn btn-primary" style={{ padding: '18px 40px', fontSize: '1.1rem' }}>Ekibimizle Toplantı Planlayın <ArrowRight size={20} style={{ marginLeft: '10px' }} /></a>
           </div>
         </article>
       </div>

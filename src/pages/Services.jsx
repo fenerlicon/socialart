@@ -130,7 +130,7 @@ function Services() {
           }}>
             {[
               { val: '8+', label: 'Hizmet Alanı' },
-              { val: '50+', label: 'Aktif Marka' },
+              { val: '50+', label: 'Çalışılan Marka' },
               { val: '3M+', label: 'Organik Erişim' },
               { val: '%94', label: 'Müşteri Memnuniyeti' }
             ].map((s, i) => (
@@ -259,7 +259,7 @@ function Services() {
             İletişime geçin, ihtiyaçlarınızı birlikte değerlendirelim. Markanıza özel yaratıcı çözümler üretelim.
           </p>
           <a href="/#funnel" className="btn btn-primary" style={{ fontSize: '1rem', padding: '16px 40px', display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: '#fff', borderRadius: '50px', fontWeight: '700', textDecoration: 'none' }}>
-            Ücretsiz Analiz Al <ArrowRight size={20} />
+            Ekibimizle Toplantı Planlayın <ArrowRight size={20} />
           </a>
         </div>
       </section>

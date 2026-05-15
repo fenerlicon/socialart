@@ -158,8 +158,8 @@ function App() {
             </nav>
             
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <button className="cta-button" onClick={() => scrollToSection('funnel')} aria-label="Ücretsiz Analiz Al">
-                Ücretsiz Analiz Al
+              <button className="cta-button" onClick={() => scrollToSection('funnel')} aria-label="Ekibimizle Toplantı Planlayın">
+                Ekibimizle Toplantı Planlayın
               </button>
               <button className="mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label={mobileMenuOpen ? 'Menüyü Kapat' : 'Menüyü Aç'}>
                 {mobileMenuOpen ? <X size={24} color="#fff" /> : <Menu size={24} color="#fff" />}
@@ -207,7 +207,7 @@ function App() {
                 <Link to="/" className="brand-logo" style={{ marginBottom: '10px', display: 'block' }}>
                   <img src="/logo.png" alt="Socialart Ajans" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} loading="lazy" />
                 </Link>
-                <p style={{marginTop: '10px', marginBottom: '30px'}}>Site → Ücretsiz Analiz → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
+                <p style={{marginTop: '10px', marginBottom: '30px'}}>Site → Strateji Toplantısı → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
                 <div className="social-links">
                   <a href="https://instagram.com/socialartajans" target="_blank" rel="noreferrer" className="instagram" aria-label="Instagram sayfamız">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>

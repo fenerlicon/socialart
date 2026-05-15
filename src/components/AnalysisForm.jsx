@@ -133,7 +133,7 @@ const AnalysisForm = ({ defaultService = "" }) => {
               <ShieldCheck size={48} color="#00e676" />
             </div>
             <h4 style={{ fontSize: '1.8rem', marginBottom: '10px', fontWeight: '800' }}>Harika! Talebiniz Alındı.</h4>
-            <p style={{ color: '#aaa', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto' }}>Ekibimiz belirttiğiniz saatte ({selectedDateStr}) sizi arayacak veya e-posta yoluyla strateji raporunuzu iletecek.</p>
+            <p style={{ color: '#aaa', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto' }}>Ekibimiz belirttiğiniz saatte ({selectedDateStr}) strateji toplantısı için sizinle iletişime geçecek.</p>
             <button className="btn btn-primary" style={{ marginTop: '30px' }} onClick={() => setFormSuccess(false)}>Yeni Form Doldur</button>
           </div>
         ) : (
@@ -318,7 +318,7 @@ const AnalysisForm = ({ defaultService = "" }) => {
               letterSpacing: '1px',
               borderRadius: '16px'
             }}>
-              {loading ? 'Gönderiliyor...' : 'Ücretsiz Analiz İstiyorum'}
+              {loading ? 'Gönderiliyor...' : 'Toplantı Talebi Gönder'}
             </button>
           </form>
         )}

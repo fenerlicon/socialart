@@ -228,7 +228,7 @@ function Home() {
             <h1 className="hero-title">İstanbul'un Öncü <span className="gradient-text">Sosyal Medya & Reklam</span> Ajansı</h1>
             <p className="hero-desc">Sadece reels çekmiyoruz, markanız için çalışan bir sistem kuruyoruz. Meta Ads, Creative Production ve SEO optimizasyonu ile ölçeklenebilir sonuçlar sağlıyoruz.</p>
             <div className="hero-actions">
-              <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')}>Ücretsiz Analiz Al</button>
+              <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')}>Ekibimizle Toplantı Planlayın</button>
               <button className="btn btn-outline" onClick={() => scrollToSection('showreel')}>Showreel İzle <ArrowRight size={20} /></button>
             </div>
           </div>
@@ -284,7 +284,7 @@ function Home() {
             <AnimatedMetric value={14.2} suffix="x" label="Ortalama ROAS" desc="Reklam harcaması geri dönüşü" color="var(--primary)" />
             <AnimatedMetric value={10} suffix="M+" label="Aylık İzlenme" desc="Kreatiflerimizin toplam erişimi" color="var(--accent)" />
             <AnimatedMetric value={85} suffix="%" prefix="%" label="Dönüşüm Artışı" desc="İlk 3 aydaki performans ivmesi" color="var(--secondary)" />
-            <AnimatedMetric value={50} suffix="+" label="Aktif Marka" desc="Birlikte büyüdüğümüz iş ortakları" color="#fff" />
+            <AnimatedMetric value={50} suffix="+" label="Çalışılan Marka" desc="Birlikte büyüdüğümüz iş ortakları" color="#fff" />
           </div>
         </div>
       </section>
@@ -342,7 +342,6 @@ function Home() {
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}><h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{item.name}</h3></div>
                 <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
                   <video src={item.url} autoPlay muted loop playsInline preload="none" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
@@ -400,7 +399,7 @@ function Home() {
       <section className="funnel-form-section" id="funnel">
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <h2 className="section-title">Markanız İçin <span className="gradient-text">Ücretsiz Analiz</span></h2>
+            <h2 className="section-title">Uzman Ekibimizle <span className="gradient-text">Toplantı Planlayın</span></h2>
             <p className="section-subtitle">Uzman ekibimiz mevcut durumunuzu analiz etsin ve size özel büyüme raporu sunsun.</p>
           </div>
           <AnalysisForm />

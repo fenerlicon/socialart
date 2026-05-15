@@ -60,7 +60,6 @@ const SunuculuReklam = () => {
                 <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
                   <video src={video.url} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <h3 style={{ textAlign: 'center', marginTop: '15px', fontSize: '1.1rem' }}>{video.name}</h3>
               </div>
             ))}
           </div>
