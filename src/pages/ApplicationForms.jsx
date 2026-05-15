@@ -40,7 +40,7 @@ export function UGCApplication() {
   };
 
   if (success) return (
-    <div className="container" style={{ paddingTop: '150px', textAlign: 'center', minHeight: '80vh' }}>
+    <div className="container" style={{ paddingTop: '220px', textAlign: 'center', minHeight: '80vh' }}>
       <div className="glass" style={{ padding: '60px', borderRadius: '32px', maxWidth: '600px', margin: '0 auto' }}>
         <ShieldCheck size={64} color="#00e676" style={{ marginBottom: '20px' }} />
         <h2 style={{ fontSize: '2rem', marginBottom: '15px' }}>Başvurunuz Alındı!</h2>
@@ -51,7 +51,7 @@ export function UGCApplication() {
   );
 
   return (
-    <section className="section-padding" style={{ paddingTop: '150px' }}>
+    <section className="section-padding" style={{ paddingTop: '220px' }}>
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <h1 className="section-title">UGC & Influencer <span className="gradient-text">Başvuru Formu</span></h1>
@@ -142,7 +142,7 @@ export function JobApplication() {
   };
 
   if (success) return (
-    <div className="container" style={{ paddingTop: '150px', textAlign: 'center', minHeight: '80vh' }}>
+    <div className="container" style={{ paddingTop: '220px', textAlign: 'center', minHeight: '80vh' }}>
       <div className="glass" style={{ padding: '60px', borderRadius: '32px', maxWidth: '600px', margin: '0 auto' }}>
         <ShieldCheck size={64} color="var(--primary)" style={{ marginBottom: '20px' }} />
         <h2 style={{ fontSize: '2rem', marginBottom: '15px' }}>Başvurunuz Alındı!</h2>
@@ -153,7 +153,7 @@ export function JobApplication() {
   );
 
   return (
-    <section className="section-padding" style={{ paddingTop: '150px' }}>
+    <section className="section-padding" style={{ paddingTop: '220px' }}>
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <h1 className="section-title">Ekibimize <span className="gradient-text">Katılın</span></h1>

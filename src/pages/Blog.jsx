@@ -81,7 +81,7 @@ function Blog() {
           }
         `}
       </style>
-      <section className="section-padding" style={{ paddingTop: '150px', minHeight: '100vh', background: 'var(--bg-color)' }}>
+      <section className="section-padding" style={{ paddingTop: '220px', minHeight: '100vh', background: 'var(--bg-color)' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h1 className="section-title" style={{ fontSize: '3.5rem', marginBottom: '15px' }}>Blog & <span className="gradient-text">Strateji</span></h1>
