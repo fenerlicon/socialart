@@ -52,9 +52,9 @@ const SunuculuReklam = () => {
           <h2 style={{ textAlign: 'center', marginBottom: '50px' }}>Örnek <span className="gradient-text">Çalışmalarımız</span></h2>
           <div className="video-showcase">
             {[
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "MioCasa Halı" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "ArayanVar" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "MioCasa Halı" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "ArayanVar" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
             ].map((video, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto' }}>
                 <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>

@@ -257,9 +257,9 @@ function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836110/jeep-reel_idufur.mp4", logo: "/assets/images/jeep-logo.webp", name: "Jeep" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836097/peugeot-1_pbbiiq.mp4", logo: "/assets/images/peugeot-logo.png", name: "Peugeot" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836114/koton-reel_jdmcsk.mp4", logo: "/assets/images/koton-logo.png", name: "Koton" }
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836110/jeep-reel_idufur.mp4", logo: "/assets/images/jeep-logo.webp", name: "Jeep" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836097/peugeot-1_pbbiiq.mp4", logo: "/assets/images/peugeot-logo.png", name: "Peugeot" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836114/koton-reel_jdmcsk.mp4", logo: "/assets/images/koton-logo.png", name: "Koton" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}><img src={item.logo} alt={item.name} width="150" height="40" loading="lazy" style={{ height: '40px', objectFit: 'contain' }} /></div>
@@ -337,9 +337,9 @@ function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
             {[
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "MioCasa Halı" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "ArayanVar" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "MioCasa Halı" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "ArayanVar" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}><h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{item.name}</h3></div>
