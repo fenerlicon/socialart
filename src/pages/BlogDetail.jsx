@@ -3,6 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Calendar, User, Share2, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+const stripCdata = (str) => {
+  if (!str) return '';
+  return str.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+};
+
 function BlogDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
@@ -65,7 +70,7 @@ function BlogDetail() {
                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
                  <span className="glass" style={{ padding: '8px 20px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px' }}>DİJİTAL PAZARLAMA</span>
                </div>
-               <h1 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1.2' }}>{post.title}</h1>
+               <h1 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1.2' }}>{stripCdata(post.title)}</h1>
             </div>
           </div>
 
@@ -96,7 +101,7 @@ function BlogDetail() {
           <div 
             className="blog-body" 
             style={{ padding: '60px', color: '#ddd', fontSize: '1.25rem', lineHeight: '1.9' }}
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: stripCdata(post.content) }}
           />
 
           {/* Footer CTA */}

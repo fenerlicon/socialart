@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { Calendar, Clock, ArrowRight, Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+const stripCdata = (str) => {
+  if (!str) return '';
+  return str.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+};
+
 function Blog() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,9 +114,9 @@ function Blog() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} color="var(--primary)" /> {post.read_time}</span>
                     </div>
                     
-                    <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', fontWeight: '800', lineHeight: '1.3' }}>{post.title}</h3>
+                    <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', fontWeight: '800', lineHeight: '1.3' }}>{stripCdata(post.title)}</h3>
                     <p style={{ color: 'var(--text-muted)', marginBottom: '25px', flex: 1, lineHeight: '1.6', fontSize: '0.95rem' }}>
-                      {post.excerpt}
+                      {stripCdata(post.excerpt)}
                     </p>
                     
                     <Link to={`/blog/${post.slug}`} style={{ 
