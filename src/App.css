@@ -25,13 +25,13 @@
 /* Desktop logo optimizasyonu - sadece masaüstü */
 @media (min-width: 993px) {
   .header-logo-img {
-    height: 80px;
+    height: 130px;
   }
 }
 
 @media (min-width: 1400px) {
   .header-logo-img {
-    height: 95px;
+    height: 155px;
   }
 }
 
