@@ -10,7 +10,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  padding: 30px 0;
+  padding: 20px 0; /* Reduced from 30px to compensate for larger logo */
   z-index: 1000;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -298,7 +298,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding-top: 80px;
+  padding-top: 300px; /* Increased from 80px to accommodate larger logo */
   overflow: hidden;
 }
 

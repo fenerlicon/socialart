@@ -65,7 +65,7 @@ function Pricing() {
   ];
 
   return (
-    <div style={{ padding: '220px 0 100px 0', background: 'var(--bg-color)' }}>
+    <div style={{ padding: '320px 0 100px 0', background: 'var(--bg-color)' }}>
       <div className="container">
         
         <div style={{ textAlign: 'center', marginBottom: '80px' }}>

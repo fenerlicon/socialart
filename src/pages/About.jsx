@@ -73,7 +73,7 @@ function About() {
           }
         `}
       </style>
-      <section className="section-padding" style={{ paddingTop: '220px' }}>
+      <section className="section-padding" style={{ paddingTop: '320px' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
             <h1 className="section-title">Biz <span className="gradient-text">Kimiz?</span></h1>
