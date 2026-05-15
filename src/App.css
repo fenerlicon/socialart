@@ -298,7 +298,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding-top: 300px; /* Increased from 80px to accommodate larger logo */
+  padding-top: 320px;
+  padding-bottom: 200px; /* Added breathing room below buttons */
   overflow: hidden;
 }
 
@@ -481,6 +482,7 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+  margin-bottom: 4rem; /* Added space below actions */
 }
 
 .btn {
