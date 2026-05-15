@@ -16,7 +16,7 @@ const SunuculuReklam = () => {
   return (
     <div className="service-detail-page" style={{ background: '#050505', color: '#fff', pt: '100px' }}>
       <style>{`
-        .service-hero { padding: 160px 0 100px; text-align: center; background: radial-gradient(circle at center, rgba(255, 0, 85, 0.1) 0%, transparent 70%); }
+        .service-hero { padding: 220px 0 100px; text-align: center; background: radial-gradient(circle at center, rgba(255, 0, 85, 0.1) 0%, transparent 70%); }
         .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin: 60px 0; }
         .feature-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 30px; border-radius: 24px; transition: 0.3s; }
         .feature-card:hover { border-color: var(--secondary); transform: translateY(-5px); }
@@ -29,7 +29,7 @@ const SunuculuReklam = () => {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 0, 85, 0.1)', color: 'var(--secondary)', padding: '8px 16px', borderRadius: '100px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '20px' }}>
             <Sparkles size={16} /> En Yüksek Dönüşüm Oranlı Reklam Formatı
           </div>
-          <h1 style={{ fontSize: '4rem', fontWeight: '900', marginBottom: '20px' }}>
+          <h1 style={{ fontSize: '4rem', fontWeight: '900', marginBottom: '35px', lineHeight: '1.2' }}>
             Sunuculu <span className="gradient-text">Reklam Videoları</span>
           </h1>
           <p style={{ maxWidth: '800px', margin: '0 auto', color: '#aaa', fontSize: '1.2rem', lineHeight: '1.6' }}>
