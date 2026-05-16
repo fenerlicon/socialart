@@ -1296,7 +1296,7 @@ function Admin() {
       const endOfDay = new Date();
       endOfDay.setHours(23, 59, 59, 999);
 
-      const { data: existingReports } = await supabase
+      const { data: existingReports, error: fetchError } = await supabase
         .from('staff_reports')
         .select('id, file_url, file_name')
         .eq('staff_name', currentUser.name)
@@ -1305,6 +1305,7 @@ function Admin() {
         .order('created_at', { ascending: false })
         .limit(1);
 
+      if (fetchError) console.error('Fetch existing report error:', fetchError);
       const existingReport = existingReports && existingReports[0];
 
       if (reportFile) {
@@ -1359,7 +1360,7 @@ function Admin() {
       alert(existingReport ? 'Raporunuz başarıyla güncellendi.' : 'Rapor başarıyla gönderildi.');
     } catch (err) {
       console.error('Report operation error:', err);
-      alert('HATA: Rapor işlenemedi.');
+      alert('HATA: ' + (err.message || 'Rapor işlenemedi. İnternet bağlantınızı veya yetkilerinizi kontrol edin.'));
     } finally {
       setIsUploadingReport(false);
     }
