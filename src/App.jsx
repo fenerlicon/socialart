@@ -24,16 +24,15 @@ import './App.css';
 import Home from './pages/Home';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
-// Code Splitting for non-critical pages to reduce main bundle size
-const Services = React.lazy(() => import('./pages/Services'));
+import Services from './pages/Services';
 import About from './pages/About';
-const Blog = React.lazy(() => import('./pages/Blog'));
-const BlogDetail = React.lazy(() => import('./pages/BlogDetail'));
-const Admin = React.lazy(() => import('./pages/StaffAdmin'));
-const Pricing = React.lazy(() => import('./pages/Pricing'));
-const ClientPortal = React.lazy(() => import('./pages/ClientPortal'));
-const NotFound = React.lazy(() => import('./pages/NotFound'));
-const ThankYou = React.lazy(() => import('./pages/ThankYou'));
+import Blog from './pages/Blog';
+import BlogDetail from './pages/BlogDetail';
+import Admin from './pages/StaffAdmin';
+import Pricing from './pages/Pricing';
+import ClientPortal from './pages/ClientPortal';
+import NotFound from './pages/NotFound';
+import ThankYou from './pages/ThankYou';
 
 // Service Detail Pages (Direct import for reliability)
 import MetaAds from './pages/services/MetaAds';
@@ -43,9 +42,8 @@ import SosyalMedya from './pages/services/SosyalMedya';
 import UGCInfluencer from './pages/services/UGCInfluencer';
 import SunuculuReklam from './pages/services/SunuculuReklam';
 
-const UGCApplication = React.lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
-const JobApplication = React.lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.JobApplication })));
-const EmailMarketing = React.lazy(() => import('./pages/EmailMarketing'));
+import { UGCApplication, JobApplication } from './pages/ApplicationForms';
+import EmailMarketing from './pages/EmailMarketing';
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -172,8 +170,7 @@ function App() {
 
       {/* PAGE CONTENT */}
       <main className="main-content">
-        <React.Suspense fallback={<div style={{ height: '100vh', background: '#000' }}></div>}>
-          <Routes>
+        <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/hakkimizda" element={<About />} />
             <Route path="/hizmetlerimiz" element={<Services />} />
@@ -197,7 +194,6 @@ function App() {
 
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </React.Suspense>
       </main>
 
       {/* FOOTER */}
