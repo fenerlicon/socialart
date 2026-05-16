@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, User, Phone, Mail, Globe, Link as LinkIcon, MapPin, Info, Rocket, Zap, Camera } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export function UGCApplication() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,8 +32,7 @@ export function UGCApplication() {
           city: formData.city,
           about: formData.about
         }]);
-      if (error) throw error;
-      setSuccess(true);
+      navigate('/tesekkurler');
     } catch (err) {
       alert('Başvuru sırasında bir hata oluştu: ' + err.message);
     } finally {
@@ -107,6 +108,7 @@ export function UGCApplication() {
 }
 
 export function JobApplication() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -132,8 +134,7 @@ export function JobApplication() {
           portfolio_url: formData.portfolio,
           about: formData.about
         }]);
-      if (error) throw error;
-      setSuccess(true);
+      navigate('/tesekkurler');
     } catch (err) {
       alert('Başvuru sırasında bir hata oluştu: ' + err.message);
     } finally {

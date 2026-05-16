@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const AnalysisForm = ({ defaultService = "" }) => {
+  const navigate = useNavigate();
   const today = new Date();
   const [displayedMonth, setDisplayedMonth] = React.useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDateStr, setSelectedDateStr] = React.useState('');
@@ -109,7 +111,7 @@ const AnalysisForm = ({ defaultService = "" }) => {
         console.error('Email notification failed:', err);
       }
 
-      setFormSuccess(true);
+      navigate('/tesekkurler');
     } catch (err) {
       setFormError('Bir hata oluştu. Lütfen tekrar deneyiniz.');
     } finally {

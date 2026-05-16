@@ -33,6 +33,7 @@ const Admin = React.lazy(() => import('./pages/StaffAdmin'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
 const ClientPortal = React.lazy(() => import('./pages/ClientPortal'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
+const ThankYou = React.lazy(() => import('./pages/ThankYou'));
 
 // Service Detail Pages (Direct import for reliability)
 import MetaAds from './pages/services/MetaAds';
@@ -192,6 +193,7 @@ function App() {
             <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
             <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
             <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
+            <Route path="/tesekkurler" element={<ThankYou />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
