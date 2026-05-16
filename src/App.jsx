@@ -95,7 +95,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/admin', '/musteri', '/email-marketing'].includes(location.pathname) && (
+      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler'].includes(location.pathname) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -201,7 +201,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/admin', '/musteri', '/email-marketing'].includes(location.pathname) && (
+      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler'].includes(location.pathname) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
