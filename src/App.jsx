@@ -26,7 +26,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Code Splitting for non-critical pages to reduce main bundle size
 const Services = React.lazy(() => import('./pages/Services'));
-const About = React.lazy(() => import('./pages/About'));
+import About from './pages/About';
 const Blog = React.lazy(() => import('./pages/Blog'));
 const BlogDetail = React.lazy(() => import('./pages/BlogDetail'));
 const Admin = React.lazy(() => import('./pages/StaffAdmin'));
