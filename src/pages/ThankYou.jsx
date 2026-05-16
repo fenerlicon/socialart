@@ -4,7 +4,7 @@ import { CheckCircle, ArrowRight, Home } from 'lucide-react';
 
 const ThankYou = () => {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const timer = setInterval(() => {
