@@ -1289,8 +1289,6 @@ function Admin() {
     try {
       const todayDate = new Date().toLocaleDateString('en-CA');
       
-      // Bugünün raporunu kontrol et (Yerel saat dilimine göre 00:00 - 23:59 arası)
-      // Not: created_at DB'de UTC saklanır, bu yüzden karşılaştırma yaparken ISO aralığı kullanıyoruz.
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date();
@@ -1305,7 +1303,11 @@ function Admin() {
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (fetchError) console.error('Fetch existing report error:', fetchError);
+      if (fetchError) {
+        console.error('[v3] Fetch Error:', fetchError);
+        throw new Error('Mevcut rapor kontrol edilemedi: ' + fetchError.message);
+      }
+      
       const existingReport = existingReports && existingReports[0];
 
       if (reportFile) {
@@ -1315,7 +1317,7 @@ function Admin() {
           .from('lead-attachments')
           .upload(filePath, reportFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) throw new Error('Dosya yükleme hatası: ' + uploadError.message);
 
         const { data: { publicUrl } } = supabase.storage
           .from('lead-attachments')
@@ -1335,22 +1337,19 @@ function Admin() {
         file_url: fileUrl,
         file_name: fileName,
         external_links: reportLinks.filter(l => l.trim()),
-        report_date: todayDate, // Yerel tarih damgası
-        created_at: new Date().toISOString()
+        report_date: todayDate
       };
 
       let opError;
       if (existingReport) {
-        // GÜNCELLE
         const { error } = await supabase.from('staff_reports').update(reportData).eq('id', existingReport.id);
         opError = error;
       } else {
-        // YENİ EKLE
         const { error } = await supabase.from('staff_reports').insert([reportData]);
         opError = error;
       }
 
-      if (opError) throw opError;
+      if (opError) throw new Error('Veritabanı kayıt hatası: ' + opError.message);
 
       setReportInput('');
       setReportFile(null);
@@ -1359,8 +1358,8 @@ function Admin() {
       fetchAllData();
       alert(existingReport ? 'Raporunuz başarıyla güncellendi.' : 'Rapor başarıyla gönderildi.');
     } catch (err) {
-      console.error('Report operation error:', err);
-      alert('HATA: ' + (err.message || 'Rapor işlenemedi. İnternet bağlantınızı veya yetkilerinizi kontrol edin.'));
+      console.error('[v3] Operation Error:', err);
+      alert('HATA [v3]: ' + (err.message || 'Rapor işlenemedi. Lütfen internetinizi kontrol edin.'));
     } finally {
       setIsUploadingReport(false);
     }
