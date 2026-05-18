@@ -544,6 +544,7 @@ CREATE TABLE IF NOT EXISTS "appointments" (
   "email" text,
   "url" text,
   "services" text,
+  "files" jsonb DEFAULT '[]'::jsonb,
   "appointment_date" text NOT NULL,
   "appointment_time" text NOT NULL,
   "status" text,

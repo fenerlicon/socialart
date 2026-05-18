@@ -797,6 +797,7 @@ function Admin() {
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
   const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
+  const [shootFiles, setShootFiles] = useState([]);
 
   // Calendar States
   const [calendarPopup, setCalendarPopup] = useState(null);
@@ -867,13 +868,33 @@ function Admin() {
 
   const handleSaveShoot = async (e) => {
     e.preventDefault();
+    let newUploadedFiles = [];
+    if (shootFiles.length > 0) {
+      for (const file of shootFiles) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `appointments/${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('lead-attachments')
+          .upload(filePath, file);
+        if (uploadError) {
+          alert('Dosya yükleme hatası: ' + uploadError.message);
+          return;
+        }
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-attachments')
+          .getPublicUrl(filePath);
+        newUploadedFiles.push({ url: publicUrl, name: file.name });
+      }
+    }
+
     const { error } = await supabase.from('appointments').insert([{
       full_name: shootFormData.clientName,
       appointment_date: shootFormData.date,
       appointment_time: shootFormData.time,
       status: shootFormData.type,
       email: shootFormData.details,
-      phone: shootFormData.staffName
+      phone: shootFormData.staffName,
+      files: newUploadedFiles
     }]);
 
     if (!error) {
@@ -881,6 +902,7 @@ function Admin() {
       setIsShootModalOpen(false);
       setEditingAppt(null);
       setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
+      setShootFiles([]);
       fetchAllData();
     } else {
       alert('Kayıt eklenirken hata: ' + error.message);
@@ -890,19 +912,44 @@ function Admin() {
   const handleUpdateAppt = async (e) => {
     e.preventDefault();
     if (!editingAppt) return;
+    
+    let newUploadedFiles = [];
+    if (shootFiles.length > 0) {
+      for (const file of shootFiles) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `appointments/${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('lead-attachments')
+          .upload(filePath, file);
+        if (uploadError) {
+          alert('Dosya yükleme hatası: ' + uploadError.message);
+          return;
+        }
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-attachments')
+          .getPublicUrl(filePath);
+        newUploadedFiles.push({ url: publicUrl, name: file.name });
+      }
+    }
+    
+    let finalFiles = editingAppt.files || [];
+    finalFiles = [...finalFiles, ...newUploadedFiles];
+
     const { error } = await supabase.from('appointments').update({
       full_name: shootFormData.clientName,
       appointment_date: shootFormData.date,
       appointment_time: shootFormData.time,
       status: shootFormData.type,
       email: shootFormData.details,
-      phone: shootFormData.staffName
+      phone: shootFormData.staffName,
+      files: finalFiles
     }).eq('id', editingAppt.id);
 
     if (!error) {
       logActivity('Takvim Kaydı Güncellendi', `${shootFormData.clientName} güncellendi.`);
       setIsShootModalOpen(false);
       setEditingAppt(null);
+      setShootFiles([]);
       fetchAllData();
     } else {
       alert('Güncelleme hatası: ' + error.message);
@@ -2062,6 +2109,15 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         </div>
                         {appt.email && <div style={{ fontSize: '0.8rem', color: '#ccc', marginTop: '6px', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '8px' }}>{appt.email}</div>}
                         {appt.phone && <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}><Users size={12}/> {appt.phone}</div>}
+                        {appt.files && appt.files.length > 0 && (
+                          <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {appt.files.map((file, i) => (
+                              <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '0.75rem', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <Download size={12} color="var(--accent)" /> {file.name || `Dosya ${i+1}`}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -3491,7 +3547,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
       {isShootModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
-            <button onClick={() => { setIsShootModalOpen(false); setEditingAppt(null); }} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => { setIsShootModalOpen(false); setEditingAppt(null); setShootFiles([]); }} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
               <X size={24} />
             </button>
             <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: editingAppt ? 'var(--accent)' : 'var(--primary)' }}>{editingAppt ? 'Kaydı Düzenle' : 'Takvime Kayıt Ekle'}</h2>
@@ -3537,6 +3593,21 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Not / Detaylar</label>
                 <TextareaAutosize minRows={3} value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Ekstra bilgiler..." />
               </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Ek Dosyalar (Kurgu, Brief vb.)</label>
+                <input
+                  type="file"
+                  multiple
+                  id="shoot-files"
+                  onChange={e => setShootFiles(Array.from(e.target.files))}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="shoot-files" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#ccc', cursor: 'pointer', textAlign: 'center', justifyContent: 'center' }}>
+                  <Camera size={18} /> {shootFiles.length > 0 ? `${shootFiles.length} dosya seçildi` : 'Dosya(lar) Seç'}
+                </label>
+              </div>
+
               <button type="submit" className="btn" style={{ background: editingAppt ? 'var(--accent)' : 'var(--primary)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>
                 {editingAppt ? 'Güncelle' : 'Kaydet'}
               </button>
