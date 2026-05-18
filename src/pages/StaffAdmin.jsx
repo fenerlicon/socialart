@@ -788,7 +788,7 @@ function Admin() {
   const [staffReports, setStaffReports] = useState([]);
   const [reportInput, setReportInput] = useState('');
   const [reportLinks, setReportLinks] = useState(['']);
-  const [reportFile, setReportFile] = useState(null);
+  const [reportFiles, setReportFiles] = useState([]);
   const [selectedReportDate, setSelectedReportDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [isUploadingReport, setIsUploadingReport] = useState(false);
   const [editingReportId, setEditingReportId] = useState(null);
@@ -1280,7 +1280,7 @@ function Admin() {
 
   const handleUploadStaffReport = async (e) => {
     e.preventDefault();
-    if (!reportInput && !reportFile && reportLinks.every(l => !l.trim())) return;
+    if (!reportInput && reportFiles.length === 0 && reportLinks.every(l => !l.trim())) return;
 
     setIsUploadingReport(true);
     let fileUrl = null;
@@ -1296,7 +1296,7 @@ function Admin() {
 
       const { data: existingReports, error: fetchError } = await supabase
         .from('staff_reports')
-        .select('id, file_url, file_name')
+        .select('id, file_url, file_name, files')
         .eq('staff_name', currentUser.name)
         .gte('created_at', startOfDay.toISOString())
         .lte('created_at', endOfDay.toISOString())
@@ -1310,32 +1310,37 @@ function Admin() {
       
       const existingReport = existingReports && existingReports[0];
 
-      if (reportFile) {
-        const fileExt = reportFile.name.split('.').pop();
-        const filePath = `reports/${currentUser.name}_${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('lead-attachments')
-          .upload(filePath, reportFile);
+      let newUploadedFiles = [];
+      if (reportFiles.length > 0) {
+        for (const file of reportFiles) {
+          const fileExt = file.name.split('.').pop();
+          const filePath = `reports/${currentUser.name}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('lead-attachments')
+            .upload(filePath, file);
 
-        if (uploadError) throw new Error('Dosya yükleme hatası: ' + uploadError.message);
+          if (uploadError) throw new Error('Dosya yükleme hatası: ' + uploadError.message);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('lead-attachments')
-          .getPublicUrl(filePath);
-        
-        fileUrl = publicUrl;
-        fileName = reportFile.name;
-      } else if (existingReport) {
-        fileUrl = existingReport.file_url;
-        fileName = existingReport.file_name;
+          const { data: { publicUrl } } = supabase.storage
+            .from('lead-attachments')
+            .getPublicUrl(filePath);
+          
+          newUploadedFiles.push({ url: publicUrl, name: file.name });
+        }
       }
+      
+      let finalFiles = existingReport?.files || [];
+      if (existingReport?.file_url && finalFiles.length === 0) {
+        finalFiles.push({ url: existingReport.file_url, name: existingReport.file_name });
+      }
+      
+      finalFiles = [...finalFiles, ...newUploadedFiles];
 
       const reportData = {
         staff_name: currentUser.name,
         staff_role: currentUser.role || 'Ekip Üyesi',
         content: reportInput,
-        file_url: fileUrl,
-        file_name: fileName,
+        files: finalFiles,
         external_links: reportLinks.filter(l => l.trim()),
         report_date: todayDate
       };
@@ -1352,7 +1357,7 @@ function Admin() {
       if (opError) throw new Error('Veritabanı kayıt hatası: ' + opError.message);
 
       setReportInput('');
-      setReportFile(null);
+      setReportFiles([]);
       setReportLinks(['']);
       setEditingReportId(null);
       fetchAllData();
@@ -4147,12 +4152,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   <div style={{ position: 'relative' }}>
                     <input
                       type="file"
+                      multiple
                       id="report-file"
-                      onChange={e => setReportFile(e.target.files[0])}
+                      onChange={e => setReportFiles(Array.from(e.target.files))}
                       style={{ display: 'none' }}
                     />
                     <label htmlFor="report-file" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '10px', color: '#ccc', cursor: 'pointer', textAlign: 'center', justifyContent: 'center' }}>
-                      <Camera size={18} /> {reportFile ? reportFile.name : 'Dosya Yükle (PDF, Resim vb.)'}
+                      <Camera size={18} /> {reportFiles.length > 0 ? `${reportFiles.length} dosya seçildi` : 'Dosya(lar) Yükle (Çoklu Seçim)'}
                     </label>
                   </div>
                 </div>
@@ -4172,7 +4178,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       setEditingReportId(null);
                       setReportInput('');
                       setReportLinks(['']);
-                      setReportFile(null);
+                      setReportFiles([]);
                     }}
                     style={{ marginTop: '10px', background: 'rgba(255,255,255,0.05)', color: '#888', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                   >
@@ -4300,9 +4306,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          {(report.file_url || report.external_link || (report.external_links && report.external_links.length > 0)) ? (
+                          {(report.file_url || (report.files && report.files.length > 0) || report.external_link || (report.external_links && report.external_links.length > 0)) ? (
                             <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <FileText size={12} /> { (report.external_links?.length || 0) + (report.file_url ? 1 : 0) + (report.external_link ? 1 : 0) } Ek
+                              <FileText size={12} /> { (report.external_links?.length || 0) + (report.files?.length || (report.file_url ? 1 : 0)) + (report.external_link ? 1 : 0) } Ek
                             </span>
                           ) : (
                             <span style={{ fontSize: '0.75rem', color: '#444' }}>Ek yok</span>
@@ -4392,11 +4398,17 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       {selectedReportDetail.content}
                     </div>
 
-                    {(selectedReportDetail.file_url || selectedReportDetail.external_link || (selectedReportDetail.external_links && selectedReportDetail.external_links.length > 0)) && (
+                    {(selectedReportDetail.file_url || (selectedReportDetail.files && selectedReportDetail.files.length > 0) || selectedReportDetail.external_link || (selectedReportDetail.external_links && selectedReportDetail.external_links.length > 0)) && (
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
                         <h4 style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '15px', fontWeight: '800' }}>EKLER VE LİNKLER</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
-                          {selectedReportDetail.file_url && (
+                          {selectedReportDetail.files && selectedReportDetail.files.length > 0 ? (
+                            selectedReportDetail.files.map((file, i) => (
+                              <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
+                                <Download size={16} color="var(--accent)" /> {file.name || `Dosya ${i+1}`}
+                              </a>
+                            ))
+                          ) : selectedReportDetail.file_url && (
                             <a href={selectedReportDetail.file_url} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
                               <Download size={16} color="var(--accent)" /> {selectedReportDetail.file_name || 'Dosya'}
                             </a>
