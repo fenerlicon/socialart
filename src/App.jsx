@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, 
@@ -25,27 +25,31 @@ import './App.css';
 import Home from './pages/Home';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
-import Services from './pages/Services';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import BlogDetail from './pages/BlogDetail';
-import Admin from './pages/StaffAdmin';
-import Pricing from './pages/Pricing';
-import ClientPortal from './pages/ClientPortal';
-import NotFound from './pages/NotFound';
-import ThankYou from './pages/ThankYou';
+// Lazy Loaded Pages
+const Services = lazy(() => import('./pages/Services'));
+const About = lazy(() => import('./pages/About'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const Admin = lazy(() => import('./pages/StaffAdmin'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const ClientPortal = lazy(() => import('./pages/ClientPortal'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const ThankYou = lazy(() => import('./pages/ThankYou'));
 
-// Service Detail Pages (Direct import for reliability)
-import MetaAds from './pages/services/MetaAds';
-import CreativeProduction from './pages/services/CreativeProduction';
-import SEOGEO from './pages/services/SEOGEO';
-import SosyalMedya from './pages/services/SosyalMedya';
-import UGCInfluencer from './pages/services/UGCInfluencer';
-import SunuculuReklam from './pages/services/SunuculuReklam';
-import RestaurantMarketing from './pages/services/RestaurantMarketing';
+// Service Detail Pages
+const MetaAds = lazy(() => import('./pages/services/MetaAds'));
+const CreativeProduction = lazy(() => import('./pages/services/CreativeProduction'));
+const SEOGEO = lazy(() => import('./pages/services/SEOGEO'));
+const SosyalMedya = lazy(() => import('./pages/services/SosyalMedya'));
+const UGCInfluencer = lazy(() => import('./pages/services/UGCInfluencer'));
+const SunuculuReklam = lazy(() => import('./pages/services/SunuculuReklam'));
+const RestaurantMarketing = lazy(() => import('./pages/services/RestaurantMarketing'));
 
-import { UGCApplication, JobApplication } from './pages/ApplicationForms';
-import EmailMarketing from './pages/EmailMarketing';
+// Named exports from ApplicationForms
+const UGCApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
+const JobApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.JobApplication })));
+
+const EmailMarketing = lazy(() => import('./pages/EmailMarketing'));
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -175,7 +179,12 @@ function App() {
 
       {/* PAGE CONTENT */}
       <main className="main-content">
-        <Routes>
+        <Suspense fallback={
+          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505', color: '#fff' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          </div>
+        }>
+          <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/hakkimizda" element={<About />} />
             <Route path="/hizmetlerimiz" element={<Services />} />
@@ -200,6 +209,7 @@ function App() {
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+        </Suspense>
       </main>
 
       {/* FOOTER */}

@@ -1,41 +1,60 @@
 <!doctype html>
 <html lang="tr">
   <head>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-NZQRQ95X');</script>
-    <!-- End Google Tag Manager -->
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18159914289"></script>
+    <!-- Dynamic Third-Party Scripts Optimization -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      (function() {
+        var analyticsLoaded = false;
+        function loadAnalytics() {
+          if (analyticsLoaded) return;
+          analyticsLoaded = true;
 
-      gtag('config', 'AW-18159914289');
+          // 1. Google Tag Manager
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-NZQRQ95X');
+
+          // 2. Google Ads (gtag)
+          var gascript = document.createElement('script');
+          gascript.async = true;
+          gascript.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18159914289';
+          document.head.appendChild(gascript);
+          
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'AW-18159914289');
+
+          // 3. Microsoft Clarity
+          (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "wpg9qeo7yw");
+        }
+
+        var interactionEvents = ['mouseover', 'keydown', 'touchstart', 'scroll', 'click'];
+        interactionEvents.forEach(function(event) {
+          window.addEventListener(event, loadAnalytics, { once: true, passive: true });
+        });
+
+        // Fallback after 4 seconds to ensure tracking on slow sessions
+        window.addEventListener('load', function() {
+          setTimeout(loadAnalytics, 4000);
+        });
+      })();
     </script>
+
     <meta charset="UTF-8" />
-    
     <title>SocialArt Ajans | Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon</title>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://piffaggeshfrubyjkhej.supabase.co">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://piffaggeshfrubyjkhej.supabase.co">
     <link rel="dns-prefetch" href="https://res.cloudinary.com">
-
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "wpg9qeo7yw");
-    </script>
 
     <!-- Critical CSS to prevent FCP delay -->
     <style>
