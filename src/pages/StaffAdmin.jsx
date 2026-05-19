@@ -1421,7 +1421,12 @@ function Admin() {
     if (!window.confirm("Bu raporu silmek istediğinize emin misiniz?")) return;
     
     try {
-      const { error } = await supabase.from('staff_reports').delete().eq('id', id);
+      const { error } = await supabase
+        .from('staff_reports')
+        .delete()
+        .eq('id', id)
+        .eq('staff_name', currentUser?.name);
+        
       if (error) throw error;
       
       fetchAllData();
@@ -4389,8 +4394,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         {(() => {
                           const reportDate = (report.report_date || new Date(report.created_at).toLocaleDateString('en-CA'));
                           const isToday = new Date().toLocaleDateString('en-CA') === reportDate;
-                          const isMyReport = report.staff_name === currentUser.name;
-                          if (isToday && isMyReport) {
+                          const isMyReport = report.staff_name === currentUser?.name;
+                          if (isMyReport) {
                             return (
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button 
@@ -4402,33 +4407,21 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                 >
                                   <Trash2 size={12} /> SİL
                                 </button>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingReportId(report.id);
-                                    setReportInput(report.content);
-                                    setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
-                                    document.getElementById('report-form-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  }}
-                                  style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: 'none', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '800', cursor: 'pointer' }}
-                                >
-                                  DÜZENLE
-                                </button>
+                                {isToday && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingReportId(report.id);
+                                      setReportInput(report.content);
+                                      setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
+                                      document.getElementById('report-form-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }}
+                                    style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: 'none', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '800', cursor: 'pointer' }}
+                                  >
+                                    DÜZENLE
+                                  </button>
+                                )}
                               </div>
-                            );
-                          }
-                          // Yöneticiler (permissions === 'all') her raporu silebilir
-                          if (currentUser.permissions === 'all' && !isMyReport) {
-                            return (
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteReport(report.id);
-                                }}
-                                style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', border: 'none', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                              >
-                                <Trash2 size={12} /> SİL
-                              </button>
                             );
                           }
                           return null;
