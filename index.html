@@ -1,6 +1,182 @@
 <!doctype html>
 <html lang="tr">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SocialArt Ajans | Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon</title>
+    <meta name="description" content="SocialArt Ajans, markanızı dijitalde zirveye taşıyan büyüme odaklı 360 derece reklam ve prodüksiyon ajansıdır. Meta Ads, SEO & GEO ve profesyonel çekim çözümleri sunuyoruz." />
+    <meta name="theme-color" content="#000000" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://piffaggeshfrubyjkhej.supabase.co">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://piffaggeshfrubyjkhej.supabase.co">
+    <link rel="dns-prefetch" href="https://res.cloudinary.com">
+    
+    <link rel="icon" type="image/png" href="/app-icon.png" />
+    <link rel="apple-touch-icon" href="/app-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preload" as="image" href="/logo.png" fetchpriority="high" />
+
+    <!-- Critical CSS to prevent FCP delay & Layout Shifts -->
+    <style>
+      :root {
+        --bg-color: #050505;
+        --text-color: #f1f1f1;
+        --primary: #8a2be2;
+        --secondary: #ff0055;
+        --font-family: 'Outfit', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: var(--font-family);
+        overflow-x: hidden;
+      }
+      .container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      .header {
+        position: absolute;
+        width: 100%;
+        top: 0;
+        left: 0;
+        z-index: 100;
+        background: transparent;
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 90px;
+      }
+      .brand-logo img {
+        height: 60px;
+        width: auto;
+        object-fit: contain;
+      }
+      .hero {
+        padding-top: 180px;
+        padding-bottom: 80px;
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero-bg-shapes {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .shape {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+      }
+      .shape-1 {
+        top: -10%;
+        left: -10%;
+        width: 400px;
+        height: 400px;
+        background: var(--primary);
+      }
+      .shape-2 {
+        bottom: 10%;
+        right: -10%;
+        width: 350px;
+        height: 350px;
+        background: var(--secondary);
+      }
+      .hero-content {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+      }
+      .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+      }
+      .gradient-text {
+        background: linear-gradient(90deg, var(--primary), var(--secondary), #00e5ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: var(--primary); /* Fallback */
+        color: transparent;
+      }
+      .hero-desc {
+        font-size: 1.15rem;
+        color: #aaa;
+        max-width: 600px;
+        margin: 0 auto 35px;
+        line-height: 1.6;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 32px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: none;
+        outline: none;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+      }
+      .btn-outline {
+        background: rgba(255, 255, 255, 0.03);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.15);
+      }
+      @media (max-width: 768px) {
+        .hero { padding-top: 140px; min-height: 70vh; }
+        .hero-title { font-size: 2.5rem !important; }
+        .hero-desc { font-size: 1rem; }
+        .btn { padding: 12px 24px; font-size: 0.9rem; }
+      }
+    </style>
+
+    <!-- Non-blocking Font Loading -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    </noscript>
+
     <!-- Dynamic Third-Party Scripts Optimization -->
     <script>
       (function() {
@@ -46,82 +222,46 @@
         });
       })();
     </script>
-
-    <meta charset="UTF-8" />
-    <title>SocialArt Ajans | Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://piffaggeshfrubyjkhej.supabase.co">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://piffaggeshfrubyjkhej.supabase.co">
-    <link rel="dns-prefetch" href="https://res.cloudinary.com">
-
-    <!-- Critical CSS to prevent FCP delay -->
-    <style>
-      :root {
-        --bg-color: #050505;
-        --text-color: #f1f1f1;
-        --primary: #8a2be2;
-        --secondary: #ff0055;
-        --font-family: 'Outfit', sans-serif;
-      }
-      body {
-        margin: 0;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        font-family: var(--font-family);
-        overflow-x: hidden;
-      }
-      .hero {
-        padding-top: 150px;
-        min-height: 80vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-      }
-      .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        line-height: 1.1;
-        margin-bottom: 20px;
-      }
-      .gradient-text {
-        background: linear-gradient(90deg, var(--primary), var(--secondary), #00e5ff);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: var(--primary); /* Fallback */
-        color: transparent;
-      }
-      @media (max-width: 768px) {
-        .hero { padding-top: 100px; min-height: 60vh; }
-        .hero-title { font-size: 2.8rem !important; }
-      }
-    </style>
-    
-    <link rel="icon" type="image/png" href="/app-icon.png" />
-    <link rel="apple-touch-icon" href="/app-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="SocialArt Ajans, markanızı dijitalde zirveye taşıyan büyüme odaklı 360 derece reklam ve prodüksiyon ajansıdır. Meta Ads, SEO & GEO ve profesyonel çekim çözümleri sunuyoruz." />
-    <meta name="theme-color" content="#000000" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <link rel="preload" as="image" href="/logo.png" fetchpriority="high" />
-    
-    <!-- Non-blocking Font Loading -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    </noscript>
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZQRQ95X"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    <div id="root"></div>
+    
+    <div id="root">
+      <!-- Pre-rendered Static Hero (instantly visible on load to ensure <1s FCP and LCP) -->
+      <header class="header">
+        <div class="container">
+          <div class="header-inner">
+            <a href="/" class="brand-logo">
+              <img src="/logo.png" alt="Socialart Ajans Logo" />
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-bg-shapes">
+          <div class="shape shape-1"></div>
+          <div class="shape shape-2"></div>
+        </div>
+        <div class="container">
+          <div class="hero-content">
+            <h1 class="hero-title">
+              İstanbul'un Öncü <span class="gradient-text">Sosyal Medya & Reklam</span> Ajansı
+            </h1>
+            <p class="hero-desc">
+              Sadece reels çekmiyoruz, markanız için çalışan bir sistem kuruyoruz. Meta Ads, Creative Production ve SEO optimizasyonu ile ölçeklenebilir sonuçlar sağlıyoruz.
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-primary">Ekibimizle Toplantı Planlayın</button>
+              <button class="btn btn-outline">Showreel İzle</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
