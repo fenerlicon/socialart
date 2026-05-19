@@ -60,7 +60,7 @@ function BlogDetail() {
   }
 
   return (
-    <div className="blog-detail-page" style={{ paddingTop: '120px', minHeight: '100vh', background: 'var(--bg-color)' }}>
+    <div className="blog-detail-page" style={{ paddingTop: '200px', minHeight: '100vh', background: 'var(--bg-color)' }}>
       <div className="container">
         {/* Navigation */}
         <Link to="/blog" className="btn btn-outline" style={{ marginBottom: '40px', padding: '10px 20px', fontSize: '0.9rem' }}>
