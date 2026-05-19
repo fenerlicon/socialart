@@ -28,12 +28,11 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
-import AnalysisForm from '../components/AnalysisForm';
-import FAQAccordion from '../components/FAQAccordion';
+const AnalysisForm = React.lazy(() => import('../components/AnalysisForm'));
+const FAQAccordion = React.lazy(() => import('../components/FAQAccordion'));
 
 const AnimatedMetric = ({ value, suffix = '', prefix = '', label, desc, color }) => {
   const [count, setCount] = React.useState(0);
@@ -122,8 +121,6 @@ function Home() {
     ]
   };
 
-  const [selectedDateStr, setSelectedDateStr] = React.useState('');
-  const [selectedTimeStr, setSelectedTimeStr] = React.useState('');
   const [activeReel, setActiveReel] = React.useState(0);
   const [subClipIndex, setSubClipIndex] = React.useState(0);
   const videoRef = React.useRef(null);
@@ -161,43 +158,7 @@ function Home() {
     }
   }, [activeReel, subClipIndex]);
 
-  const today = new Date();
-  const [displayedMonth, setDisplayedMonth] = React.useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
-  const daysInMonth = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = displayedMonth.getDay();
-  const startDayIndex = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
-
-  const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-  
-  const handlePrevMonth = () => {
-    if (displayedMonth.getFullYear() === today.getFullYear() && displayedMonth.getMonth() === today.getMonth()) return;
-    setDisplayedMonth(new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() - 1, 1));
-  };
-  const handleNextMonth = () => setDisplayedMonth(new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1, 1));
-
-  const timeSlots = ["09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00", "17:00 - 18:00"];
-
-  const [loading, setLoading] = React.useState(false);
-  const [formSuccess, setFormSuccess] = React.useState(false);
-  const [formError, setFormError] = React.useState('');
-
-  const [formData, setFormData] = React.useState({
-    fullName: '', phone: '', email: '', url: '', services: []
-  });
-  const [blockedSlots, setBlockedSlots] = React.useState([]);
-
-  React.useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        fetchBlockedSlots();
-        observer.disconnect();
-      }
-    }, { rootMargin: '200px' });
-    const funnelEl = document.getElementById('funnel');
-    if (funnelEl) observer.observe(funnelEl);
-    return () => observer.disconnect();
-  }, []);
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
@@ -402,7 +363,13 @@ function Home() {
             <h2 className="section-title">Uzman Ekibimizle <span className="gradient-text">Toplantı Planlayın</span></h2>
             <p className="section-subtitle">Uzman ekibimiz mevcut durumunuzu analiz etsin ve size özel büyüme raporu sunsun.</p>
           </div>
-          <AnalysisForm />
+          <React.Suspense fallback={
+            <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            </div>
+          }>
+            <AnalysisForm />
+          </React.Suspense>
         </div>
       </section>
 
@@ -410,28 +377,34 @@ function Home() {
       <section className="section-padding" style={{ background: '#000' }}>
         <div className="container">
           <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '40px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
-          <FAQAccordion items={[
-            {
-              question: "ROAS nedir ve neden önemlidir?",
-              answer: "Return on Ad Spend (Reklam Harcaması Getirisi), reklam için harcadığınız her 1 TL karşılığında ne kadar kazandığınızı gösterir. 14.2x ROAS, 1 TL harcayıp 14.2 TL kazandığınız anlamına gelir. Sürdürülebilir büyüme için en kritik metrik budur."
-            },
-            {
-              question: "Hizmet süreci nasıl başlıyor?",
-              answer: "Ücretsiz analiz formunu doldurduğunuzda ekibimiz markanızı, rakiplerinizi ve pazar payınızı inceler. Ardından size özel bir strateji toplantısı planlarız, yol haritamızı ve garanti şartlarımızı netleştiririz."
-            },
-            {
-              question: "UGC ve Influencer iş birlikleri ne kazandırır?",
-              answer: "Doğal ve kullanıcı tarafından üretilen içerikler (UGC), markanıza olan güveni %80 oranında artırır. Tüketiciler profesyonel reklamlardan ziyade gerçek insan deneyimlerine güvenir, bu da dönüşüm oranınızı katlar."
-            },
-            {
-              question: "Hangi platformlarda reklam veriyorsunuz?",
-              answer: "Ağırlıklı olarak Meta (Facebook, Instagram) ve Google Ads üzerinde yüksek performanslı kampanyalar yönetiyoruz. Ayrıca GEO (AI Search) optimizasyonu ile markanızı yeni nesil arama motorlarına hazırlıyoruz."
-            },
-            {
-              question: "Onboarding süreci ne kadar sürer?",
-              answer: "Anlaşma sağlandıktan sonra teknik kurulumlar ve ilk kreatif stratejilerin hazırlanması genellikle 5-7 iş günü sürer. Bu sürenin sonunda reklamlarımızı test etmeye ve veri toplamaya başlarız."
-            }
-          ]} />
+          <React.Suspense fallback={
+            <div style={{ minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            </div>
+          }>
+            <FAQAccordion items={[
+              {
+                question: "ROAS nedir ve neden önemlidir?",
+                answer: "Return on Ad Spend (Reklam Harcaması Getirisi), reklam için harcadığınız her 1 TL karşılığında ne kadar kazandığınızı gösterir. 14.2x ROAS, 1 TL harcayıp 14.2 TL kazandığınız anlamına gelir. Sürdürülebilir büyüme için en kritik metrik budur."
+              },
+              {
+                question: "Hizmet süreci nasıl başlıyor?",
+                answer: "Ücretsiz analiz formunu doldurduğunuzda ekibimiz markanızı, rakiplerinizi ve pazar payınızı inceler. Ardından size özel bir strateji toplantısı planlarız, yol haritamızı ve garanti şartlarımızı netleştiririz."
+              },
+              {
+                question: "UGC ve Influencer iş birlikleri ne kazandırır?",
+                answer: "Doğal ve kullanıcı tarafından üretilen içerikler (UGC), markanıza olan güveni %80 oranında artırır. Tüketiciler profesyonel reklamlardan ziyade gerçek insan deneyimlerine güvenir, bu da dönüşüm oranınızı katlar."
+              },
+              {
+                question: "Hangi platformlarda reklam veriyorsunuz?",
+                answer: "Ağırlıklı olarak Meta (Facebook, Instagram) ve Google Ads üzerinde yüksek performanslı kampanyalar yönetiyoruz. Ayrıca GEO (AI Search) optimizasyonu ile markanızı yeni nesil arama motorlarına hazırlıyoruz."
+              },
+              {
+                question: "Onboarding süreci ne kadar sürer?",
+                answer: "Anlaşma sağlandıktan sonra teknik kurulumlar ve ilk kreatif stratejilerin hazırlanması genellikle 5-7 iş günü sürer. Bu sürenin sonunda reklamlarımızı test etmeye ve veri toplamaya başlarız."
+              }
+            ]} />
+          </React.Suspense>
         </div>
       </section>
 

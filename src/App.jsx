@@ -22,7 +22,7 @@ import {
   Utensils
 } from 'lucide-react';
 import './App.css';
-import Home from './pages/Home';
+const Home = lazy(() => import('./pages/Home'));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Lazy Loaded Pages
