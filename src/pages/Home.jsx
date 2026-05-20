@@ -207,7 +207,6 @@ function Home() {
                   <div 
                     className={`brand-item ${isTrust ? 'trust-brand' : ''}`} 
                     key={`t1-${i}`}
-                    style={isTrust ? { opacity: 0.95, textShadow: '0 0 12px rgba(255, 255, 255, 0.45)', fontWeight: '900', color: '#fff' } : {}}
                   >
                     {p}
                   </div>
@@ -220,7 +219,6 @@ function Home() {
                   <div 
                     className={`brand-item ${isTrust ? 'trust-brand' : ''}`} 
                     key={`t2-${i}`}
-                    style={isTrust ? { opacity: 0.95, textShadow: '0 0 12px rgba(255, 255, 255, 0.45)', fontWeight: '900', color: '#fff' } : {}}
                   >
                     {p}
                   </div>

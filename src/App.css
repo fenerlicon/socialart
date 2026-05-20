@@ -889,6 +889,13 @@
   letter-spacing: calc(-1px);
 }
 
+.brand-item.trust-brand {
+  opacity: 0.95 !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+  font-weight: 900 !important;
+  color: #fff !important;
+}
+
 .brand-item:hover {
   opacity: 1;
 }
