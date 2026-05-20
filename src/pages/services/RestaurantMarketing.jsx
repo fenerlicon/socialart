@@ -196,18 +196,51 @@ const RestaurantMarketing = () => {
               </div>
             </div>
             <div className="glass" style={{ padding: '40px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <img 
-                src="/blog_cover_restaurant_sosyal_medya.png" 
-                alt="Restoran Pazarlaması" 
-                style={{ width: '100%', borderRadius: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }} 
-              />
-              <div style={{ marginTop: '30px', background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-                  <Star color="#ffab00" fill="#ffab00" size={20} />
-                  <span style={{ fontWeight: '800' }}>Örnek Başarı Hikayesi</span>
+              {/* Referans Başlığı */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(138,43,226,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Star color="#ffab00" fill="#ffab00" size={18} />
                 </div>
-                <p style={{ color: '#ccc', fontSize: '0.95rem', fontStyle: 'italic' }}>
-                  "Karadeniz Et Lokantası ile başladığımız süreçte, iştah kabartan video serilerimiz ve konum bazlı reklamlarımızla hafta sonu rezervasyonlarını %120 oranında artırdık."
+                <div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '2px' }}>Çalıştığımız Markalar</div>
+                  <div style={{ fontSize: '1rem', fontWeight: '800', color: '#fff' }}>Güvenilen Restoran Referanslarımız</div>
+                </div>
+              </div>
+
+              {/* 2x2 Referans Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                {[
+                  { name: 'VIP\nCATERING', icon: '🥂', color: '#c9a84c', bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.2)', tag: 'Catering & Organizasyon' },
+                  { name: 'TAŞDELEN\nKARADENİZ ET', icon: '🥩', color: '#e05252', bg: 'rgba(224,82,82,0.08)', border: 'rgba(224,82,82,0.2)', tag: 'Et Lokantası' },
+                  { name: 'GURME\nBAHÇEŞEHİR', icon: '🍽️', color: '#00c896', bg: 'rgba(0,200,150,0.08)', border: 'rgba(0,200,150,0.2)', tag: 'Fine Dining' },
+                  { name: 'EGE CUNDA\nBALIK', icon: '🐟', color: '#00b4d8', bg: 'rgba(0,180,216,0.08)', border: 'rgba(0,180,216,0.2)', tag: 'Balık Restoranı' },
+                ].map((client, i) => (
+                  <div key={i} style={{
+                    background: client.bg,
+                    border: `1px solid ${client.border}`,
+                    borderRadius: '20px',
+                    padding: '20px 18px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                    cursor: 'default',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 12px 28px ${client.border}`; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  >
+                    <div style={{ fontSize: '1.8rem', lineHeight: 1 }}>{client.icon}</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: '900', color: '#fff', lineHeight: '1.35', whiteSpace: 'pre-line' }}>{client.name}</div>
+                    <div style={{ fontSize: '0.65rem', fontWeight: '700', color: client.color, letterSpacing: '0.8px', textTransform: 'uppercase' }}>{client.tag}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Alt not */}
+              <div style={{ marginTop: '22px', padding: '14px 18px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e676', flexShrink: 0, boxShadow: '0 0 6px #00e676' }} />
+                <p style={{ color: '#888', fontSize: '0.82rem', margin: 0, lineHeight: '1.5' }}>
+                  Karadeniz Et Lokantası ile çalışmamızda hafta sonu rezervasyonları <strong style={{ color: '#fff' }}>%120 arttı.</strong>
                 </p>
               </div>
             </div>
