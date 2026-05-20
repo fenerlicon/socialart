@@ -159,9 +159,9 @@ const RestaurantMarketing = () => {
           <h2 style={{ textAlign: 'center', marginBottom: '50px', fontSize: '2.8rem', fontWeight: '900' }}>Örnek <span className="gradient-text">Çalışmalarımız</span></h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', margin: '40px 0' }}>
             {[
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "Restoran Örneği 1" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "Restoran Örneği 2" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Restoran Örneği 3" }
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/v1779304529/anne_n43ygw.mp4", name: "Restoran Örneği 1" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/v1779304523/R%C3%B6portaj_pgeurw.mov", name: "Restoran Örneği 2" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/v1779304500/iftar_ljxvdx.mp4", name: "Restoran Örneği 3" }
             ].map((video, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
