@@ -166,11 +166,11 @@ function Home() {
   };
 
   const partners = [
-    "KOTON", "JEEP", "PEUGEOT", "Gurme Bahçeşehir", "Eray Gıda", "Flormar",
-    "Sahne Marin", "EGE CUNDA BALIK", "Smart Enerji", "Polar", "Enova Eğitim",
-    "Indian Motorcycle", "S.E.T.S", "Allure Deluxe Beauty", "Funfest",
-    "DUMA DUMA", "216 Dizayn", "good&mood", "MapOfX", "Cosentino", "Geberit",
-    "Karadeniz Et", "SRG"
+    "PEUGEOT", "KOTON", "JEEP", "Gurme Bahçeşehir", "Eray Gıda", "Flormar",
+    "Sahne Marin", "EGE CUNDA BALIK", "PEUGEOT", "KOTON", "JEEP", "Smart Enerji", 
+    "Polar", "Enova Eğitim", "Indian Motorcycle", "S.E.T.S", "PEUGEOT", "KOTON", 
+    "JEEP", "Allure Deluxe Beauty", "Funfest", "DUMA DUMA", "216 Dizayn", 
+    "good&mood", "MapOfX", "Cosentino", "Geberit", "Karadeniz Et", "SRG"
   ];
 
   return (
@@ -201,9 +201,31 @@ function Home() {
         <div className="container">
           <div className="brand-ticker-wrap">
             <div className="brand-track">
-              {partners.map((p, i) => <div className="brand-item" key={`t1-${i}`}>{p}</div>)}
+              {partners.map((p, i) => {
+                const isTrust = ["PEUGEOT", "KOTON", "JEEP"].includes(p);
+                return (
+                  <div 
+                    className={`brand-item ${isTrust ? 'trust-brand' : ''}`} 
+                    key={`t1-${i}`}
+                    style={isTrust ? { opacity: 0.95, textShadow: '0 0 12px rgba(255, 255, 255, 0.45)', fontWeight: '900', color: '#fff' } : {}}
+                  >
+                    {p}
+                  </div>
+                );
+              })}
               {/* Duplicate for seamless scrolling */}
-              {partners.map((p, i) => <div className="brand-item" key={`t2-${i}`}>{p}</div>)}
+              {partners.map((p, i) => {
+                const isTrust = ["PEUGEOT", "KOTON", "JEEP"].includes(p);
+                return (
+                  <div 
+                    className={`brand-item ${isTrust ? 'trust-brand' : ''}`} 
+                    key={`t2-${i}`}
+                    style={isTrust ? { opacity: 0.95, textShadow: '0 0 12px rgba(255, 255, 255, 0.45)', fontWeight: '900', color: '#fff' } : {}}
+                  >
+                    {p}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
