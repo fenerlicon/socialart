@@ -7,6 +7,33 @@ const ThankYou = () => {
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
+    // Define the gtag_report_conversion function globally as requested
+    window.gtag_report_conversion = function(url) {
+      const callback = function () {
+        if (typeof(url) !== 'undefined') {
+          window.location = url;
+        }
+      };
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'conversion', {
+            'send_to': 'AW-17236814033/VvXnCM-OxrAcENHRk5tA',
+            'event_callback': callback
+        });
+      } else {
+        callback();
+      }
+      return false;
+    };
+
+    // Trigger conversion event automatically when user lands on this page
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-17236814033/VvXnCM-OxrAcENHRk5tA'
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
