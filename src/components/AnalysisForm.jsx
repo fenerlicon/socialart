@@ -256,20 +256,28 @@ const AnalysisForm = ({ defaultService = "" }) => {
                       const isSelected = selectedDateStr === keyStr;
                       const isToday = today.getFullYear() === displayedMonth.getFullYear() && today.getMonth() === displayedMonth.getMonth() && today.getDate() === d;
                       
+                      const dateObj = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), d);
+                      const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                      const isPast = dateObj < todayZero;
+
                       return (
                         <div 
                           key={d} 
-                          onClick={() => setSelectedDateStr(keyStr)} 
+                          onClick={isPast ? null : () => {
+                            setSelectedDateStr(keyStr);
+                            setSelectedTimeStr('');
+                          }} 
                           style={{ 
                             padding: '10px 0', 
-                            cursor: 'pointer', 
+                            cursor: isPast ? 'not-allowed' : 'pointer', 
                             fontSize: '0.95rem',
                             fontWeight: isSelected ? 'bold' : 'normal',
                             background: isSelected ? 'var(--primary)' : isToday ? 'rgba(255,255,255,0.1)' : 'transparent', 
-                            color: isSelected ? '#fff' : '#eee',
+                            color: isSelected ? '#fff' : isPast ? '#444' : '#eee',
                             borderRadius: '10px',
                             border: isToday && !isSelected ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            opacity: isPast ? 0.3 : 1
                           }}
                         >
                           {d}
@@ -284,21 +292,27 @@ const AnalysisForm = ({ defaultService = "" }) => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px' }}>
                     {timeSlots.map(time => {
                       const isSelected = selectedTimeStr === time;
+                      const slotStartHour = parseInt(time.split(':')[0], 10);
+                      const currentHour = today.getHours();
+                      const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                      const isSlotPast = selectedDateStr === todayDateStr && currentHour >= slotStartHour;
+
                       return (
                         <div 
                           key={time} 
-                          onClick={() => setSelectedTimeStr(time)} 
+                          onClick={isSlotPast ? null : () => setSelectedTimeStr(time)} 
                           style={{ 
                             padding: '12px 5px', 
                             fontSize: '0.85rem', 
                             textAlign: 'center', 
                             borderRadius: '12px', 
                             background: isSelected ? 'var(--secondary)' : 'rgba(255,255,255,0.04)', 
-                            color: isSelected ? '#fff' : '#ccc',
+                            color: isSelected ? '#fff' : isSlotPast ? '#555' : '#ccc',
                             border: `1px solid ${isSelected ? 'var(--secondary)' : 'rgba(255,255,255,0.08)'}`,
-                            cursor: 'pointer',
+                            cursor: isSlotPast ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s',
-                            fontWeight: isSelected ? 'bold' : '500'
+                            fontWeight: isSelected ? 'bold' : '500',
+                            opacity: isSlotPast ? 0.25 : 1
                           }}
                         >
                           {time.split(' ')[0]}

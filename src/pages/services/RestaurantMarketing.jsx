@@ -153,6 +153,25 @@ const RestaurantMarketing = () => {
           </div>
         </div>
       </section>
+      {/* Showcase */}
+      <section className="section-padding" style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="container">
+          <h2 style={{ textAlign: 'center', marginBottom: '50px', fontSize: '2.8rem', fontWeight: '900' }}>Örnek <span className="gradient-text">Çalışmalarımız</span></h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', margin: '40px 0' }}>
+            {[
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "Restoran Örneği 1" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "Restoran Örneği 2" },
+              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Restoran Örneği 3" }
+            ].map((video, idx) => (
+              <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
+                  <video src={video.url} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* SERVICES GRID */}
       <section className="section-padding" style={{ background: 'rgba(255,255,255,0.02)' }}>
