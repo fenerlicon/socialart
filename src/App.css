@@ -1111,6 +1111,31 @@
   box-shadow: 0 0 20px rgba(138, 43, 226, 0.15);
 }
 
+/* Custom select option styling for dark theme */
+.input-group select {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  padding-right: 40px; /* space for custom arrow */
+}
+
+.input-group select option {
+  background: var(--bg-dark);
+  color: #fff;
+}
+
+/* Optional custom arrow */
+.input-group select::-ms-expand { display: none; }
+.input-group select::after {
+  content: "▼";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #fff;
+}
+
 .input-group textarea {
   resize: vertical;
   min-height: 120px;
