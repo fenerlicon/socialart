@@ -872,7 +872,7 @@
   align-items: center;
   gap: 100px;
   padding-right: 100px;
-  animation: scrollBrands 100s linear infinite;
+  animation: scrollBrands 200s linear infinite;
   white-space: nowrap;
 }
 
@@ -1471,7 +1471,7 @@
   }
   
   .brand-track {
-    animation-duration: 25s;
+    animation-duration: 50s;
     gap: 40px;
   }
 }
