@@ -263,7 +263,7 @@ const AnalysisForm = ({ defaultService = "" }) => {
                       return (
                         <div 
                           key={d} 
-                          onClick={isPast ? null : () => {
+                          onClick={isPast ? undefined : () => {
                             setSelectedDateStr(keyStr);
                             setSelectedTimeStr('');
                           }} 
@@ -300,7 +300,7 @@ const AnalysisForm = ({ defaultService = "" }) => {
                       return (
                         <div 
                           key={time} 
-                          onClick={isSlotPast ? null : () => setSelectedTimeStr(time)} 
+                          onClick={isSlotPast ? undefined : () => setSelectedTimeStr(time)} 
                           style={{ 
                             padding: '12px 5px', 
                             fontSize: '0.85rem', 
