@@ -137,9 +137,6 @@ function App() {
                   <Link to="/ugc-influencer-isbirligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <Users size={18} style={{ marginRight: '12px', color: '#00e676' }} /> UGC & Influencer İşbirliği
                   </Link>
-                  <Link to="/restoran-pazarlama" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Utensils size={18} style={{ marginRight: '12px', color: '#ff7043' }} /> Restoran Pazarlaması
-                  </Link>
                 </div>
               </div>
 
