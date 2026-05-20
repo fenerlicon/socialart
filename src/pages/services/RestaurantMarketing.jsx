@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Utensils, 
   Camera, 
@@ -15,8 +15,73 @@ import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
 import FAQAccordion from '../../components/FAQAccordion';
 
+// Count-up animasyon hook'u
+function useCountUp(target, duration = 2000, started = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!started) return;
+    let startTime = null;
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      // easeOutQuart
+      const ease = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(ease * target));
+      if (progress < 1) requestAnimationFrame(step);
+      else setCount(target);
+    };
+    requestAnimationFrame(step);
+  }, [started, target, duration]);
+  return count;
+}
+
+function AnimatedMetric({ value, label, desc, delay = 0 }) {
+  const [started, setStarted] = useState(false);
+  const ref = useRef(null);
+
+  // Değeri parse et: prefix, numericPart, suffix ayır
+  const match = value.match(/^([^\d]*?)([\d.]+)([^\d]*)$/);
+  const prefix = match ? match[1] : '';
+  const numericStr = match ? match[2] : value;
+  const suffix = match ? match[3] : '';
+  const numeric = parseFloat(numericStr);
+  const isFloat = numericStr.includes('.');
+
+  const displayed = useCountUp(isFloat ? Math.round(numeric * 10) : numeric, 2000, started);
+  const displayValue = isFloat
+    ? `${prefix}${(displayed / 10).toFixed(1)}${suffix}`
+    : `${prefix}${displayed}${suffix}`;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setTimeout(() => setStarted(true), delay); observer.disconnect(); } },
+      { threshold: 0.5 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [delay]);
+
+  return (
+    <div ref={ref} style={{ textAlign: 'center' }}>
+      <div style={{
+        fontSize: '3.5rem',
+        fontWeight: '900',
+        color: 'var(--primary)',
+        marginBottom: '5px',
+        transition: 'opacity 0.3s',
+        fontVariantNumeric: 'tabular-nums'
+      }}>
+        {started ? displayValue : value}
+      </div>
+      <div style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '10px' }}>{label}</div>
+      <p style={{ color: '#888', fontSize: '0.9rem' }}>{desc}</p>
+    </div>
+  );
+}
+
 const RestaurantMarketing = () => {
   const navigate = useNavigate();
+  void navigate; // suppress unused warning
 
   const metrics = [
     { value: '3.4M+', label: 'Aylık İzlenme', desc: 'Restoran müşterilerimiz için ürettiğimiz Reels içeriklerinin toplam erişimi.' },
@@ -84,11 +149,7 @@ const RestaurantMarketing = () => {
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px' }}>
             {metrics.map((m, i) => (
-              <div key={i} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'var(--primary)', marginBottom: '5px' }}>{m.value}</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '10px' }}>{m.label}</div>
-                <p style={{ color: '#888', fontSize: '0.9rem' }}>{m.desc}</p>
-              </div>
+              <AnimatedMetric key={i} value={m.value} label={m.label} desc={m.desc} delay={i * 150} />
             ))}
           </div>
         </div>
@@ -136,7 +197,7 @@ const RestaurantMarketing = () => {
             </div>
             <div className="glass" style={{ padding: '40px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <img 
-                src="/blog_cover_restaurant_marketing_1778849138990.png" 
+                src="/blog_cover_restaurant_sosyal_medya.png" 
                 alt="Restoran Pazarlaması" 
                 style={{ width: '100%', borderRadius: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }} 
               />
