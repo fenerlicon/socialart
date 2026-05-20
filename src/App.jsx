@@ -35,6 +35,7 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const ClientPortal = lazy(() => import('./pages/ClientPortal'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ThankYou = lazy(() => import('./pages/ThankYou'));
+const Contact = lazy(() => import('./pages/Contact'));
 
 // Service Detail Pages
 const MetaAds = lazy(() => import('./pages/services/MetaAds'));
@@ -142,6 +143,7 @@ function App() {
 
               <Link to="/hakkimizda" className={location.pathname === '/hakkimizda' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Hakkımızda</Link>
               <Link to="/blog" className={location.pathname.startsWith('/blog') ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+              <Link to="/iletisim" className={location.pathname === '/iletisim' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>İletişim</Link>
 
               {/* Dropdown for internal scroll links */}
               <div 
@@ -203,6 +205,7 @@ function App() {
             <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
             <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
             <Route path="/tesekkurler" element={<ThankYou />} />
+            <Route path="/iletisim" element={<Contact />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -254,6 +257,7 @@ function App() {
                   <li><Link to="/hizmetlerimiz" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hizmetlerimiz</Link></li>
                   <li><Link to="/blog" style={{ fontSize: '0.9rem', color: '#ccc' }}>Blog</Link></li>
                   <li><Link to="/fiyatlar" style={{ fontSize: '0.9rem', color: '#ccc' }}>Fiyatlar</Link></li>
+                  <li><Link to="/iletisim" style={{ fontSize: '0.9rem', color: '#ccc' }}>İletişim</Link></li>
                 </ul>
               </div>
 
