@@ -2,6 +2,7 @@
 
 :root {
   --bg-color: #050505;
+  --bg-dark: #0a0a0a;
   --text-color: #f1f1f1;
   --text-muted: #d1d1d1; /* Improved contrast for accessibility (was #bcbcbc) */
   --primary: #8a2be2;
@@ -471,4 +472,13 @@ button {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain;
+}
+
+/* Global select elements styling to prevent white-on-white text in browser native dropdowns */
+select {
+  color-scheme: dark;
+}
+select option {
+  background-color: #121212 !important;
+  color: #ffffff !important;
 }

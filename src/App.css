@@ -1117,11 +1117,12 @@
   background: rgba(255, 255, 255, 0.03);
   color: #fff;
   padding-right: 40px; /* space for custom arrow */
+  color-scheme: dark;
 }
 
 .input-group select option {
-  background: var(--bg-dark);
-  color: #fff;
+  background-color: #121212 !important;
+  color: #ffffff !important;
 }
 
 /* Optional custom arrow */
