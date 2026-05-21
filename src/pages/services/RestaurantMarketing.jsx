@@ -109,7 +109,7 @@ const RestaurantMarketing = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          background: `linear-gradient(to bottom, rgba(5,5,5,0.7), #050505), url('/restaurant_marketing_hero.png')`,
+          background: `linear-gradient(to bottom, rgba(5,5,5,0.7), #050505), url('/restaurant_marketing_hero.jpg')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.6,

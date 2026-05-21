@@ -109,7 +109,7 @@ function Blog() {
               posts.map((post) => (
                 <div key={post.slug} className="glass blog-card">
                   <div className="blog-image-wrap">
-                    <img src={post.cover_image} alt={post.title} className="blog-image" />
+                    <img src={post.cover_image} alt={post.title} className="blog-image" width="400" height="250" loading="lazy" />
                     <div className="blog-overlay">
                       <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: '800', letterSpacing: '1px' }}>OKUMAYA BAŞLA</span>
                     </div>

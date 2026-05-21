@@ -40,7 +40,7 @@ async function run() {
     // Blog verileri
     const title = "Kısa Video İçerikleri Neden Markalar İçin Vazgeçilmez Hale Geldi?";
     const slug = "kisa-video-icerikleri-markalar-icin-neden-vazgecilmez";
-    const coverImage = "/short_video_marketing.png";
+    const coverImage = "/short_video_marketing.jpg";
     const excerpt = "Günümüz dijital pazarlama dünyasında kısa video içeriklerinin markalar üzerindeki etkisi ve neden stratejilerde yer alması gerektiği üzerine detaylı bir analiz.";
     const readTime = "5 dk okuma";
     

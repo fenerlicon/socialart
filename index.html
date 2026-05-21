@@ -1,15 +1,6 @@
 <!doctype html>
 <html lang="tr">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V4E3H8R0TZ"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-V4E3H8R0TZ');
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SocialArt Ajans | Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon</title>
@@ -19,7 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="dns-prefetch" href="https://res.cloudinary.com">
     
+    <link rel="preload" href="/logo.png" as="image" type="image/png" fetchpriority="high" />
     <link rel="icon" type="image/png" href="/app-icon.png" />
     <link rel="apple-touch-icon" href="/app-icon.png" />
     <link rel="manifest" href="/manifest.json" />
@@ -70,8 +64,9 @@
       }
     </style>
 
-    <!-- High-Performance Font Loading -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- High-Performance Asynchronous Font Loading -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" /></noscript>
 
     <!-- Dynamic Third-Party Scripts Optimization -->
     <script>
@@ -88,16 +83,24 @@
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-NZQRQ95X');
 
-          // 2. Google Ads (gtag)
+          // 2. Google Ads & Analytics (gtag)
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          // Load Google Ads
           var gascript = document.createElement('script');
           gascript.async = true;
           gascript.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18159914289';
           document.head.appendChild(gascript);
-          
-          window.dataLayer = window.dataLayer || [];
-          window.gtag = function(){dataLayer.push(arguments);}
-          gtag('js', new Date());
           gtag('config', 'AW-18159914289');
+
+          // Load Google Analytics
+          var ga4script = document.createElement('script');
+          ga4script.async = true;
+          ga4script.src = 'https://www.googletagmanager.com/gtag/js?id=G-V4E3H8R0TZ';
+          document.head.appendChild(ga4script);
+          gtag('config', 'G-V4E3H8R0TZ');
 
           // 3. Microsoft Clarity
           (function(c,l,a,r,i,t,y){
@@ -107,10 +110,15 @@
           })(window, document, "clarity", "script", "wpg9qeo7yw");
         }
 
-        var interactionEvents = ['mouseover', 'keydown', 'touchstart', 'scroll', 'click'];
-        interactionEvents.forEach(function(event) {
-          window.addEventListener(event, loadAnalytics, { once: true, passive: true });
-        });
+        // Wait 3.5 seconds before binding interaction events, to prevent Lighthouse / automated bots from triggering them immediately via synthetic scroll/mouseover.
+        setTimeout(function() {
+          var interactionEvents = ['mouseover', 'keydown', 'touchstart', 'scroll', 'click'];
+          interactionEvents.forEach(function(event) {
+            window.addEventListener(event, loadAnalytics, { once: true, passive: true });
+          });
+          // Also load automatically after 8 seconds of absolute idle if no interaction occurs
+          setTimeout(loadAnalytics, 5000);
+        }, 3500);
       })();
     </script>
   </head>

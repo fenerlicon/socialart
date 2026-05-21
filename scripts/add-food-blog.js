@@ -64,7 +64,7 @@ async function addBlog() {
       <p><strong>SocialArt Ajans</strong> olarak, gastronomi markalarına özel uçtan uca dijital büyüme sistemleri kuruyoruz. Restoranınızın reklam ve büyüme süreçlerini profesyonellere bırakmak isterseniz, ekibimizle hemen bir toplantı planlayabilirsiniz.</p>
     `,
     read_time: '4 dk okuma',
-    cover_image: '/blog_cover_food_order_geo.png'
+    cover_image: '/blog_cover_food_order_geo.jpg'
   };
 
   const { data: maxData, error: maxError } = await supabase

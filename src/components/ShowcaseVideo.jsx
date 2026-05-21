@@ -3,14 +3,35 @@ import React, { useState, useRef, useEffect } from 'react';
 const ShowcaseVideo = ({ src, aspectRatio = '9/16', style = {} }) => {
   const [inView, setInView] = useState(false);
   const containerRef = useRef(null);
+  const videoRef = useRef(null);
 
   // Auto-generate optimized JPEG poster URL from Cloudinary video URL
   const getPosterUrl = (videoUrl) => {
     if (!videoUrl) return '';
     if (videoUrl.includes('cloudinary.com')) {
       let poster = videoUrl.replace(/\.[a-zA-Z0-9]+$/, '.jpg');
-      if (poster.includes('/video/upload/')) {
-        poster = poster.replace(/\/video\/upload\/[^/]*\//, '/video/upload/f_auto,q_auto,w_450,c_scale/');
+      
+      const match = poster.match(/(.*\/video\/upload\/)(.*)/);
+      if (match) {
+        const prefix = match[1];
+        let rest = match[2];
+        
+        const parts = rest.split('/');
+        const isVersion = /^v\d+$/.test(parts[0]);
+        
+        if (isVersion) {
+          return prefix + 'f_auto,q_auto,w_450,c_scale/' + rest;
+        } else if (parts.length > 1) {
+          const isSecondPartVersion = /^v\d+$/.test(parts[1]);
+          if (isSecondPartVersion || parts.length > 2) {
+            parts[0] = 'f_auto,q_auto,w_450,c_scale';
+            return prefix + parts.join('/');
+          }
+        }
+        
+        if (!rest.includes('f_auto,q_auto,w_450,c_scale')) {
+          return prefix + 'f_auto,q_auto,w_450,c_scale/' + rest;
+        }
       }
       return poster;
     }
@@ -22,13 +43,10 @@ const ShowcaseVideo = ({ src, aspectRatio = '9/16', style = {} }) => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect(); // Once it enters viewport, keep it loaded
-        }
+        setInView(entry.isIntersecting);
       },
       {
-        rootMargin: '150px', // Preload 150px before entering viewport
+        rootMargin: '100px', // Start loading/playing 100px before entering viewport
         threshold: 0.01,
       }
     );
@@ -39,6 +57,20 @@ const ShowcaseVideo = ({ src, aspectRatio = '9/16', style = {} }) => {
 
     return () => observer.disconnect();
   }, []);
+
+  // Play or pause programmatically based on viewport intersection
+  useEffect(() => {
+    if (videoRef.current) {
+      if (inView) {
+        videoRef.current.play().catch(err => {
+          // Silent catch for autoplay browser policies
+          console.debug("Autoplay prevented or interrupted:", err);
+        });
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [inView]);
 
   return (
     <div 
@@ -56,35 +88,24 @@ const ShowcaseVideo = ({ src, aspectRatio = '9/16', style = {} }) => {
         ...style
       }}
     >
-      {/* If visible in viewport, render and autoplay the video. Otherwise, render the poster */}
-      {inView ? (
-        <video 
-          src={src} 
-          autoPlay 
-          muted 
-          loop 
-          playsInline 
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'cover',
-            display: 'block'
-          }} 
-        />
-      ) : (
-        <div 
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            backgroundImage: posterUrl ? `url(${posterUrl})` : 'none',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            display: 'block'
-          }}
-        />
-      )}
+      <video 
+        ref={videoRef}
+        src={src} 
+        muted 
+        loop 
+        playsInline 
+        poster={posterUrl}
+        preload="none"
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover',
+          display: 'block'
+        }} 
+      />
     </div>
   );
 };
 
 export default ShowcaseVideo;
+

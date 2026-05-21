@@ -70,7 +70,7 @@ function BlogDetail() {
         <article className="blog-content-wrap glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
           {/* Header Image */}
           <div style={{ width: '100%', height: '450px', overflow: 'hidden', position: 'relative' }}>
-            <img src={post.cover_image} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={post.cover_image} alt={post.title} width="1200" height="450" fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '50px', background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}>
                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
                  <span className="glass" style={{ padding: '8px 20px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px' }}>DİJİTAL PAZARLAMA</span>

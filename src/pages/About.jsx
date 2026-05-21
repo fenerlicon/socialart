@@ -88,7 +88,7 @@ function About() {
             <div className="glass" style={{ padding: '40px', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="profile-pic-container">
                 <div className="profile-bg-1"></div>
-                <img src="/celal-unlu.png" alt="Celal Ünlü" className="profile-img-1" />
+                <img src="/celal-unlu.png" alt="Celal Ünlü" className="profile-img-1" width="200" height="200" loading="lazy" />
               </div>
               <h2 style={{ fontSize: '1.6rem', marginBottom: '15px', textAlign: 'center', fontWeight: '800' }}><span className="gradient-text">CELAL ÜNLÜ</span> <br/><span style={{fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px'}}>Kurucu / Yönetmen</span></h2>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.8', textAlign: 'center', fontSize: '0.95rem' }}>
@@ -101,7 +101,7 @@ function About() {
             <div className="glass" style={{ padding: '40px', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="profile-pic-container">
                 <div className="profile-bg-2"></div>
-                <img src="/ercan-ozdemir.png" alt="Ercan Özdemir" className="profile-img-2" />
+                <img src="/ercan-ozdemir.png" alt="Ercan Özdemir" className="profile-img-2" width="200" height="200" loading="lazy" />
               </div>
               <h2 style={{ fontSize: '1.6rem', marginBottom: '15px', textAlign: 'center', fontWeight: '800' }}><span className="gradient-text">ERCAN ÖZDEMİR</span> <br/><span style={{fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px'}}>Kurucu / Görüntü Yönetmeni</span></h2>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.8', textAlign: 'center', fontSize: '0.95rem' }}>

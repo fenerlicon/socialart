@@ -400,6 +400,11 @@
     filter: none; /* Disable expensive blur on mobile */
     opacity: 0.2;
   }
+  .shape {
+    filter: blur(40px) !important;
+    opacity: 0.35 !important;
+    animation: none !important;
+  }
 }
 
 .hero-bg-shapes {

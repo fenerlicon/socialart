@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import './App.css';
 const Home = lazy(() => import('./pages/Home'));
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Lazy Loaded Pages
 const Services = lazy(() => import('./pages/Services'));
@@ -61,6 +60,31 @@ function App() {
   const [activeMobileDropdown, setActiveMobileDropdown] = useState(null); // 'hizmetler' or 'kurumsal' or null
   const navigate = useNavigate();
   const location = useLocation();
+  const [SpeedInsightsComponent, setSpeedInsightsComponent] = useState(null);
+
+  useEffect(() => {
+    let delayTimer = null;
+    const loadSpeedInsights = () => {
+      delayTimer = setTimeout(() => {
+        import("@vercel/speed-insights/react")
+          .then((mod) => {
+            setSpeedInsightsComponent(() => mod.SpeedInsights);
+          })
+          .catch((err) => console.debug("SpeedInsights failed to load", err));
+      }, 3000);
+    };
+
+    if (document.readyState === 'complete') {
+      loadSpeedInsights();
+    } else {
+      window.addEventListener('load', loadSpeedInsights);
+    }
+
+    return () => {
+      window.removeEventListener('load', loadSpeedInsights);
+      if (delayTimer) clearTimeout(delayTimer);
+    };
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -219,7 +243,7 @@ function App() {
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
               <div className="footer-col">
                 <Link to="/" className="brand-logo" style={{ marginBottom: '10px', display: 'block' }}>
-                  <img src="/logo.png" alt="Socialart Ajans" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} loading="lazy" />
+                  <img src="/logo.png" alt="Socialart Ajans" width="180" height="60" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} loading="lazy" />
                 </Link>
                 <p style={{marginTop: '10px', marginBottom: '30px'}}>Site → Strateji Toplantısı → Teklif → Satış kurgusu ile dijitalde sınırları aşıyoruz.</p>
                 <div className="social-links">
@@ -275,7 +299,7 @@ function App() {
           </div>
         </footer>
       )}
-      <SpeedInsights />
+      {SpeedInsightsComponent && <SpeedInsightsComponent />}
     </div>
   );
 }

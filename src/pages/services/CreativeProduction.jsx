@@ -34,7 +34,7 @@ function CreativeProduction() {
         <div className="container">
           <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
             <div className="feature-list-card" style={{ padding: '20px', borderRadius: '32px', position: 'relative', overflow: 'hidden' }}>
-               <img src="/assets/images/socialart-studio.png" alt="Social Art Stüdyo" style={{ width: '100%', borderRadius: '20px', marginBottom: '20px' }} />
+               <img src="/assets/images/socialart-studio.jpg" alt="Social Art Stüdyo" width="600" height="400" loading="lazy" style={{ width: '100%', height: 'auto', borderRadius: '20px', marginBottom: '20px' }} />
                <div style={{ position: 'absolute', top: '30px', left: '30px', background: 'var(--primary)', padding: '8px 16px', borderRadius: '10px', fontWeight: 'bold', fontSize: '0.9rem', boxShadow: '0 10px 30px rgba(138,43,226,0.3)' }}>Kendi Stüdyomuzla Hizmetinizdeyiz</div>
             </div>
             <div className="service-text-content">
