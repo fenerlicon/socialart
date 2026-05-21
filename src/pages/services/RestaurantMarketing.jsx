@@ -307,7 +307,7 @@ const RestaurantMarketing = () => {
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/v1779304523/R%C3%B6portaj_pgeurw.mov", name: "Restoran Örneği 2" },
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/v1779304500/iftar_ljxvdx.mp4", name: "Restoran Örneği 3" }
             ].map((video, idx) => (
-              <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={idx} className="glass" style={{ width: '100%', borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
                 <ShowcaseVideo src={video.url} name={video.name} />
               </div>
             ))}

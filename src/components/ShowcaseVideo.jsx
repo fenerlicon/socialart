@@ -52,6 +52,7 @@ const ShowcaseVideo = ({ src, logo, name, aspectRatio = '9/16', style = {} }) =>
     <div 
       className="showcase-video-card"
       style={{
+        width: '100%',
         borderRadius: '30px',
         overflow: 'hidden',
         aspectRatio: aspectRatio,

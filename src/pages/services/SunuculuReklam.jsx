@@ -57,7 +57,7 @@ const SunuculuReklam = () => {
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "ArayanVar" },
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
             ].map((video, idx) => (
-              <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto' }}>
+              <div key={idx} className="glass" style={{ width: '100%', borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
                 <ShowcaseVideo src={video.url} name={video.name} />
               </div>
             ))}
