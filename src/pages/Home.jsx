@@ -31,6 +31,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
+import ShowcaseVideo from '../components/ShowcaseVideo';
 const AnalysisForm = React.lazy(() => import('../components/AnalysisForm'));
 const FAQAccordion = React.lazy(() => import('../components/FAQAccordion'));
 
@@ -244,9 +245,7 @@ function Home() {
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}><img src={item.logo} alt={item.name} width="150" height="40" loading="lazy" style={{ height: '40px', objectFit: 'contain' }} /></div>
-                <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', position: 'relative', border: '8px solid #1a1a1a' }}>
-                  <video src={item.url} autoPlay muted loop playsInline preload="none" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+                <ShowcaseVideo src={item.url} name={item.name} />
               </div>
             ))}
           </div>
@@ -323,9 +322,7 @@ function Home() {
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4" }
             ].map((item, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
-                  <video src={item.url} autoPlay muted loop playsInline preload="none" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+                <ShowcaseVideo src={item.url} name={`Örnek Reklam ${idx + 1}`} />
               </div>
             ))}
           </div>

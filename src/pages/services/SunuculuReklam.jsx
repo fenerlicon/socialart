@@ -11,6 +11,7 @@ import {
   Zap
 } from 'lucide-react';
 import AnalysisForm from '../../components/AnalysisForm';
+import ShowcaseVideo from '../../components/ShowcaseVideo';
 
 const SunuculuReklam = () => {
   return (
@@ -57,9 +58,7 @@ const SunuculuReklam = () => {
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Social Art" }
             ].map((video, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto' }}>
-                <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
-                  <video src={video.url} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+                <ShowcaseVideo src={video.url} name={video.name} />
               </div>
             ))}
           </div>

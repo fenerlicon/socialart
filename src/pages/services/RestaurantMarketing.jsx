@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { 
   Utensils, 
   Camera, 
@@ -9,11 +8,16 @@ import {
   Star,
   Zap,
   PlayCircle,
-  Smartphone
+  Smartphone,
+  Wine,
+  ChefHat,
+  Award,
+  Fish
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnalysisForm from '../../components/AnalysisForm';
 import FAQAccordion from '../../components/FAQAccordion';
+import ShowcaseVideo from '../../components/ShowcaseVideo';
 
 // Count-up animasyon hook'u
 function useCountUp(target, duration = 2000, started = false) {
@@ -210,30 +214,75 @@ const RestaurantMarketing = () => {
               {/* 2x2 Referans Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 {[
-                  { name: 'VIP\nCATERING', icon: '🥂', color: '#c9a84c', bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.2)', tag: 'Catering & Organizasyon' },
-                  { name: 'TAŞDELEN\nKARADENİZ ET', icon: '🥩', color: '#e05252', bg: 'rgba(224,82,82,0.08)', border: 'rgba(224,82,82,0.2)', tag: 'Et Lokantası' },
-                  { name: 'GURME\nBAHÇEŞEHİR', icon: '🍽️', color: '#00c896', bg: 'rgba(0,200,150,0.08)', border: 'rgba(0,200,150,0.2)', tag: 'Fine Dining' },
-                  { name: 'EGE CUNDA\nBALIK', icon: '🐟', color: '#00b4d8', bg: 'rgba(0,180,216,0.08)', border: 'rgba(0,180,216,0.2)', tag: 'Balık Restoranı' },
-                ].map((client, i) => (
-                  <div key={i} style={{
-                    background: client.bg,
-                    border: `1px solid ${client.border}`,
-                    borderRadius: '20px',
-                    padding: '20px 18px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-                    cursor: 'default',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 12px 28px ${client.border}`; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
-                  >
-                    <div style={{ fontSize: '1.8rem', lineHeight: 1 }}>{client.icon}</div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: '900', color: '#fff', lineHeight: '1.35', whiteSpace: 'pre-line' }}>{client.name}</div>
-                    <div style={{ fontSize: '0.65rem', fontWeight: '700', color: client.color, letterSpacing: '0.8px', textTransform: 'uppercase' }}>{client.tag}</div>
-                  </div>
-                ))}
+                  { name: 'VIP\nCATERING', icon: Wine, color: '#c9a84c', shadow: 'rgba(201, 168, 76, 0.2)', tag: 'Catering & Organizasyon' },
+                  { name: 'TAŞDELEN\nKARADENİZ ET', icon: ChefHat, color: '#e05252', shadow: 'rgba(224, 82, 82, 0.2)', tag: 'Et Lokantası' },
+                  { name: 'GURME\nBAHÇEŞEHİR', icon: Award, color: '#00c896', shadow: 'rgba(0, 200, 150, 0.2)', tag: 'Fine Dining' },
+                  { name: 'EGE CUNDA\nBALIK', icon: Fish, color: '#00b4d8', shadow: 'rgba(0, 180, 216, 0.2)', tag: 'Balık Restoranı' },
+                ].map((client, i) => {
+                  const IconComponent = client.icon;
+                  return (
+                    <div key={i} style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      border: `1px solid rgba(255, 255, 255, 0.07)`,
+                      borderRadius: '24px',
+                      padding: '24px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                      cursor: 'default',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'translateY(-6px)';
+                      e.currentTarget.style.borderColor = client.color;
+                      e.currentTarget.style.boxShadow = `0 12px 30px ${client.shadow}, inset 0 0 12px ${client.shadow}`;
+                      const wrapper = e.currentTarget.querySelector('.ref-icon-wrapper');
+                      if (wrapper) {
+                        wrapper.style.transform = 'scale(1.1)';
+                        wrapper.style.background = client.color;
+                        wrapper.style.color = '#000';
+                        wrapper.style.boxShadow = `0 0 15px ${client.color}`;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      const wrapper = e.currentTarget.querySelector('.ref-icon-wrapper');
+                      if (wrapper) {
+                        wrapper.style.transform = 'scale(1)';
+                        wrapper.style.background = 'rgba(255, 255, 255, 0.05)';
+                        wrapper.style.color = client.color;
+                        wrapper.style.boxShadow = 'none';
+                      }
+                    }}
+                    >
+                      <div className="ref-icon-wrapper" style={{
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '16px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: `1px solid rgba(255, 255, 255, 0.1)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: client.color,
+                        transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                      }}>
+                        <IconComponent size={26} />
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '900', color: '#fff', lineHeight: '1.3', whiteSpace: 'pre-line', letterSpacing: '0.5px' }}>{client.name}</div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: '800', color: client.color, letterSpacing: '1px', textTransform: 'uppercase', marginTop: '2px' }}>{client.tag}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Alt not */}
@@ -258,9 +307,7 @@ const RestaurantMarketing = () => {
               { url: "https://res.cloudinary.com/dqs6iconu/video/upload/v1779304500/iftar_ljxvdx.mp4", name: "Restoran Örneği 3" }
             ].map((video, idx) => (
               <div key={idx} className="glass" style={{ borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ borderRadius: '30px', overflow: 'hidden', aspectRatio: '9/16', background: '#000', border: '8px solid #1a1a1a' }}>
-                  <video src={video.url} autoPlay muted loop playsInline preload="none" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+                <ShowcaseVideo src={video.url} name={video.name} />
               </div>
             ))}
           </div>
