@@ -796,8 +796,10 @@ function Admin() {
 
 
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
-  const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
+  const [shootFormData, setShootFormData] = useState({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim', briefUrl: '' });
   const [shootFiles, setShootFiles] = useState([]);
+  const [existingApptFiles, setExistingApptFiles] = useState([]);
+
 
   // Calendar States
   const [calendarPopup, setCalendarPopup] = useState(null);
@@ -894,6 +896,7 @@ function Admin() {
       status: shootFormData.type,
       email: shootFormData.details,
       phone: shootFormData.staffName,
+      url: shootFormData.briefUrl,
       files: newUploadedFiles
     }]);
 
@@ -901,14 +904,15 @@ function Admin() {
       logActivity('Takvime Not Eklendi', `${shootFormData.clientName} (${shootFormData.type}) eklendi.`);
       setIsShootModalOpen(false);
       setEditingAppt(null);
-      setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim' });
+      setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim', briefUrl: '' });
       setShootFiles([]);
+      setExistingApptFiles([]);
       fetchAllData();
     } else {
+
       alert('Kayıt eklenirken hata: ' + error.message);
     }
   };
-
   const handleUpdateAppt = async (e) => {
     e.preventDefault();
     if (!editingAppt) return;
@@ -932,8 +936,7 @@ function Admin() {
       }
     }
     
-    let finalFiles = editingAppt.files || [];
-    finalFiles = [...finalFiles, ...newUploadedFiles];
+    const finalFiles = [...existingApptFiles, ...newUploadedFiles];
 
     const { error } = await supabase.from('appointments').update({
       full_name: shootFormData.clientName,
@@ -942,6 +945,7 @@ function Admin() {
       status: shootFormData.type,
       email: shootFormData.details,
       phone: shootFormData.staffName,
+      url: shootFormData.briefUrl,
       files: finalFiles
     }).eq('id', editingAppt.id);
 
@@ -950,11 +954,14 @@ function Admin() {
       setIsShootModalOpen(false);
       setEditingAppt(null);
       setShootFiles([]);
+      setExistingApptFiles([]);
+      setShootFormData({ clientName: '', date: '', time: '12:00', details: '', staffName: '', type: 'Çekim', briefUrl: '' });
       fetchAllData();
     } else {
       alert('Güncelleme hatası: ' + error.message);
     }
   };
+
 
   const handleDeleteAppointment = async (apptId) => {
     if (!window.confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
@@ -2075,7 +2082,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   </div>
                 </div>
               ))}
-
               {calendarPopup.appts && calendarPopup.appts.length > 0 && (
                 <div style={{ marginTop: '20px' }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px', marginBottom: '12px' }}>
@@ -2099,8 +2105,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   time: appt.appointment_time,
                                   details: appt.email || '',
                                   staffName: appt.phone || '',
-                                  type: appt.status
+                                  type: appt.status,
+                                  briefUrl: appt.url || ''
                                 });
+                                setExistingApptFiles(appt.files || []);
                                 setIsShootModalOpen(true);
                               }}
                               style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}
@@ -2121,6 +2129,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                 <Download size={12} color="var(--accent)" /> {file.name || `Dosya ${i+1}`}
                               </a>
                             ))}
+                          </div>
+                        )}
+                        {appt.url && (
+                          <div style={{ marginTop: '8px' }}>
+                            <a href={appt.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', background: 'rgba(0,229,255,0.1)', borderRadius: '8px', color: 'var(--primary)', fontSize: '0.75rem', textDecoration: 'none', border: '1px solid rgba(0,229,255,0.2)', fontWeight: 'bold' }}>
+                              <ExternalLink size={12} /> Brief Linki / Dökümanı
+                            </a>
                           </div>
                         )}
                       </div>

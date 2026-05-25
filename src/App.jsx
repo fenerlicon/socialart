@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { 
   Menu, 
   X, 
@@ -209,6 +209,7 @@ function App() {
         }>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/hakkimizda" element={<About />} />
             <Route path="/hizmetlerimiz" element={<Services />} />
             <Route path="/blog" element={<Blog />} />

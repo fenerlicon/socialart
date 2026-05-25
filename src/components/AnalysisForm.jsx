@@ -120,14 +120,17 @@ const AnalysisForm = ({ defaultService = "" }) => {
   };
 
   return (
-    <div className="form-box-wrapper" style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div className="form-box-wrapper" style={{ maxWidth: '900px', width: '100%', margin: '0 auto' }}>
       <div className="form-box" style={{ 
         background: 'rgba(15, 15, 15, 0.7)', 
         backdropFilter: 'blur(15px)', 
         border: '1px solid rgba(255,255,255,0.1)', 
-        padding: '30px', 
+        padding: '40px 30px', 
         borderRadius: '32px',
-        boxShadow: '0 25px 50px rgba(0,0,0,0.4)'
+        boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
+        maxWidth: '900px',
+        width: '100%',
+        margin: '0 auto'
       }}>
         {formSuccess ? (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>

@@ -32,7 +32,7 @@ import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
 import ShowcaseVideo from '../components/ShowcaseVideo';
-const AnalysisForm = React.lazy(() => import('../components/AnalysisForm'));
+import AnalysisForm from '../components/AnalysisForm';
 const FAQAccordion = React.lazy(() => import('../components/FAQAccordion'));
 
 const AnimatedMetric = ({ value, suffix = '', prefix = '', label, desc, color }) => {
@@ -412,13 +412,7 @@ function Home() {
             <p className="section-subtitle">Uzman ekibimiz mevcut durumunuzu analiz etsin ve size özel büyüme raporu sunsun.</p>
           </div>
           <LazySection height="350px">
-            <React.Suspense fallback={
-              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-              </div>
-            }>
-              <AnalysisForm />
-            </React.Suspense>
+            <AnalysisForm />
           </LazySection>
         </div>
       </section>

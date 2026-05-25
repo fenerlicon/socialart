@@ -1076,14 +1076,10 @@
 }
 
 .form-box {
-  max-width: 700px;
+  max-width: 900px;
   margin: 40px auto 0;
   background: var(--surface);
   padding: 40px;
-}
-
-@media (min-width: 2000px) {
-  .form-box { max-width: 900px; }
 }
 
 .input-group {
