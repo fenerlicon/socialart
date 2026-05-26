@@ -44,6 +44,7 @@ const SosyalMedya = lazy(() => import('./pages/services/SosyalMedya'));
 const UGCInfluencer = lazy(() => import('./pages/services/UGCInfluencer'));
 const SunuculuReklam = lazy(() => import('./pages/services/SunuculuReklam'));
 const RestaurantMarketing = lazy(() => import('./pages/services/RestaurantMarketing'));
+const GymMarketing = lazy(() => import('./pages/services/GymMarketing'));
 
 // Named exports from ApplicationForms
 const UGCApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
@@ -229,6 +230,7 @@ function App() {
             <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
             <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
             <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
+            <Route path="/spor-salonu-pazarlama" element={<GymMarketing />} />
             <Route path="/tesekkurler" element={<ThankYou />} />
             <Route path="/iletisim" element={<Contact />} />
 
