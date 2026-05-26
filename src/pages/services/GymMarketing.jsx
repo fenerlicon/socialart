@@ -301,17 +301,11 @@ const GymMarketing = () => {
       {/* Showcase */}
       <section className="section-padding" style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="container">
-          <h2 style={{ textAlign: 'center', marginBottom: '50px', fontSize: '2.8rem', fontWeight: '900' }}>Örnek <span className="gradient-text">Çalışmalarımız</span></h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', margin: '40px 0' }}>
-            {[
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836177/video1_ewynu2.mov", name: "Salon Tanıtım Videosu" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836171/video2_vthln3.mp4", name: "Eğitmen Reels Tanıtımı" },
-              { url: "https://res.cloudinary.com/dqs6iconu/video/upload/q_auto,vc_auto,f_auto/v1778836176/video3_f9pp8w.mp4", name: "Dönüşüm Odaklı Spor Reklamı" }
-            ].map((video, idx) => (
-              <div key={idx} className="glass" style={{ width: '100%', borderRadius: '40px', padding: '15px', maxWidth: '320px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
-                <ShowcaseVideo src={video.url} name={video.name} />
-              </div>
-            ))}
+          <h2 style={{ textAlign: 'center', marginBottom: '50px', fontSize: '2.8rem', fontWeight: '900' }}>Örnek <span className="gradient-text">Çalışmamız</span></h2>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '40px 0' }}>
+            <div className="glass" style={{ width: '100%', borderRadius: '40px', padding: '15px', maxWidth: '360px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
+              <ShowcaseVideo src="https://res.cloudinary.com/dqs6iconu/video/upload/v1779788810/spor_seko%CC%88ru%CC%88ne_o%CC%88zel_reklammp4_pm1irw.mp4" name="Spor Sektörüne Özel Reklam" />
+            </div>
           </div>
         </div>
       </section>
