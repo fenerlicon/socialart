@@ -195,7 +195,7 @@ const GymMarketing = () => {
                   </div>
                   <div>
                     <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Dönüşüm Odaklı Reklam Kampanyaları</h4>
-                    <p style={{ color: '#888', fontSize: '0.95rem' }}>Sadece takipçi değil; ücretsiz deneme seansı, salon turu ve özel üyelik teklifleriyle salonunuza doğrudan yeni üyeler getiren reklamlar.</p>
+                    <p style={{ color: '#888', fontSize: '0.95rem' }}>Sadece takipçi değil; üyelik kayıt kampanyaları, özel indirimler ve hedeflenmiş tekliflerle salonunuza doğrudan yeni üyeler getiren reklamlar.</p>
                   </div>
                 </div>
               </div>
@@ -301,7 +301,7 @@ const GymMarketing = () => {
       {/* Showcase */}
       <section className="section-padding" style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="container">
-          <h2 style={{ textAlign: 'center', marginBottom: '50px', fontSize: '2.8rem', fontWeight: '900' }}>Örnek <span className="gradient-text">Çalışmamız</span></h2>
+          <h2 style={{ textAlign: 'center', marginBottom: '50px', fontSize: '2.8rem', fontWeight: '900', lineHeight: '1.2' }}>Potansiyel Üyeleri Harekete Geçiren <span className="gradient-text">Reklam Kurgumuz</span></h2>
           <div style={{ display: 'flex', justifyContent: 'center', margin: '40px 0' }}>
             <div className="glass" style={{ width: '100%', borderRadius: '40px', padding: '15px', maxWidth: '360px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
               <ShowcaseVideo src="https://res.cloudinary.com/dqs6iconu/video/upload/v1779788810/spor_seko%CC%88ru%CC%88ne_o%CC%88zel_reklammp4_pm1irw.mp4" name="Spor Sektörüne Özel Reklam" />
@@ -320,9 +320,9 @@ const GymMarketing = () => {
           
           <div className="services-grid">
             {[
-              { icon: <Smartphone />, title: "Motivasyon Arttıran Reels", desc: "Trend müzikler ve dinamik antrenman kurgularıyla yüksek izlenmeli video serileri." },
+              { icon: <Smartphone />, title: "Motivasyon Arttıran Reels", desc: "Trend müzikler and dinamik antrenman kurgularıyla yüksek izlenmeli video serileri." },
               { icon: <MapPin />, title: "Bölgesel GEO Reklamları", desc: "Salon çevresinde yaşayan ve spor yapma potansiyeli olan kişileri hedefleyen reklamlar." },
-              { icon: <Zap />, title: "Ücretsiz Deneme Kampanyaları", desc: "İlk seansı ücretsiz sunarak potansiyel üyelerin iletişim bilgilerini toplayan sistemler." },
+              { icon: <TrendingUp />, title: "Kayıt Odaklı Kampanyalar", desc: "Sezonluk fırsatlar ve özel üyelik paketleri için doğrudan satış getiren performans reklamları." },
               { icon: <Users />, title: "UGC & Eğitmen İçerikleri", desc: "Eğitmenlerinizin uzmanlığını ve üyelerinizin değişim hikayelerini öne çıkaran doğal paylaşımlar." },
               { icon: <PlayCircle />, title: "Hikaye ve Günlük Paylaşım", desc: "Günlük salon enerjisini, doluluk oranını ve anlık motivasyonu gösteren hikaye yönetimi." },
               { icon: <Star />, title: "Kurumsal Üyelik Tasarımları", desc: "Broşürlerden dijital kartlara, salonunuzun görsel kimliğine değer katan tüm grafik çalışmaları." }
@@ -351,8 +351,8 @@ const GymMarketing = () => {
               answer: "Bütçenizi salonun konumuna yakın (3-5 km yarıçapında) yaşayan ve sporla aktif olarak ilgilenen potansiyel kitleye odaklayarak minimum maliyetle maksimum üye kazanımı sağlıyoruz."
             },
             {
-              question: "Ücretsiz deneme kampanyaları nasıl üye kazandırır?",
-              answer: "Sosyal medya üzerinden ücretsiz deneme seansı veya salon turu teklif eden reklamlarla başvuru topluyoruz. Satış ekibinizle entegre çalışan bu formlar sayesinde gelen potansiyel üyeleri hızlıca kayda dönüştürüyorsunuz."
+              question: "Sosyal medya hesaplarımızın günlük yönetimini de yapıyor musunuz?",
+              answer: "Evet, sadece reklam çıkmıyoruz. Aylık içerik planının hazırlanması, hazırlanan Reels ve postların paylaşılması, hikaye yönetimi ve gelen mesaj/yorumların karşılanması gibi tüm sosyal medya yönetim sürecini de üstleniyoruz."
             }
           ]} />
         </div>
