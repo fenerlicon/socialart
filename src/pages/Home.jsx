@@ -32,7 +32,7 @@ import jeepLogo from '../assets/images/jeep-logo.webp';
 import peugeotLogo from '../assets/images/peugeot-logo.png';
 import kotonLogo from '../assets/images/koton-logo.png';
 import ShowcaseVideo from '../components/ShowcaseVideo';
-import AnalysisForm from '../components/AnalysisForm';
+const AnalysisForm = React.lazy(() => import('../components/AnalysisForm'));
 const FAQAccordion = React.lazy(() => import('../components/FAQAccordion'));
 
 const AnimatedMetric = ({ value, suffix = '', prefix = '', label, desc, color }) => {
@@ -199,10 +199,10 @@ function Home() {
 
   const partners = [
     "PEUGEOT", "KOTON", "JEEP", "Gurme Bahçeşehir", "Eray Gıda", "Flormar",
-    "Sahne Marin", "EGE CUNDA BALIK", "PEUGEOT", "KOTON", "JEEP", "Smart Enerji", 
-    "Polar", "Enova Eğitim", "Indian Motorcycle", "S.E.T.S", "PEUGEOT", "KOTON", 
-    "JEEP", "Allure Deluxe Beauty", "Funfest", "DUMA DUMA", "216 Dizayn", 
-    "good&mood", "MapOfX", "Cosentino", "Geberit", "Karadeniz Et", "SRG"
+    "Sahne Marin", "EGE CUNDA BALIK", "Smart Enerji", "Polar", "Enova Eğitim",
+    "Indian Motorcycle", "S.E.T.S", "Allure Deluxe Beauty", "Funfest",
+    "DUMA DUMA", "216 Dizayn", "good&mood", "MapOfX", "Cosentino", "Geberit",
+    "Karadeniz Et", "SRG"
   ];
 
   return (
@@ -228,35 +228,25 @@ function Home() {
         </div>
       </section>
 
-      {/* PARTNERS TICKER (Moved above Showreel for social proof) */}
-      <section className="brands-section" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#000', paddingTop: '20px', paddingBottom: '20px' }}>
+      {/* PARTNERS GRID */}
+      <section className="brands-section" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#020202', paddingTop: '60px', paddingBottom: '60px' }}>
         <div className="container">
-          <div className="brand-ticker-wrap">
-            <div className="brand-track">
-              {partners.map((p, i) => {
-                const isTrust = ["PEUGEOT", "KOTON", "JEEP"].includes(p);
-                return (
-                  <div 
-                    className={`brand-item ${isTrust ? 'trust-brand' : ''}`} 
-                    key={`t1-${i}`}
-                  >
-                    {p}
-                  </div>
-                );
-              })}
-              {/* Duplicate for seamless scrolling */}
-              {partners.map((p, i) => {
-                const isTrust = ["PEUGEOT", "KOTON", "JEEP"].includes(p);
-                return (
-                  <div 
-                    className={`brand-item ${isTrust ? 'trust-brand' : ''}`} 
-                    key={`t2-${i}`}
-                  >
-                    {p}
-                  </div>
-                );
-              })}
-            </div>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: 'var(--primary)', background: 'rgba(255, 0, 85, 0.08)', padding: '8px 20px', borderRadius: '50px', border: '1px solid rgba(255, 0, 85, 0.15)' }}>Birlikte Büyüyoruz</span>
+            <h3 style={{ fontSize: '1.8rem', fontWeight: '900', marginTop: '16px', color: '#fff', letterSpacing: '-0.5px' }}>Referanslarımız & İş Ortaklarımız</h3>
+          </div>
+          <div className="brands-grid-wrap">
+            {partners.map((p, i) => {
+              const isTrust = ["PEUGEOT", "KOTON", "JEEP", "Geberit", "Cosentino", "Polar", "Flormar"].includes(p);
+              return (
+                <div 
+                  className={`brand-card ${isTrust ? 'trust-brand-card' : ''}`} 
+                  key={`brand-${i}`}
+                >
+                  {p}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -412,7 +402,13 @@ function Home() {
             <p className="section-subtitle">Uzman ekibimiz mevcut durumunuzu analiz etsin ve size özel büyüme raporu sunsun.</p>
           </div>
           <LazySection height="350px">
-            <AnalysisForm />
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm />
+            </React.Suspense>
           </LazySection>
         </div>
       </section>

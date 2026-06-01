@@ -1,7 +1,8 @@
 import React from 'react';
 import { Globe, Search, Zap, ArrowRight, Brain, Cpu, Layout, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import AnalysisForm from '../../components/AnalysisForm';
+import LazySection from '../../components/LazySection';
+const AnalysisForm = React.lazy(() => import('../../components/AnalysisForm'));
 import FAQAccordion from '../../components/FAQAccordion';
 
 function SEOGEO() {
@@ -136,7 +137,15 @@ function SEOGEO() {
             </p>
           </div>
           
-          <AnalysisForm defaultService="SEO & GEO Hizmeti" />
+          <LazySection height="350px">
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm defaultService="SEO & GEO Hizmeti" />
+            </React.Suspense>
+          </LazySection>
         </div>
       </section>
     </div>

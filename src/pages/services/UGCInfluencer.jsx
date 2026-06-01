@@ -1,7 +1,8 @@
 import React from 'react';
 import { Users, Video, TrendingUp, ArrowRight, CheckCircle2, Heart, Sparkles, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import AnalysisForm from '../../components/AnalysisForm';
+import LazySection from '../../components/LazySection';
+const AnalysisForm = React.lazy(() => import('../../components/AnalysisForm'));
 import FAQAccordion from '../../components/FAQAccordion';
 
 function UGCInfluencer() {
@@ -130,7 +131,15 @@ function UGCInfluencer() {
             </p>
           </div>
           
-          <AnalysisForm defaultService="UGC & Influencer" />
+          <LazySection height="350px">
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm defaultService="UGC & Influencer" />
+            </React.Suspense>
+          </LazySection>
         </div>
       </section>
     </div>

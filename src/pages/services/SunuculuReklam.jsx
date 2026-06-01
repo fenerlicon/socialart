@@ -10,8 +10,39 @@ import {
   Target,
   Zap
 } from 'lucide-react';
-import AnalysisForm from '../../components/AnalysisForm';
+const AnalysisForm = React.lazy(() => import('../../components/AnalysisForm'));
 import ShowcaseVideo from '../../components/ShowcaseVideo';
+
+const LazySection = ({ children, height = '300px' }) => {
+  const [isInView, setIsInView] = React.useState(false);
+  const containerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: '200px',
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ minHeight: isInView ? 'auto' : height, width: '100%', display: 'flex', flexDirection: 'column' }}>
+      {isInView ? children : null}
+    </div>
+  );
+};
 
 const SunuculuReklam = () => {
   return (
@@ -116,7 +147,15 @@ const SunuculuReklam = () => {
             <h2 className="section-title">Hemen <span className="gradient-text">Teklif Alın</span></h2>
             <p className="section-subtitle">Markanız için en uygun sunuculu reklam stratejisini birlikte kuralım.</p>
           </div>
-          <AnalysisForm defaultService="Sunuculu Reklam" />
+          <LazySection height="350px">
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm defaultService="Sunuculu Reklam" />
+            </React.Suspense>
+          </LazySection>
         </div>
       </section>
     </div>

@@ -16,7 +16,8 @@ import {
   Fish
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import AnalysisForm from '../../components/AnalysisForm';
+import LazySection from '../../components/LazySection';
+const AnalysisForm = React.lazy(() => import('../../components/AnalysisForm'));
 import FAQAccordion from '../../components/FAQAccordion';
 import ShowcaseVideo from '../../components/ShowcaseVideo';
 
@@ -373,7 +374,15 @@ const RestaurantMarketing = () => {
             </p>
           </div>
           
-          <AnalysisForm defaultService="Restoran Pazarlaması" />
+          <LazySection height="350px">
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm defaultService="Restoran Pazarlaması" />
+            </React.Suspense>
+          </LazySection>
         </div>
       </section>
     </div>
