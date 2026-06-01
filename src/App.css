@@ -299,7 +299,7 @@
   justify-content: center;
   text-align: center;
   padding-top: 320px;
-  padding-bottom: 200px; /* Added breathing room below buttons */
+  padding-bottom: 80px; /* Reduced to decrease the large gap below buttons */
   overflow: hidden;
 }
 
@@ -474,14 +474,14 @@
   font-size: 5.5rem;
   font-weight: 900;
   line-height: 1.1;
-  margin-bottom: 3.5rem;
+  margin-bottom: 2rem; /* Reduced margin to make layout more compact */
   letter-spacing: -2px;
 }
 
 .hero-desc {
   font-size: 1.35rem;
   color: var(--text-muted);
-  margin-bottom: 4.5rem;
+  margin-bottom: 2.5rem; /* Reduced margin to make layout more compact */
   line-height: 1.8;
   max-width: 850px;
 }
@@ -492,7 +492,7 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  margin-bottom: 4rem; /* Added space below actions */
+  margin-bottom: 1.5rem; /* Reduced space below actions */
 }
 
 .btn {
@@ -1432,6 +1432,12 @@
     height: 65px !important;
   }
 
+  .hero {
+    padding-top: 130px !important;
+    padding-bottom: 60px !important;
+    min-height: auto !important; /* Allow the section to auto-scale on mobile */
+  }
+
   .hero-title {
     font-size: 2.8rem !important; /* Even larger for mobile */
     line-height: 1.1;
@@ -1442,7 +1448,7 @@
 
   .hero-desc {
     font-size: 1.05rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
     line-height: 1.6;
   }
 
@@ -1451,6 +1457,7 @@
     width: 100%;
     gap: 12px !important;
     padding: 0;
+    margin-bottom: 1.5rem !important; /* Reduced space below actions on mobile */
   }
 
   /* SECTIONS */
