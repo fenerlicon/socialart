@@ -121,10 +121,10 @@ function Home() {
     "logo": "https://www.socialartmedya.com/logo.png",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "İstanbul",
+      "addressLocality": "Çekmeköy, İstanbul",
       "addressCountry": "TR"
     },
-    "description": "İstanbul merkezli büyüme odaklı (growth) dijital pazarlama ajansı.",
+    "description": "İstanbul Çekmeköy merkezli büyüme odaklı (growth) dijital pazarlama, reklam ve kreatif prodüksiyon ajansı.",
     "sameAs": [
       "https://www.instagram.com/socialartmedya"
     ]
