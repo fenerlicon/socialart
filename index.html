@@ -89,19 +89,16 @@
           window.gtag = function(){dataLayer.push(arguments);}
           gtag('js', new Date());
 
-          // Load Google Ads
+          // Load Google Tag library once
           var gascript = document.createElement('script');
           gascript.async = true;
-          gascript.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18159914289';
+          gascript.src = 'https://www.googletagmanager.com/gtag/js?id=G-V4E3H8R0TZ';
           document.head.appendChild(gascript);
-          gtag('config', 'AW-18159914289');
 
-          // Load Google Analytics
-          var ga4script = document.createElement('script');
-          ga4script.async = true;
-          ga4script.src = 'https://www.googletagmanager.com/gtag/js?id=G-V4E3H8R0TZ';
-          document.head.appendChild(ga4script);
+          // Configure all properties
+          gtag('config', 'AW-18159914289');
           gtag('config', 'G-V4E3H8R0TZ');
+          gtag('config', 'G-JHVRJRG3GW');
 
           // 3. Microsoft Clarity
           (function(c,l,a,r,i,t,y){
