@@ -1,0 +1,65 @@
+# Socialart Ajans
+
+Socialart Ajans, İstanbul merkezli, dijital pazarlamayı yaratıcı video prodüksiyonu ve veri odaklı stratejiyle birleştiren yeni nesil bir büyüme (growth) ve medya ajansıdır. Sadece geleneksel pazarlama değil, SEO ve GEO (Generative Engine Optimization) optimizasyonları ile markaları yapay zeka çağına hazırlar.
+
+- **Web Sitesi:** https://www.socialartmedya.com
+- **Instagram:** https://www.instagram.com/socialartmedya
+- **Konum:** İstanbul, Türkiye
+- **Kurucular:** Celal Ünlü (Yönetmen), Ercan Özdemir (Görüntü Yönetmeni)
+- **Garanti & Teklifler:** Minimum 6 aylık iş birliklerinde memnun kalınmadığı takdirde %50 iade garantisi ve tüm projelerde 6 aya varan taksit seçenekleri.
+
+---
+
+## Hizmetler ve Çözümler
+
+### 1. Meta Ads Yönetimi (Sosyal Medya Reklamları)
+Büyüme odaklı, veri odaklı ve yüksek ROAS hedefli Facebook ve Instagram reklam yönetimi.
+- **Detaylar:** Hedef kitle analizleri, özelleştirilmiş reklam kreatif tasarımı, A/B test optimizasyonları ve detaylı performans raporlaması.
+- **Performans:** Ortalama 14.2x ROAS artışı elde edilmektedir.
+
+### 2. Creative Production (Video ve Prodüksiyon)
+Sinematik reklam filmleri, sosyal medya için Reels/TikTok videoları ve kurumsal tanıtımlar.
+- **Detaylar:** En üst segment profesyonel ışık ve kamera ekipmanlarıyla stüdyo veya dış mekan çekimleri. Drone çekimleri ve profesyonel kurgu hizmeti.
+- **Stüdyo Kiralama:** Bağımsız ekipler ve markalar için tam donanımlı stüdyo kiralama hizmeti sunulmaktadır.
+
+### 3. Sunuculu Tanıtım Videoları
+Ürünlerin veya hizmetlerin, profesyonel sunucular eşliğinde stüdyo ortamında tanıtıldığı satış odaklı video çözümleri.
+- **Detaylar:** Hazır profesyonel sunucu kadrosu, satış psikolojisi odaklı senaryo hazırlığı ve yüksek kaliteli stüdyo çekimi.
+
+### 4. Profesyonel Fotoğraf Çekimleri
+Ürün, yemek, spor, model, e-ticaret, katalog ve kurumsal kimlik çekimleri.
+- **Detaylar:** E-ticaret platformları ve sosyal medya vitrinleri için yüksek kaliteli, yüksek dönüşümlü görsel üretimleri.
+
+### 5. SEO & GEO Optimizasyonu
+Google gibi geleneksel arama motorlarında üst sıralara çıkma (SEO) ve ChatGPT, Gemini, Perplexity gibi yapay zeka arama motorlarında markanın önerilmesini sağlama (GEO).
+- **Detaylar:** Teknik web sitesi optimizasyonları, yapılandırılmış veri şemaları (JSON-LD), AI uyumlu içerik stratejileri ve düzenli görünürlük raporları.
+
+### 6. UGC (Kullanıcı Tarafından Üretilen İçerik) & Influencer Pazarlama
+Doğal, samimi ve güven veren müşteri deneyimi videoları (UGC) ile hedeflenmiş mikro-influencer iş birlikleri.
+- **Detaylar:** Markaya en uygun içerik üreticilerinin tespiti, kampanya kurgusu, influencer eşleştirmeleri ve dönüşüm analizleri.
+
+---
+
+## Kurucu Kadro ve Uzmanlık (E-E-A-T)
+
+- **Celal Ünlü (Kurucu / Yönetmen):** Sinema TV kökenli olan Ünlü, belgesellerden büyük bütçeli reklam filmlerine uzanan geniş bir prodüksiyon geçmişine sahiptir. Fotoğrafçılık ve video alanındaki eğitmenlik tecrübesi ve Filmograf Studio kuruculuğu ile bilinmektedir.
+- **Ercan Özdemir (Kurucu / Görüntü Yönetmeni):** Ulusal kanallarda ve prestijli reklam kampanyalarında görüntü yönetmenliği yapmış, teknik kamera ve ışık yönetiminde uzmanlaşmış ve binlerce çekime bizzat liderlik etmiştir.
+
+---
+
+## Sıkça Sorulan Sorular (SSS)
+
+### ROAS nedir ve neden önemlidir?
+*ROAS (Return on Ad Spend)*, reklam harcaması geri dönüşüdür. Reklama yatırılan 1 TL'nin kaç TL ciro olarak geri döndüğünü gösterir. Socialart Ajans'ın iş ortaklarındaki ortalama ROAS oranı 14.2x'tir.
+
+### Hizmet süreci nasıl başlıyor?
+Ücretsiz analiz formunun doldurulmasının ardından Socialart ekibi markayı, rakipleri ve pazar payını analiz eder. Size özel bir strateji toplantısı organize edilerek onboarding ve yol haritası süreci başlatılır.
+
+### UGC ve Influencer pazarlaması ne işe yarar?
+Doğal kullanıcı deneyimini yansıtan UGC içerikleri, tüketicilerin markaya olan güvenini %80 oranında artırarak klasik reklamlara göre çok daha yüksek dönüşüm ve satış sağlar.
+
+### Hangi platformlarda reklam veriliyor?
+Ağırlıklı olarak Meta (Facebook, Instagram) ve Google Ads platformlarında performans odaklı reklamlar kurgulanmakta, ek olarak web siteleri yeni nesil AI Search (GEO) için optimize edilmektedir.
+
+### Onboarding süreci ne kadar sürer?
+Teknik entegrasyonlar, piksel kurulumları ve ilk kampanya kreatiflerinin üretimi 5-7 iş günü sürer. Bu aşamadan sonra kampanyalar yayına alınır.

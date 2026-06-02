@@ -86,8 +86,32 @@ const servicesData = [
 ];
 
 function Services() {
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Socialart Ajans Hizmetleri",
+    "description": "Socialart Ajans tarafından sunulan dijital pazarlama, video prodüksiyon ve reklam yönetimi hizmetleri listesi.",
+    "itemListElement": servicesData.map((service, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Service",
+        "name": service.title,
+        "description": service.desc,
+        "provider": {
+          "@type": "Organization",
+          "name": "SocialArt Ajans",
+          "url": "https://www.socialartmedya.com"
+        },
+        "url": `https://www.socialartmedya.com${service.link}`
+      }
+    }))
+  };
+
   return (
     <div style={{ background: '#050505', minHeight: '100vh' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
+
 
       {/* HERO */}
       <section style={{

@@ -59,8 +59,36 @@ function BlogDetail() {
     );
   }
 
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": stripCdata(post.title),
+    "description": post.excerpt || stripCdata(post.title),
+    "image": post.cover_image ? (post.cover_image.startsWith('http') ? post.cover_image : `https://www.socialartmedya.com${post.cover_image}`) : "https://www.socialartmedya.com/logo.png",
+    "datePublished": post.created_at,
+    "dateModified": post.created_at,
+    "author": {
+      "@type": "Organization",
+      "name": "SocialArt Ajans",
+      "url": "https://www.socialartmedya.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SocialArt Ajans",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.socialartmedya.com/logo.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://www.socialartmedya.com/blog/${post.slug}`
+    }
+  };
+
   return (
     <div className="blog-detail-page" style={{ paddingTop: '200px', minHeight: '100vh', background: 'var(--bg-color)' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }} />
       <div className="container">
         {/* Navigation */}
         <Link to="/blog" className="btn btn-outline" style={{ marginBottom: '40px', padding: '10px 20px', fontSize: '0.9rem' }}>

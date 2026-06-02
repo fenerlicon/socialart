@@ -2,8 +2,36 @@ import React from 'react';
 import { Camera, Video, Users, Target, Rocket, Award, Heart, ArrowRight } from 'lucide-react';
 
 function About() {
+  const aboutSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "Socialart Ajans Hakkımızda",
+    "description": "SocialArt Ajans, sanatı stratejiyle birleştiren, markaların dijital dünyadaki hikayelerini en estetik ve etkili şekilde anlatan bir yeni nesil medya ajansıdır.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "SocialArt Ajans",
+      "url": "https://www.socialartmedya.com",
+      "logo": "https://www.socialartmedya.com/logo.png",
+      "founder": [
+        {
+          "@type": "Person",
+          "name": "Celal Ünlü",
+          "jobTitle": "Kurucu / Yönetmen",
+          "description": "Sinema TV kökenli vizyonuyla, belgesellerden reklam filmlerine uzanan geniş bir prodüksiyon tecrübesine sahiptir. Filmograf Studio'nun kurucusudur."
+        },
+        {
+          "@type": "Person",
+          "name": "Ercan Özdemir",
+          "jobTitle": "Kurucu / Görüntü Yönetmeni",
+          "description": "Ulusal kanallardan büyük bütçeli reklam filmlerine kadar pek çok projede görüntü yönetmeni olarak yer almıştır."
+        }
+      ]
+    }
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }} />
       <style>
         {`
           .profile-pic-container {

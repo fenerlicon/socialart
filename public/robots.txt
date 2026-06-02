@@ -1,4 +1,23 @@
 User-agent: *
 Allow: /
 
+# AI Crawlers and Search Agents
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://www.socialartmedya.com/sitemap.xml
+# AI Semantic Index
+Sitemap: https://www.socialartmedya.com/llms.txt
+
