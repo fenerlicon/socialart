@@ -38,7 +38,38 @@ const ShowcaseVideo = ({ src, aspectRatio = '9/16', style = {} }) => {
     return '';
   };
 
+  // Auto-generate optimized video source URL from Cloudinary URL to save massive bandwidth
+  const getOptimizedVideoUrl = (videoUrl) => {
+    if (!videoUrl) return '';
+    if (videoUrl.includes('cloudinary.com')) {
+      const match = videoUrl.match(/(.*\/video\/upload\/)(.*)/);
+      if (match) {
+        const prefix = match[1];
+        let rest = match[2];
+        
+        const parts = rest.split('/');
+        const isVersion = /^v\d+$/.test(parts[0]);
+        
+        if (isVersion) {
+          return prefix + 'f_auto,q_auto/' + rest;
+        } else if (parts.length > 1) {
+          const isSecondPartVersion = /^v\d+$/.test(parts[1]);
+          if (isSecondPartVersion || parts.length > 2) {
+            parts[0] = 'f_auto,q_auto';
+            return prefix + parts.join('/');
+          }
+        }
+        
+        if (!rest.includes('f_auto,q_auto')) {
+          return prefix + 'f_auto,q_auto/' + rest;
+        }
+      }
+    }
+    return videoUrl;
+  };
+
   const posterUrl = getPosterUrl(src);
+  const optimizedVideoUrl = getOptimizedVideoUrl(src);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -90,7 +121,7 @@ const ShowcaseVideo = ({ src, aspectRatio = '9/16', style = {} }) => {
     >
       <video 
         ref={videoRef}
-        src={src} 
+        src={optimizedVideoUrl} 
         muted 
         loop 
         playsInline 

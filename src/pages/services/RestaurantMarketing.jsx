@@ -134,7 +134,7 @@ const RestaurantMarketing = () => {
             </div>
             
             <h1 className="hero-title" style={{ fontSize: '4.5rem', lineHeight: '1.1', fontWeight: '900', marginBottom: '30px' }}>
-              Restoranınızın Masalarını <span className="gradient-text">Dijitalden Dolduruyoruz.</span>
+              Restoran Dijital Pazarlama ile <span className="gradient-text">Masalarınızı Dolduruyoruz.</span>
             </h1>
             
             <p className="hero-desc" style={{ fontSize: '1.25rem', color: '#ccc', maxWidth: '700px', lineHeight: '1.6' }}>
