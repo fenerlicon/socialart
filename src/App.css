@@ -1482,5 +1482,42 @@
     border-radius: 12px;
     min-height: 52px;
   }
+
+  /* Optimize hero backgrounds on mobile (zero image download load time) */
+  .restaurant-hero-bg {
+    background-image: linear-gradient(to bottom, rgba(5,5,5,0.92), #050505) !important;
+    opacity: 0.95 !important;
+  }
+  .gym-hero-bg {
+    background-image: linear-gradient(to bottom, rgba(5,5,5,0.92), #050505) !important;
+    opacity: 0.95 !important;
+  }
+}
+
+/* Service Detail Pages Desktop Backgrounds */
+.restaurant-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(to bottom, rgba(5,5,5,0.7), #050505), url('/restaurant_marketing_hero.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.gym-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(to bottom, rgba(5,5,5,0.7), #050505), url('/gym_marketing_hero.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+  z-index: 0;
 }
 

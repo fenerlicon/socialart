@@ -104,18 +104,7 @@ const GymMarketing = () => {
         paddingBottom: '120px',
         overflow: 'hidden'
       }}>
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: `linear-gradient(to bottom, rgba(5,5,5,0.7), #050505), url('/gym_marketing_hero.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.5,
-          zIndex: 0
-        }}></div>
+        <div className="gym-hero-bg"></div>
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ maxWidth: '850px' }}>

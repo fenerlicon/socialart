@@ -104,18 +104,7 @@ const RestaurantMarketing = () => {
         paddingBottom: '120px',
         overflow: 'hidden'
       }}>
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: `linear-gradient(to bottom, rgba(5,5,5,0.7), #050505), url('/restaurant_marketing_hero.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.6,
-          zIndex: 0
-        }}></div>
+        <div className="restaurant-hero-bg"></div>
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ maxWidth: '850px' }}>
