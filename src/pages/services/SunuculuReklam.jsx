@@ -65,7 +65,7 @@ const SunuculuReklam = () => {
             Sunuculu <span className="gradient-text">Reklam Videoları</span>
           </h1>
           <p style={{ maxWidth: '800px', margin: '0 auto', color: '#aaa', fontSize: '1.2rem', lineHeight: '1.6' }}>
-            Markanızı profesyonel bir yüzle temsil edin. Stüdyo ortamında, profesyonel sunucular ve senaryo ekibimizle markanızın güvenilirliğini ve satışlarını artırıyoruz.
+            Sosyal medya video çekimi yapan ve e-ticaret markaları için dönüşümü yüksek hazır reklam videoları üreten profesyonel bir video prodüksiyon ajansıyız. Markanızı profesyonel bir yüzle temsil edin, satışlarınızı katlayın.
           </p>
           <div style={{ marginTop: '40px' }}>
             <button 
@@ -75,6 +75,25 @@ const SunuculuReklam = () => {
               Ekibimizle Toplantı Planlayın <ArrowRight size={20} style={{ marginLeft: '10px' }} />
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Analysis Form (MOVED UP) */}
+      <section className="section-padding" id="form" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+            <h2 className="section-title">Hemen <span className="gradient-text">Teklif Alın</span></h2>
+            <p className="section-subtitle">Markanız için en uygun sunuculu reklam stratejisini birlikte kuralım.</p>
+          </div>
+          <LazySection height="350px">
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm defaultService="Sunuculu Reklam" />
+            </React.Suspense>
+          </LazySection>
         </div>
       </section>
 
@@ -99,7 +118,7 @@ const SunuculuReklam = () => {
       {/* Features */}
       <section className="section-padding">
         <div className="container">
-          <div className="feature-grid">
+          <div className="feature-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
             <div className="feature-card">
               <Users size={40} color="var(--secondary)" style={{ marginBottom: '20px' }} />
               <h3>Profesyonel Sunucular</h3>
@@ -108,12 +127,17 @@ const SunuculuReklam = () => {
             <div className="feature-card">
               <MessageSquare size={40} color="var(--secondary)" style={{ marginBottom: '20px' }} />
               <h3>Stratejik Senaryo</h3>
-              <p style={{ color: '#888' }}>Satış psikolojisine uygun, ilk 3 saniyede yakalayan ve harekete geçiren senaryolar hazırlıyoruz.</p>
+              <p style={{ color: '#888' }}>Satış psikolojisine uygun, ilk 3 saniyede yakalayan ve harekete geçiren kancalı senaryolar hazırlıyoruz.</p>
             </div>
             <div className="feature-card">
-              <Target size={40} color="var(--secondary)" style={{ marginBottom: '20px' }} />
-              <h3>Stüdyo Kalitesi</h3>
-              <p style={{ color: '#888' }}>Profesyonel ışık, ses ve kamera ekipmanlarımızla stüdyo ortamında 4K çekimler yapıyoruz.</p>
+              <Video size={40} color="var(--secondary)" style={{ marginBottom: '20px' }} />
+              <h3>Video Prodüksiyon Ajansı</h3>
+              <p style={{ color: '#888' }}>Uçtan uca sosyal medya video çekimi yapan, profesyonel stüdyo ve kamera ekipmanlarına sahip tam donanımlı bir video prodüksiyon ajansıyız.</p>
+            </div>
+            <div className="feature-card">
+              <Zap size={40} color="var(--secondary)" style={{ marginBottom: '20px' }} />
+              <h3>Hazır Reklam Videoları</h3>
+              <p style={{ color: '#888' }}>E-ticaret ve sosyal medya kanallarınızda anında yayına alabileceğiniz, yüksek dönüşüm getiren hazır reklam videoları paketleri sunuyoruz.</p>
             </div>
           </div>
         </div>
@@ -140,24 +164,7 @@ const SunuculuReklam = () => {
         </div>
       </section>
 
-      {/* Analysis Form */}
-      <section className="section-padding" id="form">
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-            <h2 className="section-title">Hemen <span className="gradient-text">Teklif Alın</span></h2>
-            <p className="section-subtitle">Markanız için en uygun sunuculu reklam stratejisini birlikte kuralım.</p>
-          </div>
-          <LazySection height="350px">
-            <React.Suspense fallback={
-              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-              </div>
-            }>
-              <AnalysisForm defaultService="Sunuculu Reklam" />
-            </React.Suspense>
-          </LazySection>
-        </div>
-      </section>
+      {/* Form section was moved up */}
     </div>
   );
 };

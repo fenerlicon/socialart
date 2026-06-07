@@ -13,7 +13,9 @@ import {
   Wine,
   ChefHat,
   Award,
-  Fish
+  Fish,
+  Film,
+  Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LazySection from '../../components/LazySection';
@@ -150,6 +152,28 @@ const RestaurantMarketing = () => {
         </div>
       </section>
 
+      {/* CTA & FORM (MOVED UP) */}
+      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{ fontSize: '3.5rem', fontWeight: '900', marginBottom: '20px' }}>Kafe & Restoranınızı <span className="gradient-text">Birlikte Büyütelim.</span></h2>
+            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
+              Ücretsiz analiz formunu doldurun, ekibimiz işletmenizin dijital potansiyelini çıkarsın.
+            </p>
+          </div>
+          
+          <LazySection height="350px">
+            <React.Suspense fallback={
+              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              </div>
+            }>
+              <AnalysisForm defaultService="Restoran Pazarlaması" />
+            </React.Suspense>
+          </LazySection>
+        </div>
+      </section>
+
       {/* CORE STRATEGY */}
       <section className="section-padding">
         <div className="container">
@@ -280,7 +304,7 @@ const RestaurantMarketing = () => {
               <div style={{ marginTop: '22px', padding: '14px 18px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e676', flexShrink: 0, boxShadow: '0 0 6px #00e676' }} />
                 <p style={{ color: '#888', fontSize: '0.82rem', margin: 0, lineHeight: '1.5' }}>
-                  Karadeniz Et Lokantası ile çalışmamızda hafta sonu rezervasyonları <strong style={{ color: '#fff' }}>%120 arttı.</strong>
+                  Çalıştığımız kafe ve restoranlarda aylık ortalama müşteri trafiği ve ciro <strong style={{ color: '#fff' }}>%95'in üzerinde artış</strong> gösterdi.
                 </p>
               </div>
             </div>
@@ -309,18 +333,18 @@ const RestaurantMarketing = () => {
       <section className="section-padding" style={{ background: 'rgba(255,255,255,0.02)' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h2 className="section-title">Nokta Atışı <span className="gradient-text">Restoran Çözümleri</span></h2>
-            <p className="section-subtitle">Markanızın ihtiyacı olan tüm dijital silahlar burada.</p>
+            <h2 className="section-title">Nokta Atışı <span className="gradient-text">Kafe & Restoran Çözümleri</span></h2>
+            <p className="section-subtitle">Mekanınızın ihtiyacı olan tüm dijital pazarlama silahları burada.</p>
           </div>
           
           <div className="services-grid">
             {[
-              { icon: <Smartphone />, title: "İştah Açan Reels", desc: "Trend müzikler ve dinamik kurgularla milyonlara ulaşacak video serileri." },
-              { icon: <MapPin />, title: "Yerel SEO (GEO)", desc: "Çevrede yemek arayan potansiyel müşterilerin sizi bulmasını sağlıyoruz." },
-              { icon: <Zap />, title: "Hızlı Rezervasyon", desc: "Instagram üzerinden tek tıkla rezervasyon alabileceğiniz entegrasyonlar." },
-              { icon: <Users />, title: "Influencer Tadımları", desc: "Gastronomi dünyasının etkili isimleriyle markanızı buluşturuyoruz." },
-              { icon: <PlayCircle />, title: "Hikaye Yönetimi", desc: "Günlük 'story' paylaşımları ile takipçilerinizi her an masanıza davet ediyoruz." },
-              { icon: <Star />, title: "Menü Tasarımı", desc: "QR menü ve basılı menülerinizi dijital kimliğinizle uyumlu hale getiriyoruz." }
+              { icon: <Smartphone />, title: "İştah Açan Reels", desc: "Kahve akışından dumanı tüten yemeklere, trend müziklerle hazırlanan yüksek etkileşimli Reels kurguları." },
+              { icon: <MapPin />, title: "Yerel SEO (GEO)", desc: "Haritalarda 'en yakın üçüncü dalga kahveci' veya 'en iyi akşam yemeği' aramalarında ilk sırada listelenin." },
+              { icon: <Zap />, title: "Hızlı Rezervasyon & Sipariş", desc: "Instagram DM veya WhatsApp üzerinden tek tıkla masa ayırtma veya paket servis yönlendirme kurguları." },
+              { icon: <Users />, title: "Influencer & Blogger Davetleri", desc: "Gastronomi yazarları, kahve gurmeleri ve yerel influencer'lar ile organik tanıtım buluşmaları." },
+              { icon: <PlayCircle />, title: "Anlık Hikaye (Story) Yönetimi", desc: "Günlük brunch hazırlıkları, günün tatlısı ve kahve saatleri paylaşımları ile sürekli etkileşim." },
+              { icon: <Star />, title: "Dijital & QR Menü Optimizasyonu", desc: "En çok satan ve yüksek kârlılığa sahip ürünlerinizi öne çıkaran, kullanıcı dostu QR menü tasarımları." }
             ].map((s, i) => (
               <div key={i} className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                 <div style={{ color: 'var(--primary)', marginBottom: '20px' }}>{s.icon}</div>
@@ -338,40 +362,91 @@ const RestaurantMarketing = () => {
           <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '60px' }}>Sıkça Sorulan <span className="gradient-text">Sorular</span></h2>
           <FAQAccordion items={[
             {
-              question: "Restoran çekimleri ne kadar sürüyor?",
-              answer: "İçerik planına göre değişmekle birlikte genellikle 1 tam gün çekim, tüm ayın içerik ihtiyacını (Reels, post, story) karşılamak için yeterli olmaktadır."
+              question: "Kafe ve restoran çekimleri ne kadar sürüyor?",
+              answer: "İçerik planına göre değişmekle birlikte genellikle 1 tam gün profesyonel prodüksiyon çekimi, tüm ayın içerik ihtiyacını (Reels videoları, postlar, storyler) karşılamak için yeterlidir."
             },
             {
               question: "Reklam bütçemizi nasıl yönetiyorsunuz?",
-              answer: "Bütçenizi en yoğun olduğunuz saatlere değil, masalarınızın daha boş olduğu veya özel etkinlikler düzenlediğiniz zamanlara odaklayarak verimliliği artırıyoruz."
+              answer: "Bütçenizi mekanınızın en yoğun olduğu saatlere değil, kafeler için 'brunch/kahve saati' veya restoranlar için 'öğle arası/akşam yemeği' gibi stratejik zaman dilimlerine odaklıyoruz."
             },
             {
               question: "Influencer iş birlikleri nasıl yapılıyor?",
-              answer: "Markanıza ve kitlenize en uygun olan 'foodie' hesapları ekiplerimiz seçer, tadım organizasyonunu yapar ve paylaşılan içeriğin performansını raporlar."
+              answer: "Markanızın tarzına uygun 'foodie' bloggerlar ve kahve eleştirmenleri arasından seçim yapar, özel tadım davetleri düzenler ve paylaşılan içeriklerin performansını raporlarız."
             }
           ]} />
         </div>
       </section>
 
-      {/* CTA & FORM */}
-      <section className="section-padding" id="funnel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
+      {/* PRODUCTION SERVICES SECTION */}
+      <section className="section-padding" style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #050505 100%)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h2 style={{ fontSize: '3.5rem', fontWeight: '900', marginBottom: '20px' }}>Restoranınızı <span className="gradient-text">Birlikte Büyütelim.</span></h2>
-            <p style={{ fontSize: '1.2rem', color: '#aaa', maxWidth: '600px', margin: '0 auto' }}>
-              Ücretsiz analiz formunu doldurun, ekibimiz restoranınızın dijital potansiyelini çıkarsın.
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '10px', 
+              background: 'rgba(255,255,255,0.05)', 
+              padding: '8px 16px', 
+              borderRadius: '100px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              marginBottom: '20px'
+            }}>
+              <Camera size={18} color="var(--primary)" />
+              <span style={{ fontSize: '0.9rem', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase' }}>PRODÜKSİYON STÜDYOMUZ</span>
+            </div>
+            <h2 className="section-title">Profesyonel <span className="gradient-text">Gastronomi Prodüksiyonu</span></h2>
+            <p className="section-subtitle" style={{ maxWidth: '700px', margin: '0 auto' }}>
+              Sadece video çekmiyoruz; yemeğin dokusunu, dumanını ve kahvenin akışını en sinematik haliyle ekrana yansıtıyoruz.
             </p>
           </div>
-          
-          <LazySection height="350px">
-            <React.Suspense fallback={
-              <div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
+            {[
+              {
+                icon: <Film size={32} />,
+                title: "Sinematik Reklam Filmi",
+                desc: "Markanızın hikayesini, lezzet felsefesini ve prestijini yansıtan; sinema standartlarında (RED/Sony Cinema kameraları ile) 4K reklam filmleri tasarlıyoruz."
+              },
+              {
+                icon: <Smartphone size={32} />,
+                title: "Yüksek Etkileşimli Reels Çekimleri",
+                desc: "Instagram ve TikTok algoritmalarına uygun, trend geçişler ve ASMR ses tasarımlarıyla zenginleştirilmiş, iştah kabartıcı dikey video ve Reels içerikleri üretiyoruz."
+              },
+              {
+                icon: <Camera size={32} />,
+                title: "Mekan Tanıtım Videoları",
+                desc: "Kafe veya restoranınızın benzersiz ambiyansını, mutfak arkası hazırlıklarını, şeflerinizin özel anlarını ve müşteri deneyimini yansıtan profesyonel tanıtım videoları."
+              },
+              {
+                icon: <Sparkles size={32} />,
+                title: "Aylık Profesyonel İçerik Üretimi",
+                desc: "Sosyal medya kanallarınızın her gün taze kalması için gıda stilistliği, özel ışık kurulumları ve düzenli çekim takvimleri ile uçtan uca içerik üretimi paketi sunuyoruz."
+              }
+            ].map((prod, idx) => (
+              <div key={idx} className="glass" style={{ 
+                padding: '40px 30px', 
+                borderRadius: '28px', 
+                border: '1px solid rgba(255,255,255,0.05)',
+                background: 'rgba(255,255,255,0.01)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-5px)';
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
+              }}
+              >
+                <div style={{ color: 'var(--primary)', marginBottom: '25px', display: 'inline-block' }}>{prod.icon}</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '15px' }}>{prod.title}</h3>
+                <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>{prod.desc}</p>
               </div>
-            }>
-              <AnalysisForm defaultService="Restoran Pazarlaması" />
-            </React.Suspense>
-          </LazySection>
+            ))}
+          </div>
         </div>
       </section>
     </div>
