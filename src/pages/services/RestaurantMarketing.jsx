@@ -311,6 +311,103 @@ const RestaurantMarketing = () => {
           </div>
         </div>
       </section>
+
+      {/* DETAILED PAZARLAMA & REELS SECTION */}
+      <section className="section-padding" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.01) 100%)', borderTop: '1px solid rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '10px', 
+              background: 'rgba(0, 229, 255, 0.1)', 
+              color: '#00e5ff', 
+              padding: '8px 16px', 
+              borderRadius: '100px',
+              border: '1px solid rgba(0, 229, 255, 0.2)',
+              marginBottom: '20px'
+            }}>
+              <Sparkles size={16} />
+              <span style={{ fontSize: '0.9rem', fontWeight: '600', letterSpacing: '1px' }}>RESTORAN DİJİTAL BÜYÜME SİSTEMİ</span>
+            </div>
+            <h2 style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>
+              Masaları Dolduran <span className="gradient-text">Pazarlama & Reels Çekimi</span>
+            </h2>
+            <p style={{ maxWidth: '800px', margin: '0 auto', color: '#aaa', fontSize: '1.15rem', lineHeight: '1.7' }}>
+              Geleneksel pazarlama yöntemleri gastronomi sektöründe artık çalışmıyor. Modern bir restoranın büyümesi; iştah kabartan sosyal medya içerikleri, keşfete düşen Reels videoları ve yerel bazlı nokta atışı dijital reklamların sinerisinden geçer.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
+            {/* Reels Çekimi Kartı */}
+            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px', borderRadius: '20px', background: 'rgba(255, 0, 85, 0.1)', color: 'var(--secondary)', marginBottom: '30px' }}>
+                <Film size={30} />
+              </div>
+              <h3 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '20px' }}>Sosyal Medya Reels Çekimleri</h3>
+              <p style={{ color: '#aaa', lineHeight: '1.7', fontSize: '1rem', marginBottom: '25px' }}>
+                Sosyal medyanın para birimi **dikkat süresidir**. Bir kullanıcının Reels akışında gezinirken restoranınızın tabağını gördüğünde durmasını sağlıyoruz. Çekimlerimizde sadece estetiğe değil, algoritmaların seveceği dinamiklere odaklanıyoruz.
+              </p>
+              <ul style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: 'auto' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontWeight: 'bold' }}>✓</span> **Makro Gıda Çekimi (Food Porn):** Yemeğin sosu, dumanı ve kıvamını en iştah açıcı açılardan çekeriz.
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontWeight: 'bold' }}>✓</span> **ASMR Ses Kayıtları:** Dışı çıtır, içi sulu etlerin ve pişen yemeklerin o iştah kabartan seslerini kaydederiz.
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--secondary)', fontWeight: 'bold' }}>✓</span> **Trend Ses & Hızlı Geçişler:** Algoritmanın güncel olarak öne çıkardığı viral müziklerle kurgularız.
+                </li>
+              </ul>
+            </div>
+
+            {/* İçerik Üretimi Kartı */}
+            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px', borderRadius: '20px', background: 'rgba(138, 43, 226, 0.1)', color: 'var(--primary)', marginBottom: '30px' }}>
+                <Camera size={30} />
+              </div>
+              <h3 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '20px' }}>Uçtan Uca İçerik Üretimi</h3>
+              <p style={{ color: '#aaa', lineHeight: '1.7', fontSize: '1rem', marginBottom: '25px' }}>
+                Düzenli içerik üretemeyen restoranlar dijitalde unutulmaya mahkumdur. Ayda sadece 1 gün çekim yaparak tüm ay boyunca sosyal medya hesaplarınızın iştah açıcı ve taze kalmasını sağlıyoruz. Gıda stilistliğinden montaja kadar her şeyi üstleniyoruz.
+              </p>
+              <ul style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: 'auto' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>✓</span> **Gıda Stilistliği:** Tabakların kamera karşısında en canlı ve iştah açıcı şekilde süslenmesi.
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>✓</span> **Mutfak Arkası Hikayeleri:** Şefin hazırlığı, taze malzemelerin gelişi gibi şeffaf ve samimi içerikler.
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>✓</span> **Aylık Planlama & Konsept:** Her haftaya özel story şablonları, etkileşim anketleri ve kampanya duyuruları.
+                </li>
+              </ul>
+            </div>
+
+            {/* Dijital Pazarlama Kartı */}
+            <div className="glass" style={{ padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px', borderRadius: '20px', background: 'rgba(0, 229, 255, 0.1)', color: '#00e5ff', marginBottom: '30px' }}>
+                <TrendingUp size={30} />
+              </div>
+              <h3 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '20px' }}>Restoran Dijital Pazarlaması</h3>
+              <p style={{ color: '#aaa', lineHeight: '1.7', fontSize: '1rem', marginBottom: '25px' }}>
+                Sadece beğeni alan değil, kapıdan müşteri getiren pazarlama stratejileri kuruyoruz. Restoranınızın bulunduğu konumu merkez alarak, çevrenizdeki potansiyel misafirleri doğrudan masalarınıza yönlendiriyoruz.
+              </p>
+              <ul style={{ padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: 'auto' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: '#00e5ff', fontWeight: 'bold' }}>✓</span> **Hiper-Lokal Reklamcılık:** Mekanınızın 3-5 km çevresindeki aktif dışarıda yiyen kitleyi hedefleme.
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: '#00e5ff', fontWeight: 'bold' }}>✓</span> **DM Rezervasyon Dönüşümü:** Reels reklamlarını görüp yazan kişileri otomatik rezervasyona bağlama.
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ccc', fontSize: '0.95rem' }}>
+                  <span style={{ color: '#00e5ff', fontWeight: 'bold' }}>✓</span> **GEO (Yerel Harita Arama SEO'su):** Google Haritalar'da en üst sıralarda çıkarak turist ve yerel müşteri çekme.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Showcase */}
       <section className="section-padding" style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="container">
@@ -339,12 +436,12 @@ const RestaurantMarketing = () => {
           
           <div className="services-grid">
             {[
-              { icon: <Smartphone />, title: "İştah Açan Reels", desc: "Kahve akışından dumanı tüten yemeklere, trend müziklerle hazırlanan yüksek etkileşimli Reels kurguları." },
-              { icon: <MapPin />, title: "Yerel SEO (GEO)", desc: "Haritalarda 'en yakın üçüncü dalga kahveci' veya 'en iyi akşam yemeği' aramalarında ilk sırada listelenin." },
-              { icon: <Zap />, title: "Hızlı Rezervasyon & Sipariş", desc: "Instagram DM veya WhatsApp üzerinden tek tıkla masa ayırtma veya paket servis yönlendirme kurguları." },
-              { icon: <Users />, title: "Influencer & Blogger Davetleri", desc: "Gastronomi yazarları, kahve gurmeleri ve yerel influencer'lar ile organik tanıtım buluşmaları." },
-              { icon: <PlayCircle />, title: "Anlık Hikaye (Story) Yönetimi", desc: "Günlük brunch hazırlıkları, günün tatlısı ve kahve saatleri paylaşımları ile sürekli etkileşim." },
-              { icon: <Star />, title: "Dijital & QR Menü Optimizasyonu", desc: "En çok satan ve yüksek kârlılığa sahip ürünlerinizi öne çıkaran, kullanıcı dostu QR menü tasarımları." }
+              { icon: <Smartphone />, title: "İştah Açan Reels & Video Çekimi", desc: "Kahve akışından dumanı tüten yemeklere, trend müziklerle hazırlanan ve izleyicide acıkma hissi uyandıran yüksek etkileşimli Reels ve TikTok video kurguları." },
+              { icon: <MapPin />, title: "Yerel SEO & Google Harita Pazarlaması", desc: "Yakındaki potansiyel müşterilerin haritalarda 'en yakın restoran' veya 'en iyi akşam yemeği' aramalarında mekanınızı ilk sırada bulmasını sağlayan SEO çalışmaları." },
+              { icon: <Zap />, title: "Hızlı Rezervasyon & Sipariş Pazarlaması", desc: "Instagram Reels reklamları ve hikayeleri üzerinden tek tıkla doğrudan WhatsApp veya Instagram DM yoluyla rezervasyon alma sistemleri." },
+              { icon: <Users />, title: "İçerik Üretimi & Influencer İş Birlikleri", desc: "Gastronomi yazarları, yemek gurmeleri ve yerel influencer'lar ile özel tadım günleri düzenleyerek organik etkileşimi patlatma." },
+              { icon: <PlayCircle />, title: "Anlık Hikaye (Story) & Canlı Mekan Yönetimi", desc: "Günlük brunch hazırlıkları, mutfak arkası (behind-the-scenes) anlar ve taze servis süreçleri ile sosyal medyanızı sürekli canlı ve iştah açıcı tutma." },
+              { icon: <Star />, title: "QR Menü & Menü Mühendisliği Pazarlaması", desc: "En yüksek kâr getiren yemeklerinizi görsel olarak öne çıkararak ortalama sepet/sipariş tutarınızı artıran dijital menü optimizasyonları." }
             ].map((s, i) => (
               <div key={i} className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                 <div style={{ color: 'var(--primary)', marginBottom: '20px' }}>{s.icon}</div>
@@ -364,6 +461,14 @@ const RestaurantMarketing = () => {
             {
               question: "Kafe ve restoran çekimleri ne kadar sürüyor?",
               answer: "İçerik planına göre değişmekle birlikte genellikle 1 tam gün profesyonel prodüksiyon çekimi, tüm ayın içerik ihtiyacını (Reels videoları, postlar, storyler) karşılamak için yeterlidir."
+            },
+            {
+              question: "Reels çekimlerinde yiyeceklerin taze görünmesini nasıl sağlıyorsunuz?",
+              answer: "Çekimlerimizde profesyonel bir gıda stilisti (food stylist) ve özel stüdyo ışık kitleri kullanıyoruz. Tabaklar şefinizin elinden çıktığı saniyede, dumanı ve parlaklığı üzerindeyken çekilir. Ayrıca peynir akışı, sos dökülmesi gibi kritik 'iştah açıcı' anlar yüksek kare hızında (slow-motion) kaydedilir."
+            },
+            {
+              question: "Restoran dijital pazarlamasında yatırım getirisini (ROI) nasıl takip ediyorsunuz?",
+              answer: "WhatsApp mesajları, Instagram DM rezervasyonları, Google Haritalar üzerinden alınan yol tarifleri ve QR menü tıklamalarını takip ediyoruz. Kurduğumuz rezervasyon hunisi sayesinde reklam harcamalarınızın doğrudan kaç masayı doldurduğunu (ROAS oranını) net bir şekilde raporluyoruz."
             },
             {
               question: "Reklam bütçemizi nasıl yönetiyorsunuz?",

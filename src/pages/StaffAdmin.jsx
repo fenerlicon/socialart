@@ -229,6 +229,51 @@ const stripHtml = (html) => {
   return doc.body.textContent || ""; 
 };
 
+const renderAttachments = (url, name, accent = false) => {
+  if (!url) return null;
+  let files = [];
+  if (url.startsWith('[')) {
+    try {
+      files = JSON.parse(url);
+    } catch (e) {
+      files = [{ name: name || 'Dosya Eki', url }];
+    }
+  } else {
+    files = [{ name: name || 'Dosya Eki', url }];
+  }
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+      {files.map((file, i) => (
+        <a
+          key={i}
+          onClick={e => e.stopPropagation()}
+          href={file.url}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 12px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '8px',
+            fontSize: '0.75rem',
+            color: accent ? 'var(--accent)' : 'var(--primary)',
+            fontWeight: '700',
+            textDecoration: 'none',
+            transition: '0.2s'
+          }}
+        >
+          <FileCode size={14} />
+          {file.name}
+        </a>
+      ))}
+    </div>
+  );
+};
+
 function Admin() {
   // const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
@@ -678,9 +723,17 @@ function Admin() {
   };
 
 
-  const [activeTab, setActiveTab] = useState('potansiyel'); // potansiyel, aktif, gorev
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('admin_active_tab') || 'potansiyel'); // potansiyel, aktif, gorev
   const [searchTerm, setSearchTerm] = useState('');
-  const [leadSubTab, setLeadSubTab] = useState('active'); // active, archived, all
+  const [leadSubTab, setLeadSubTab] = useState(() => localStorage.getItem('admin_lead_sub_tab') || 'active'); // active, archived, all
+
+  useEffect(() => {
+    localStorage.setItem('admin_active_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem('admin_lead_sub_tab', leadSubTab);
+  }, [leadSubTab]);
 
   const [potansiyel, setPotansiyel] = useState([]);
   const [aktifMusteriler, setAktifMusteriler] = useState([]);
@@ -721,7 +774,11 @@ function Admin() {
   const [subGorevFilter, setSubGorevFilter] = useState('Hepsi');
   const [dashboardSubFilter, setDashboardSubFilter] = useState('Hepsi');
   const [dashboardBucketFilter, setDashboardBucketFilter] = useState('Hepsi');
-  const [leadStatusFilter, setLeadStatusFilter] = useState('Hepsi');
+  const [leadStatusFilter, setLeadStatusFilter] = useState(() => localStorage.getItem('admin_lead_status_filter') || 'Hepsi');
+
+  useEffect(() => {
+    localStorage.setItem('admin_lead_status_filter', leadStatusFilter);
+  }, [leadStatusFilter]);
 
   // Detay & Geçmiş Modal
   const [isLeadDetailModalOpen, setIsLeadDetailModalOpen] = useState(false);
@@ -768,7 +825,7 @@ function Admin() {
   const [compTask, setCompTask] = useState(null);
   const [compText, setCompText] = useState('');
   const [compFile, setCompFile] = useState(null);
-  const [taskFile, setTaskFile] = useState(null);
+  const [taskFiles, setTaskFiles] = useState([]);
   const [taskUploading, setTaskUploading] = useState(false);
   const [compUploading, setCompUploading] = useState(false);
   // Performance System States
@@ -1128,23 +1185,27 @@ function Admin() {
     let attachmentName = null;
 
     try {
-      if (taskFile) {
-        const sanitizedName = taskFile.name
-          .replace(/[ığüşöçİĞÜŞÖÇ]/g, s => ({'ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c','İ':'I','Ğ':'G','Ü':'U','Ş':'S','Ö':'O','Ç':'C'})[s])
-          .replace(/[^a-zA-Z0-9.-]/g, '_');
-        const filePath = `task_attachments/${Date.now()}_${sanitizedName}`;
-        const { error: uploadError } = await supabase.storage
-          .from('lead-attachments')
-          .upload(filePath, taskFile);
+      if (taskFiles && taskFiles.length > 0) {
+        const uploadedFiles = [];
+        for (const file of taskFiles) {
+          const sanitizedName = file.name
+            .replace(/[ığüşöçİĞÜŞÖÇ]/g, s => ({'ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c','İ':'I','Ğ':'G','Ü':'U','Ş':'S','Ö':'O','Ç':'C'})[s])
+            .replace(/[^a-zA-Z0-9.-]/g, '_');
+          const filePath = `task_attachments/${Date.now()}_${sanitizedName}`;
+          const { error: uploadError } = await supabase.storage
+            .from('lead-attachments')
+            .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('lead-attachments')
-          .getPublicUrl(filePath);
-        
-        attachmentUrl = publicUrl;
-        attachmentName = taskFile.name;
+          const { data: { publicUrl } } = supabase.storage
+            .from('lead-attachments')
+            .getPublicUrl(filePath);
+          
+          uploadedFiles.push({ name: file.name, url: publicUrl });
+        }
+        attachmentUrl = JSON.stringify(uploadedFiles);
+        attachmentName = taskFiles.map(f => f.name).join(', ');
       }
 
       const statusMap = {
@@ -1174,7 +1235,7 @@ function Admin() {
         fetchAllData();
         setIsTaskModalOpen(false);
         setTaskFormData({ empId: '', task: '', taskType: 'pendingTasks', clientName: '', phase: '1', category: 'Proje', priority: '#2979ff', due_date: '' });
-        setTaskFile(null);
+        setTaskFiles([]);
       } else {
         throw error;
       }
@@ -1567,7 +1628,7 @@ function Admin() {
     } else if (activeTab === 'aktif') {
       return [
         { title: 'Aktif Yönetilen Proje', value: aktifMusteriler.length, icon: <Briefcase size={24} color="var(--secondary)" /> },
-        { title: 'Ortalama İlerleme Seviyesi', value: `%${Math.round(aktifMusteriler.reduce((a, b) => a + b.progress, 0) / aktifMusteriler.length) || 0}`, icon: <Activity size={24} color="#00e676" /> },
+        { title: 'Ortalama İlerleme Seviyesi', value: `%${Math.round(aktifMusteriler.reduce((a, b) => a + (b.progress || 0), 0) / (aktifMusteriler.length || 1)) || 0}`, icon: <Activity size={24} color="#00e676" /> },
       ];
     } else if (activeTab === 'gorev') {
       const allT = isTakip.reduce((acc, p) => [...acc, ...(p.activeTasks || []), ...(p.pendingTasks || []), ...(p.completedTasks || [])], []);
@@ -2991,8 +3052,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       <td style={{ padding: '20px 24px' }}>
                         <div className="card-text-val" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', gap: '10px' }}>
-                            <span title="Tamamlanan" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', background: 'rgba(0,230,118,0.1)', color: '#00e676' }}>{client.completed.length} Bitti</span>
-                            <span title="Devam Eden" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', background: 'rgba(0,229,255,0.1)', color: 'var(--primary)' }}>{client.active.length} Aktif</span>
+                            <span title="Tamamlanan" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', background: 'rgba(0,230,118,0.1)', color: '#00e676' }}>{(Array.isArray(client.completed) ? client.completed : []).length} Bitti</span>
+                            <span title="Devam Eden" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', background: 'rgba(0,229,255,0.1)', color: 'var(--primary)' }}>{(Array.isArray(client.active) ? client.active : []).length} Aktif</span>
                           </div>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button
@@ -3001,9 +3062,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   id: client.id,
                                   name: client.name,
                                   package: client.package,
-                                  completed: client.completed.join(', '),
-                                  active: client.active.join(', '),
-                                  pending: client.pending.join(', '),
+                                  completed: (Array.isArray(client.completed) ? client.completed : []).join(', '),
+                                  active: (Array.isArray(client.active) ? client.active : []).join(', '),
+                                  pending: (Array.isArray(client.pending) ? client.pending : []).join(', '),
                                   ads_active: client.ads_active || false
                                 });
                                 setIsEditClientModalOpen(true);
@@ -3122,32 +3183,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   return clean.length > 85 ? clean.substring(0, 85) + '...' : clean;
                                 })()}
                               </div>
-                              {t.attachment_url && (
-                                <div style={{ marginTop: '10px' }}>
-                                  <a
-                                    onClick={e => e.stopPropagation()}
-                                    href={t.attachment_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '8px',
-                                      padding: '8px 12px',
-                                      background: 'rgba(255,255,255,0.05)',
-                                      border: '1px solid rgba(255,255,255,0.1)',
-                                      borderRadius: '8px',
-                                      fontSize: '0.75rem',
-                                      color: 'var(--primary)',
-                                      fontWeight: '700',
-                                      transition: '0.2s'
-                                    }}
-                                  >
-                                    <FileCode size={14} />
-                                    {t.attachment_name || 'Dosya Eki'}
-                                  </a>
-                                </div>
-                              )}
+                              {renderAttachments(t.attachment_url, t.attachment_name)}
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <select 
                                   onClick={e => e.stopPropagation()}
@@ -3453,7 +3489,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   <input
                     type="file"
                     id="taskAttachment"
-                    onChange={e => setTaskFile(e.target.files[0])}
+                    multiple
+                    onChange={e => setTaskFiles(Array.from(e.target.files))}
                     style={{ display: 'none' }}
                     accept=".txt,.pdf,image/*"
                   />
@@ -3476,18 +3513,34 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     }}
                   >
                     <Upload size={18} />
-                    {taskFile ? taskFile.name : 'Dosya Seç (PDF, TXT, Resim)'}
+                    {taskFiles && taskFiles.length > 0 ? `${taskFiles.length} dosya seçildi` : 'Dosya Seç (PDF, TXT, Resim)'}
                   </label>
-                  {taskFile && (
+                  {taskFiles && taskFiles.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setTaskFile(null)}
+                      onClick={() => setTaskFiles([])}
                       style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
                     >
                       <X size={18} />
                     </button>
                   )}
                 </div>
+                {taskFiles && taskFiles.length > 0 && (
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {taskFiles.map((file, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', color: '#ccc', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span>📄 {file.name}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setTaskFiles(prev => prev.filter((_, i) => i !== idx))} 
+                          style={{ background: 'transparent', border: 'none', color: '#ff1744', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button type="submit" disabled={taskUploading} className="btn btn-primary" style={{ padding: '14px', fontSize: '1rem', marginTop: '10px', opacity: taskUploading ? 0.7 : 1 }}>
@@ -5968,17 +6021,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
             {selectedTask.attachment_url && (
               <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <label style={{ display: 'block', marginBottom: '10px', color: '#666', fontSize: '0.7rem', fontWeight: '800' }}>EKLİ DOSYA</label>
-                <a 
-                  onClick={e => e.stopPropagation()}
-                  href={selectedTask.attachment_url} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}
-                >
-                  <FileCode size={20} />
-                  {selectedTask.attachment_name || 'Dosyayı Görüntüle'}
-                </a>
+                <label style={{ display: 'block', marginBottom: '10px', color: '#666', fontSize: '0.7rem', fontWeight: '800' }}>EKLİ DOSYALAR</label>
+                {renderAttachments(selectedTask.attachment_url, selectedTask.attachment_name)}
               </div>
             )}
           </div>

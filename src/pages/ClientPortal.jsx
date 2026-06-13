@@ -445,9 +445,9 @@ function ClientPortal() {
 
             {/* Task Breakdown */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-              <TaskBox title="TAMAMLANANLAR" icon={<CheckCircle2 size={18} color="#00e676" />} items={clientDetails?.completed || []} color="#00e676" />
-              <TaskBox title="ŞU AN YAPILANLAR" icon={<Clock size={18} color="var(--accent)" />} items={clientDetails?.active || []} color="var(--accent)" />
-              <TaskBox title="SIRADAKİLER" icon={<AlertCircle size={18} color="#ffab00" />} items={clientDetails?.pending || []} color="#ffab00" />
+              <TaskBox title="TAMAMLANANLAR" icon={<CheckCircle2 size={18} color="#00e676" />} items={Array.isArray(clientDetails?.completed) ? clientDetails.completed : []} color="#00e676" />
+              <TaskBox title="ŞU AN YAPILANLAR" icon={<Clock size={18} color="var(--accent)" />} items={Array.isArray(clientDetails?.active) ? clientDetails.active : []} color="var(--accent)" />
+              <TaskBox title="SIRADAKİLER" icon={<AlertCircle size={18} color="#ffab00" />} items={Array.isArray(clientDetails?.pending) ? clientDetails.pending : []} color="#ffab00" />
             </div>
 
             {/* EK HİZMETLER VİTRİNİ */}
@@ -724,13 +724,13 @@ function TaskBox({ title, icon, items, color }) {
         {icon} {title}
       </h4>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {items.filter(i => i.trim()).map((item, idx) => (
+        {(Array.isArray(items) ? items : []).filter(i => i && typeof i === 'string' && i.trim()).map((item, idx) => (
           <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.85rem', color: '#ccc' }}>
             <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}` }}></div>
             {item}
           </div>
         ))}
-        {items.filter(i => i.trim()).length === 0 && (
+        {(Array.isArray(items) ? items : []).filter(i => i && typeof i === 'string' && i.trim()).length === 0 && (
           <div style={{ fontSize: '0.8rem', color: '#444', fontStyle: 'italic' }}>Kayıt bulunmuyor.</div>
         )}
       </div>

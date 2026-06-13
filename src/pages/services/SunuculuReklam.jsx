@@ -8,7 +8,10 @@ import {
   MessageSquare,
   Sparkles,
   Target,
-  Zap
+  Zap,
+  Smartphone,
+  TrendingUp,
+  Flame
 } from 'lucide-react';
 const AnalysisForm = React.lazy(() => import('../../components/AnalysisForm'));
 import ShowcaseVideo from '../../components/ShowcaseVideo';
@@ -111,6 +114,80 @@ const SunuculuReklam = () => {
                 <ShowcaseVideo src={video.url} name={video.name} />
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Sosyal Medya Video Çekimi Section */}
+      <section className="section-padding" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0) 100%)', borderTop: '1px solid rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+        <div className="container">
+          <div className="service-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '50px', alignItems: 'center' }}>
+            <div className="service-text-content">
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 229, 255, 0.1)', color: '#00e5ff', padding: '6px 12px', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px' }}>
+                <Smartphone size={14} /> Mobil Uyumlu & Dikey Çekimler
+              </div>
+              <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '25px', lineHeight: '1.3' }}>
+                Sosyal Medya Video Çekiminde <br /><span className="gradient-text">Sunucu Gücü</span>
+              </h2>
+              <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '20px' }}>
+                Sosyal medya algoritmaları (Instagram Reels, TikTok ve YouTube Shorts) artık sadece görsel güzelliğe değil, kullanıcının videoda kalma süresine (retention) odaklanıyor. Klasik reklamlar saniyeler içinde geçilirken, profesyonel bir sunucunun samimi anlatımı kullanıcıyı ekrana bağlar.
+              </p>
+              <p style={{ color: '#aaa', lineHeight: '1.8', fontSize: '1.1rem', marginBottom: '25px' }}>
+                Biz, <strong>sosyal medya video çekimi</strong> süreçlerimizi tamamen bu algoritma dinamiklerine göre tasarlıyoruz. Markanızın mesajını en net ve güven verici şekilde aktaracak sunucularla çekim yapıyor, izleyicide güven hissi uyandırarak satın alma kararını hızlandırıyoruz.
+              </p>
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle color="var(--secondary)" size={18} />
+                  <span style={{ fontWeight: '500' }}>Reels & TikTok Uyumlu</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle color="var(--secondary)" size={18} />
+                  <span style={{ fontWeight: '500' }}>Yüksek İzlenme Süresi</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle color="var(--secondary)" size={18} />
+                  <span style={{ fontWeight: '500' }}>Algoritma Optimizasyonu</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="social-media-shooting-grid" style={{ display: 'grid', gap: '20px' }}>
+              <div className="shooting-card" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '25px', borderRadius: '20px', transition: '0.3s' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                  <div style={{ background: 'rgba(138, 43, 226, 0.1)', color: 'var(--primary)', padding: '12px', borderRadius: '12px' }}>
+                    <Smartphone size={24} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '8px' }}>Dikey Format & Kadraj</h3>
+                    <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.5' }}>Tüm çekimlerimizi mobil cihazlar için optimize edilmiş 9:16 dikey formatta gerçekleştirerek ekranı tam kaplayan sürükleyici bir deneyim sunuyoruz.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="shooting-card" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '25px', borderRadius: '20px', transition: '0.3s' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--secondary)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                  <div style={{ background: 'rgba(255, 0, 85, 0.1)', color: 'var(--secondary)', padding: '12px', borderRadius: '12px' }}>
+                    <Flame size={24} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '8px' }}>İlk 3 Saniye Kancası (Hook)</h3>
+                    <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.5' }}>Sosyal medya akışındaki hızla kaydırma alışkanlığını kırmak için videonun ilk 3 saniyesine özel görsel ve sözel kancalar yerleştiriyoruz.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="shooting-card" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '25px', borderRadius: '20px', transition: '0.3s' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#00e5ff'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                  <div style={{ background: 'rgba(0, 229, 255, 0.1)', color: '#00e5ff', padding: '12px', borderRadius: '12px' }}>
+                    <TrendingUp size={24} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '8px' }}>Dinamik Kurgu & Altyazılar</h3>
+                    <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.5' }}>Sıkılmayı önleyen hızlı kurgu teknikleri, trend yazı tipleriyle zenginleştirilmiş dinamik altyazılar ve ses efektleri ile izlenme süresini zirveye taşıyoruz.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
