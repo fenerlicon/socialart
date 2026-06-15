@@ -63,6 +63,23 @@ function App() {
   const location = useLocation();
   const [SpeedInsightsComponent, setSpeedInsightsComponent] = useState(null);
 
+  // Handle chunk loading errors (automatically reload page if version updates and old chunks are missing)
+  useEffect(() => {
+    const handleChunkError = (e) => {
+      const errorText = e.message || '';
+      if (
+        errorText.includes('Importing a module script failed') || 
+        errorText.includes('Failed to fetch dynamically imported module') ||
+        errorText.includes('chunk')
+      ) {
+        console.warn('New version detected or chunk error, reloading...', e);
+        window.location.reload();
+      }
+    };
+    window.addEventListener('error', handleChunkError, true);
+    return () => window.removeEventListener('error', handleChunkError, true);
+  }, []);
+
   useEffect(() => {
     let delayTimer = null;
     const loadSpeedInsights = () => {

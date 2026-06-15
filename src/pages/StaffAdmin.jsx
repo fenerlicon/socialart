@@ -302,7 +302,10 @@ function Admin() {
         // Bu adım, LocalStorage temizlense bile oturumun devam etmesini sağlar.
         const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user) {
-          const metadata = session.user.user_metadata;
+          // Sunucudan güncel kullanıcı verilerini çekerek lokal cache (token) verilerini tazeliyoruz.
+          const { data: { user } } = await supabase.auth.getUser();
+          const freshUser = user || session.user;
+          const metadata = freshUser.user_metadata;
           const userObj = { 
             name: metadata.display_name, 
             role: metadata.role,
