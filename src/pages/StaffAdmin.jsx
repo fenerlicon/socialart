@@ -2624,7 +2624,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Ad Soyad</th>
                       <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Pozisyon</th>
                       <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>İletişim</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Portfolyo</th>
+                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Portfolyo / CV</th>
                       <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Tarih</th>
                     </tr>
                   </thead>
@@ -2635,7 +2635,21 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         <td style={{ padding: '15px', fontWeight: 'bold' }}>{app.full_name}</td>
                         <td style={{ padding: '15px', color: 'var(--accent)', fontWeight: 'bold' }}>{app.position}</td>
                         <td style={{ padding: '15px' }}>{app.phone}<br/><span style={{fontSize:'0.8rem', color:'#888'}}>{app.email}</span></td>
-                        <td style={{ padding: '15px' }}>{app.portfolio_url && <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline' }}>İncele</a>}</td>
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            {app.portfolio_url && (
+                              <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline', fontSize: '0.85rem' }}>
+                                Linki İncele
+                              </a>
+                            )}
+                            {app.resume_url && (
+                              <a href={app.resume_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                CV Dosyasını Aç
+                              </a>
+                            )}
+                            {!app.portfolio_url && !app.resume_url && <span style={{ color: '#666' }}>Yok</span>}
+                          </div>
+                        </td>
                         <td style={{ padding: '15px', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
                       </tr>
                     ))}

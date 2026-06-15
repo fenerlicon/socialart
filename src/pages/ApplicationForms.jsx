@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, User, Phone, Mail, Globe, Link as LinkIcon, MapPin, Info, Rocket, Zap, Camera } from 'lucide-react';
+import { ShieldCheck, User, Phone, Mail, Globe, Link as LinkIcon, MapPin, Info, Rocket, Zap, Camera, Upload, X, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export function UGCApplication() {
@@ -111,6 +111,7 @@ export function JobApplication() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [resumeFile, setResumeFile] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -122,8 +123,35 @@ export function JobApplication() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.portfolio && !resumeFile) {
+      alert('Lütfen bir Özgeçmiş / Portfolyo Linki girin veya bir Özgeçmiş Dosyası yükleyin.');
+      return;
+    }
+
     setLoading(true);
     try {
+      let uploadedResumeUrl = null;
+
+      if (resumeFile) {
+        const sanitizedName = resumeFile.name
+          .replace(/[ığüşöçİĞÜŞÖÇ]/g, s => ({'ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c','İ':'I','Ğ':'G','Ü':'U','Ş':'S','Ö':'O','Ç':'C'})[s])
+          .replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filePath = `resumes/${Date.now()}_${sanitizedName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('lead-attachments')
+          .upload(filePath, resumeFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('lead-attachments')
+          .getPublicUrl(filePath);
+        
+        uploadedResumeUrl = publicUrl;
+      }
+
       const { error } = await supabase
         .from('job_applications')
         .insert([{
@@ -131,9 +159,12 @@ export function JobApplication() {
           phone: formData.phone,
           email: formData.email,
           position: formData.position,
-          portfolio_url: formData.portfolio,
+          portfolio_url: formData.portfolio || null,
+          resume_url: uploadedResumeUrl || null,
           about: formData.about
         }]);
+      
+      if (error) throw error;
       navigate('/tesekkurler');
     } catch (err) {
       alert('Başvuru sırasında bir hata oluştu: ' + err.message);
@@ -190,9 +221,86 @@ export function JobApplication() {
                 <option value="Diğer">Diğer</option>
               </select>
             </div>
-            <div className="input-group">
-              <label><LinkIcon size={16} /> Özgeçmiş / Portfolio Linki</label>
-              <input type="url" required value={formData.portfolio} onChange={e => setFormData({...formData, portfolio: e.target.value})} placeholder="LinkedIn, Behance veya Drive linki" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label><LinkIcon size={16} /> Özgeçmiş / Portfolio Linki</label>
+                <input type="url" value={formData.portfolio} onChange={e => setFormData({...formData, portfolio: e.target.value})} placeholder="LinkedIn, Behance veya Drive linki" />
+              </div>
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label><Upload size={16} /> Veya Özgeçmiş Dosyası Yükleyin (Max 10MB)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="file"
+                    id="resume-file-upload"
+                    onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.size > 10 * 1024 * 1024) {
+                          alert('Maksimum dosya boyutu 10MB\'dır.');
+                          e.target.value = null;
+                          return;
+                        }
+                        setResumeFile(file);
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                    accept=".pdf,.doc,.docx,.zip"
+                  />
+                  <label
+                    htmlFor="resume-file-upload"
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px dashed #444',
+                      borderRadius: '10px',
+                      color: '#888',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      transition: 'all 0.3s',
+                      height: '48px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <Upload size={18} />
+                    <span style={{ 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      maxWidth: '200px',
+                      fontSize: '0.85rem' 
+                    }}>
+                      {resumeFile ? resumeFile.name : 'Dosya Seç (PDF, DOC, DOCX, ZIP)'}
+                    </span>
+                  </label>
+                  {resumeFile && (
+                    <button
+                      type="button"
+                      onClick={() => setResumeFile(null)}
+                      style={{ 
+                        background: 'rgba(255,23,68,0.1)', 
+                        color: '#ff1744', 
+                        padding: '12px', 
+                        borderRadius: '10px', 
+                        border: 'none', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '48px',
+                        width: '48px',
+                        flexShrink: 0
+                      }}
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="input-group">
               <label><Info size={16} /> Neden Sizinle Çalışmalıyız?</label>
