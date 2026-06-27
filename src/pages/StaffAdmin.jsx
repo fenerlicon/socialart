@@ -2134,7 +2134,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     {person.tasks.map((task, ti) => (
                       <div key={ti} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px 16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                          <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1 }} dangerouslySetInnerHTML={{ __html: task.task_text }} className="task-html-content"></span>
+                          <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: task.task_text }} className="task-html-content"></div>
                           <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '6px', background: `${statusColor(task.status)}22`, color: statusColor(task.status), fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                             {task.status}
                           </span>
@@ -3255,8 +3255,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {tamamlanmayanTasks.map((t) => (
-                        <div key={t.id} style={{ fontSize: '0.8rem', color: '#ff1744', opacity: 0.6, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <AlertCircle size={12} /> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
+                        <div key={t.id} style={{ fontSize: '0.8rem', color: '#ff1744', opacity: 0.7, display: 'flex', alignItems: 'flex-start', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', marginBottom: '8px' }}>
+                          <AlertCircle size={14} color="#ff1744" style={{ flexShrink: 0, marginTop: '2px' }} /> 
+                          <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
                         </div>
                       ))}
                       {tamamlanmayanTasks.length === 0 && <div style={{ fontSize: '0.75rem', color: '#333' }}>Yok.</div>}
@@ -4817,7 +4818,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const briefRequests = [...emp.activeTasks, ...emp.pendingTasks].filter(t => t.brief_request);
                         return briefRequests.length > 0 ? briefRequests.map(t => (
                           <div key={t.id} style={{ padding: '15px', background: 'rgba(255,64,129,0.05)', borderRadius: '15px', border: '1px solid rgba(255,64,129,0.1)' }}>
-                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
+                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px', wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
                             <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>"{t.brief_request}"</div>
 
                             {t.brief_response ? (
@@ -4861,7 +4862,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const timeRequests = [...emp.activeTasks, ...emp.pendingTasks].filter(t => t.extension_request);
                         return timeRequests.length > 0 ? timeRequests.map(t => (
                           <div key={t.id} style={{ padding: '15px', background: 'rgba(255,171,0,0.05)', borderRadius: '15px', border: '1px solid rgba(255,171,0,0.1)' }}>
-                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
+                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px', wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
                             <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>"{t.extension_request}"</div>
 
                             {t.extension_response ? (
@@ -4907,8 +4908,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const emp = isTakip.find(e => e.rep === perfEmployee);
                         const currentTasks = [...emp.activeTasks, ...emp.pendingTasks];
                         return currentTasks.length > 0 ? currentTasks.map(t => (
-                          <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></div> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
+                           <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'flex-start', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', flexShrink: 0, marginTop: '7px' }}></div> 
+                            <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
                           </div>
                         )) : <p style={{ color: '#444', fontSize: '0.8rem' }}>Şu an devam eden iş yok.</p>;
                       })()}
@@ -4924,9 +4926,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const emp = isTakip.find(e => e.rep === perfEmployee);
                         const doneTasks = (emp.completedTasks || []).filter(t => t.status === 'Yaptım');
                         return doneTasks.length > 0 ? doneTasks.map(t => (
-                          <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '10px 15px', background: 'rgba(0,230,118,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <CheckSquare size={14} color="#00e676" /> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
+                          <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '10px 15px', background: 'rgba(0,230,118,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flex: 1 }}>
+                              <CheckSquare size={14} color="#00e676" style={{ flexShrink: 0, marginTop: '2px' }} /> 
+                              <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
                             </div>
                             {currentUser?.permissions === 'all' && (
                               <button 
@@ -4952,8 +4955,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         const failedTasks = (emp.completedTasks || []).filter(t => t.status === 'Tamamlanamadı');
                         return failedTasks.length > 0 ? failedTasks.map(t => (
                           <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '12px', background: 'rgba(255,23,68,0.03)', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '0.85rem', color: '#ccc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <AlertCircle size={14} color="#ff1744" /> <span dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
+                            <div style={{ fontSize: '0.85rem', color: '#ccc', display: 'flex', alignItems: 'flex-start', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                              <AlertCircle size={14} color="#ff1744" style={{ flexShrink: 0, marginTop: '2px' }} /> 
+                              <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
                             </div>
                             {t.fail_reason && (
                               <div style={{ fontSize: '0.75rem', color: '#999', fontStyle: 'italic', paddingLeft: '22px' }}>
