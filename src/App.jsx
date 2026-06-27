@@ -35,6 +35,7 @@ const ClientPortal = lazy(() => import('./pages/ClientPortal'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ThankYou = lazy(() => import('./pages/ThankYou'));
 const Contact = lazy(() => import('./pages/Contact'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
 // Service Detail Pages
 const MetaAds = lazy(() => import('./pages/services/MetaAds'));
@@ -251,6 +252,7 @@ function App() {
             <Route path="/tesekkurler" element={<ThankYou />} />
             <Route path="/iletisim" element={<Contact />} />
 
+            <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -313,8 +315,10 @@ function App() {
               </div>
             </div>
             
-            <div className="footer-bottom" style={{border: 'none', paddingTop: '20px', textAlign: 'center'}}>
+            <div className="footer-bottom" style={{border: 'none', paddingTop: '20px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)'}}>
               &copy; {new Date().getFullYear()} Socialart Ajans. Tüm hakları saklıdır.
+              <span style={{ margin: '0 10px', color: '#333' }}>|</span> 
+              <Link to="/gizlilik-politikasi" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#fff'} onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}>Gizlilik Politikası & KVKK</Link>
             </div>
           </div>
         </footer>
