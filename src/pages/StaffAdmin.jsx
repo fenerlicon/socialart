@@ -3858,7 +3858,19 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
                 const nameParts = selectedLead.name.split(' | ');
                 const companyName = parsedCompany && parsedCompany !== '-' ? parsedCompany : (nameParts[1] || '');
-                const websiteUrl = parsedWeb && parsedWeb !== '-' ? parsedWeb : '';
+                
+                // Formlardan gelen siteler platform kolonunda saklanıyor
+                const platformIsUrl = selectedLead.platform && 
+                  (selectedLead.platform.includes('.') || selectedLead.platform.startsWith('http')) && 
+                  !selectedLead.platform.includes('Instagram') && 
+                  !selectedLead.platform.includes('Meta Ads') && 
+                  !selectedLead.platform.includes('WhatsApp');
+                
+                const websiteUrl = parsedWeb && parsedWeb !== '-' 
+                  ? parsedWeb 
+                  : (platformIsUrl ? selectedLead.platform : '');
+
+                const displayPlatform = platformIsUrl ? "Web Sitesi / Form" : (selectedLead.platform || 'Bilinmiyor');
 
                 return (
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '25px', marginBottom: '35px' }}>
@@ -3905,7 +3917,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
                           <Layout size={12} /> Platform / Kanal
                         </span>
-                        <span style={{ fontSize: '0.95rem', color: '#fff' }}>{selectedLead.platform || 'Bilinmiyor'}</span>
+                        <span style={{ fontSize: '0.95rem', color: '#fff' }}>{displayPlatform}</span>
                       </div>
                       <div>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
