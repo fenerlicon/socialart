@@ -3738,11 +3738,17 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               {!isEditingLead ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1.5rem', fontWeight: '900' }}>{selectedLead.name.charAt(0)}</div>
+                    <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1.5rem', fontWeight: '900' }}>{(selectedLead.name.split(' | ')[0] || '').charAt(0)}</div>
                     <div>
-                      <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff' }}>{selectedLead.name}</h2>
-                      <div style={{ display: 'flex', gap: '15px', marginTop: '5px' }}>
+                      <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff' }}>{selectedLead.name.split(' | ')[0]}</h2>
+                      <div style={{ display: 'flex', gap: '15px', marginTop: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '0.9rem', color: 'var(--accent)' }}>{selectedLead.service}</span>
+                        {selectedLead.name.split(' | ')[1] && (
+                          <>
+                            <span style={{ fontSize: '0.9rem', color: '#888' }}>•</span>
+                            <span style={{ fontSize: '0.9rem', color: '#aaa', fontWeight: '600' }}>{selectedLead.name.split(' | ')[1]}</span>
+                          </>
+                        )}
                         <span style={{ fontSize: '0.9rem', color: '#888' }}>•</span>
                         <span style={{ fontSize: '0.9rem', color: '#888' }}>{selectedLead.phone || 'Telefon Yok'}</span>
                       </div>
@@ -3840,6 +3846,87 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
             {/* Modal Content - Scrollable */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '40px' }}>
+
+              {/* Lead Bilgileri Kartı */}
+              {(() => {
+                const reactionText = selectedLead.reaction || '';
+                const companyMatch = reactionText.match(/Şirket:\s*([^|]+)/i);
+                const webMatch = reactionText.match(/Web:\s*([^\n|]+)/i);
+                
+                const parsedCompany = companyMatch ? companyMatch[1].trim() : null;
+                const parsedWeb = webMatch ? webMatch[1].trim() : null;
+
+                const nameParts = selectedLead.name.split(' | ');
+                const companyName = parsedCompany && parsedCompany !== '-' ? parsedCompany : (nameParts[1] || '');
+                const websiteUrl = parsedWeb && parsedWeb !== '-' ? parsedWeb : '';
+
+                return (
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '25px', marginBottom: '35px' }}>
+                    <h4 style={{ color: '#fff', fontSize: '1rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <Activity size={16} color="var(--primary)" /> Müşteri Kartı Bilgileri
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+                      <div>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                          <Mail size={12} /> E-Posta
+                        </span>
+                        <span style={{ fontSize: '0.95rem', color: selectedLead.email ? '#fff' : '#444' }}>{selectedLead.email || 'Belirtilmemiş'}</span>
+                      </div>
+                      <div>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                          <Phone size={12} /> Telefon
+                        </span>
+                        <span style={{ fontSize: '0.95rem', color: selectedLead.phone ? '#fff' : '#444' }}>{selectedLead.phone || 'Belirtilmemiş'}</span>
+                      </div>
+                      <div>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                          <Briefcase size={12} /> Şirket / Marka
+                        </span>
+                        <span style={{ fontSize: '0.95rem', color: companyName ? '#fff' : '#444', fontWeight: companyName ? 'bold' : 'normal' }}>{companyName || 'Belirtilmemiş'}</span>
+                      </div>
+                      <div>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                          <ExternalLink size={12} /> Web Sitesi
+                        </span>
+                        {websiteUrl ? (
+                          <a 
+                            href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            style={{ fontSize: '0.95rem', color: 'var(--accent)', textDecoration: 'underline', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            {websiteUrl} <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span style={{ fontSize: '0.95rem', color: '#444' }}>Belirtilmemiş</span>
+                        )}
+                      </div>
+                      <div>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                          <Layout size={12} /> Platform / Kanal
+                        </span>
+                        <span style={{ fontSize: '0.95rem', color: '#fff' }}>{selectedLead.platform || 'Bilinmiyor'}</span>
+                      </div>
+                      <div>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                          <UserCheck size={12} /> Temsilci
+                        </span>
+                        <span style={{ fontSize: '0.95rem', color: '#fff' }}>{selectedLead.rep || '-'}</span>
+                      </div>
+                    </div>
+
+                    {/* İlk Form Detayları */}
+                    {selectedLead.reaction && (
+                      <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Başvuru Notu / Açıklama</span>
+                        <div style={{ fontSize: '0.95rem', color: '#fff', background: 'rgba(0,0,0,0.2)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {selectedLead.reaction}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div style={{ marginBottom: '40px' }}>
                 <h3 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
