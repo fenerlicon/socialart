@@ -615,17 +615,20 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  color: var(--post-text-muted);
 }
 
 .timeline-tab-btn:hover {
   border-color: var(--post-border-hover);
   background: var(--post-surface-light);
+  color: var(--post-text);
 }
 
 .timeline-tab-btn.active {
   background: var(--post-surface-light);
   border-color: var(--post-gold);
   box-shadow: 0 4px 20px rgba(255, 183, 3, 0.05);
+  color: var(--post-text);
 }
 
 .timeline-tab-num {
@@ -639,6 +642,8 @@
 .timeline-tab-title {
   font-weight: 700;
   font-size: 0.95rem;
+  color: inherit;
+  display: block;
 }
 
 .timeline-content-card {
