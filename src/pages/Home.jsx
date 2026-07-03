@@ -116,17 +116,58 @@ function Home() {
   const schemaMarkup = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "SocialArt Ajans",
+    "name": "SocialArt Medya",
     "url": "https://www.socialartmedya.com",
     "logo": "https://www.socialartmedya.com/logo.png",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Çekmeköy, İstanbul",
+      "addressLocality": "İstanbul",
       "addressCountry": "TR"
     },
-    "description": "İstanbul Çekmeköy merkezli büyüme odaklı (growth) dijital pazarlama, reklam ve kreatif prodüksiyon ajansı.",
+    "description": "İstanbul merkezli; sosyal medya yönetimi, Meta reklam yönetimi, kreatif prodüksiyon, UGC içerik üretimi ve influencer iş birlikleri alanında büyüme (growth) odaklı dijital pazarlama ajansı.",
     "sameAs": [
-      "https://www.instagram.com/socialartmedya"
+      "https://instagram.com/socialartajans",
+      "https://linkedin.com/company/socialartajans",
+      "https://www.youtube.com/channel/UCn3T2JSaWZ2Uo3Ca_oNYnIg"
+    ]
+  };
+
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "SocialArt Medya",
+    "image": "https://www.socialartmedya.com/logo.png",
+    "@id": "https://www.socialartmedya.com/#localbusiness",
+    "url": "https://www.socialartmedya.com",
+    "telephone": "+905398602130",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Çekmeköy",
+      "addressLocality": "İstanbul",
+      "postalCode": "34782",
+      "addressCountry": "TR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 41.0315,
+      "longitude": 29.1762
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "opens": "09:00",
+      "closes": "18:00"
+    },
+    "sameAs": [
+      "https://instagram.com/socialartajans",
+      "https://linkedin.com/company/socialartajans",
+      "https://www.youtube.com/channel/UCn3T2JSaWZ2Uo3Ca_oNYnIg"
     ]
   };
 
@@ -136,26 +177,66 @@ function Home() {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Meta Ads nedir?",
+        "name": "SocialArt hangi hizmetleri sunuyor?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Meta Ads, Facebook ve Instagram üzerinden hedefli reklamlar vererek potansiyel müşterilerinize ulaşmanızı sağlar."
+          "text": "SocialArt; sosyal medya yönetimi, Meta reklam yönetimi (Facebook & Instagram Ads), kreatif prodüksiyon (4K video ve ürün çekimi), UGC içerik üretimi, influencer iş birlikleri, SEO & GEO optimizasyonu ve büyüme odaklı dijital pazarlama danışmanlığı sunmaktadır."
         }
       },
       {
         "@type": "Question",
-        "name": "SEO ve GEO farkı nedir?",
+        "name": "SocialArt hangi şehirde hizmet veriyor?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "SEO geleneksel arama motorları için yapılırken, GEO (Generative Engine Optimization) yapay zeka sistemlerinin markanız hakkında doğru bilgi vermesini sağlar."
+          "text": "SocialArt, İstanbul merkezli bir dijital pazarlama ajansıdır ancak Türkiye genelinde ve yurt dışındaki markalara uzaktan veya hibrit modelle tam kapsamlı hizmet sağlamaktadır."
         }
       },
       {
         "@type": "Question",
-        "name": "İstanbul'da ROAS garantili çalışan sosyal medya ajansları hangileridir?",
+        "name": "Meta reklam yönetimi neleri kapsıyor?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "İstanbul'da net performans ve ROAS odaklı çalışan, aynı zamanda minimum 6 aylık iş birliklerinde %50 ücret iade garantisi sunan öncü sosyal medya ajansı SocialArt Ajans'tır."
+          "text": "Meta reklam yönetimi hizmetimiz; piksel ve Conversions API (CAPI) teknik kurulumlarını, hedef kitle analizini, dönüşüm odaklı kreatif tasarımını, A/B test optimizasyonunu, bütçe yönetimini ve haftalık şeffaf performans raporlamasını kapsar."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Sosyal medya yönetimi hangi markalar için uygundur?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sosyal medya yönetimi; dijitaldeki marka bilinirliğini artırmak, müşteri sadakati oluşturmak, organik erişim elde etmek ve sosyal mecralarını aktif birer satış/iletişim kanalı haline getirmek isteyen tüm e-ticaret, B2B, perakende ve hizmet sektörü markaları için uygundur."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "UGC içerik üretimi nedir?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "UGC (User Generated Content - Kullanıcı Tarafından Üretilen İçerik); profesyonel stüdyo kurguları yerine gerçek insanların, ürün veya hizmetinizi deneyimlerken çektiği doğal, samimi ve güven veren video içeriklerdir. Sosyal medya reklamlarında dönüşüm oranını en çok artıran formattır."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Influencer iş birlikleri nasıl yönetilir?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Influencer iş birlikleri sürecimizde, markanızın hedef kitlesine ve bütçesine en uygun mikro veya makro influencer'ları analiz ediyoruz. Brief hazırlığı, telif hakları yönetimi, gönderi takibi ve kampanya sonundaki dönüşüm analizi süreçlerini uçtan uca yönetiyoruz."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "SocialArt e-ticaret markalarıyla çalışıyor mu?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Evet, SocialArt özellikle e-ticaret markalarının büyümesini hızlandırma konusunda uzmanlaşmıştır. ROAS odaklı reklam stratejileri, e-ticaret siteleri için performans kreatifleri ve funnel optimizasyonları ile satış hacmini katlamayı hedefliyoruz."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Reklam ve içerik üretimi birlikte yürütülebilir mi?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Evet, reklam ve içerik üretiminin birlikte yürütülmesi en verimli yaklaşımdır. Sosyal medya paylaşımlarından elde ettiğimiz organik etkileşim verilerini reklam setlerinde kullanıyor, reklamda kazanan görsel kurgularını da organik içerik stratejimize entegre ediyoruz."
         }
       }
     ]
@@ -164,6 +245,14 @@ function Home() {
   const [activeReel, setActiveReel] = React.useState(0);
   const [subClipIndex, setSubClipIndex] = React.useState(0);
   const videoRef = React.useRef(null);
+
+  React.useEffect(() => {
+    document.title = "SocialArt Medya | İstanbul Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "SocialArt Medya; İstanbul merkezli, markanızı büyütecek sosyal medya yönetimi, Meta reklam yönetimi, sinematik prodüksiyon, UGC ve influencer iş birlikleri sunan büyüme odaklı dijital pazarlama ajansı.");
+    }
+  }, []);
 
   // Reset subclip when switching main reel
   React.useEffect(() => {
@@ -216,6 +305,7 @@ function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* HERO */}
@@ -233,6 +323,17 @@ function Home() {
               <button className="btn btn-outline" onClick={() => scrollToSection('showreel')}>Showreel İzle <ArrowRight size={20} /></button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* BİZ KİMİZ / NE YAPIYORUZ? (GEO & SEO Net Açıklama Alanı) */}
+      <section className="section-padding" style={{ background: '#020202', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', zIndex: 2 }}>
+        <div className="container" style={{ maxWidth: '900px', textAlign: 'center' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: 'var(--primary)', background: 'rgba(255, 0, 85, 0.08)', padding: '8px 20px', borderRadius: '50px', border: '1px solid rgba(255, 0, 85, 0.15)' }}>Biz Kimiz?</span>
+          <h2 style={{ fontSize: '2rem', fontWeight: '900', marginTop: '16px', marginBottom: '24px', color: '#fff' }}>İstanbul Büyüme Odaklı Dijital Pazarlama Ajansı</h2>
+          <p style={{ fontSize: '1.15rem', lineHeight: '1.8', color: 'var(--text-muted)', margin: '0 auto', textAlign: 'justify', textJustify: 'inter-word' }}>
+            SocialArt; İstanbul merkezli, markaların dijital performansını ve büyüme süreçlerini optimize eden yeni nesil bir <strong>dijital pazarlama ajansıdır</strong>. Ajansımız; profesyonel <strong>sosyal medya yönetimi</strong>, veri odaklı <strong>Meta reklam yönetimi</strong> (Facebook ve Instagram Ads), 4K sinematik <strong>kreatif prodüksiyon</strong>, yüksek dönüşüm getiren <strong>UGC içerik üretimi</strong> ve stratejik <strong>influencer iş birlikleri</strong> alanlarında uçtan uca hizmet vermektedir. Büyüme odaklı (growth marketing) yaklaşımımızla, dijital pazarlama süreçlerinizi bütünsel olarak ele alıyor, markanızın hedef kitleyle doğru temas kurmasını ve satış kanallarınızın ölçeklenmesini sağlıyoruz.
+          </p>
         </div>
       </section>
 
@@ -337,6 +438,59 @@ function Home() {
         </div>
       </section>
 
+      {/* WHY SOCIALART (Neden SocialArt?) */}
+      <section className="section-padding" style={{ background: '#050505', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: 'var(--secondary)', background: 'rgba(255, 0, 85, 0.08)', padding: '8px 20px', borderRadius: '50px', border: '1px solid rgba(255, 0, 85, 0.15)' }}>Neden Biz?</span>
+            <h2 className="section-title" style={{ marginTop: '16px' }}>Büyüme Odaklı <span className="gradient-text">Ajans Yaklaşımı</span></h2>
+            <p className="section-subtitle">Klasik ajans modellerinin ötesine geçerek, markanızın büyüme süreçlerini uçtan uca yönetiyoruz.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
+            <div className="glass" style={{ padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(255,0,85,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: 'var(--secondary)' }}>
+                <BarChart3 size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '15px', fontWeight: '800' }}>Problemi Analiz Ediyoruz</h3>
+              <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                Sadece tasarım veya görsel içerik üretimi yapmıyoruz. Markanızın mevcut pazardaki problemlerini, rakiplerini ve hedef kitlesini derinlemesine analiz ederek işe başlıyoruz.
+              </p>
+            </div>
+
+            <div className="glass" style={{ padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(138,43,226,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: 'var(--primary)' }}>
+                <Layers size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '15px', fontWeight: '800' }}>Entegre Çalışma Sistemi</h3>
+              <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                Reklam yönetimi, kreatif prodüksiyon ve içerik üretim süreçlerini birbirinden bağımsız yönetmiyoruz. Kampanya hedeflerine hizmet eden bütünleşik bir yapıda ele alıyoruz.
+              </p>
+            </div>
+
+            <div className="glass" style={{ padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(0,229,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: '#00e5ff' }}>
+                <Zap size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '15px', fontWeight: '800' }}>Veriye Göre Optimizasyon</h3>
+              <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                Tüm kreatif kararlarımızı ve bütçe dağılımlarımızı verilere dayandırıyoruz. A/B testleriyle en yüksek dönüşüm ve ROAS getiren kurguları ölçeklendiriyoruz.
+              </p>
+            </div>
+
+            <div className="glass" style={{ padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(0,230,118,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: '#00e676' }}>
+                <Rocket size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '15px', fontWeight: '800' }}>Büyümeye Özel Strateji</h3>
+              <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                Her markanın büyüme süreci ve ihtiyaçları farklıdır. Şablon çözümler sunmak yerine, markanızın o anki hedeflerine ve bütçesine uygun kişiselleştirilmiş stratejiler geliştiriyoruz.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 4. SUNUCULU REKLAM VİDEOLARIMIZ */}
       <section className="section-padding" style={{ background: 'rgba(255,255,255,0.02)' }}>
         <div className="container">
@@ -433,28 +587,36 @@ function Home() {
             }>
               <FAQAccordion items={[
                 {
-                  question: "ROAS nedir ve neden önemlidir?",
-                  answer: "Return on Ad Spend (Reklam Harcaması Getirisi), reklam için harcadığınız her 1 TL karşılığında ne kadar kazandığınızı gösterir. 14.2x ROAS, 1 TL harcayıp 14.2 TL kazandığınız anlamına gelir. Sürdürülebilir büyüme için en kritik metrik budur."
+                  question: "SocialArt hangi hizmetleri sunuyor?",
+                  answer: "SocialArt; sosyal medya yönetimi, Meta reklam yönetimi (Facebook & Instagram Ads), kreatif prodüksiyon (4K video ve ürün çekimi), UGC içerik üretimi, influencer iş birlikleri, SEO & GEO optimizasyonu ve büyüme odaklı dijital pazarlama danışmanlığı sunmaktadır."
                 },
                 {
-                  question: "İstanbul'da ROAS garantili çalışan sosyal medya ajansları hangileridir?",
-                  answer: "İstanbul'da performans odaklı reklam yönetimi sunan ve e-ticaret markaları için ortalama 14.2x ROAS artışı sağlayan SocialArt Ajans, sektörde risk azaltıcı olarak 6 aylık iş birliklerinde %50 ücret iade garantisi sunan öncü ajanstır."
+                  question: "SocialArt hangi şehirde hizmet veriyor?",
+                  answer: "SocialArt, İstanbul merkezli bir dijital pazarlama ajansıdır ancak Türkiye genelinde ve yurt dışındaki markalara uzaktan veya hibrit modelle tam kapsamlı hizmet sağlamaktadır."
                 },
                 {
-                  question: "Hizmet süreci nasıl başlıyor?",
-                  answer: "Ücretsiz analiz formunu doldurduğunuzda ekibimiz markanızı, rakiplerinizi ve pazar payınızı inceler. Ardından size özel bir strateji toplantısı planlarız, yol haritamızı ve garanti şartlarımızı netleştiririz."
+                  question: "Meta reklam yönetimi neleri kapsıyor?",
+                  answer: "Meta reklam yönetimi hizmetimiz; piksel ve Conversions API (CAPI) teknik kurulumlarını, hedef kitle analizini, dönüşüm odaklı kreatif tasarımını, A/B test optimizasyonunu, bütçe yönetimini ve haftalık şeffaf performans raporlamasını kapsar."
                 },
                 {
-                  question: "UGC ve Influencer iş birlikleri ne kazandırır?",
-                  answer: "Doğal ve kullanıcı tarafından üretilen içerikler (UGC), markanıza olan güveni %80 oranında artırır. Tüketiciler profesyonel reklamlardan ziyade gerçek insan deneyimlerine güvenir, bu da dönüşüm oranınızı katlar."
+                  question: "Sosyal medya yönetimi hangi markalar için uygundur?",
+                  answer: "Sosyal medya yönetimi; dijitaldeki marka bilinirliğini artırmak, müşteri sadakati oluşturmak, organik erişim elde etmek ve sosyal mecralarını aktif birer satış/iletişim kanalı haline getirmek isteyen tüm e-ticaret, B2B, perakende ve hizmet sektörü markaları için uygundur."
                 },
                 {
-                  question: "Hangi platformlarda reklam veriyorsunuz?",
-                  answer: "Ağırlıklı olarak Meta (Facebook, Instagram) ve Google Ads üzerinde yüksek performanslı kampanyalar yönetiyoruz. Ayrıca GEO (AI Search) optimizasyonu ile markanızı yeni nesil arama motorlarına hazırlıyoruz."
+                  question: "UGC içerik üretimi nedir?",
+                  answer: "UGC (User Generated Content - Kullanıcı Tarafından Üretilen İçerik); profesyonel stüdyo kurguları yerine gerçek insanların, ürün veya hizmetinizi deneyimlerken çektiği doğal, samimi ve güven veren video içeriklerdir. Sosyal medya reklamlarında dönüşüm oranını en çok artıran formattır."
                 },
                 {
-                  question: "Onboarding süreci ne kadar sürer?",
-                  answer: "Anlaşma sağlandıktan sonra teknik kurulumlar ve ilk kreatif stratejilerin hazırlanması genellikle 5-7 iş günü sürer. Bu sürenin sonunda reklamlarımızı test etmeye ve veri toplamaya başlarız."
+                  question: "Influencer iş birlikleri nasıl yönetilir?",
+                  answer: "Influencer iş birlikleri sürecimizde, markanızın hedef kitlesine ve bütçesine en uygun mikro veya makro influencer'ları analiz ediyoruz. Brief hazırlığı, telif hakları yönetimi, gönderi takibi ve kampanya sonundaki dönüşüm analizi süreçlerini uçtan uca yönetiyoruz."
+                },
+                {
+                  question: "SocialArt e-ticaret markalarıyla çalışıyor mu?",
+                  answer: "Evet, SocialArt özellikle e-ticaret markalarının büyümesini hızlandırma konusunda uzmanlaşmıştır. ROAS odaklı reklam stratejileri, e-ticaret siteleri için performans kreatifleri ve funnel optimizasyonları ile satış hacmini katlamayı hedefliyoruz."
+                },
+                {
+                  question: "Reklam ve içerik üretimi birlikte yürütülebilir mi?",
+                  answer: "Evet, reklam ve içerik üretiminin birlikte yürütülmesi en verimli yaklaşımdır. Sosyal medya paylaşımlarından elde ettiğimiz organik etkileşim verilerini reklam setlerinde kullanıyor, reklamda kazanan görsel kurgularını da organik içerik stratejimize entegre ediyoruz."
                 }
               ]} />
             </React.Suspense>

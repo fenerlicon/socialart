@@ -82,15 +82,43 @@ const servicesData = [
     desc: 'Samimi ve doğal kullanıcı içerikleri (UGC) ile markanızın güvenilirliğini artırıyoruz. Doğru influencer eşleşmeleri ve stratejik içerik planlamasıyla etkileşim ve satış rakamlarınızı yukarı taşıyoruz.',
     features: ['UGC İçerik Üreticileri', 'Influencer Eşleştirme', 'Kampanya Yönetimi', 'Performans Analizi'],
     link: '/ugc-influencer-isbirligi'
+  },
+  {
+    id: 'dijital-danismanlik',
+    title: 'Dijital Pazarlama Danışmanlığı',
+    icon: <Layers size={32} color="var(--primary)" />,
+    color: 'var(--primary)',
+    glow: 'rgba(138, 43, 226, 0.15)',
+    desc: '360 derece büyüme (growth) odaklı dijital pazarlama danışmanlığı. Satış hunileri, bütçe verimliliği, kreatif mentorluk ve CRO optimizasyonları.',
+    features: ['360° Büyüme Analizi', 'Stratejik Yol Haritası', 'CRO & Sepet İyileştirme', 'Haftalık Strateji Seansları'],
+    link: '/dijital-pazarlama-danismanligi'
+  },
+  {
+    id: 'post-produksiyon',
+    title: 'Post-Prodüksiyon (Kurgu & Montaj)',
+    icon: <Video size={32} color="#ffb703" />,
+    color: '#ffb703',
+    glow: 'rgba(255, 183, 3, 0.15)',
+    desc: 'Çekimlerinizi profesyonel kurgu, sinematik renk derecelendirme (color grading), görsel efektler (VFX), hareketli grafikler ve zengin ses tasarımı ile yüksek dönüşüm getiren birer görsel şölene dönüştürüyoruz.',
+    features: ['Sinematik Renk Derecelendirme', 'Dinamik Kurgu & Montaj', 'CGI & Görsel Efektler (VFX)', 'Zengin Ses Tasarımı & SFX'],
+    link: '/post-produksiyon'
   }
 ];
 
 function Services() {
+  React.useEffect(() => {
+    document.title = "Hizmetlerimiz | SocialArt Medya";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "SocialArt Medya tarafından sunulan growth odaklı dijital pazarlama, sosyal medya yönetimi, Meta reklam yönetimi, sinematik prodüksiyon, UGC ve danışmanlık hizmetleri.");
+    }
+  }, []);
+
   const serviceSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Socialart Ajans Hizmetleri",
-    "description": "Socialart Ajans tarafından sunulan dijital pazarlama, video prodüksiyon ve reklam yönetimi hizmetleri listesi.",
+    "name": "SocialArt Medya Hizmetleri",
+    "description": "SocialArt Medya tarafından sunulan dijital pazarlama, video prodüksiyon ve reklam yönetimi hizmetleri listesi.",
     "itemListElement": servicesData.map((service, index) => ({
       "@type": "ListItem",
       "position": index + 1,
@@ -100,7 +128,7 @@ function Services() {
         "description": service.desc,
         "provider": {
           "@type": "Organization",
-          "name": "SocialArt Ajans",
+          "name": "SocialArt Medya",
           "url": "https://www.socialartmedya.com"
         },
         "url": `https://www.socialartmedya.com${service.link}`

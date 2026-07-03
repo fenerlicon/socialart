@@ -46,12 +46,14 @@ const UGCInfluencer = lazy(() => import('./pages/services/UGCInfluencer'));
 const SunuculuReklam = lazy(() => import('./pages/services/SunuculuReklam'));
 const RestaurantMarketing = lazy(() => import('./pages/services/RestaurantMarketing'));
 const GymMarketing = lazy(() => import('./pages/services/GymMarketing'));
+const DijitalPazarlamaDanismanligi = lazy(() => import('./pages/services/DijitalPazarlamaDanismanligi'));
 
 // Named exports from ApplicationForms
 const UGCApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
 const JobApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.JobApplication })));
 
 const EmailMarketing = lazy(() => import('./pages/EmailMarketing'));
+const PostProduction = lazy(() => import('./pages/PostProduction'));
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -143,7 +145,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler'].includes(location.pathname) && (
+      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -175,11 +177,17 @@ function App() {
                   <Link to="/sosyal-medya-yonetimi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <Share2 size={18} style={{ marginRight: '12px', color: 'var(--primary)' }} /> Sosyal Medya Yönetimi
                   </Link>
+                  <Link to="/ugc-influencer-isbirligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <Users size={18} style={{ marginRight: '12px', color: '#00e676' }} /> UGC & Influencer İşbirliği
+                  </Link>
+                  <Link to="/dijital-pazarlama-danismanligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <Layers size={18} style={{ marginRight: '12px', color: 'var(--primary)' }} /> Dijital Pazarlama Danışmanlığı
+                  </Link>
                   <Link to="/sunuculu-reklam-videolari" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <PlayCircle size={18} style={{ marginRight: '12px', color: '#ff0055' }} /> Sunuculu Reklam Videoları
                   </Link>
-                  <Link to="/ugc-influencer-isbirligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Users size={18} style={{ marginRight: '12px', color: '#00e676' }} /> UGC & Influencer İşbirliği
+                  <Link to="/post-produksiyon" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <PlayCircle size={18} style={{ marginRight: '12px', color: '#ffb703' }} /> Post Prodüksiyon
                   </Link>
                 </div>
               </div>
@@ -239,6 +247,7 @@ function App() {
             <Route path="/ugc-basvuru" element={<UGCApplication />} />
             <Route path="/is-basvurusu" element={<JobApplication />} />
             <Route path="/email-marketing" element={<EmailMarketing />} />
+            <Route path="/post-produksiyon" element={<PostProduction />} />
             
             {/* Service Detail Routes */}
             <Route path="/meta-ads-yonetimi" element={<MetaAds />} />
@@ -246,6 +255,7 @@ function App() {
             <Route path="/seo-geo-optimizasyonu" element={<SEOGEO />} />
             <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
             <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
+            <Route path="/dijital-pazarlama-danismanligi" element={<DijitalPazarlamaDanismanligi />} />
             <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
             <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
             <Route path="/spor-salonu-pazarlama" element={<GymMarketing />} />
@@ -259,7 +269,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler'].includes(location.pathname) && (
+      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>

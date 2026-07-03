@@ -13,6 +13,37 @@ const stripCdata = (str) => {
     .trim();
 };
 
+const getCategory = (post) => {
+  const slug = post.slug.toLowerCase();
+  const title = post.title.toLowerCase();
+  
+  if (slug.includes('ugc') || slug.includes('influencer') || title.includes('ugc') || title.includes('influencer')) {
+    return 'UGC ve Influencer Pazarlaması';
+  }
+  if (slug.includes('kreatif') || title.includes('kreatif') || slug.includes('reklam-kreatifi') || title.includes('reklam kreatif')) {
+    return 'Kreatif ve Reklam Performansı';
+  }
+  if (slug.includes('meta') || slug.includes('reklam') || title.includes('reklam') || title.includes('meta')) {
+    return 'Meta Reklam Rehberleri';
+  }
+  if (slug.includes('sosyal-medya') || slug.includes('instagram') || title.includes('sosyal medya') || title.includes('instagram')) {
+    return 'Sosyal Medya Yönetimi Rehberleri';
+  }
+  if (slug.includes('buyut') || slug.includes('büyüt') || slug.includes('growth') || slug.includes('danisman') || title.includes('büyüt') || title.includes('growth') || title.includes('danışman') || title.includes('strateji')) {
+    return 'Marka Büyütme Rehberleri';
+  }
+  
+  return 'Genel Dijital Pazarlama';
+};
+
+const getAuthor = (post) => {
+  const content = post.content.toLowerCase();
+  if (content.includes('ercan özdemir')) {
+    return 'Ercan Özdemir';
+  }
+  return 'Celal Ünlü';
+};
+
 function BlogDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
@@ -98,10 +129,10 @@ function BlogDetail() {
         <article className="blog-content-wrap glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
           {/* Header Image */}
           <div style={{ width: '100%', height: '450px', overflow: 'hidden', position: 'relative' }}>
-            <img src={post.cover_image} alt={post.title} width="1200" height="450" fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={post.cover_image} alt={post.title} width="1200" height="450" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '50px', background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}>
                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-                 <span className="glass" style={{ padding: '8px 20px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px' }}>DİJİTAL PAZARLAMA</span>
+                 <span className="glass" style={{ padding: '8px 20px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '1px' }}>{getCategory(post).toUpperCase()}</span>
                </div>
                <h1 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1.2' }}>{stripCdata(post.title)}</h1>
             </div>
@@ -114,7 +145,7 @@ function BlogDetail() {
                  <Calendar size={18} color="var(--primary)" /> <span>{new Date(post.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                </div>
                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#bbb', fontWeight: '500' }}>
-                 <User size={18} color="var(--primary)" /> <span>Socialart Ekibi</span>
+                 <User size={18} color="var(--primary)" /> <span>{getAuthor(post)}</span>
                </div>
              </div>
              <div style={{ display: 'flex', gap: '15px' }}>

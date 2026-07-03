@@ -8,13 +8,13 @@ function Pricing() {
   const plans = [
     {
       name: "Eko Paket",
-      price: "36.000",
+      price: "46.000",
       description: "Belirli oturmuş kitlesi olan markaları Sosyal medyada canlı tutmak ve kaliteli bir vitrin oluşturmak için ideal.",
       features: [
         "4 Adet Reels",
         "4 Adet Statik veya Carousel Post",
         "30 Adet Story",
-        "Sosyal Medya ve Reklam yönetimi",
+        "Sosyal Medya ve Reklam Yönetimi",
         "Sunum ve Raporlamalar"
       ],
       color: "var(--primary)",
@@ -23,17 +23,17 @@ function Pricing() {
     },
     {
       name: "Business Paket",
-      price: "46.000",
+      price: "55.000",
       description: "Markasını sosyal medyada hızlıca var etmek ve Marka algısı inşa etmek isteyenler için ideal.",
       features: [
         "8 Adet Reels",
         "60 Adet Story",
-        "4 Adet Statik veya Carousel Post",
-        "4 Adet Grafik Tasarım",
+        "8 Adet Statik veya Carousel Post",
         "Sayfa tasarımı ve Creative marka tasarımı",
-        "Sosyal medya ve Yönetimi",
+        "Sosyal Medya ve Yönetimi",
         "Reklam Yönetimi ve Stratejisi",
-        "Sunum ve raporlamalar"
+        "Sunum ve Raporlamalar",
+        "Piyasa ve Rakip Analizi"
       ],
       color: "var(--accent)",
       icon: <Zap size={30} color="var(--accent)" />,
@@ -42,13 +42,12 @@ function Pricing() {
     },
     {
       name: "Booster Paket",
-      price: "110.000",
+      price: "132.000",
       description: "Markasına Sosyal medyada ve web de agresif büyüme hızı isteyen ve tam kapsamlı ajans hizmeti almak isteyenler için ideal.",
       features: [
         "10 Adet Reels",
         "90 Adet Story (Günde 3 Adet)",
-        "4 Adet Statik veya Carousel Post",
-        "4 Adet Grafik Tasarım Postu",
+        "8 Adet Statik veya Carousel Post",
         "Ürün Fotoğrafı Çekimi",
         "Tanıtım Filmi",
         "Sosyal Medya Yönetimi",

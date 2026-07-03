@@ -2,14 +2,22 @@ import React from 'react';
 import { Camera, Video, Users, Target, Rocket, Award, Heart, ArrowRight } from 'lucide-react';
 
 function About() {
+  React.useEffect(() => {
+    document.title = "Hakkımızda | SocialArt Medya";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "SocialArt Medya, sanatı stratejiyle birleştiren, markaların dijital dünyadaki hikayelerini en estetik ve etkili şekilde anlatan bir yeni nesil medya ajansıdır.");
+    }
+  }, []);
+
   const aboutSchema = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    "name": "Socialart Ajans Hakkımızda",
-    "description": "SocialArt Ajans, sanatı stratejiyle birleştiren, markaların dijital dünyadaki hikayelerini en estetik ve etkili şekilde anlatan bir yeni nesil medya ajansıdır.",
+    "name": "SocialArt Medya - Hakkımızda",
+    "description": "SocialArt Medya, sanatı stratejiyle birleştiren, markaların dijital dünyadaki hikayelerini en estetik ve etkili şekilde anlatan bir yeni nesil medya ajansıdır.",
     "publisher": {
       "@type": "Organization",
-      "name": "SocialArt Ajans",
+      "name": "SocialArt Medya",
       "url": "https://www.socialartmedya.com",
       "logo": "https://www.socialartmedya.com/logo.png",
       "founder": [
