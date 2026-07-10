@@ -109,6 +109,17 @@ const caseStudiesData = [
     isComingSoon: true
   },
   {
+    id: 'shineco',
+    brand: 'SHINECO',
+    sector: 'Kozmetik & Temizlik',
+    services: [],
+    challenge: '',
+    solution: '',
+    metrics: [],
+    highlight: '',
+    isComingSoon: true
+  },
+  {
     id: 'cosentino-geberit',
     brand: 'COSENTINO & GEBERIT',
     sector: 'Mimari / Yapı Teknolojileri',
