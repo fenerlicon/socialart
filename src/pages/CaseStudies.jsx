@@ -94,7 +94,19 @@ const caseStudiesData = [
     challenge: '',
     solution: '',
     metrics: [],
-    highlight: ''
+    highlight: '',
+    isComingSoon: true
+  },
+  {
+    id: 'miocasa',
+    brand: 'MIOCASA',
+    sector: 'Mimari & Mobilya',
+    services: [],
+    challenge: '',
+    solution: '',
+    metrics: [],
+    highlight: '',
+    isComingSoon: true
   },
   {
     id: 'cosentino-geberit',
@@ -422,11 +434,10 @@ const CaseStudies = () => {
           </button>
         ))}
       </div>
-      {/* Active Brand Story Showcase */}
-      {activeBrandId === 'spright' ? (
+      {activeBrand.isComingSoon ? (
         <div className="spright-coming-soon-wrapper">
           <div className="spright-pulse-circle"></div>
-          <h1 className="spright-coming-soon-brand">SPRIGHT</h1>
+          <h1 className="spright-coming-soon-brand">{activeBrand.brand}</h1>
           <p className="spright-coming-soon-tagline">Yakında</p>
         </div>
       ) : (
