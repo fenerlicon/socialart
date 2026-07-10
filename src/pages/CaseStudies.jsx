@@ -87,9 +87,9 @@ const caseStudiesData = [
     ]
   },
   {
-    id: 'spright',
-    brand: 'SPRIGHT',
-    sector: 'Spor & Giyim',
+    id: 'sprite',
+    brand: 'SPRITE',
+    sector: 'Gıda & Hızlı Tüketim',
     services: [],
     challenge: '',
     solution: '',
