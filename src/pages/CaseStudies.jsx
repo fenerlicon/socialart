@@ -10,7 +10,8 @@ import {
   Sparkles, 
   Target, 
   Zap,
-  ChevronRight
+  ChevronRight,
+  Play
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -19,15 +20,19 @@ const caseStudiesData = [
     id: 'peugeot',
     brand: 'PEUGEOT',
     sector: 'Otomotiv',
-    services: ['Sosyal Medya Yönetimi', 'Kreatif Prodüksiyon', 'Meta Ads Yönetimi'],
-    challenge: 'Yeni model lansmanını genç kitleye ulaştırmak, marka algısını dijitalde dinamikleştirmek ve sosyal medya üzerinden test sürüşü taleplerini artırmak.',
-    solution: 'Dinamik, dikkat çekici kanca (hook) kurgularına sahip, sinematik 4K Reels içerikleri ürettik. Hedef kitle analizleri doğrultusunda ilgi alanlarına göre özelleştirilmiş Meta reklam setleri oluşturarak etkileşim ve lead hunilerini kurduk.',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Yeni model Peugeot lansmanı için sosyal medya mecralarında paylaşılmak üzere, araç dinamizmini ve estetiğini en üst seviyede yansıtacak yüksek kalitede, sinematik video kreatif üretimi.',
+    solution: 'Peugeot lansmanı için özel olarak belirlenen rotalarda, hareketli takip sistemleri (car rig) ve gelişmiş FPV drone ekipmanları kullanarak 4K sinematik video çekimleri gerçekleştirdik. Kurgu ve post-prodüksiyon aşamasında otomotiv dünyasına uygun dinamik ritim ve renk düzenlemeleri uygulayarak iki adet Reels reklam filmi hazırladık.',
     metrics: [
       { value: '2.5M+', label: 'Reels İzlenme', desc: 'Lansman süresince toplam erişim' },
-      { value: '+%120', label: 'Etkileşim Oranı', desc: 'Sektör ortalamasının üzerinde performans' },
-      { value: '3.8x', label: 'Lead Dönüşümü', desc: 'Test sürüşü başvuru maliyetinde düşüş' }
+      { value: '+%120', label: 'Etkileşim Artışı', desc: 'Sektör ortalamasının üzerinde kreatif etkileşimi' },
+      { value: '4K / 60 FPS', label: 'Çekim Standardı', desc: 'Ultra yüksek çözünürlük kalitesi' }
     ],
-    highlight: 'Genç ve dinamik otomobil tutkunlarını sinematik video kreatifleriyle yakaladık.'
+    highlight: 'Peugeot lansmanını FPV drone açıları ve yüksek kaliteli araç takip çekimleriyle görselleştirdik.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836097/peugeot-1_pbbiiq.mp4',
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836073/peugeot-2_tnygmj.mp4'
+    ]
   },
   {
     id: 'koton',
@@ -357,6 +362,28 @@ const CaseStudies = () => {
               </div>
               <p style={{ color: '#aaa', fontSize: '0.95rem', lineHeight: '1.7', textAlign: 'justify' }}>{activeBrand.solution}</p>
             </div>
+
+            {activeBrand.videos && activeBrand.videos.length > 0 && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px', marginTop: '25px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <Play size={20} color="var(--primary)" />
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Üretilen Kreatif Çalışmalar</h3>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                  {activeBrand.videos.map((vidUrl, index) => (
+                    <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: '9/16', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                      <video 
+                        src={vidUrl} 
+                        controls 
+                        playsInline
+                        preload="metadata"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
