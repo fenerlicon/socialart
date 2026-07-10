@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Video, Users, ArrowRight, Mic, Smartphone, Layers, Monitor, TrendingUp, Globe, Star, CheckCircle, Zap } from 'lucide-react';
+import { Camera, Video, Users, ArrowRight, Mic, Smartphone, Layers, Monitor, TrendingUp, Globe, Star, CheckCircle, Zap, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const servicesData = [
@@ -51,6 +51,16 @@ const servicesData = [
     glow: 'rgba(255, 0, 85, 0.15)',
     desc: 'Modern medya dünyasında yüksek kaliteli ve yaratıcı videolar oluşturuyoruz. Her projede izleyicilere benzersiz deneyimler sunmayı hedefliyoruz. Yenilikçi ve dinamik bakış açısıyla her videoda yeni hikayeler keşfediyoruz.',
     features: ['Sinematik Reklam Filmleri', 'Kurumsal Tanıtım Videoları', 'Sosyal Medya Reels & TikTok', 'Drone Çekimleri'],
+    link: '/creative-production'
+  },
+  {
+    id: 'event-cekimi',
+    title: 'Event & Etkinlik Çekimi',
+    icon: <Calendar size={32} color="#ffb703" />,
+    color: '#ffb703',
+    glow: 'rgba(255, 183, 3, 0.15)',
+    desc: 'Lansmanlar, fuarlar, kurumsal etkinlikler, partiler ve özel organizasyonlarınız için dinamik, enerjik ve yüksek çözünürlüklü video & fotoğraf prodüksiyonu sunuyoruz.',
+    features: ['Lansman & Gala Videoları', 'Kurumsal Etkinlik Çekimleri', 'Aftermovie & Özet Klipler', 'Profesyonel Etkinlik Fotoğrafçılığı'],
     link: '/creative-production'
   },
   {

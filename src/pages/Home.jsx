@@ -25,7 +25,8 @@ import {
   Mail,
   PlayCircle,
   ChevronDown,
-  MessageSquare
+  MessageSquare,
+  Calendar
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import jeepLogo from '../assets/images/jeep-logo.webp';
@@ -299,7 +300,7 @@ function Home() {
     "Sahne Marin", "EGE CUNDA BALIK", "Smart Enerji", "Polar", "Enova Eğitim",
     "Indian Motorcycle", "S.E.T.S", "Allure Deluxe Beauty", "Funfest",
     "DUMA DUMA", "216 Dizayn", "good&mood", "MapOfX", "Cosentino", "Geberit",
-    "Karadeniz Et", "SRG"
+    "Karadeniz Et", "SRG", "Spright", "Miocasa", "Arayanvar", "Shineco"
   ];
 
   return (
@@ -316,7 +317,7 @@ function Home() {
         </div>
         <div className="container">
           <div className="hero-content">
-            <h1 className="hero-title">İstanbul'un Öncü <span className="gradient-text">Sosyal Medya & Reklam</span> Ajansı</h1>
+            <h1 className="hero-title">İstanbul'un Kreatif <span className="gradient-text">Sosyal Medya & Reklam</span> Ajansı</h1>
             <p className="hero-desc">Sadece reels çekmiyoruz, markanız için çalışan bir sistem kuruyoruz. Meta Ads, Creative Production ve SEO optimizasyonu ile ölçeklenebilir sonuçlar sağlıyoruz.</p>
             <div className="hero-actions">
               <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')}>Ekibimizle Toplantı Planlayın</button>
@@ -364,7 +365,7 @@ function Home() {
       <section className="section-padding" id="showreel" style={{ background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h2 className="section-title">Director's <span className="gradient-text">Showreel</span></h2>
+            <h2 className="section-title">Yönetmen <span className="gradient-text">Showreel</span></h2>
             <p className="section-subtitle">Üst segment prodüksiyon ve sinematik reklam çekimi vizyonumuz.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', justifyContent: 'center' }}>
@@ -386,7 +387,7 @@ function Home() {
       <section className="section-padding" style={{ background: '#050505', position: 'relative', overflow: 'hidden' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h2 className="section-title">Growth <span className="gradient-text">Metrics</span></h2>
+            <h2 className="section-title">Büyüme <span className="gradient-text">Metriklerimiz</span></h2>
             <p className="section-subtitle">Data odaklı yaklaşımımızla markaları dijitalde devleştiriyoruz.</p>
           </div>
           
@@ -412,7 +413,7 @@ function Home() {
             </Link>
             <Link to="/creative-production" className="service-card" style={{ textDecoration: 'none' }}>
               <Camera className="service-icon" style={{color: 'var(--accent)'}} />
-              <h3 className="service-title">Creative Production</h3>
+              <h3 className="service-title">Kreatif Prodüksiyon</h3>
               <p className="service-desc">Sinematik reklam filmleri ve sosyal medya için yüksek kaliteli video içerik üretimi.</p>
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
             </Link>
@@ -432,6 +433,12 @@ function Home() {
               <Smartphone className="service-icon" style={{color: 'var(--primary)'}} />
               <h3 className="service-title">UGC & Influencer</h3>
               <p className="service-desc">Kullanıcı odaklı doğal içerikler ve stratejik influencer iş birlikleri ile güven inşa edin.</p>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
+            </Link>
+            <Link to="/creative-production" className="service-card" style={{ textDecoration: 'none' }}>
+              <Calendar className="service-icon" style={{color: '#ffb703'}} />
+              <h3 className="service-title">Event & Etkinlik Çekimi</h3>
+              <p className="service-desc">Lansmanlar, fuarlar, kurumsal etkinlikler ve özel organizasyonlar için dinamik aftermovie ve fotoğraf prodüksiyonu.</p>
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
             </Link>
           </div>

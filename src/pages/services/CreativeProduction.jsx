@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Video, Play, ArrowRight, CheckCircle2, Sparkles, Zap, Award } from 'lucide-react';
+import { Camera, Video, Play, ArrowRight, CheckCircle2, Sparkles, Zap, Award, Calendar, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LazySection from '../../components/LazySection';
 const AnalysisForm = React.lazy(() => import('../../components/AnalysisForm'));
@@ -97,7 +97,7 @@ function CreativeProduction() {
           <div style={{ maxWidth: '800px' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--accent)', background: 'rgba(0, 229, 255, 0.08)', padding: '8px 20px', borderRadius: '50px', border: '1px solid rgba(0, 229, 255, 0.15)' }}>Profesyonel Prodüksiyon</span>
             <h1 className="hero-title" style={{ fontSize: '3.5rem', lineHeight: '1.25', marginBottom: '30px', marginTop: '15px' }}>
-              Creative Production ile <span className="gradient-text">Görsel Gücünüzü</span> Sergileyin
+              Kreatif Prodüksiyon ile <span className="gradient-text">Görsel Gücünüzü</span> Sergileyin
             </h1>
             <p className="hero-desc" style={{ fontSize: '1.2rem', marginTop: '30px' }}>
               Sinematik reklam filmlerinden, yüksek dönüşüm getiren UGC içeriklerine kadar; markanızın ruhunu yansıtan ve izleyiciyi harekete geçiren kreatifler üretiyoruz.
@@ -171,13 +171,23 @@ function CreativeProduction() {
             </div>
             <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                <Camera size={35} color="var(--primary)" style={{ marginBottom: '20px' }} />
-               <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>Profesyonel Ürün & Yemek Çekimi</h3>
-               <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Kendi stüdyomuzda e-ticaret siteleri, kataloglar ve sosyal medya hesapları için profesyonel ürün ve yemek fotoğrafları üretiyoruz.</p>
+               <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>Profesyonel Ürün & Model Çekimi</h3>
+               <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Kendi stüdyomuzda e-ticaret siteleri, kataloglar ve sosyal medya hesapları için profesyonel ürün ve model fotoğrafları üretiyoruz.</p>
             </div>
             <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                <Sparkles size={35} color="#00e5ff" style={{ marginBottom: '20px' }} />
                <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>Post-Prodüksiyon (Kurgu & Renk)</h3>
                <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Çekilen ham görüntüleri sinematik renk derecelendirme (color grading), dinamik kurgu ve ses efektleriyle kusursuz hale getiriyoruz.</p>
+            </div>
+            <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
+               <Monitor size={35} color="var(--accent)" style={{ marginBottom: '20px' }} />
+               <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>Stüdyo Çekim & Kiralama</h3>
+               <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Işık ekipmanları, dekorlar ve farklı arka plan seçenekleri ile donatılmış stüdyomuzda hem kendi çekimlerimizi yapıyor hem de bağımsız ekiplere kiralıyoruz.</p>
+            </div>
+            <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
+               <Calendar size={35} color="#ffb703" style={{ marginBottom: '20px' }} />
+               <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>Event & Etkinlik Çekimi</h3>
+               <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Marka lansmanları, fuarlar, partiler, kurumsal etkinlikler ve özel davetleriniz için anın ruhunu yakalayan dinamik aftermovie ve fotoğraf çekimleri.</p>
             </div>
           </div>
         </div>

@@ -19,7 +19,8 @@ import {
   Camera,
   Globe,
   Rocket,
-  Utensils
+  Utensils,
+  Calendar
 } from 'lucide-react';
 import './App.css';
 const Home = lazy(() => import('./pages/Home'));
@@ -169,7 +170,7 @@ function App() {
                     <TrendingUp size={18} style={{ marginRight: '12px', color: 'var(--secondary)' }} /> Meta Ads Yönetimi
                   </Link>
                   <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Camera size={18} style={{ marginRight: '12px', color: 'var(--accent)' }} /> Creative Production
+                    <Camera size={18} style={{ marginRight: '12px', color: 'var(--accent)' }} /> Kreatif Prodüksiyon
                   </Link>
                   <Link to="/seo-geo-optimizasyonu" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <Globe size={18} style={{ marginRight: '12px', color: '#00e5ff' }} /> SEO & GEO
@@ -188,6 +189,9 @@ function App() {
                   </Link>
                   <Link to="/post-produksiyon" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
                     <PlayCircle size={18} style={{ marginRight: '12px', color: '#ffb703' }} /> Post Prodüksiyon
+                  </Link>
+                  <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <Calendar size={18} style={{ marginRight: '12px', color: '#ffb703' }} /> Event & Etkinlik Çekimi
                   </Link>
                 </div>
               </div>
