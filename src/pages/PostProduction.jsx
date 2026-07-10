@@ -559,7 +559,7 @@ function PostProduction() {
                 </div>
               </div>
               <div className="portfolio-info">
-                <span className="portfolio-category">E-Ticaret Reklam Filmi</span>
+                <span className="portfolio-category">Kreatif Reklam Filmi</span>
                 <h4 className="portfolio-title">Moda Markası Tanıtımı</h4>
                 <p className="portfolio-desc">Dinamik geçişler, profesyonel renk derecelendirme ve ritmik müzik kurgusu ile 45 saniyelik sosyal medya lansman videosu.</p>
               </div>

@@ -55,6 +55,7 @@ const JobApplication = lazy(() => import('./pages/ApplicationForms').then(m => (
 
 const EmailMarketing = lazy(() => import('./pages/EmailMarketing'));
 const PostProduction = lazy(() => import('./pages/PostProduction'));
+const EventCekimi = lazy(() => import('./pages/services/EventCekimi'));
 
 const LockIcon = Lock;
 const CardIcon = CreditCard;
@@ -166,32 +167,68 @@ function App() {
               >
                 <span style={{ cursor: 'pointer', color: '#f1f1f1', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>Hizmetler <ChevronDown size={14} style={{ transform: activeMobileDropdown === 'hizmetler' ? 'rotate(180deg)' : 'none', transition: '0.3s' }} /></span>
                 <div className="hizmet-dropdown">
-                  <Link to="/meta-ads-yonetimi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <TrendingUp size={18} style={{ marginRight: '12px', color: 'var(--secondary)' }} /> Meta Ads Yönetimi
+                  <Link to="/meta-ads-yonetimi" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: 'var(--secondary)' }}><TrendingUp size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Meta Reklam Yönetimi</span>
+                      <span className="dropdown-link-desc">ROAS ve veri odaklı reklam kampanyaları.</span>
+                    </div>
                   </Link>
-                  <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Camera size={18} style={{ marginRight: '12px', color: 'var(--accent)' }} /> Kreatif Prodüksiyon
+                  <Link to="/creative-production" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: 'var(--accent)' }}><Camera size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Kreatif Prodüksiyon</span>
+                      <span className="dropdown-link-desc">4K sinematik reklam filmleri ve Reels çekimleri.</span>
+                    </div>
                   </Link>
-                  <Link to="/seo-geo-optimizasyonu" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Globe size={18} style={{ marginRight: '12px', color: '#00e5ff' }} /> SEO & GEO
+                  <Link to="/seo-geo-optimizasyonu" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: '#00e5ff' }}><Globe size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">SEO & GEO</span>
+                      <span className="dropdown-link-desc">Arama motorları ve yapay zekada görünürlük.</span>
+                    </div>
                   </Link>
-                  <Link to="/sosyal-medya-yonetimi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Share2 size={18} style={{ marginRight: '12px', color: 'var(--primary)' }} /> Sosyal Medya Yönetimi
+                  <Link to="/sosyal-medya-yonetimi" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: 'var(--primary)' }}><Share2 size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Sosyal Medya Yönetimi</span>
+                      <span className="dropdown-link-desc">Organik erişim ve aktif topluluk yönetimi.</span>
+                    </div>
                   </Link>
-                  <Link to="/ugc-influencer-isbirligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Users size={18} style={{ marginRight: '12px', color: '#00e676' }} /> UGC & Influencer İşbirliği
+                  <Link to="/ugc-influencer-isbirligi" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: '#00e676' }}><Users size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">UGC & Influencer</span>
+                      <span className="dropdown-link-desc">Güven inşa eden samimi kullanıcı içerikleri.</span>
+                    </div>
                   </Link>
-                  <Link to="/dijital-pazarlama-danismanligi" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Layers size={18} style={{ marginRight: '12px', color: 'var(--primary)' }} /> Dijital Pazarlama Danışmanlığı
+                  <Link to="/dijital-pazarlama-danismanligi" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: 'var(--primary)' }}><Layers size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Pazarlama Danışmanlığı</span>
+                      <span className="dropdown-link-desc">Büyüme stratejileri ve CRO/huni kurulumu.</span>
+                    </div>
                   </Link>
-                  <Link to="/sunuculu-reklam-videolari" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <PlayCircle size={18} style={{ marginRight: '12px', color: '#ff0055' }} /> Sunuculu Reklam Videoları
+                  <Link to="/sunuculu-reklam-videolari" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: '#ff0055' }}><PlayCircle size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Sunuculu Reklamlar</span>
+                      <span className="dropdown-link-desc">Profesyonel yüzlerle yüksek dönüşümlü videolar.</span>
+                    </div>
                   </Link>
-                  <Link to="/post-produksiyon" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <PlayCircle size={18} style={{ marginRight: '12px', color: '#ffb703' }} /> Post Prodüksiyon
+                  <Link to="/post-produksiyon" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: '#ffb703' }}><Video size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Post Prodüksiyon</span>
+                      <span className="dropdown-link-desc">Sinematik kurgu, montaj ve renk düzenleme.</span>
+                    </div>
                   </Link>
-                  <Link to="/creative-production" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', color: '#f1f1f1', textDecoration: 'none', borderRadius: '10px', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
-                    <Calendar size={18} style={{ marginRight: '12px', color: '#ffb703' }} /> Event & Etkinlik Çekimi
+                  <Link to="/event-etkinlik-cekimi" className="dropdown-link" onClick={() => { setMobileMenuOpen(false); setActiveMobileDropdown(null); }}>
+                    <div className="dropdown-link-icon-wrapper" style={{ color: '#ffb703' }}><Calendar size={18} /></div>
+                    <div className="dropdown-link-text">
+                      <span className="dropdown-link-title">Event & Etkinlik Çekimi</span>
+                      <span className="dropdown-link-desc">Lansman ve kurumsal organizasyon çekimleri.</span>
+                    </div>
                   </Link>
                 </div>
               </div>
@@ -261,6 +298,7 @@ function App() {
             <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
             <Route path="/dijital-pazarlama-danismanligi" element={<DijitalPazarlamaDanismanligi />} />
             <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
+            <Route path="/event-etkinlik-cekimi" element={<EventCekimi />} />
             <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
             <Route path="/spor-salonu-pazarlama" element={<GymMarketing />} />
             <Route path="/tesekkurler" element={<ThankYou />} />

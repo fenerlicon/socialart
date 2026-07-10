@@ -3608,7 +3608,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Kapsam / Paket</label>
-                  <input type="text" required value={clientFormData.package} onChange={e => setClientFormData({ ...clientFormData, package: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="E-ticaret Yönetimi vb." />
+                  <input type="text" required value={clientFormData.package} onChange={e => setClientFormData({ ...clientFormData, package: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="Sosyal Medya Yönetimi vb." />
                 </div>
               </div>
 

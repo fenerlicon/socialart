@@ -135,7 +135,7 @@ function CreativeProduction() {
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                      <CheckCircle2 color="var(--accent)" size={20} style={{ flexShrink: 0 }} />
-                     <span style={{ fontSize: '1.05rem', color: '#ccc' }}>E-Ticaret Siteleri İçin Profesyonel Ürün Çekimine İhtiyacı Olanlar</span>
+                      <span style={{ fontSize: '1.05rem', color: '#ccc' }}>Katalog ve Web Siteleri İçin Profesyonel Ürün Çekimine İhtiyacı Olanlar</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                      <CheckCircle2 color="var(--accent)" size={20} style={{ flexShrink: 0 }} />
@@ -172,7 +172,7 @@ function CreativeProduction() {
             <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                <Camera size={35} color="var(--primary)" style={{ marginBottom: '20px' }} />
                <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>Profesyonel Ürün & Model Çekimi</h3>
-               <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Kendi stüdyomuzda e-ticaret siteleri, kataloglar ve sosyal medya hesapları için profesyonel ürün ve model fotoğrafları üretiyoruz.</p>
+               <p style={{ color: '#888', fontSize: '0.95rem', lineHeight: '1.6' }}>Kendi stüdyomuzda web siteleri, kataloglar ve sosyal medya hesapları için profesyonel ürün ve model fotoğrafları üretiyoruz.</p>
             </div>
             <div className="glass" style={{ padding: '35px', borderRadius: '24px' }}>
                <Sparkles size={35} color="#00e5ff" style={{ marginBottom: '20px' }} />

@@ -139,7 +139,7 @@ function DijitalPazarlamaDanismanligi() {
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                      <CheckCircle2 color="var(--primary)" size={20} style={{ flexShrink: 0 }} />
-                     <span style={{ fontSize: '1.05rem', color: '#ccc' }}>Reklam Verimliliği (ROAS) Düşen E-Ticaret Girişimleri</span>
+                     <span style={{ fontSize: '1.05rem', color: '#ccc' }}>Reklam Verimliliği (ROAS) Düşen Dijital Girişimler ve Markalar</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                      <CheckCircle2 color="var(--primary)" size={20} style={{ flexShrink: 0 }} />

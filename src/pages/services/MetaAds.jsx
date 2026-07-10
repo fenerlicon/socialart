@@ -131,7 +131,7 @@ function MetaAds() {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                      <CheckCircle2 color="var(--secondary)" size={20} style={{ flexShrink: 0 }} />
-                     <span style={{ fontSize: '1.05rem', color: '#ccc' }}>Satışlarını ve Gelirlerini Ölçeklemek İsteyen E-Ticaret Markaları</span>
+                     <span style={{ fontSize: '1.05rem', color: '#ccc' }}>Satışlarını ve Gelirlerini Ölçeklemek İsteyen Büyüme Odaklı Markalar</span>
                   </div>
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                      <CheckCircle2 color="var(--secondary)" size={20} style={{ flexShrink: 0 }} />

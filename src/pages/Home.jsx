@@ -205,7 +205,7 @@ function Home() {
         "name": "Sosyal medya yönetimi hangi markalar için uygundur?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sosyal medya yönetimi; dijitaldeki marka bilinirliğini artırmak, müşteri sadakati oluşturmak, organik erişim elde etmek ve sosyal mecralarını aktif birer satış/iletişim kanalı haline getirmek isteyen tüm e-ticaret, B2B, perakende ve hizmet sektörü markaları için uygundur."
+          "text": "Sosyal medya yönetimi; dijitaldeki marka bilinirliğini artırmak, müşteri sadakati oluşturmak, organik erişim elde etmek ve sosyal mecralarını aktif birer satış/iletişim kanalı haline getirmek isteyen tüm B2B, perakende ve hizmet sektörü markaları için uygundur."
         }
       },
       {
@@ -222,14 +222,6 @@ function Home() {
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Influencer iş birlikleri sürecimizde, markanızın hedef kitlesine ve bütçesine en uygun mikro veya makro influencer'ları analiz ediyoruz. Brief hazırlığı, telif hakları yönetimi, gönderi takibi ve kampanya sonundaki dönüşüm analizi süreçlerini uçtan uca yönetiyoruz."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "SocialArt e-ticaret markalarıyla çalışıyor mu?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Evet, SocialArt özellikle e-ticaret markalarının büyümesini hızlandırma konusunda uzmanlaşmıştır. ROAS odaklı reklam stratejileri, e-ticaret siteleri için performans kreatifleri ve funnel optimizasyonları ile satış hacmini katlamayı hedefliyoruz."
         }
       },
       {
@@ -392,10 +384,10 @@ function Home() {
           </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '30px' }}>
-            <AnimatedMetric value={14.2} suffix="x" label="Ortalama ROAS" desc="Reklam harcaması geri dönüşü" color="var(--primary)" />
-            <AnimatedMetric value={10} suffix="M+" label="Aylık İzlenme" desc="Kreatiflerimizin toplam erişimi" color="var(--accent)" />
-            <AnimatedMetric value={85} suffix="%" prefix="%" label="Dönüşüm Artışı" desc="İlk 3 aydaki performans ivmesi" color="var(--secondary)" />
-            <AnimatedMetric value={50} suffix="+" label="Çalışılan Marka" desc="Birlikte büyüdüğümüz iş ortakları" color="#fff" />
+            <AnimatedMetric value={14.2} suffix="x" label="Ortalama ROAS" desc="Reklam harcaması geri dönüşü" color="#ffffff" />
+            <AnimatedMetric value={10} suffix="M+" label="Aylık İzlenme" desc="Kreatiflerimizin toplam erişimi" color="#ffffff" />
+            <AnimatedMetric value={85} prefix="%" label="Dönüşüm Artışı" desc="İlk 3 aydaki performans ivmesi" color="#ffffff" />
+            <AnimatedMetric value={50} suffix="+" label="Çalışılan Marka" desc="Birlikte büyüdüğümüz iş ortakları" color="#ffffff" />
           </div>
         </div>
       </section>
@@ -435,10 +427,10 @@ function Home() {
               <p className="service-desc">Kullanıcı odaklı doğal içerikler ve stratejik influencer iş birlikleri ile güven inşa edin.</p>
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
             </Link>
-            <Link to="/creative-production" className="service-card" style={{ textDecoration: 'none' }}>
+            <Link to="/event-etkinlik-cekimi" className="service-card" style={{ textDecoration: 'none' }}>
               <Calendar className="service-icon" style={{color: '#ffb703'}} />
               <h3 className="service-title">Event & Etkinlik Çekimi</h3>
-              <p className="service-desc">Lansmanlar, fuarlar, kurumsal etkinlikler ve özel organizasyonlar için dinamik aftermovie ve fotoğraf prodüksiyonu.</p>
+              <p className="service-desc">Lansmanlar, fuarlar, kurumsal etkinlikler ve özel organizasyonlar için dinamik aftermovie and fotoğraf prodüksiyonu.</p>
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>İncele <ArrowRight size={16} style={{marginLeft: '5px'}} /></div>
             </Link>
           </div>
@@ -607,7 +599,7 @@ function Home() {
                 },
                 {
                   question: "Sosyal medya yönetimi hangi markalar için uygundur?",
-                  answer: "Sosyal medya yönetimi; dijitaldeki marka bilinirliğini artırmak, müşteri sadakati oluşturmak, organik erişim elde etmek ve sosyal mecralarını aktif birer satış/iletişim kanalı haline getirmek isteyen tüm e-ticaret, B2B, perakende ve hizmet sektörü markaları için uygundur."
+                  answer: "Sosyal medya yönetimi; dijitaldeki marka bilinirliğini artırmak, müşteri sadakati oluşturmak, organik erişim elde etmek ve sosyal mecralarını aktif birer satış/iletişim kanalı haline getirmek isteyen tüm B2B, perakende ve hizmet sektörü markaları için uygundur."
                 },
                 {
                   question: "UGC içerik üretimi nedir?",
@@ -616,10 +608,6 @@ function Home() {
                 {
                   question: "Influencer iş birlikleri nasıl yönetilir?",
                   answer: "Influencer iş birlikleri sürecimizde, markanızın hedef kitlesine ve bütçesine en uygun mikro veya makro influencer'ları analiz ediyoruz. Brief hazırlığı, telif hakları yönetimi, gönderi takibi ve kampanya sonundaki dönüşüm analizi süreçlerini uçtan uca yönetiyoruz."
-                },
-                {
-                  question: "SocialArt e-ticaret markalarıyla çalışıyor mu?",
-                  answer: "Evet, SocialArt özellikle e-ticaret markalarının büyümesini hızlandırma konusunda uzmanlaşmıştır. ROAS odaklı reklam stratejileri, e-ticaret siteleri için performans kreatifleri ve funnel optimizasyonları ile satış hacmini katlamayı hedefliyoruz."
                 },
                 {
                   question: "Reklam ve içerik üretimi birlikte yürütülebilir mi?",

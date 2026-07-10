@@ -68,7 +68,7 @@ const SunuculuReklam = () => {
             Sunuculu <span className="gradient-text">Reklam Videoları</span>
           </h1>
           <p style={{ maxWidth: '800px', margin: '0 auto', color: '#aaa', fontSize: '1.2rem', lineHeight: '1.6' }}>
-            Sosyal medya video çekimi yapan ve e-ticaret markaları için dönüşümü yüksek hazır reklam videoları üreten profesyonel bir video prodüksiyon ajansıyız. Markanızı profesyonel bir yüzle temsil edin, satışlarınızı katlayın.
+            Sosyal medya video çekimi yapan ve markalar için dönüşümü yüksek hazır reklam videoları üreten profesyonel bir video prodüksiyon ajansıyız. Markanızı profesyonel bir yüzle temsil edin, satışlarınızı katlayın.
           </p>
           <div style={{ marginTop: '40px' }}>
             <button 
@@ -214,7 +214,7 @@ const SunuculuReklam = () => {
             <div className="feature-card">
               <Zap size={40} color="var(--secondary)" style={{ marginBottom: '20px' }} />
               <h3>Hazır Reklam Videoları</h3>
-              <p style={{ color: '#888' }}>E-ticaret ve sosyal medya kanallarınızda anında yayına alabileceğiniz, yüksek dönüşüm getiren hazır reklam videoları paketleri sunuyoruz.</p>
+              <p style={{ color: '#888' }}>Web sitenizde ve sosyal medya kanallarınızda anında yayına alabileceğiniz, yüksek dönüşüm getiren hazır reklam videoları paketleri sunuyoruz.</p>
             </div>
           </div>
         </div>

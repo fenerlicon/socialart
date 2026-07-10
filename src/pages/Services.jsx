@@ -39,8 +39,8 @@ const servicesData = [
     icon: <Camera size={32} color="#00e676" />,
     color: '#00e676',
     glow: 'rgba(0, 230, 118, 0.15)',
-    desc: 'Markalara özel profesyonel fotoğraf hizmetleri sunuyoruz. Ürün, Yemek, Spor, Model, Emlak, E-ticaret, Katalog çekimleri gibi geniş bir yelpazede kaliteli görseller sağlıyoruz.',
-    features: ['Ürün & Katalog Çekimi', 'Yemek Fotoğrafçılığı', 'Model & Lifestyle', 'E-ticaret Görselleri'],
+    desc: 'Markalara özel profesyonel fotoğraf hizmetleri sunuyoruz. Ürün, Yemek, Spor, Model, Emlak, Lansman, Katalog çekimleri gibi geniş bir yelpazede kaliteli görseller sağlıyoruz.',
+    features: ['Ürün & Katalog Çekimi', 'Yemek Fotoğrafçılığı', 'Model & Lifestyle', 'Sosyal Medya Görselleri'],
     link: '/creative-production'
   },
   {
@@ -61,7 +61,7 @@ const servicesData = [
     glow: 'rgba(255, 183, 3, 0.15)',
     desc: 'Lansmanlar, fuarlar, kurumsal etkinlikler, partiler ve özel organizasyonlarınız için dinamik, enerjik ve yüksek çözünürlüklü video & fotoğraf prodüksiyonu sunuyoruz.',
     features: ['Lansman & Gala Videoları', 'Kurumsal Etkinlik Çekimleri', 'Aftermovie & Özet Klipler', 'Profesyonel Etkinlik Fotoğrafçılığı'],
-    link: '/creative-production'
+    link: '/event-etkinlik-cekimi'
   },
   {
     id: 'sunuculu',
