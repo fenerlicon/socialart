@@ -39,7 +39,7 @@ const caseStudiesData = [
     brand: 'KOTON',
     sector: 'Moda / Perakende',
     services: ['Kreatif Prodüksiyon'],
-    challenge: 'Koton\'un yeni sezon koleksiyon lansmanı için sosyal medya mecralarında paylaşılmak üzere, ürünlerin hareket halindeki estetiğini, dokusunu ve kumaş kalitesini öne çıkaracak enerjik ve yüksek kalitede video kreatif üretimi.',
+    challenge: 'Koton\'un yeni sezon koleksiyon lansmanı için sosyal medya mecralarında paylaşılmak üzere, ürünlerin hareket halindeki estetiğini, dokusunu ve kumaş kalitesini öne çıkaracak enerjik ve yüksek kalitede video kreatif profesyonel üretimi.',
     solution: 'Kendi stüdyomuzda, profesyonel modellerle dinamik lifestyle ve konsept çekimleri gerçekleştirdik. Koleksiyon parçalarını öne çıkaran, hızlı geçişli ve müzikle senkronize Reels/TikTok video kreatifleri hazırladık.',
     metrics: [
       { value: 'Moda', label: 'Çekim Konsepti', desc: 'Lifestyle cast ve model odaklı kurgu' },
@@ -90,47 +90,46 @@ const caseStudiesData = [
     id: 'spright',
     brand: 'SPRIGHT',
     sector: 'Spor & Giyim',
-    services: ['Kreatif Prodüksiyon', 'Yakında...'],
-    challenge: 'Çok yakında yepyeni sezon çekimleri, katalog çekimleri ve özel kreatif prodüksiyon çalışmalarımızla burada olacağız. Takipte kalın!',
-    solution: 'SocialArt ekibi olarak yeni bir başarı hikayesi yazmak için hazırlıklarımızı sürdürüyoruz.',
-    metrics: [
-      { value: 'Yakında', label: 'Çekim Konsepti', desc: 'Yeni sezon hazırlıkları sürüyor' },
-      { value: 'Hazırlık', label: 'Prodüksiyon', desc: 'Konsept ve cast çalışmaları aşamasında' },
-      { value: 'Kreatif', label: 'Kurgu Tarzı', desc: 'Çok yakında yayında' }
-    ],
-    highlight: 'Yeni sezonda enerjik ve sınırları aşan bir prodüksiyon ile geliyoruz.'
+    services: [],
+    challenge: '',
+    solution: '',
+    metrics: [],
+    highlight: ''
   },
   {
-    id: 'cosentino',
-    brand: 'COSENTINO',
-    sector: 'Mimari / Yapı Malzemeleri',
+    id: 'cosentino-geberit',
+    brand: 'COSENTINO & GEBERIT',
+    sector: 'Mimari / Yapı Teknolojileri',
     services: ['Kreatif Prodüksiyon'],
-    challenge: 'Premium mimari ve tasarım kitlelerine hitap eden Cosentino ürünlerinin detay kalitesini, malzeme dokusunu ve estetiğini ön plana çıkaracak prestijli video kreatif üretimi.',
-    solution: 'Showroom ve mimari uygulama alanlarında, lüks mimari tasarımları öne çıkaran detay odaklı makro çekimler gerçekleştirdik. Tasarım kalitesini ve malzeme dayanıklılığını vurgulayan akıcı, sinematik bir lansman videosu kurguladık.',
+    challenge: 'Premium mimari, yapı teknolojileri ve banyo çözümleri sunan Cosentino & Geberit ürünlerinin tasarım kalitesini, malzeme dokusunu ve inovasyonunu bir arada yansıtan prestijli video kreatif üretimi.',
+    solution: 'Showroom ve mimari uygulama alanlarında, lüks tasarım çizgilerini ve teknolojik detayları öne çıkaran detay odaklı makro çekimler gerçekleştirdik. Malzeme kalitesini ve inovasyonu vurgulayan sinematik bir lansman videosu kurguladık.',
     metrics: [
-      { value: 'Mimari', label: 'Çekim Teması', desc: 'Showroom ve modern mekan tasarımları kurgusu' },
-      { value: 'Makro', label: 'Çekim Detayı', desc: 'Malzeme dokusunu ve kalitesini gösteren yakın planlar' },
+      { value: 'Yapı', label: 'Çekim Teması', desc: 'Showroom ve modern banyo tasarımları kurgusu' },
+      { value: 'Makro', label: 'Çekim Detayı', desc: 'Malzeme dokusunu ve teknolojisini gösteren yakın planlar' },
       { value: 'Sinematik', label: 'Kurgu Tarzı', desc: 'Prestijli ve şık mimari görsel anlatım' }
     ],
-    highlight: 'Lüks yapı malzemelerini mimari estetiği yansıtan makro çekimlerle görselleştirdik.',
+    highlight: 'Cosentino & Geberit\'in tasarım ve yapı teknolojilerini estetik makro çekimlerle görselleştirdik.',
     videos: [
       'https://res.cloudinary.com/dqs6iconu/video/upload/v1783700450/cosentino_Geberik_1_o8bptg.mp4'
     ],
     videoAspect: '16/9'
   },
   {
-    id: 'geberit',
-    brand: 'GEBERIT',
-    sector: 'Sıhhi Tesisat / Yapı Teknolojileri',
-    services: ['Post Prodüksiyon', 'Sosyal Medya Yönetimi', 'Meta Ads Yönetimi'],
-    challenge: 'Teknolojik ve inovatif banyo çözümlerini son tüketiciye anlaşılır, estetik ve fayda odaklı bir dille anlatmak.',
-    solution: 'Ürünlerin fonksiyonel ve hijyenik avantajlarını animasyonlar ve akıcı kurgularla açıklayan video serileri hazırladık. Son tüketiciye hitap eden bilgilendirici infografikler ve video kampanyaları yürüttük.',
+    id: 'polar',
+    brand: 'POLAR',
+    sector: 'Gıda & Hızlı Tüketim',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Polar ürünlerinin lezzetini, iştah açıcı dokusunu ve ambalaj estetiğini sosyal medyada ön plana çıkaracak dinamik ve yüksek kaliteli video kreatif üretimi.',
+    solution: 'Stüdyomuzda, özel ışıklandırma teknikleri kullanarak Polar ürünlerinin akışkanlığını, dokusunu ve renklerini öne çıkaran makro çekimler gerçekleştirdik. Sosyal medya trendlerine uygun hızlı kurgu ve ritmik müzik eşliğinde reklam filmini tamamladık.',
     metrics: [
-      { value: '1.2M+', label: 'Erişim Skoru', desc: 'Bilinirlik kampanyaları toplam gösterimi' },
-      { value: '+%48', label: 'Form Dönüşümü', desc: 'Showroom ziyaret taleplerindeki artış' },
-      { value: '2.5x', label: 'Reklam Verimliliği', desc: 'Tüketici hedefli kampanyaların başarısı' }
+      { value: 'Makro', label: 'Çekim Tekniği', desc: 'Ürün dokusunu ve detaylarını öne çıkaran yakın planlar' },
+      { value: 'Stüdyo', label: 'Işık & Set', desc: 'Gıda çekimine özel iştah açıcı stüdyo aydınlatması' },
+      { value: 'Dinamik', label: 'Kurgu Riti', desc: 'Ürün akıcılığını yansıtan hızlı sahne geçişleri' }
     ],
-    highlight: 'İleri teknolojili banyo çözümlerini sade ve fayda odaklı videolarla anlattık.'
+    highlight: 'Polar ürünlerinin iştah açıcı yapısını dinamik stüdyo çekimleriyle görselleştirdik.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836147/polar-reel_yl1awq.mp4'
+    ]
   }
 ];
 
@@ -287,6 +286,75 @@ const CaseStudies = () => {
             grid-template-columns: 1fr;
           }
         }
+        .spright-coming-soon-wrapper {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 450px;
+          text-align: center;
+          overflow: hidden;
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 20px;
+          border-radius: 28px;
+          border: 1px solid rgba(255, 255, 255, 0.03);
+          background: rgba(255, 255, 255, 0.01);
+          box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.6);
+        }
+        .spright-coming-soon-brand {
+          font-size: 6rem;
+          font-weight: 900;
+          letter-spacing: 16px;
+          color: #fff;
+          margin-bottom: 24px;
+          text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+          animation: sprightBreath 4s ease-in-out infinite;
+          user-select: none;
+        }
+        .spright-coming-soon-tagline {
+          font-size: 1.8rem;
+          font-weight: 500;
+          letter-spacing: 10px;
+          color: var(--primary);
+          text-transform: uppercase;
+          animation: sprightBreath 4s ease-in-out infinite;
+          animation-delay: 0.5s;
+          user-select: none;
+        }
+        .spright-pulse-circle {
+          position: absolute;
+          width: 320px;
+          height: 320px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255, 0, 85, 0.06) 0%, transparent 70%);
+          animation: sprightGlow 4s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @keyframes sprightBreath {
+          0%, 100% {
+            transform: scale(0.96);
+            opacity: 0.5;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.05));
+          }
+          50% {
+            transform: scale(1.04);
+            opacity: 1;
+            filter: drop-shadow(0 0 40px rgba(255, 0, 85, 0.4));
+          }
+        }
+        @keyframes sprightGlow {
+          0%, 100% {
+            transform: scale(0.85);
+            opacity: 0.35;
+          }
+          50% {
+            transform: scale(1.35);
+            opacity: 1;
+          }
+        }
       `}</style>
 
       {/* Hero Section */}
@@ -316,93 +384,98 @@ const CaseStudies = () => {
           </button>
         ))}
       </div>
-
       {/* Active Brand Story Showcase */}
-      <div className="story-container">
-        {/* Left Side Details */}
-        <div className="story-card-left">
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: '800', background: 'rgba(255,255,255,0.05)', padding: '6px 14px', borderRadius: '100px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                {activeBrand.sector}
-              </span>
-              <Award size={20} color="var(--primary)" />
+      {activeBrandId === 'spright' ? (
+        <div className="spright-coming-soon-wrapper">
+          <div className="spright-pulse-circle"></div>
+          <h1 className="spright-coming-soon-brand">SPRIGHT</h1>
+          <p className="spright-coming-soon-tagline">Yakında</p>
+        </div>
+      ) : (
+        <div className="story-container">
+          {/* Left Side Details */}
+          <div className="story-card-left">
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: '800', background: 'rgba(255,255,255,0.05)', padding: '6px 14px', borderRadius: '100px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  {activeBrand.sector}
+                </span>
+                <Award size={20} color="var(--primary)" />
+              </div>
+              <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', marginBottom: '15px' }}>{activeBrand.brand}</h2>
+              <p style={{ color: '#ccc', fontSize: '1.05rem', lineHeight: '1.6', fontStyle: 'italic', position: 'relative', paddingLeft: '20px', borderLeft: '3px solid var(--primary)', marginBottom: '30px' }}>
+                "{activeBrand.highlight}"
+              </p>
             </div>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', marginBottom: '15px' }}>{activeBrand.brand}</h2>
-            <p style={{ color: '#ccc', fontSize: '1.05rem', lineHeight: '1.6', fontStyle: 'italic', position: 'relative', paddingLeft: '20px', borderLeft: '3px solid var(--primary)', marginBottom: '30px' }}>
-              "{activeBrand.highlight}"
-            </p>
+
+            <div>
+              <h4 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#888', marginBottom: '12px', fontWeight: '700' }}>Verilen Hizmetler</h4>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {activeBrand.services.map((srv, idx) => (
+                  <span key={idx} style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '6px 12px', borderRadius: '8px' }}>
+                    {srv}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div>
-            <h4 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#888', marginBottom: '12px', fontWeight: '700' }}>Verilen Hizmetler</h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {activeBrand.services.map((srv, idx) => (
-                <span key={idx} style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '6px 12px', borderRadius: '8px' }}>
-                  {srv}
-                </span>
+          {/* Right Side Content & Metrics */}
+          <div className="story-card-right">
+            {/* Metrics Grid */}
+            <div className="case-metric-grid">
+              {activeBrand.metrics.map((m, idx) => (
+                <div key={idx} className="case-metric-card">
+                  <div className="case-metric-value">{m.value}</div>
+                  <div className="case-metric-label">{m.label}</div>
+                  <div className="case-metric-desc">{m.desc}</div>
+                </div>
               ))}
             </div>
+
+            {/* Details */}
+            <div className="details-wrapper">
+              <div style={{ marginBottom: '25px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <Target size={20} color="var(--primary)" />
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Zorluklar & Hedef</h3>
+                </div>
+                <p style={{ color: '#aaa', fontSize: '0.95rem', lineHeight: '1.7', textAlign: 'justify' }}>{activeBrand.challenge}</p>
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <Zap size={20} color="var(--primary)" />
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>SocialArt Stratejisi</h3>
+                </div>
+                <p style={{ color: '#aaa', fontSize: '0.95rem', lineHeight: '1.7', textAlign: 'justify' }}>{activeBrand.solution}</p>
+              </div>
+
+              {activeBrand.videos && activeBrand.videos.length > 0 && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px', marginTop: '25px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Play size={20} color="var(--primary)" />
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Üretilen Kreatif Çalışmalar</h3>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                    {activeBrand.videos.map((vidUrl, index) => (
+                      <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: activeBrand.videoAspect || '9/16', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                        <video 
+                          src={vidUrl} 
+                          controls 
+                          playsInline
+                          preload="metadata"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Right Side Content & Metrics */}
-        <div className="story-card-right">
-          {/* Metrics Grid */}
-          <div className="case-metric-grid">
-            {activeBrand.metrics.map((m, idx) => (
-              <div key={idx} className="case-metric-card">
-                <div className="case-metric-value">{m.value}</div>
-                <div className="case-metric-label">{m.label}</div>
-                <div className="case-metric-desc">{m.desc}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Details */}
-          <div className="details-wrapper">
-            <div style={{ marginBottom: '25px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <Target size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Zorluklar & Hedef</h3>
-              </div>
-              <p style={{ color: '#aaa', fontSize: '0.95rem', lineHeight: '1.7', textAlign: 'justify' }}>{activeBrand.challenge}</p>
-            </div>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <Zap size={20} color="var(--primary)" />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>SocialArt Stratejisi</h3>
-              </div>
-              <p style={{ color: '#aaa', fontSize: '0.95rem', lineHeight: '1.7', textAlign: 'justify' }}>{activeBrand.solution}</p>
-            </div>
-
-            {activeBrand.videos && activeBrand.videos.length > 0 && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '25px', marginTop: '25px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                  <Play size={20} color="var(--primary)" />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Üretilen Kreatif Çalışmalar</h3>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                  {activeBrand.videos.map((vidUrl, index) => (
-                    <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: activeBrand.videoAspect || '9/16', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                      <video 
-                        src={vidUrl} 
-                        controls 
-                        playsInline
-                        preload="metadata"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
+      )}      {/* CTA Section */}
       <section className="cta-cases container">
         <div className="cta-content">
           <h2 style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '20px' }}>
