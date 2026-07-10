@@ -288,7 +288,7 @@ function Home() {
   };
 
   const partners = [
-    "PEUGEOT", "KOTON", "JEEP", "Geberit", "Cosentino", "Polar", "Flormar", "Spright",
+    "PEUGEOT", "KOTON", "JEEP", "Geberit", "Cosentino", "Polar", "Flormar", "Sprite",
     "Gurme Bahçeşehir", "Eray Gıda", "Sahne Marin", "EGE CUNDA BALIK", "Smart Enerji",
     "Enova Eğitim", "Indian Motorcycle", "S.E.T.S", "Allure Deluxe Beauty", "Funfest",
     "DUMA DUMA", "216 Dizayn", "good&mood", "MapOfX", "Karadeniz Et", "SRG",
@@ -310,7 +310,7 @@ function Home() {
         <div className="container">
           <div className="hero-content">
             <h1 className="hero-title">İstanbul'un Kreatif <span className="gradient-text">Sosyal Medya & Reklam</span> Ajansı</h1>
-            <p className="hero-desc">Sadece reels çekmiyoruz, markanız için çalışan bir sistem kuruyoruz. Meta Ads, Creative Production ve SEO optimizasyonu ile ölçeklenebilir sonuçlar sağlıyoruz.</p>
+            <p className="hero-desc">Sadece reels çekmiyoruz, markanız için çalışan bir system kuruyoruz. Meta Ads, Creative Production ve SEO optimizasyonu ile ölçeklenebilir sonuçlar sağlıyoruz.</p>
             <div className="hero-actions">
               <button className="btn btn-primary btn-pulse" onClick={() => scrollToSection('funnel')}>Ekibimizle Toplantı Planlayın</button>
               <button className="btn btn-outline" onClick={() => scrollToSection('showreel')}>Showreel İzle <ArrowRight size={20} /></button>
@@ -339,7 +339,7 @@ function Home() {
           </div>
           <div className="brands-grid-wrap">
             {partners.map((p, i) => {
-              const isTrust = ["PEUGEOT", "KOTON", "JEEP", "Geberit", "Cosentino", "Polar", "Flormar", "Spright"].includes(p);
+              const isTrust = ["PEUGEOT", "KOTON", "JEEP", "Geberit", "Cosentino", "Polar", "Flormar", "Sprite"].includes(p);
               return (
                 <div 
                   className={`brand-card ${isTrust ? 'trust-brand-card' : ''}`} 
