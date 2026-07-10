@@ -55,15 +55,18 @@ const caseStudiesData = [
     id: 'jeep',
     brand: 'JEEP',
     sector: 'Otomotiv / Premium',
-    services: ['Kreatif Prodüksiyon', 'Drone Çekimleri', 'Post Prodüksiyon'],
-    challenge: 'Jeep markasının macera, özgürlük ve premium off-road ruhunu, sosyal medya mecralarında izleyicide heyecan uyandıracak şekilde görselleştirmek.',
-    solution: 'Zorlu arazi koşullarında, profesyonel FPV drone pilotlarımız ve 4K kameralarımızla doğa çekimleri gerçekleştirdik. Macera ruhunu yansıtan, izleyiciyi içine çeken dinamik aftermovie ve lansman videoları kurguladık.',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Jeep markasının özgürlük ve macera ruhunu, araç tasarımını ve arazi kabiliyetini ön plana çıkaracak sinematik ve prestijli video kreatif üretimi.',
+    solution: 'Zorlu arazi ve doğa ortamlarında, hareketli takip sistemleri kullanarak Jeep\'in dayanıklılığını ve off-road gücünü 4K çözünürlükte kaydettik. Macera hissini uyandıran dinamik kurgu ve doğa tonlarına uygun profesyonel renk düzenlemeleriyle lansman videosunu hazırladık.',
     metrics: [
-      { value: '1.8M+', label: 'Video İzlenme', desc: 'Doğa ve macera temalı Reels serisi' },
-      { value: '+%92', label: 'Kaydetme Oranı', desc: 'İzleyicilerin en çok kaydettiği içerikler' },
-      { value: '5.2x', label: 'Kreatif ROAS', desc: 'Reklam kreatif kalitesinden gelen performans' }
+      { value: 'Off-Road', label: 'Çekim Teması', desc: 'Zorlu arazi koşullarında macera odaklı kurgu' },
+      { value: 'Doğal', label: 'Işık & Tonlar', desc: 'Dış mekanda gün ışığı ve doğa renk optimizasyonu' },
+      { value: 'Dinamik', label: 'Kamera Takip', desc: 'Hareketli araç üstü takip çekimleri' }
     ],
-    highlight: 'Jeep macera ruhunu ekstrem drone açıları ve sinematik post-prodüksiyonla işledik.'
+    highlight: 'Jeep\'in özgürlük ruhunu dinamik arazi çekimleri ve doğa atmosferiyle görselleştirdik.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836110/jeep-reel_idufur.mp4'
+    ]
   },
   {
     id: 'flormar',
