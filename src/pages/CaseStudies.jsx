@@ -90,29 +90,33 @@ const caseStudiesData = [
     id: 'spright',
     brand: 'SPRIGHT',
     sector: 'Spor & Giyim',
-    services: ['Stüdyo Çekim & Kiralama', 'Katalog Çekimleri', 'Sosyal Medya Yönetimi'],
-    challenge: 'Pazara yeni giren aktif giyim markasının marka bilinirliğini estetik, dinamik ve profesyonel bir görsel dille oluşturmak.',
-    solution: 'Kendi stüdyomuzda, profesyonel sporcularla dinamik hareket/aksiyon odaklı fotoğraf ve katalog çekimleri gerçekleştirdik. Sosyal medya feed tasarımını modern, sportif ve minimal bir estetikle kurguladık.',
+    services: ['Kreatif Prodüksiyon', 'Yakında...'],
+    challenge: 'Çok yakında yepyeni sezon çekimleri, katalog çekimleri ve özel kreatif prodüksiyon çalışmalarımızla burada olacağız. Takipte kalın!',
+    solution: 'SocialArt ekibi olarak yeni bir başarı hikayesi yazmak için hazırlıklarımızı sürdürüyoruz.',
     metrics: [
-      { value: '+%200', label: 'Bilinirlik Artışı', desc: 'Marka lansmanının ilk 2 ayındaki yükseliş' },
-      { value: '5K+', label: 'Yeni Müşteri', desc: 'Sosyal medya kanallarından gelen satışlar' },
-      { value: '9/10', label: 'Müşteri Memnuniyeti', desc: 'Katalog ve görsel içerik kalitesi puanı' }
+      { value: 'Yakında', label: 'Çekim Konsepti', desc: 'Yeni sezon hazırlıkları sürüyor' },
+      { value: 'Hazırlık', label: 'Prodüksiyon', desc: 'Konsept ve cast çalışmaları aşamasında' },
+      { value: 'Kreatif', label: 'Kurgu Tarzı', desc: 'Çok yakında yayında' }
     ],
-    highlight: 'Aktif giyim markasının dinamizmini profesyonel sporcu çekimleriyle yansıttık.'
+    highlight: 'Yeni sezonda enerjik ve sınırları aşan bir prodüksiyon ile geliyoruz.'
   },
   {
     id: 'cosentino',
     brand: 'COSENTINO',
     sector: 'Mimari / Yapı Malzemeleri',
-    services: ['Kreatif Prodüksiyon', 'Post Prodüksiyon', 'Sosyal Medya Yönetimi'],
-    challenge: 'Premium mimari ve tasarım kitlelerine hitap eden, ürünlerin detay kalitesini ve estetiğini ön plana çıkaran prestijli içerikler üretmek.',
-    solution: 'Lüks mimari projelerde ve showroom alanlarında detay odaklı, sinematik makro çekimler gerçekleştirdik. Tasarımcı ve mimarlarla röportaj formatında, bilgi sunan estetik video serileri hazırladık.',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Premium mimari ve tasarım kitlelerine hitap eden Cosentino ürünlerinin detay kalitesini, malzeme dokusunu ve estetiğini ön plana çıkaracak prestijli video kreatif üretimi.',
+    solution: 'Showroom ve mimari uygulama alanlarında, lüks mimari tasarımları öne çıkaran detay odaklı makro çekimler gerçekleştirdik. Tasarım kalitesini ve malzeme dayanıklılığını vurgulayan akıcı, sinematik bir lansman videosu kurguladık.',
     metrics: [
-      { value: '+%110', label: 'B2B Etkileşim', desc: 'Mimar ve tasarımcı kitlesine erişim' },
-      { value: '450K+', label: 'Hedefli Gösterim', desc: 'Premium mimari kitle erişimi' },
-      { value: '+%65', label: 'Teklif Talebi', desc: 'Sosyal medyadan gelen kurumsal talepler' }
+      { value: 'Mimari', label: 'Çekim Teması', desc: 'Showroom ve modern mekan tasarımları kurgusu' },
+      { value: 'Makro', label: 'Çekim Detayı', desc: 'Malzeme dokusunu ve kalitesini gösteren yakın planlar' },
+      { value: 'Sinematik', label: 'Kurgu Tarzı', desc: 'Prestijli ve şık mimari görsel anlatım' }
     ],
-    highlight: 'Lüks yapı malzemelerini mimari estetiği yansıtan makro çekimlerle görselleştirdik.'
+    highlight: 'Lüks yapı malzemelerini mimari estetiği yansıtan makro çekimlerle görselleştirdik.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1783700450/cosentino_Geberik_1_o8bptg.mp4'
+    ],
+    videoAspect: '16/9'
   },
   {
     id: 'geberit',
