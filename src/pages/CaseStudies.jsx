@@ -129,7 +129,7 @@ const CaseStudies = () => {
   const activeBrand = caseStudiesData.find(c => c.id === activeBrandId);
 
   return (
-    <div className="case-studies-page" style={{ background: '#050505', color: '#fff', padding: '160px 0 100px' }}>
+    <div className="case-studies-page" style={{ background: '#050505', color: '#fff', padding: '220px 0 100px' }}>
       <style>{`
         .cases-hero { text-align: center; margin-bottom: 70px; }
         .brand-tabs-container { 
