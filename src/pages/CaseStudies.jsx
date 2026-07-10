@@ -66,7 +66,8 @@ const caseStudiesData = [
     highlight: 'Jeep\'in özgürlük ruhunu dinamik arazi çekimleri ve doğa atmosferiyle görselleştirdik.',
     videos: [
       'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836110/jeep-reel_idufur.mp4'
-    ]
+    ],
+    videoAspect: '16/9'
   },
   {
     id: 'flormar',
@@ -377,7 +378,7 @@ const CaseStudies = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                   {activeBrand.videos.map((vidUrl, index) => (
-                    <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: '9/16', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                    <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: activeBrand.videoAspect || '9/16', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                       <video 
                         src={vidUrl} 
                         controls 
