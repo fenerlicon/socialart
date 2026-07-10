@@ -372,6 +372,15 @@ function Home() {
               </div>
             ))}
           </div>
+          <div style={{ textAlign: 'center', marginTop: '50px' }}>
+            <a 
+              href="https://www.socialartajans.com/showreel" 
+              className="btn btn-outline" 
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
+            >
+              Daha Fazlası <ArrowRight size={20} />
+            </a>
+          </div>
         </div>
       </section>
 

@@ -235,7 +235,6 @@ function App() {
                 </div>
               </div>
 
-              <Link to="/basari-hikayeleri" className={location.pathname === '/basari-hikayeleri' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Başarı Hikayeleri</Link>
               <Link to="/hakkimizda" className={location.pathname === '/hakkimizda' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Hakkımızda</Link>
               <Link to="/blog" className={location.pathname.startsWith('/blog') ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>Blog</Link>
               <Link to="/iletisim" className={location.pathname === '/iletisim' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>İletişim</Link>
@@ -356,7 +355,6 @@ function App() {
                 <h4>Kurumsal</h4>
                 <ul className="footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <li><Link to="/hakkimizda" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hakkımızda</Link></li>
-                  <li><Link to="/basari-hikayeleri" style={{ fontSize: '0.9rem', color: '#ccc' }}>Başarı Hikayeleri</Link></li>
                   <li><Link to="/hizmetlerimiz" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hizmetlerimiz</Link></li>
                   <li><Link to="/blog" style={{ fontSize: '0.9rem', color: '#ccc' }}>Blog</Link></li>
                   <li><Link to="/fiyatlar" style={{ fontSize: '0.9rem', color: '#ccc' }}>Fiyatlar</Link></li>
