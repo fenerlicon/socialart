@@ -120,6 +120,17 @@ const caseStudiesData = [
     isComingSoon: true
   },
   {
+    id: 'gurme-bahcesehir',
+    brand: 'GURME BAHÇEŞEHİR',
+    sector: 'Gıda & Restoran',
+    services: [],
+    challenge: '',
+    solution: '',
+    metrics: [],
+    highlight: '',
+    isComingSoon: true
+  },
+  {
     id: 'cosentino-geberit',
     brand: 'COSENTINO & GEBERIT',
     sector: 'Mimari / Yapı Teknolojileri',
