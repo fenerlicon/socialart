@@ -73,15 +73,18 @@ const caseStudiesData = [
     id: 'flormar',
     brand: 'FLORMAR',
     sector: 'Kozmetik & Güzellik',
-    services: ['UGC İçerik Üretimi', 'Influencer İş Birlikleri', 'Meta Ads Yönetimi'],
-    challenge: 'Sosyal medyada reklam bütçesi verimliliğini artırmak, genç kadın hedef kitlesinde güven inşa etmek ve yeni ürün grubunun satış hacmini artırmak.',
-    solution: 'Mikro ve makro güzellik influencer’ları ile iş birliği yaparak, stüdyo kurgusu olmayan, tamamen doğal ve samimi ürün deneyimini yansıtan UGC videoları ürettik. Reklam kampanyalarında bu videoları kullanarak A/B testleri gerçekleştirdik.',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Flormar\'ın yeni sezon lansmanı için sosyal medya mecralarında paylaşılmak üzere, ürün kullanım kolaylığını ve estetiğini ön plana çıkaracak yüksek kalitede, dinamik video kreatif üretimi.',
+    solution: 'Kendi stüdyomuzda, kozmetik ürün yapısını, uygulama anını ve renk pigmentlerini en net şekilde yansıtan makro ürün çekimleri gerçekleştirdik. Sosyal medya trendlerine uyumlu dinamik geçişler, yakın plan detaylar ve ses senkronizasyonu ile reklam videosunu tamamladık.',
     metrics: [
-      { value: '4.2x', label: 'ROAS Seviyesi', desc: 'UGC reklam kreatifleri dönüşüm başarısı' },
-      { value: '+%78', label: 'İzleme Süresi', desc: 'İlk 3 saniye kanca (hook) başarısı' },
-      { value: '-%35', label: 'Edinme Maliyeti', desc: 'Müşteri kazanım maliyetinde düşüş' }
+      { value: 'Makro', label: 'Çekim Tekniği', desc: 'Ürün dokusu ve uygulama detayları yakın plan çekimi' },
+      { value: 'Stüdyo', label: 'Çekim Alanı', desc: 'Yüksek kaliteli ürün aydınlatması ve temiz fon' },
+      { value: 'Dinamik', label: 'Geçişler', desc: 'Trend müzik ritmiyle uyumlu hızlı sahne geçişleri' }
     ],
-    highlight: 'Samimi kullanıcı deneyimi sunan UGC videolarıyla dönüşüm oranlarını katladık.'
+    highlight: 'Makyaj ve ürün detaylarını yakın plan makro çekimler ve dinamik kurguyla görselleştirdik.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836120/flormar-reel_py3dmx.mp4'
+    ]
   },
   {
     id: 'spright',
