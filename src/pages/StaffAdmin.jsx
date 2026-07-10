@@ -1626,7 +1626,8 @@ function Admin() {
         { title: 'Toplam Potansiyel Lead', value: potansiyel.length, icon: <Users size={24} color="var(--primary)" />, filter: 'Hepsi' },
         { title: 'Sıcak (Olumlu) Potansiyel', value: potansiyel.filter(p => p.status === 'Sıcak').length, icon: <Activity size={24} color="var(--accent)" />, filter: 'Sıcak' },
         { title: 'Teklif Bekleyen', value: potansiyel.filter(p => p.status === 'Teklif Bekliyor').length, icon: <Clock size={24} color="#ffab00" />, filter: 'Teklif Bekliyor' },
-        { title: 'Teklif İletildi', value: potansiyel.filter(p => p.status === 'Teklif İletildi').length, icon: <Send size={24} color="#00e676" />, filter: 'Teklif İletildi' }
+        { title: 'Teklif İletildi', value: potansiyel.filter(p => p.status === 'Teklif İletildi').length, icon: <Send size={24} color="#00e676" />, filter: 'Teklif İletildi' },
+        { title: 'Katalog İletildi', value: potansiyel.filter(p => p.status === 'Katalog İletildi').length, icon: <FileText size={24} color="#2979ff" />, filter: 'Katalog İletildi' }
       ];
     } else if (activeTab === 'aktif') {
       return [
@@ -2533,6 +2534,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       } else if (stat.title === 'Teklif İletildi') {
                         setLeadSubTab('sent_proposal');
                         setLeadStatusFilter('Teklif İletildi');
+                      } else if (stat.title === 'Katalog İletildi') {
+                        setLeadSubTab('catalog_sent');
+                        setLeadStatusFilter('Katalog İletildi');
                       } else {
                         setLeadStatusFilter(stat.filter);
                       }
@@ -2718,6 +2722,22 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   📧 Teklif İletildi ({potansiyel.filter(p => p.status === 'Teklif İletildi').length})
                 </button>
                 <button
+                  onClick={() => { setLeadSubTab('catalog_sent'); setLeadStatusFilter('Hepsi'); }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: leadSubTab === 'catalog_sent' ? 'rgba(41, 121, 255, 0.15)' : 'transparent',
+                    color: leadSubTab === 'catalog_sent' ? '#2979ff' : '#888',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  📖 Katalog İletildi ({potansiyel.filter(p => p.status === 'Katalog İletildi').length})
+                </button>
+                <button
                   onClick={() => { setLeadSubTab('remarketing'); setLeadStatusFilter('Hepsi'); }}
                   style={{
                     padding: '10px 18px',
@@ -2815,6 +2835,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       if (leadSubTab === 'active') return ['Sıcak', 'Beklemede'].includes(p.status);
                       if (leadSubTab === 'pending_proposal') return p.status === 'Teklif Bekliyor';
                       if (leadSubTab === 'sent_proposal') return p.status === 'Teklif İletildi';
+                      if (leadSubTab === 'catalog_sent') return p.status === 'Katalog İletildi';
                       if (leadSubTab === 'remarketing') return p.status === 'Remarketing';
                       if (leadSubTab === 'archived') return ['Ertelendi', 'Reddedildi', 'Düşük Kalite'].includes(p.status);
                       return true;
@@ -2823,7 +2844,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       <tr key={p.id} style={{ borderBottom: idx !== array.length - 1 ? '1px solid var(--surface-border)' : 'none', cursor: 'pointer', transition: 'background 0.2s' }} className="table-row-hover">
                       <td style={{ padding: '20px 24px' }} onClick={() => fetchLeadHistory(p)}>
                         <div className="card-text-val" style={{ fontWeight: '700', fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: p.status === 'Sıcak' || p.status === 'Teklif İletildi' ? '#00e676' : p.status === 'Remarketing' ? '#00e5ff' : ['Beklemede', 'Teklif Bekliyor', 'Ertelendi'].includes(p.status) ? '#ffab00' : '#ff0055' }}></div>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: p.status === 'Sıcak' || p.status === 'Teklif İletildi' ? '#00e676' : p.status === 'Katalog İletildi' ? '#2979ff' : p.status === 'Remarketing' ? '#00e5ff' : ['Beklemede', 'Teklif Bekliyor', 'Ertelendi'].includes(p.status) ? '#ffab00' : '#ff0055' }}></div>
                           {p.name}
                         </div>
                         <div className="card-text-val" style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -2945,7 +2966,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                               }}
                             >
                               <span>
-                                {p.status === 'Anlaşıldı' ? '🤝 ' : p.status === 'Sıcak' ? '🔥 ' : p.status === 'Teklif Bekliyor' ? '🧾 ' : p.status === 'Teklif İletildi' ? '📧 ' : p.status === 'Beklemede' ? '⏳ ' : p.status === 'Remarketing' ? '📢 ' : p.status === 'Ertelendi' ? '📅 ' : p.status === 'Reddedildi' ? '❌ ' : '👎 '}
+                                {p.status === 'Anlaşıldı' ? '🤝 ' : p.status === 'Sıcak' ? '🔥 ' : p.status === 'Teklif Bekliyor' ? '🧾 ' : p.status === 'Teklif İletildi' ? '📧 ' : p.status === 'Katalog İletildi' ? '📖 ' : p.status === 'Beklemede' ? '⏳ ' : p.status === 'Remarketing' ? '📢 ' : p.status === 'Ertelendi' ? '📅 ' : p.status === 'Reddedildi' ? '❌ ' : '👎 '}
                                 {p.status}
                               </span>
                               <div style={{ transform: openStatusId === p.id ? 'rotate(180deg)' : 'none', transition: '0.2s' }}>▼</div>
@@ -2970,6 +2991,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                                   { val: 'Sıcak', label: '🔥 Sıcak / Olumlu', color: '#00e676' },
                                   { val: 'Teklif Bekliyor', label: '🧾 Teklif Bekliyor', color: '#FFD700' },
                                   { val: 'Teklif İletildi', label: '📧 Teklif İletildi', color: '#00e676' },
+                                  { val: 'Katalog İletildi', label: '📖 Katalog İletildi', color: '#2979ff' },
                                   { val: 'Beklemede', label: '⏳ Beklemede', color: '#ffab00' },
                                   { val: 'Remarketing', label: '📢 Remarketing / Takip', color: '#00e5ff' },
                                   { val: 'Ertelendi', label: '📅 Ertelendi', color: '#ffab00' },
@@ -3373,6 +3395,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Aşama</label>
                   <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
                     <option value="Sıcak">Sıcak / Olumlu</option>
+                    <option value="Katalog İletildi">Katalog İletildi</option>
                     <option value="Beklemede">Beklemede / Kararsız</option>
                     <option value="Remarketing">Remarketing / Tekrar Dönüş</option>
                     <option value="Ertelendi">Ertelendi</option>
