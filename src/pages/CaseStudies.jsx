@@ -21,14 +21,14 @@ const caseStudiesData = [
     brand: 'PEUGEOT',
     sector: 'Otomotiv',
     services: ['Kreatif Prodüksiyon'],
-    challenge: 'Yeni model Peugeot lansmanı için sosyal medya mecralarında paylaşılmak üzere, araç dinamizmini ve estetiğini en üst seviyede yansıtacak yüksek kalitede, sinematik video kreatif üretimi.',
-    solution: 'Peugeot lansmanı için özel olarak belirlenen rotalarda, hareketli takip sistemleri (car rig) ve gelişmiş FPV drone ekipmanları kullanarak 4K sinematik video çekimleri gerçekleştirdik. Kurgu ve post-prodüksiyon aşamasında otomotiv dünyasına uygun dinamik ritim ve renk düzenlemeleri uygulayarak iki adet Reels reklam filmi hazırladık.',
+    challenge: 'Yeni model Peugeot lansmanı için sosyal medya mecralarında paylaşılmak üzere, aracın aerodinamik tasarımını ve gece sürüşü detaylarını ön plana çıkaracak sinematik ve akıcı video kreatif üretimi.',
+    solution: 'Özel kamera takip sistemleri kullanarak aracın hareket halindeki estetiğini ve far/kokpit detaylarını 4K çözünürlükte kaydettik. Post-prodüksiyon aşamasında dinamik ritim, profesyonel renk derecelendirme (color grading) ve gece atmosferine uygun ses tasarımı uygulayarak iki adet dikey reklam videosu hazırladık.',
     metrics: [
-      { value: '2.5M+', label: 'Reels İzlenme', desc: 'Lansman süresince toplam erişim' },
-      { value: '+%120', label: 'Etkileşim Artışı', desc: 'Sektör ortalamasının üzerinde kreatif etkileşimi' },
-      { value: '4K / 60 FPS', label: 'Çekim Standardı', desc: 'Ultra yüksek çözünürlük kalitesi' }
+      { value: '2 Adet', label: 'Video Kreatif', desc: 'Farklı konseptlerde hazırlanan kurgular' },
+      { value: '4K / 60 FPS', label: 'Çekim Kalitesi', desc: 'Ultra yüksek çözünürlüklü detaylar' },
+      { value: '9:16 Dikey', label: 'Mobil Format', desc: 'Instagram Reels ve TikTok uyumlu' }
     ],
-    highlight: 'Peugeot lansmanını FPV drone açıları ve yüksek kaliteli araç takip çekimleriyle görselleştirdik.',
+    highlight: 'Peugeot\'nun şık tasarımını dinamik kamera hareketleri ve gece atmosferi kurgusuyla görselleştirdik.',
     videos: [
       'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836097/peugeot-1_pbbiiq.mp4',
       'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836073/peugeot-2_tnygmj.mp4'
