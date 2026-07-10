@@ -20,7 +20,8 @@ import {
   Globe,
   Rocket,
   Utensils,
-  Calendar
+  Calendar,
+  Video
 } from 'lucide-react';
 import './App.css';
 const Home = lazy(() => import('./pages/Home'));
