@@ -24,9 +24,9 @@ const caseStudiesData = [
     challenge: 'Yeni model Peugeot lansmanı için sosyal medya mecralarında paylaşılmak üzere, aracın aerodinamik tasarımını ve gece sürüşü detaylarını ön plana çıkaracak sinematik ve akıcı video kreatif üretimi.',
     solution: 'Özel kamera takip sistemleri kullanarak aracın hareket halindeki estetiğini ve far/kokpit detaylarını 4K çözünürlükte kaydettik. Post-prodüksiyon aşamasında dinamik ritim, profesyonel renk derecelendirme (color grading) ve gece atmosferine uygun ses tasarımı uygulayarak iki adet dikey reklam videosu hazırladık.',
     metrics: [
-      { value: '2 Adet', label: 'Video Kreatif', desc: 'Farklı konseptlerde hazırlanan kurgular' },
-      { value: '4K / 60 FPS', label: 'Çekim Kalitesi', desc: 'Ultra yüksek çözünürlüklü detaylar' },
-      { value: '9:16 Dikey', label: 'Mobil Format', desc: 'Instagram Reels ve TikTok uyumlu' }
+      { value: 'Car-Rig', label: 'Takip Tekniği', desc: 'Hareket halinde dinamik araç takip çekimleri' },
+      { value: 'Gece', label: 'Çekim Teması', desc: 'Karanlık atmosferde far ve tasarım hatları' },
+      { value: 'Özel', label: 'Ses & Renk', desc: 'Gece ritmine özel ses tasarımı ve color grade' }
     ],
     highlight: 'Peugeot\'nun şık tasarımını dinamik kamera hareketleri ve gece atmosferi kurgusuyla görselleştirdik.',
     videos: [
@@ -38,15 +38,18 @@ const caseStudiesData = [
     id: 'koton',
     brand: 'KOTON',
     sector: 'Moda / Perakende',
-    services: ['Kreatif Prodüksiyon', 'Model & Ürün Çekimleri', 'Sosyal Medya Yönetimi'],
-    challenge: 'Yeni sezon koleksiyon lansmanında, sosyal medya kanallarında yüksek geri dönüşüm getirecek özgün moda kreatiflerinin eksikliği ve dijital katalog ihtiyacı.',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Koton\'un yeni sezon koleksiyon lansmanı için sosyal medya mecralarında paylaşılmak üzere, ürünlerin hareket halindeki estetiğini, dokusunu ve kumaş kalitesini öne çıkaracak enerjik ve yüksek kalitede video kreatif üretimi.',
     solution: 'Kendi stüdyomuzda, profesyonel modellerle dinamik lifestyle ve konsept çekimleri gerçekleştirdik. Koleksiyon parçalarını öne çıkaran, hızlı geçişli ve müzikle senkronize Reels/TikTok video kreatifleri hazırladık.',
     metrics: [
-      { value: '+%85', label: 'Dönüşüm Artışı', desc: 'Reklam kreatiflerinde yüksek performans' },
-      { value: '-%30', label: 'Kreatif Maliyet', desc: 'İçerik üretim maliyetinde optimizasyon' },
-      { value: '4.8M', label: 'Toplam Gösterim', desc: 'Sosyal medya kanallarında organik erişim' }
+      { value: 'Moda', label: 'Çekim Konsepti', desc: 'Lifestyle cast ve model odaklı kurgu' },
+      { value: 'Stüdyo', label: 'Çekim Alanı', desc: 'Dekorlu ve profesyonel ışıklandırmalı set' },
+      { value: 'Ritmik', label: 'Kurgu Tarzı', desc: 'Müzikle senkronize dinamik geçişler' }
     ],
-    highlight: 'Model ve ürün çekimlerini sinematik kurgularla sosyal medya dinamiklerine uyarladık.'
+    highlight: 'Model ve ürün çekimlerini sinematik kurgularla sosyal medya dinamiklerine uyarladık.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836114/koton-reel_jdmcsk.mp4'
+    ]
   },
   {
     id: 'jeep',
@@ -225,7 +228,7 @@ const CaseStudies = () => {
           transform: translateY(-3px);
         }
         .case-metric-value {
-          font-size: 2.2rem;
+          font-size: 1.8rem;
           font-weight: 900;
           color: #fff;
           margin-bottom: 6px;
