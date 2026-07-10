@@ -495,12 +495,33 @@ const CaseStudies = () => {
                     <Play size={20} color="var(--primary)" />
                     <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Üretilen Kreatif Çalışmalar</h3>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'stretch' }}>
                     {activeBrand.videos.map((vid, index) => {
                       const vidUrl = typeof vid === 'string' ? vid : vid.url;
                       const vidAspect = typeof vid === 'string' ? (activeBrand.videoAspect || '9/16') : (vid.aspect || activeBrand.videoAspect || '9/16');
+                      
+                      // Calculate flex-basis and width based on aspect ratio
+                      // 9:16 is dikey (narrower), 16:9 is yatay (wider)
+                      const isHorizontal = vidAspect === '16/9';
+                      const flexStyle = isHorizontal 
+                        ? { flex: '1 1 100%', minWidth: '280px' } 
+                        : { flex: '1 1 calc(50% - 10px)', minWidth: '180px', maxWidth: '280px' };
+
                       return (
-                        <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: vidAspect, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                        <div 
+                          key={index} 
+                          style={{ 
+                            position: 'relative', 
+                            borderRadius: '16px', 
+                            overflow: 'hidden', 
+                            border: '1px solid rgba(255,255,255,0.08)', 
+                            background: '#000', 
+                            aspectRatio: vidAspect, 
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                            margin: isHorizontal ? '0 auto' : '0',
+                            ...flexStyle
+                          }}
+                        >
                           <video 
                             src={vidUrl} 
                             controls 
