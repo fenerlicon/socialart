@@ -149,6 +149,25 @@ const caseStudiesData = [
       'https://res.cloudinary.com/dqs6iconu/video/upload/v1783702454/redpandacompress_teknofestt_kegids.mp4'
     ],
     videoAspect: '16/9'
+  },
+  {
+    id: 'sets',
+    brand: 'S.E.T.S',
+    sector: 'Elektrikli Ulaşım / Bisiklet',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'S.E.T.S elektrikli bisiklet ve akıllı ulaşım çözümlerinin günlük kullanım pratikliğini, sürüş keyfini ve teknolojik donanımını yansıtan dinamik ve sinematik tanıtım filmleri üretimi.',
+    solution: 'Dış mekan çekimlerinde bisikletin hareketli sürüş detaylarını kaydetmek için takip kameraları kullandık. Ürünün genel tanıtımı için yatay sinematik formatta bir lansman filmi, sosyal medya kanalları için ise dikey formatta dinamik ritimli Reels videoları ürettik.',
+    metrics: [
+      { value: 'Multimedya', label: 'Çekim Kapsamı', desc: 'Hem yatay lansman filmi hem dikey Reels kurguları' },
+      { value: 'Sürüş', label: 'Çekim Teması', desc: 'Günlük yaşamda bisiklet kullanımı ve mobilite estetiği' },
+      { value: 'Dinamik', label: 'Kamera Takip', desc: 'Akıcı hareketli çekimler ve detay odaklı planlar' }
+    ],
+    highlight: 'S.E.T.S elektrikli bisiklet sürüş deneyimini ve akıllı teknolojilerini sinematik kadrajlarla görselleştirdik.',
+    videos: [
+      { url: 'https://res.cloudinary.com/dqs6iconu/video/upload/v1783702920/redpandacompress_genel_tan%C4%B1t%C4%B1m_hdxo4q.mp4', aspect: '16/9' },
+      { url: 'https://res.cloudinary.com/dqs6iconu/video/upload/v1783703281/redpandacompress_reels_7_cx8imm.mp4', aspect: '9/16' },
+      { url: 'https://res.cloudinary.com/dqs6iconu/video/upload/v1783703290/redpandacompress_bisiklet_rczf25.mp4', aspect: '9/16' }
+    ]
   }
 ];
 
@@ -477,17 +496,21 @@ const CaseStudies = () => {
                     <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>Üretilen Kreatif Çalışmalar</h3>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                    {activeBrand.videos.map((vidUrl, index) => (
-                      <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: activeBrand.videoAspect || '9/16', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                        <video 
-                          src={vidUrl} 
-                          controls 
-                          playsInline
-                          preload="metadata"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      </div>
-                    ))}
+                    {activeBrand.videos.map((vid, index) => {
+                      const vidUrl = typeof vid === 'string' ? vid : vid.url;
+                      const vidAspect = typeof vid === 'string' ? (activeBrand.videoAspect || '9/16') : (vid.aspect || activeBrand.videoAspect || '9/16');
+                      return (
+                        <div key={index} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#000', aspectRatio: vidAspect, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                          <video 
+                            src={vidUrl} 
+                            controls 
+                            playsInline
+                            preload="metadata"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
