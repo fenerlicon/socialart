@@ -125,7 +125,7 @@ function Home() {
       "addressLocality": "İstanbul",
       "addressCountry": "TR"
     },
-    "description": "İstanbul merkezli; sosyal medya yönetimi, Meta reklam yönetimi, kreatif prodüksiyon, UGC içerik üretimi ve influencer iş birlikleri alanında büyüme (growth) odaklı dijital pazarlama ajansı.",
+    "description": "İstanbul merkezli; sosyal medya yönetimi, Meta reklam yönetimi, kreatif prodüksiyon, UGC içerik üretimi ve influencer iş birlikleri alanında uzmanlaşmış, büyüme odaklı sosyal medya ajansı.",
     "sameAs": [
       "https://instagram.com/socialartajans",
       "https://linkedin.com/company/socialartajans",
@@ -189,7 +189,7 @@ function Home() {
         "name": "SocialArt hangi şehirde hizmet veriyor?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "SocialArt, İstanbul merkezli bir dijital pazarlama ajansıdır ancak Türkiye genelinde ve yurt dışındaki markalara uzaktan veya hibrit modelle tam kapsamlı hizmet sağlamaktadır."
+          "text": "SocialArt, İstanbul merkezli bir sosyal medya ajansıdır ancak Türkiye genelinde ve yurt dışındaki markalara uzaktan veya hibrit modelle tam kapsamlı hizmet sağlamaktadır."
         }
       },
       {
@@ -240,10 +240,10 @@ function Home() {
   const videoRef = React.useRef(null);
 
   React.useEffect(() => {
-    document.title = "SocialArt Medya | İstanbul Büyüme Odaklı Dijital Pazarlama ve Prodüksiyon";
+    document.title = "SocialArt Medya | İstanbul Büyüme Odaklı Sosyal Medya ve Prodüksiyon Ajansı";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute("content", "SocialArt Medya; İstanbul merkezli, markanızı büyütecek sosyal medya yönetimi, Meta reklam yönetimi, sinematik prodüksiyon, UGC ve influencer iş birlikleri sunan büyüme odaklı dijital pazarlama ajansı.");
+      metaDesc.setAttribute("content", "SocialArt Medya; İstanbul merkezli, markanızı büyütecek sosyal medya yönetimi, Meta reklam yönetimi, sinematik prodüksiyon, UGC ve influencer iş birlikleri sunan büyüme odaklı sosyal medya ajansı.");
     }
   }, []);
 
@@ -323,9 +323,9 @@ function Home() {
       <section className="section-padding" style={{ background: '#020202', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', zIndex: 2 }}>
         <div className="container" style={{ maxWidth: '900px', textAlign: 'center' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: 'var(--primary)', background: 'rgba(255, 0, 85, 0.08)', padding: '8px 20px', borderRadius: '50px', border: '1px solid rgba(255, 0, 85, 0.15)' }}>Biz Kimiz?</span>
-          <h2 style={{ fontSize: '2rem', fontWeight: '900', marginTop: '16px', marginBottom: '24px', color: '#fff' }}>İstanbul Büyüme Odaklı Dijital Pazarlama Ajansı</h2>
+          <h2 style={{ fontSize: '2rem', fontWeight: '900', marginTop: '16px', marginBottom: '24px', color: '#fff' }}>İstanbul Büyüme Odaklı Sosyal Medya Ajansı</h2>
           <p style={{ fontSize: '1.15rem', lineHeight: '1.8', color: 'var(--text-muted)', margin: '0 auto', textAlign: 'justify', textJustify: 'inter-word' }}>
-            SocialArt; İstanbul merkezli, markaların dijital performansını ve büyüme süreçlerini optimize eden yeni nesil bir <strong>dijital pazarlama ajansıdır</strong>. Ajansımız; profesyonel <strong>sosyal medya yönetimi</strong>, veri odaklı <strong>Meta reklam yönetimi</strong> (Facebook ve Instagram Ads), 4K sinematik <strong>kreatif prodüksiyon</strong>, yüksek dönüşüm getiren <strong>UGC içerik üretimi</strong> ve stratejik <strong>influencer iş birlikleri</strong> alanlarında uçtan uca hizmet vermektedir. Büyüme odaklı (growth marketing) yaklaşımımızla, dijital pazarlama süreçlerinizi bütünsel olarak ele alıyor, markanızın hedef kitleyle doğru temas kurmasını ve satış kanallarınızın ölçeklenmesini sağlıyoruz.
+            SocialArt; İstanbul merkezli, markaların dijital performansını ve büyüme süreçlerini optimize eden yeni nesil bir <strong>sosyal medya ajansıdır</strong>. Ajansımız; profesyonel <strong>sosyal medya yönetimi</strong>, veri odaklı <strong>Meta reklam yönetimi</strong> (Facebook ve Instagram Ads), 4K sinematik <strong>kreatif prodüksiyon</strong>, yüksek dönüşüm getiren <strong>UGC içerik üretimi</strong> ve stratejik <strong>influencer iş birlikleri</strong> alanlarında uçtan uca hizmet vermektedir. Büyüme odaklı yaklaşımımızla, sosyal medya ve dijital pazarlama süreçlerinizi bütünsel olarak ele alıyor, markanızın hedef kitleyle doğru temas kurmasını ve satış kanallarınızın ölçeklenmesini sağlıyoruz.
           </p>
         </div>
       </section>
@@ -591,7 +591,7 @@ function Home() {
                 },
                 {
                   question: "SocialArt hangi şehirde hizmet veriyor?",
-                  answer: "SocialArt, İstanbul merkezli bir dijital pazarlama ajansıdır ancak Türkiye genelinde ve yurt dışındaki markalara uzaktan veya hibrit modelle tam kapsamlı hizmet sağlamaktadır."
+                  answer: "SocialArt, İstanbul merkezli bir sosyal medya ajansıdır ancak Türkiye genelinde ve yurt dışındaki markalara uzaktan veya hibrit modelle tam kapsamlı hizmet sağlamaktadır."
                 },
                 {
                   question: "Meta reklam yönetimi neleri kapsıyor?",
