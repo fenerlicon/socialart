@@ -129,7 +129,26 @@ const caseStudiesData = [
     highlight: 'Polar ürünlerinin iştah açıcı yapısını dinamik stüdyo çekimleriyle görselleştirdik.',
     videos: [
       'https://res.cloudinary.com/dqs6iconu/video/upload/v1778836147/polar-reel_yl1awq.mp4'
-    ]
+    ],
+    videoAspect: '16/9'
+  },
+  {
+    id: 'teknofest',
+    brand: 'TEKNOFEST',
+    sector: 'Teknoloji & Havacılık',
+    services: ['Kreatif Prodüksiyon'],
+    challenge: 'Teknofest organizasyonunun büyüklüğünü, heyecanını, teknolojik ve dinamik yapısını en üst düzeyde yansıtacak sinematik ve sürükleyici bir etkinlik/aftermovie video kreatif üretimi.',
+    solution: 'Festival alanında özel takip ekipmanları, geniş açı lensler ve profesyonel post-prodüksiyon kurgu ritmiyle festival coşkusunu ve teknoloji odaklı atmosferi 4K çözünürlükte kaydettik.',
+    metrics: [
+      { value: 'Aftermovie', label: 'Çekim Teması', desc: 'Festival coşkusu ve etkinlik odaklı kurgu' },
+      { value: 'Dinamik', label: 'Kurgu Tarzı', desc: 'Müzik ve ses efektleriyle senkronize geçişler' },
+      { value: '4K', label: 'Çekim Standardı', desc: 'Ultra yüksek çözünürlüklü detaylar' }
+    ],
+    highlight: 'Teknofest heyecanını ve teknoloji coşkusunu dinamik sahne geçişleri ve sinematik kurguyla yansıttık.',
+    videos: [
+      'https://res.cloudinary.com/dqs6iconu/video/upload/v1783702454/redpandacompress_teknofestt_kegids.mp4'
+    ],
+    videoAspect: '16/9'
   }
 ];
 
