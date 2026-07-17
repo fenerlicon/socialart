@@ -90,6 +90,10 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const handleLogout = () => {
     setActiveEmployeeId('')
     setCurrentEmployeeId('')
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('social-art-base:credentials')
+      window.localStorage.removeItem('ajans_user')
+    }
     toast.success('Çıkış Yapıldı', {
       description: 'Oturumunuz güvenli bir şekilde kapatıldı.',
     })

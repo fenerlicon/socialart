@@ -288,24 +288,39 @@ function Admin() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // 1. Önce LocalStorage (Hızlı yükleme için)
-        const userJson = localStorage.getItem('ajans_user');
-        if (userJson) {
-          const parsed = JSON.parse(userJson);
-          if (parsed && parsed.name) {
-            setCurrentUser(parsed);
-            fetchAllData(parsed);
+        // A. /admin (Next.js panel) login durumunu kontrol et
+        const activeEmployeeId = localStorage.getItem('social-art-base:active-employee-id');
+        if (!activeEmployeeId) {
+          // Giriş yapılmamışsa doğrudan Next.js login sayfasına yönlendir
+          window.location.href = '/admin/login';
+          return;
+        }
+
+        // B. credentials oku
+        const credentialsJson = localStorage.getItem('social-art-base:credentials');
+        const creds = credentialsJson ? JSON.parse(credentialsJson) : null;
+
+        // C. Supabase Oturumunu Kontrol Et
+        let { data: { session } } = await supabase.auth.getSession();
+
+        // Oturum yoksa ama credential varsa arka planda giriş yap
+        if (!session && creds) {
+          const slugify = (str) => {
+            const chars = { 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c', 'Ğ': 'g', 'Ü': 'u', 'Ş': 's', 'İ': 'i', 'Ö': 'o', 'Ç': 'c' };
+            return str.replace(/[ğüşıöçĞÜŞİÖÇ]/g, m => chars[m]).toLowerCase().trim();
+          };
+          const formattedEmail = `${slugify(creds.username)}@socialart.internal`;
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: formattedEmail,
+            password: creds.password,
+          });
+          if (data && data.session) {
+            session = data.session;
           }
         }
 
-        // 2. Supabase Oturumunu Kontrol Et (Esas kaynak)
-        // Bu adım, LocalStorage temizlense bile oturumun devam etmesini sağlar.
-        const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user) {
-          // Sunucudan güncel kullanıcı verilerini çekerek lokal cache (token) verilerini tazeliyoruz.
-          const { data: { user } } = await supabase.auth.getUser();
-          const freshUser = user || session.user;
-          const metadata = freshUser.user_metadata;
+          const metadata = session.user.user_metadata;
           const userObj = { 
             name: metadata.display_name, 
             role: metadata.role,
@@ -317,10 +332,8 @@ function Admin() {
           setCurrentUser(userObj);
           fetchAllData(userObj);
         } else {
-          // Eğer ikisi de yoksa kontrolü bitir
-          if (!localStorage.getItem('ajans_user')) {
-             setIsChecking(false);
-          }
+          // Oturum kurulamadıysa da login sayfasına gönder
+          window.location.href = '/admin/login';
         }
       } catch (e) {
         console.error("Auth init error:", e);
@@ -722,7 +735,10 @@ function Admin() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('ajans_user');
+    localStorage.removeItem('social-art-base:active-employee-id');
+    localStorage.removeItem('social-art-base:credentials');
     setCurrentUser(null);
+    window.location.href = '/admin/login';
   };
 
 

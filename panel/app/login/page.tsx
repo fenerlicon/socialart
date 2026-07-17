@@ -99,6 +99,12 @@ export default function LoginPage() {
 
     if (target) {
       setActiveEmployeeId(target.id)
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('social-art-base:credentials', JSON.stringify({
+          username: usernameInput.trim(),
+          password: passwordInput.trim()
+        }))
+      }
       toast.success('Giriş Başarılı', {
         description: `Hoş geldiniz, ${target.fullName}!`,
       })
