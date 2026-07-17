@@ -1686,11 +1686,11 @@ function Admin() {
   const getStats = () => {
     if (activeTab === 'potansiyel') {
       return [
-        { title: 'Toplam Potansiyel Lead', value: potansiyel.length, icon: <Users size={24} color="var(--primary)" />, filter: 'Hepsi' },
-        { title: 'Sıcak (Olumlu) Potansiyel', value: potansiyel.filter(p => p.status === 'Sıcak').length, icon: <Activity size={24} color="var(--accent)" />, filter: 'Sıcak' },
-        { title: 'Teklif Bekleyen', value: potansiyel.filter(p => p.status === 'Teklif Bekliyor').length, icon: <Clock size={24} color="#ffab00" />, filter: 'Teklif Bekliyor' },
-        { title: 'Teklif İletildi', value: potansiyel.filter(p => p.status === 'Teklif İletildi').length, icon: <Send size={24} color="#00e676" />, filter: 'Teklif İletildi' },
-        { title: 'Katalog İletildi', value: potansiyel.filter(p => p.status === 'Katalog İletildi').length, icon: <FileText size={24} color="#2979ff" />, filter: 'Katalog İletildi' }
+        { title: 'Toplam Potansiyel Lead', value: potansiyel.length, icon: <Users size={16} color="var(--primary)" />, filter: 'Hepsi' },
+        { title: 'Sıcak (Olumlu) Potansiyel', value: potansiyel.filter(p => p.status === 'Sıcak').length, icon: <Activity size={16} color="var(--accent)" />, filter: 'Sıcak' },
+        { title: 'Teklif Bekleyen', value: potansiyel.filter(p => p.status === 'Teklif Bekliyor').length, icon: <Clock size={16} color="#ffab00" />, filter: 'Teklif Bekliyor' },
+        { title: 'Teklif İletildi', value: potansiyel.filter(p => p.status === 'Teklif İletildi').length, icon: <Send size={16} color="#00e676" />, filter: 'Teklif İletildi' },
+        { title: 'Katalog İletildi', value: potansiyel.filter(p => p.status === 'Katalog İletildi').length, icon: <FileText size={16} color="#2979ff" />, filter: 'Katalog İletildi' }
       ];
     } else if (activeTab === 'aktif') {
       return [
@@ -2444,12 +2444,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
 
         {/* Kişisel Karşılama Paneli */}
-        <div className="glass welcome-panel" style={{ borderRadius: '24px', padding: '30px', marginBottom: '40px', border: '1px solid var(--surface-border)', background: 'linear-gradient(135deg, rgba(0,229,255,0.05) 0%, rgba(255,0,85,0.02) 100%)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'var(--primary)', filter: 'blur(100px)', opacity: '0.1' }}></div>
+        <div className="glass welcome-panel" style={{ borderRadius: "20px", padding: "24px 30px", marginBottom: "30px", border: "1px solid rgba(255,255,255,0.05)", background: "rgba(15, 15, 20, 0.4)", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: '#8b5cf6', filter: 'blur(100px)', opacity: '0.08' }}></div>
 
           <div className="welcome-content" style={{ display: 'flex', alignItems: 'center', gap: '25px', position: 'relative', zIndex: 1 }}>
             
-            <div style={{ width: '70px', height: '70px', borderRadius: '18px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1.8rem', fontWeight: '900', boxShadow: '0 10px 30px rgba(0,229,255,0.3)' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.5rem', fontWeight: '900' }}>
               {currentUser?.name?.charAt(0) || '?'}
             </div>
             <div>
@@ -2546,60 +2546,61 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     } else if (isLeadFilter || ['Dönüşüm Oranı', 'Haftalık Yeni Lead'].includes(stat.title)) {
                       setActiveTab('potansiyel');
                       if (stat.title === 'Toplam Potansiyel Lead' || stat.title === 'Haftalık Yeni Lead' || stat.title === 'Dönüşüm Oranı') {
-                        setLeadSubTab('all');
-                        setLeadStatusFilter('Hepsi');
+                         setLeadSubTab('all');
+                         setLeadStatusFilter('Hepsi');
                       } else if (stat.title === 'Sıcak (Olumlu) Potansiyel') {
-                        setLeadSubTab('active');
-                        setLeadStatusFilter('Sıcak');
+                         setLeadSubTab('active');
+                         setLeadStatusFilter('Sıcak');
                       } else if (stat.title === 'Teklif Bekleyen') {
-                        setLeadSubTab('pending_proposal');
-                        setLeadStatusFilter('Teklif Bekliyor');
+                         setLeadSubTab('pending_proposal');
+                         setLeadStatusFilter('Teklif Bekliyor');
                       } else if (stat.title === 'Teklif İletildi') {
-                        setLeadSubTab('sent_proposal');
-                        setLeadStatusFilter('Teklif İletildi');
+                         setLeadSubTab('sent_proposal');
+                         setLeadStatusFilter('Teklif İletildi');
                       } else if (stat.title === 'Katalog İletildi') {
-                        setLeadSubTab('catalog_sent');
-                        setLeadStatusFilter('Katalog İletildi');
+                         setLeadSubTab('catalog_sent');
+                         setLeadStatusFilter('Katalog İletildi');
                       } else {
-                        setLeadStatusFilter(stat.filter);
+                         setLeadStatusFilter(stat.filter);
                       }
-                    } else if (stat.title === 'Aktif Yönetilen Proje' || stat.title === 'Ortalama İlerleme Seviyesi') {
-                      setActiveTab('aktif');
-                    } else if (stat.title === 'Toplam İş Yükü') {
-                      setActiveTab('gorev');
                     }
                   }}
                   style={{ 
                     cursor: (isBucketFilter || isLeadFilter) ? 'pointer' : 'default',
-                    transition: 'all 0.3s',
-                    border: isActive ? `2px solid ${stat.color || 'var(--primary)'}` : '1px solid rgba(255,255,255,0.05)',
+                    transition: 'all 0.2s',
+                    border: isActive ? `1px solid var(--primary)` : '1px solid rgba(255,255,255,0.05)',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    background: 'rgba(15, 15, 20, 0.4)',
+                    backdropFilter: 'blur(12px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '120px',
+                    boxShadow: isActive ? '0 0 15px rgba(139, 92, 246, 0.08)' : 'none'
                   }}
                 >
-                  {isActive && (
-                    <div style={{ position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', borderRadius: '50%', background: stat.color }}></div>
-                  )}
-                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
-                  <div style={{ 
-                    width: '42px', 
-                    height: '42px', 
-                    borderRadius: '12px', 
-                    background: 'rgba(255,255,255,0.03)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    color: stat.color || 'var(--primary)'
-                  }}>
-                    {stat.icon}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '700', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                      {stat.title}
+                    </span>
+                    <div style={{ color: stat.color || 'var(--primary)' }}>
+                      {stat.icon}
+                    </div>
                   </div>
-                  <div style={{ marginTop: 'auto' }}>
-                    <div className="stat-value" style={{ lineHeight: '1.2' }}>{stat.value}</div>
-                    <div className="stat-label" style={{ opacity: 0.6, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stat.title}</div>
+                  <div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: '700', color: '#fff', lineHeight: '1.2' }}>{stat.value}</div>
+                    <p style={{ fontSize: '9px', color: '#71717a', marginTop: '4px', margin: 0, fontWeight: '500' }}>
+                      {stat.title === 'Toplam Potansiyel Lead' ? 'Sistemdeki tüm aktif adaylar' : 
+                       stat.title === 'Sıcak (Olumlu) Potansiyel' ? 'Sıcak ve olumlu görüşmeler' : 
+                       stat.title === 'Teklif Bekleyen' ? 'Teklif bekleyen nitelikliler' : 
+                       stat.title === 'Teklif İletildi' ? 'Teklifi iletilen adaylar' : 
+                       stat.title === 'Katalog İletildi' ? 'Kataloğu iletilen adaylar' : 'Social Art CRM Metriği'}
+                    </p>
                   </div>
                 </div>
-              </div>
               );
             })}
           </div>
@@ -2709,19 +2710,20 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Lead Filtreleme ve Arama */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-              <div className="glass" style={{ display: 'flex', padding: '6px', borderRadius: '16px', border: '1px solid var(--surface-border)', background: 'rgba(255,255,255,0.02)' }}>
+              <div className="glass" style={{ display: 'flex', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(9, 9, 11, 0.4)', flexWrap: 'wrap', gap: '4px' }}>
                 <button
                   onClick={() => { setLeadSubTab('active'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: '12px',
-                    fontSize: '0.9rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'active' ? 'rgba(139, 92, 246, 0.2)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'active' ? 'var(--primary)' : 'transparent',
-                    color: leadSubTab === 'active' ? '#000' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'active' ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                    color: leadSubTab === 'active' ? '#c084fc' : '#a1a1aa',
+                    transition: 'all 0.2s',
+                    boxShadow: leadSubTab === 'active' ? '0 0 10px rgba(139, 92, 246, 0.05)' : 'none'
                   }}
                 >
                   🚀 Nitelikli Leadler ({potansiyel.filter(p => ['Sıcak', 'Beklemede'].includes(p.status)).length})
@@ -2729,15 +2731,16 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   onClick={() => { setLeadSubTab('pending_proposal'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'pending_proposal' ? 'rgba(255, 215, 0, 0.2)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'pending_proposal' ? 'rgba(255, 215, 0, 0.2)' : 'transparent',
-                    color: leadSubTab === 'pending_proposal' ? '#FFD700' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'pending_proposal' ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
+                    color: leadSubTab === 'pending_proposal' ? '#FFD700' : '#a1a1aa',
+                    transition: 'all 0.2s',
+                    boxShadow: leadSubTab === 'pending_proposal' ? '0 0 10px rgba(255, 215, 0, 0.05)' : 'none'
                   }}
                 >
                   🧾 Teklif Bekleyen ({potansiyel.filter(p => p.status === 'Teklif Bekliyor').length})
@@ -2745,15 +2748,16 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   onClick={() => { setLeadSubTab('sent_proposal'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'sent_proposal' ? 'rgba(0, 230, 118, 0.2)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'sent_proposal' ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
-                    color: leadSubTab === 'sent_proposal' ? '#00e676' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'sent_proposal' ? 'rgba(0, 230, 118, 0.1)' : 'transparent',
+                    color: leadSubTab === 'sent_proposal' ? '#00e676' : '#a1a1aa',
+                    transition: 'all 0.2s',
+                    boxShadow: leadSubTab === 'sent_proposal' ? '0 0 10px rgba(0, 230, 118, 0.05)' : 'none'
                   }}
                 >
                   📧 Teklif İletildi ({potansiyel.filter(p => p.status === 'Teklif İletildi').length})
@@ -2761,15 +2765,16 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   onClick={() => { setLeadSubTab('catalog_sent'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'catalog_sent' ? 'rgba(41, 121, 255, 0.2)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'catalog_sent' ? 'rgba(41, 121, 255, 0.15)' : 'transparent',
-                    color: leadSubTab === 'catalog_sent' ? '#2979ff' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'catalog_sent' ? 'rgba(41, 121, 255, 0.1)' : 'transparent',
+                    color: leadSubTab === 'catalog_sent' ? '#2979ff' : '#a1a1aa',
+                    transition: 'all 0.2s',
+                    boxShadow: leadSubTab === 'catalog_sent' ? '0 0 10px rgba(41, 121, 255, 0.05)' : 'none'
                   }}
                 >
                   📖 Katalog İletildi ({potansiyel.filter(p => p.status === 'Katalog İletildi').length})
@@ -2777,15 +2782,16 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   onClick={() => { setLeadSubTab('remarketing'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'remarketing' ? 'rgba(0, 229, 255, 0.2)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'remarketing' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
-                    color: leadSubTab === 'remarketing' ? '#00e5ff' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'remarketing' ? 'rgba(0, 229, 255, 0.1)' : 'transparent',
+                    color: leadSubTab === 'remarketing' ? '#00e5ff' : '#a1a1aa',
+                    transition: 'all 0.2s',
+                    boxShadow: leadSubTab === 'remarketing' ? '0 0 10px rgba(0, 229, 255, 0.05)' : 'none'
                   }}
                 >
                   📢 Remarketing ({potansiyel.filter(p => p.status === 'Remarketing').length})
@@ -2793,15 +2799,16 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   onClick={() => { setLeadSubTab('archived'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'archived' ? 'rgba(236, 72, 153, 0.2)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'archived' ? 'var(--secondary)' : 'transparent',
-                    color: leadSubTab === 'archived' ? '#fff' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'archived' ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
+                    color: leadSubTab === 'archived' ? '#ec4899' : '#a1a1aa',
+                    transition: 'all 0.2s',
+                    boxShadow: leadSubTab === 'archived' ? '0 0 10px rgba(236, 72, 153, 0.05)' : 'none'
                   }}
                 >
                   📁 Arşiv / Düşük İlgi ({potansiyel.filter(p => ['Ertelendi', 'Reddedildi', 'Düşük Kalite'].includes(p.status)).length})
@@ -2809,15 +2816,15 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   onClick={() => { setLeadSubTab('all'); setLeadStatusFilter('Hepsi'); }}
                   style={{
-                    padding: '10px 18px',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
                     fontWeight: '700',
-                    border: 'none',
+                    border: '1px solid ' + (leadSubTab === 'all' ? 'rgba(255,255,255,0.1)' : 'transparent'),
                     cursor: 'pointer',
-                    background: leadSubTab === 'all' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: leadSubTab === 'all' ? '#fff' : '#888',
-                    transition: 'all 0.3s'
+                    background: leadSubTab === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                    color: leadSubTab === 'all' ? '#fff' : '#a1a1aa',
+                    transition: 'all 0.2s'
                   }}
                 >
                   Hepsi ({potansiyel.length})
@@ -2825,7 +2832,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               </div>
 
               <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
-                <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
+                <Search size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#71717a' }} />
                 <input
                   type="text"
                   placeholder="İsim, hizmet veya notlar ile ara..."
@@ -2833,13 +2840,14 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
                     width: '100%',
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid var(--surface-border)',
-                    padding: '12px 15px 12px 45px',
-                    borderRadius: '16px',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '10px 14px 10px 42px',
+                    borderRadius: '12px',
                     color: '#fff',
                     outline: 'none',
-                    fontSize: '0.95rem'
+                    fontSize: '0.8rem',
+                    fontWeight: '500'
                   }}
                 />
               </div>
@@ -2850,10 +2858,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
                   <thead>
                     <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopLeftRadius: '24px', width: '25%' }}>FİRMA / LEAD</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', width: '25%' }}>SON TEMAS & BEKLENEN HİZMET</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', width: '20%' }}>İLETİŞİM KANALI</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopRightRadius: '24px', width: '30%' }}>DURUM & SON NOT</th>
+                      <th style={{ borderTopLeftRadius: '12px', width: '25%' }}>FİRMA / LEAD</th>
+                      <th style={{ width: '25%' }}>SON TEMAS & BEKLENEN HİZMET</th>
+                      <th style={{ width: '20%' }}>İLETİŞİM KANALI</th>
+                      <th style={{ borderTopRightRadius: '12px', width: '30%' }}>DURUM & SON NOT</th>
                     </tr>
                   </thead>
                 <tbody>
@@ -2879,7 +2887,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     })
                     .map((p, idx, array) => (
                       <tr key={p.id} style={{ borderBottom: idx !== array.length - 1 ? '1px solid var(--surface-border)' : 'none', cursor: 'pointer', transition: 'background 0.2s' }} className="table-row-hover">
-                      <td style={{ padding: '20px 24px' }} onClick={() => fetchLeadHistory(p)}>
+                      <td onClick={() => fetchLeadHistory(p)}>
                         <div className="card-text-val" style={{ fontWeight: '700', fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: p.status === 'Sıcak' || p.status === 'Teklif İletildi' ? '#00e676' : p.status === 'Katalog İletildi' ? '#2979ff' : p.status === 'Remarketing' ? '#00e5ff' : ['Beklemede', 'Teklif Bekliyor', 'Ertelendi'].includes(p.status) ? '#ffab00' : '#ff0055' }}></div>
                           {p.name}
@@ -2899,13 +2907,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                         </div>
                         <div className="card-text-val" style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '6px', fontWeight: '500' }}>Temsilci: {p.rep}</div>
                       </td>
-                      <td style={{ padding: '20px 24px', color: '#ccc' }} onClick={() => fetchLeadHistory(p)}>
+                      <td style={{ color: '#ccc' }} onClick={() => fetchLeadHistory(p)}>
                         <div className="card-text-val" style={{ fontWeight: '600', color: 'var(--accent)', fontSize: '0.9rem' }}>{p.service}</div>
                         <div className="card-text-val" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                           <Clock size={12} /> {p.date}
                         </div>
                       </td>
-                      <td style={{ padding: '20px 24px' }} onClick={() => fetchLeadHistory(p)}>
+                      <td onClick={() => fetchLeadHistory(p)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <span className="card-text-val" style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 14px', borderRadius: '10px', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.05)', display: 'inline-block' }}>
                             <MessageSquare size={14} style={{ display: 'inline', marginRight: '8px', marginBottom: '-2px' }} />
@@ -2980,7 +2988,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                           })()}
                         </div>
                       </td>
-                      <td style={{ padding: '20px 24px' }}>
+                      <td>
                         <div className="card-text-val" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                           {/* Özel Durum Seçici (Native select yerine) */}
                           <div className="status-selector" style={{ position: 'relative' }}>
