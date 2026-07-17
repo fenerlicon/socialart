@@ -15,6 +15,17 @@ import 'react-quill-new/dist/quill.snow.css';
 
 const AdminStyles = () => (
   <style>{`
+    :root {
+      --primary: #8b5cf6; /* Matching Next.js purple */
+      --primary-glow: rgba(139, 92, 246, 0.15);
+      --secondary: #ec4899;
+      --accent: #06b6d4;
+      --bg-dark: #09090b;
+      --card-bg: rgba(20, 20, 25, 0.4);
+      --surface-border: rgba(255, 255, 255, 0.05);
+      --text-muted: #a1a1aa;
+    }
+
     .admin-layout {
       display: flex;
       min-height: calc(100vh - 120px);
@@ -26,7 +37,7 @@ const AdminStyles = () => (
     .admin-sidebar-nav {
       width: 280px;
       flex-shrink: 0;
-      background: rgba(15, 15, 15, 0.4);
+      background: rgba(9, 9, 11, 0.3);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.05);
@@ -44,7 +55,7 @@ const AdminStyles = () => (
     .admin-sidebar-nav button {
       padding: 14px 18px;
       border-radius: 14px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
@@ -63,21 +74,51 @@ const AdminStyles = () => (
     }
 
     .admin-sidebar-nav button.active {
-      background: rgba(138, 43, 226, 0.1);
-      border: 1px solid rgba(138, 43, 226, 0.2);
-      color: var(--primary);
-      box-shadow: 0 10px 20px rgba(138, 43, 226, 0.05);
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      color: #c084fc;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
     }
 
     .admin-sidebar-nav button svg {
       transition: transform 0.3s;
     }
 
+    /* Opaque cards and panels matching admin style */
+    .glass {
+      background: rgba(15, 15, 20, 0.5) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.05) !important;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .potansiyel-table th {
+      padding: 18px 24px !important;
+      color: #a1a1aa !important;
+      font-weight: 600 !important;
+      font-size: 0.8rem !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
+    
+    .potansiyel-table td {
+      padding: 18px 24px !important;
+      font-size: 0.85rem !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02) !important;
+    }
+    
+    .potansiyel-table tr:hover {
+      background: rgba(255, 255, 255, 0.015) !important;
+    }
+
     @media (max-width: 1024px) {
       .admin-layout { flex-direction: column; gap: 20px; margin-top: 80px; }
       .admin-sidebar-nav {
         position: fixed; top: 0; left: -320px; height: 100vh; width: 300px;
-        background: #050505; z-index: 10001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #09090b; z-index: 10001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         padding: 20px; overflow-y: auto; box-shadow: 20px 0 50px rgba(0,0,0,0.5);
         display: flex !important;
         flex-direction: column;
@@ -742,7 +783,13 @@ function Admin() {
   };
 
 
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('admin_active_tab') || 'potansiyel'); // potansiyel, aktif, gorev
+  const [activeTab, setActiveTab] = useState(() => {
+    const stored = localStorage.getItem('admin_active_tab');
+    if (stored && ['potansiyel', 'basvurular', 'log', 'support'].includes(stored)) {
+      return stored;
+    }
+    return 'potansiyel';
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [leadSubTab, setLeadSubTab] = useState(() => localStorage.getItem('admin_lead_sub_tab') || 'active'); // active, archived, all
 
@@ -2257,7 +2304,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
   if (isChecking) {
     return (
-      <div style={{ background: '#020202', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+      <div style={{ background: 'linear-gradient(to bottom right, #09090b, #111115, #1d113a)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0,229,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}></div>
           <p style={{ color: '#fff', fontSize: '0.8rem', letterSpacing: '2px' }}>VERİLER YÜKLENİYOR...</p>
@@ -2282,7 +2329,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
   }
 
   return (
-    <div className="admin-container" style={{ background: '#020202', minHeight: '100vh', paddingTop: '100px', paddingBottom: '50px', position: 'relative' }}>
+    <div className="admin-container" style={{ background: 'linear-gradient(to bottom right, #09090b, #111115, #1d113a)', minHeight: '100vh', paddingTop: '100px', paddingBottom: '50px', position: 'relative' }}>
 
       {/* GLOBAL TALEP ALERT (TOAST) */}
       {newTalepAlert && (
@@ -2438,10 +2485,16 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <Users size={18} /> Potansiyel Müşteriler
             </button>
             <button
-              onClick={() => { setActiveTab('aktif'); setIsSidebarOpen(false); }}
-              className={activeTab === 'aktif' ? 'active' : ''}
+              onClick={() => { setActiveTab('basvurular'); setIsSidebarOpen(false); }}
+              className={activeTab === 'basvurular' ? 'active' : ''}
             >
-              <Briefcase size={18} /> Çalışılan Müşteriler
+              <Target size={18} /> Başvurular
+            </button>
+            <button
+              onClick={() => { setActiveTab('support'); setIsSidebarOpen(false); }}
+              className={activeTab === 'support' ? 'active' : ''}
+            >
+              <MessageSquare size={18} /> Müşteri Talepleri
             </button>
             <button
               onClick={() => { window.location.href = '/email-marketing'; setIsSidebarOpen(false); }}
@@ -2449,52 +2502,14 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             >
               <Mail size={18} /> E-Mail Marketing
             </button>
-            <button
-              onClick={() => { setActiveTab('reports'); setIsSidebarOpen(false); }}
-              className={activeTab === 'reports' ? 'active' : ''}
-            >
-              <FileText size={18} /> Raporlar
-            </button>
-            <button
-              onClick={() => { setActiveTab('basvurular'); setIsSidebarOpen(false); }}
-              className={activeTab === 'basvurular' ? 'active' : ''}
-            >
-              <Target size={18} /> Başvurular
-            </button>
-            <button
-              onClick={() => { setActiveTab('gorev'); setIsSidebarOpen(false); }}
-              className={activeTab === 'gorev' ? 'active' : ''}
-            >
-              <ClipboardList size={18} /> İş Takip Sistemi
-            </button>
-            <button
-              onClick={() => { setActiveTab('gorevList'); setIsSidebarOpen(false); }}
-              className={activeTab === 'gorevList' ? 'active' : ''}
-            >
-              <ListTodo size={18} /> Görev Listem
-            </button>
 
             {currentUser.permissions === 'all' && (
-              <>
-                <button
-                  onClick={() => { setActiveTab('log'); setIsSidebarOpen(false); }}
-                  className={activeTab === 'log' ? 'active' : ''}
-                >
-                  <Activity size={18} /> Aktivite Kayıtları
-                </button>
-                <button
-                  onClick={() => { setActiveTab('availability'); setIsSidebarOpen(false); }}
-                  className={activeTab === 'availability' ? 'active' : ''}
-                >
-                  <Clock size={18} /> Müsaitlik
-                </button>
-                <button
-                  onClick={() => { setActiveTab('performance'); setIsSidebarOpen(false); }}
-                  className={activeTab === 'performance' ? 'active' : ''}
-                >
-                  <Users size={18} /> Çalışanlar
-                </button>
-              </>
+              <button
+                onClick={() => { setActiveTab('log'); setIsSidebarOpen(false); }}
+                className={activeTab === 'log' ? 'active' : ''}
+              >
+                <Activity size={18} /> Aktivite Kayıtları
+              </button>
             )}
 
             {/*
@@ -2598,29 +2613,36 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
             
             <div className="glass" style={{ padding: '25px', borderRadius: '24px' }}>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800' }}>
                 <Camera size={20} /> UGC & Influencer Başvuruları
               </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Ad Soyad</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>İletişim</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Instagram</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Şehir</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Tarih</th>
+                      <th style={{ borderTopLeftRadius: '24px' }}>Ad Soyad</th>
+                      <th>İletişim</th>
+                      <th>Instagram</th>
+                      <th>Şehir</th>
+                      <th style={{ borderTopRightRadius: '24px' }}>Tarih</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {ugcApps.length === 0 && <tr><td colSpan="5" style={{ padding: '15px', textAlign: 'center', color: '#666' }}>Henüz başvuru yok.</td></tr>}
+                    {ugcApps.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', color: '#666', padding: '40px 0' }}>Henüz başvuru yok.</td></tr>}
                     {ugcApps.map(app => (
-                      <tr key={app.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                        <td style={{ padding: '15px', fontWeight: 'bold' }}>{app.full_name}</td>
-                        <td style={{ padding: '15px' }}>{app.phone}<br/><span style={{fontSize:'0.8rem', color:'#888'}}>{app.email}</span></td>
-                        <td style={{ padding: '15px' }}><a href={`https://instagram.com/${app.instagram_url?.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>{app.instagram_url}</a></td>
-                        <td style={{ padding: '15px' }}>{app.city}</td>
-                        <td style={{ padding: '15px', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
+                      <tr key={app.id} className="table-row-hover">
+                        <td style={{ fontWeight: '800', color: '#fff' }}>{app.full_name}</td>
+                        <td>
+                          <div style={{ fontWeight: '700' }}>{app.phone}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '2px' }}>{app.email}</div>
+                        </td>
+                        <td>
+                          <a href={`https://instagram.com/${app.instagram_url?.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: '700' }}>
+                            {app.instagram_url}
+                          </a>
+                        </td>
+                        <td style={{ fontWeight: '600' }}>{app.city}</td>
+                        <td style={{ color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -2629,43 +2651,50 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
 
             <div className="glass" style={{ padding: '25px', borderRadius: '24px' }}>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800' }}>
                 <Briefcase size={20} /> Kariyer / İş Başvuruları
               </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Ad Soyad</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Pozisyon</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>İletişim</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Portfolyo / CV</th>
-                      <th style={{ padding: '15px', color: '#888', fontWeight: '500' }}>Tarih</th>
+                      <th style={{ borderTopLeftRadius: '24px' }}>Ad Soyad</th>
+                      <th>Pozisyon</th>
+                      <th>İletişim</th>
+                      <th>Portfolyo / CV</th>
+                      <th style={{ borderTopRightRadius: '24px' }}>Tarih</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {jobApps.length === 0 && <tr><td colSpan="5" style={{ padding: '15px', textAlign: 'center', color: '#666' }}>Henüz başvuru yok.</td></tr>}
+                    {jobApps.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', color: '#666', padding: '40px 0' }}>Henüz başvuru yok.</td></tr>}
                     {jobApps.map(app => (
-                      <tr key={app.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                        <td style={{ padding: '15px', fontWeight: 'bold' }}>{app.full_name}</td>
-                        <td style={{ padding: '15px', color: 'var(--accent)', fontWeight: 'bold' }}>{app.position}</td>
-                        <td style={{ padding: '15px' }}>{app.phone}<br/><span style={{fontSize:'0.8rem', color:'#888'}}>{app.email}</span></td>
-                        <td style={{ padding: '15px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <tr key={app.id} className="table-row-hover">
+                        <td style={{ fontWeight: '800', color: '#fff' }}>{app.full_name}</td>
+                        <td>
+                          <span style={{ color: 'var(--accent)', fontWeight: '800', fontSize: '0.8rem', background: 'rgba(0,229,255,0.08)', padding: '4px 8px', borderRadius: '6px' }}>
+                            {app.position}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: '700' }}>{app.phone}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '2px' }}>{app.email}</div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {app.portfolio_url && (
-                              <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline', fontSize: '0.85rem' }}>
+                              <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', textDecoration: 'underline', fontSize: '0.8rem', fontWeight: '600' }}>
                                 Linki İncele
                               </a>
                             )}
                             {app.resume_url && (
-                              <a href={app.resume_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                              <a href={app.resume_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '0.8rem', fontWeight: '700' }}>
                                 CV Dosyasını Aç
                               </a>
                             )}
-                            {!app.portfolio_url && !app.resume_url && <span style={{ color: '#666' }}>Yok</span>}
+                            {!app.portfolio_url && !app.resume_url && <span style={{ color: '#555' }}>Yok</span>}
                           </div>
                         </td>
-                        <td style={{ padding: '15px', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
+                        <td style={{ color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -3060,1063 +3089,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </div>
       )}
 
-        {/* Tab 2: ÇALIŞILAN MÜŞTERİLER */}
-        {activeTab === 'aktif' && (
-          <div className="glass" style={{ borderRadius: '24px', overflow: 'visible', border: '1px solid var(--surface-border)', paddingBottom: '20px' }}>
-            <div style={{ overflowX: 'visible' }}>
-              <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopLeftRadius: '24px' }}>MARKA / PAKET</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>PROJE İLERLEMESİ</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>REKLAM DURUMU</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem', borderTopRightRadius: '24px' }}>İŞ LİSTELERİ & AKSİYON</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {aktifMusteriler.map((client, idx) => (
-                    <tr key={client.id} style={{ borderBottom: idx !== aktifMusteriler.length - 1 ? '1px solid var(--surface-border)' : 'none', transition: 'background 0.2s' }} className="table-row-hover">
-                      <td style={{ padding: '20px 24px' }}>
-                        <div className="card-text-val" style={{ fontWeight: '700', fontSize: '1.2rem', color: '#fff' }}>{client.name}</div>
-                        <div className="card-text-val" style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '4px' }}>{client.package}</div>
-                      </td>
-                      <td style={{ padding: '20px 24px', minWidth: '200px' }}>
-                        <div className="card-text-val" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                            <div style={{ width: `${client.progress}%`, height: '100%', background: 'var(--secondary)', borderRadius: '10px' }}></div>
-                          </div>
-                          <span style={{ fontWeight: '800', color: 'var(--secondary)', fontSize: '0.9rem' }}>%{client.progress}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '20px 24px' }}>
-                        <div className="card-text-val" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: client.ads_active ? '#00e676' : '#666' }}></div>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: client.ads_active ? '#00e676' : '#888' }}>
-                            {client.ads_active ? 'REKLAM AKTİF' : 'REKLAM PASİF'}
-                          </span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '20px 24px' }}>
-                        <div className="card-text-val" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', gap: '10px' }}>
-                            <span title="Tamamlanan" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', background: 'rgba(0,230,118,0.1)', color: '#00e676' }}>{(Array.isArray(client.completed) ? client.completed : []).length} Bitti</span>
-                            <span title="Devam Eden" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', background: 'rgba(0,229,255,0.1)', color: 'var(--primary)' }}>{(Array.isArray(client.active) ? client.active : []).length} Aktif</span>
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              onClick={() => {
-                                setEditClientData({
-                                  id: client.id,
-                                  name: client.name,
-                                  package: client.package,
-                                  completed: (Array.isArray(client.completed) ? client.completed : []).join(', '),
-                                  active: (Array.isArray(client.active) ? client.active : []).join(', '),
-                                  pending: (Array.isArray(client.pending) ? client.pending : []).join(', '),
-                                  ads_active: client.ads_active || false
-                                });
-                                setIsEditClientModalOpen(true);
-                              }}
-                              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', padding: '8px', borderRadius: '10px', cursor: 'pointer' }}
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteActiveClient(client.id)}
-                              style={{ background: 'rgba(255,23,68,0.05)', border: '1px solid rgba(255,23,68,0.1)', color: '#ff1744', padding: '8px', borderRadius: '10px', cursor: 'pointer' }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* Tab 2: ÇALIŞILAN MÜŞTERİLER — KALDIRILDI */}
+        {activeTab === 'aktif' && null}
 
-        {/* Tab 3: İŞ TAKİP SİSTEMİ */}
-        {activeTab === 'gorev' && (
-          <div className="task-manager-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '25px' }}>
-            {[...isTakip].sort((a, b) => {
-               if (a.rep === currentUser?.name) return -1;
-               if (b.rep === currentUser?.name) return 1;
-               return 0;
-            }).map((person) => {
-              // Tüm görevleri birleştir
-              const allTasks = [...(person.activeTasks || []), ...(person.pendingTasks || []), ...(person.completedTasks || [])];
-              
-              // 3 Ana Kategori
-              const yapilanTasks = allTasks.filter(t => ['Sırada', 'Yapıyorum', 'Revize'].includes(t.status));
-              const tamamlananTasks = allTasks.filter(t => t.status === 'Yaptım');
-              const tamamlanmayanTasks = allTasks.filter(t => t.status === 'Tamamlanamadı');
-
-              return (
-                <div key={person.id} className="glass" style={{ 
-                  padding: '25px', 
-                  borderRadius: '24px', 
-                  border: person.rep === currentUser?.name ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.05)', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '25px' 
-                }}>
-                  {/* Personel Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                      <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: '900', color: '#000' }}>{person.rep.charAt(0)}</div>
-                      <div>
-                        <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#fff' }}>{person.rep}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700' }}>{person.role?.toUpperCase()}</div>
-                      </div>
-                    </div>
-                    <button onClick={() => { setTaskFormData({ ...taskFormData, empId: person.id.toString() }); setIsTaskModalOpen(true); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '8px 15px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}>+ GÖREV EKLE</button>
-                  </div>
-
-                  {(dashboardBucketFilter === 'Hepsi' || dashboardBucketFilter === 'Yapılan (Aktif)') && (
-                    <div style={{ flex: 1 }}>
-                    <h4 style={{ color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '900' }}>
-                      <Zap size={16} /> Yapılan (Aktif)
-                      <span style={{ marginLeft: 'auto', background: 'var(--primary)', color: '#000', padding: '1px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>{yapilanTasks.length}</span>
-                    </h4>
-                    
-                    {/* Alt Filtreler (Sadece Aktif İçin) */}
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '15px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
-                      {['Hepsi', 'Sırada', 'Yapıyorum', 'Revize'].map(f => (
-                        <button 
-                          key={f}
-                          onClick={() => setDashboardSubFilter(f)}
-                          style={{ 
-                            fontSize: '0.65rem', 
-                            padding: '5px 10px', 
-                            borderRadius: '8px', 
-                            border: '1px solid rgba(255,255,255,0.05)', 
-                            background: dashboardSubFilter === f ? 'var(--primary)' : 'rgba(255,255,255,0.05)', 
-                            color: dashboardSubFilter === f ? '#000' : '#888', 
-                            fontWeight: '800', 
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {f}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {(() => {
-                        const filtered = yapilanTasks.filter(t => dashboardSubFilter === 'Hepsi' || t.status === dashboardSubFilter);
-                        return filtered.length > 0 ? filtered.map((t) => (
-                          <div 
-                            key={t.id} 
-                            onClick={() => { setSelectedTask(t); setIsTaskDetailModalOpen(true); }}
-                            style={{ 
-                              background: 'rgba(255,255,255,0.02)', 
-                              padding: '15px', 
-                              borderRadius: '16px', 
-                              border: '1px solid rgba(255,255,255,0.05)', 
-                              borderLeft: `4px solid ${t.priority || '#2979ff'}`,
-                              cursor: 'pointer',
-                              overflow: 'hidden',
-                              transition: 'transform 0.2s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
-                              <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff', flex: 1, lineHeight: '1.4', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', wordBreak: 'break-word' }} className="task-html-content">
-                                {(() => {
-                                  const clean = stripHtml(t.task_text).trim();
-                                  return clean.length > 85 ? clean.substring(0, 85) + '...' : clean;
-                                })()}
-                              </div>
-                              {renderAttachments(t.attachment_url, t.attachment_name)}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <select 
-                                  onClick={e => e.stopPropagation()}
-                                  value={t.status} 
-                                  onChange={e => handleTaskStatusChange(person.id, t, 'pendingTasks', e.target.value)} 
-                                  style={{ background: t.status === 'Yapıyorum' ? 'var(--primary)' : t.status === 'Revize' ? '#d500f9' : '#ffab00', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}
-                                >
-                                  <option value="Sırada">Sırada</option>
-                                  <option value="Yapıyorum">Yapıyorum</option>
-                                  <option value="Revize">Revize</option>
-                                  <option value="Yaptım">Yaptım</option>
-                                  <option value="Tamamlanamadı">Tamamlanamadı</option>
-                                </select>
-                                <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(person.id, t); }} style={{ background: 'none', border: 'none', color: '#ff1744', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.6 }}>
-                              <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{(t.category || 'PROJE').toUpperCase()}</span>
-                              {t.due_date && <span style={{ fontSize: '0.7rem' }}>🗓 {t.due_date}</span>}
-                            </div>
-                          </div>
-                        )) : <div style={{ color: '#444', fontSize: '0.8rem', textAlign: 'center', padding: '20px' }}>Bu kategoride aktif görev bulunmuyor.</div>;
-                      })()}
-                    </div>
-                  </div>
-
-                  )}
-                  {(dashboardBucketFilter === 'Hepsi' || dashboardBucketFilter === 'Tamamlanan') && (
-                    <div style={{ background: 'rgba(0,230,118,0.02)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(0,230,118,0.05)', flex: 1 }}>
-                    <h4 style={{ color: '#00e676', fontSize: '0.8rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '900', textTransform: 'uppercase' }}>
-                      <CheckCircle2 size={16} /> Tamamlanan
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {tamamlananTasks.slice(0, 3).map((t) => (
-                        <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#555' }}>
-                          <span style={{ textDecoration: 'line-through', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></span>
-                          <select value={t.status} onChange={e => handleTaskStatusChange(person.id, t, 'completedTasks', e.target.value)} style={{ background: 'none', color: '#00e676', border: 'none', fontSize: '0.65rem', cursor: 'pointer' }}>
-                             <option value="Yaptım">Yaptım</option>
-                             <option value="Revize">Revize</option>
-                          </select>
-                        </div>
-                      ))}
-                      {tamamlananTasks.length === 0 && <div style={{ fontSize: '0.75rem', color: '#333' }}>Henüz yok.</div>}
-                    </div>
-                  </div>
-
-                  )}
-                  {(dashboardBucketFilter === 'Hepsi' || dashboardBucketFilter === 'Tamamlanmayan') && (
-                    <div style={{ background: 'rgba(255,23,68,0.02)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,23,68,0.05)', flex: 1 }}>
-                    <h4 style={{ color: '#ff1744', fontSize: '0.8rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '900', textTransform: 'uppercase' }}>
-                      <XCircle size={16} /> Tamamlanmayan
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {tamamlanmayanTasks.map((t) => (
-                        <div key={t.id} style={{ fontSize: '0.8rem', color: '#ff1744', opacity: 0.7, display: 'flex', alignItems: 'flex-start', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', marginBottom: '8px' }}>
-                          <AlertCircle size={14} color="#ff1744" style={{ flexShrink: 0, marginTop: '2px' }} /> 
-                          <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
-                        </div>
-                      ))}
-                      {tamamlanmayanTasks.length === 0 && <div style={{ fontSize: '0.75rem', color: '#333' }}>Yok.</div>}
-                    </div>
-                  </div>
-
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-        
-
-
-      {/* YENİ POTANSİYEL EKLEME MODALI */}
-      {isAddModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '600px', position: 'relative', margin: 'auto' }}>
-            <button onClick={() => setIsAddModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#fff' }}>Yeni Lead Kaydı</h2>
-            <form onSubmit={handleAddPotansiyel} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Firma / Kişi Adı</label>
-                  <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>İletişim Kanalı</label>
-                  <select value={formData.platform} onChange={e => setFormData({ ...formData, platform: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="">Seçiniz...</option>
-                    <option value="Instagram DM">Instagram DM</option>
-                    <option value="WhatsApp">WhatsApp</option>
-                    <option value="Arama">Arama / Telefon</option>
-                    <option value="Web Sitesi / Form">Web Sitesi / Form</option>
-                    <option value="Referans">Referans</option>
-                    <option value="Diğer">Diğer</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>E-posta Adresi</label>
-                  <input type="email" placeholder="ornek@sirket.com (İsteğe bağlı)" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Telefon</label>
-                  <input type="text" required placeholder="05XX XXX XX XX" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-              </div>
-
-              {formData.platform === 'Instagram DM' && (
-                <div style={{ marginTop: '-10px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Instagram Kullanıcı Adı</label>
-                  <input type="text" placeholder="@kullaniciadi" value={formData.instagram_username} onChange={e => setFormData({ ...formData, instagram_username: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--primary)', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-              )}
-
-              <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <label style={{ display: 'block', marginBottom: '15px', color: '#ccc', fontSize: '0.9rem' }}>Beklenen Hizmetler (Birden fazla seçilebilir)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  {[
-                    '360° Sosyal Medya Yönetimi', 
-                    'Kreatif İçerik / Çekim', 
-                    'Meta & Google Reklam', 
-                    'Web Tasarım / Yazılım', 
-                    'Marka Kimliği Tasarımı', 
-                    'Influencer Marketing', 
-                    'Video Prodüksiyon', 
-                    'Sunuculu Reklam Videosu',
-                    'Stüdyo Çekimi',
-                    'Diğer'
-                  ].map(service => (
-                    <label key={service} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: '#fff', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={formData.selectedServices.includes(service)}
-                        onChange={(e) => {
-                          const updated = e.target.checked
-                            ? [...formData.selectedServices, service]
-                            : formData.selectedServices.filter(s => s !== service);
-                          setFormData({ ...formData, selectedServices: updated });
-                        }}
-                        style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
-                      />
-                      {service}
-                    </label>
-                  ))}
-                </div>
-                {formData.selectedServices.includes('Diğer') && (
-                  <div style={{ marginTop: '12px' }}>
-                    <input
-                      type="text"
-                      placeholder="Lütfen diğer hizmeti belirtin..."
-                      value={formData.otherService}
-                      onChange={e => setFormData({ ...formData, otherService: e.target.value })}
-                      style={{ width: '100%', padding: '10px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--primary)', borderRadius: '8px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Temsilci / İlgilenen</label>
-                  <input type="text" required value={formData.rep} onChange={e => setFormData({ ...formData, rep: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Aşama</label>
-                  <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="Sıcak">Sıcak / Olumlu</option>
-                    <option value="Katalog İletildi">Katalog İletildi</option>
-                    <option value="Beklemede">Beklemede / Kararsız</option>
-                    <option value="Remarketing">Remarketing / Tekrar Dönüş</option>
-                    <option value="Ertelendi">Ertelendi</option>
-                    <option value="Reddedildi">Reddedildi</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görüşme Neden Yarım Kaldı / Müşteri Ne Dedi?</label>
-                <textarea rows="3" required value={formData.reaction} onChange={e => setFormData({ ...formData, reaction: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'vertical' }} placeholder="Fiyat çok geldi, eşiyle görüşecek vs." />
-              </div>
-
-              <button type="submit" className="btn btn-primary" style={{ padding: '16px', fontSize: '1rem', marginTop: '10px', background: '#fff', color: '#000', fontWeight: '800', borderRadius: '50px' }}>Kaydet ve Listeye Ekle</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-
-      {/* Görev Atama Modalı */}
-      {isTaskModalOpen && (
-
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative', margin: 'auto' }}>
-            <button onClick={() => setIsTaskModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#fff' }}>Personele Görev Ata</h2>
-            <form onSubmit={handleAddTask} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Marka / Müşteri</label>
-                  <select value={taskFormData.clientName} onChange={e => setTaskFormData({ ...taskFormData, clientName: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="">Genel Görev</option>
-                    {aktifMusteriler.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Kategori</label>
-                  <select value={taskFormData.category} onChange={e => setTaskFormData({ ...taskFormData, category: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="Proje">📂 Proje Bazlı</option>
-                    <option value="Fotoğraf">📸 Fotoğraf</option>
-                    <option value="Video">🎥 Video</option>
-                    <option value="Reklam">🚀 Reklam</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Süreç Evresi</label>
-                  <select value={taskFormData.phase} onChange={e => setTaskFormData({ ...taskFormData, phase: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                    <option value="1">1. Evre: Planlama</option>
-                    <option value="2">2. Evre: Prodüksiyon</option>
-                    <option value="3">3. Evre: Kreatif/Kurgu</option>
-                    <option value="4">4. Evre: Onay/Revize</option>
-                    <option value="5">5. Evre: Yayın/Rapor</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görevin Önceliği (Süreye Göre)</label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    {[
-                      { color: '#ff1744', label: 'ACİL (1-2 GÜN)', val: '#ff1744' },
-                      { color: '#2979ff', label: 'NORMAL (3-6 GÜN)', val: '#2979ff' },
-                      { color: '#00e676', label: 'ESNEK (7+ GÜN)', val: '#00e676' }
-                    ].map(p => (
-                      <button
-                        key={p.val}
-                        type="button"
-                        onClick={() => setTaskFormData({ ...taskFormData, priority: p.val })}
-                        style={{
-                          flex: 1,
-                          padding: '10px 5px',
-                          background: taskFormData.priority === p.val ? p.color : 'rgba(255,255,255,0.02)',
-                          border: `1px solid ${p.color}`,
-                          borderRadius: '8px',
-                          color: taskFormData.priority === p.val ? '#000' : p.color,
-                          fontSize: '0.65rem',
-                          fontWeight: '800',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Teslim Tarihi (Zorunlu)</label>
-                  <input
-                    required
-                    type="date"
-                    value={taskFormData.due_date}
-                    onChange={e => setTaskFormData({ ...taskFormData, due_date: e.target.value })}
-                    style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Çalışan / Personel</label>
-                <select required value={taskFormData.empId} onChange={e => setTaskFormData({ ...taskFormData, empId: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                  <option value="">Ekip Üyesi Seçin...</option>
-                  {isTakip.map(person => (
-                    <option key={person.id} value={person.id}>{person.rep}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görev Aşaması</label>
-                <select value={taskFormData.taskType} onChange={e => setTaskFormData({ ...taskFormData, taskType: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', appearance: 'none' }}>
-                  <option value="pendingTasks">Bekleyen (To-Do) Yapılacaklar</option>
-                  <option value="activeTasks">Acil - Şu An Yapılmalı</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Görev Açıklaması</label>
-                <div className="quill-custom"><ReactQuill theme="snow" value={taskFormData.task} onChange={content => setTaskFormData({ ...taskFormData, task: content })} placeholder="Projeyi hızlandırmak için yeni UI tasarımını tamamla..." /></div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Brief / Konu Dosyası (TXT, PDF, Görsel)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="file"
-                    id="taskAttachment"
-                    multiple
-                    onChange={e => setTaskFiles(Array.from(e.target.files))}
-                    style={{ display: 'none' }}
-                    accept=".txt,.pdf,image/*"
-                  />
-                  <label
-                    htmlFor="taskAttachment"
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px dashed #444',
-                      borderRadius: '10px',
-                      color: '#888',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px',
-                      transition: 'all 0.3s'
-                    }}
-                  >
-                    <Upload size={18} />
-                    {taskFiles && taskFiles.length > 0 ? `${taskFiles.length} dosya seçildi` : 'Dosya Seç (PDF, TXT, Resim)'}
-                  </label>
-                  {taskFiles && taskFiles.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTaskFiles([])}
-                      style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}
-                    >
-                      <X size={18} />
-                    </button>
-                  )}
-                </div>
-                {taskFiles && taskFiles.length > 0 && (
-                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {taskFiles.map((file, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', color: '#ccc', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span>📄 {file.name}</span>
-                        <button 
-                          type="button" 
-                          onClick={() => setTaskFiles(prev => prev.filter((_, i) => i !== idx))} 
-                          style={{ background: 'transparent', border: 'none', color: '#ff1744', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <button type="submit" disabled={taskUploading} className="btn btn-primary" style={{ padding: '14px', fontSize: '1rem', marginTop: '10px', opacity: taskUploading ? 0.7 : 1 }}>
-                {taskUploading ? 'Yükleniyor...' : 'Kaydet ve Listeye Ekle'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Aktif Müşteri Ekleme Modalı */}
-      {isClientModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '650px', position: 'relative', margin: 'auto' }}>
-            <button onClick={() => setIsClientModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: '#fff' }}>Yeni Aktif Müşteri Dosyası</h2>
-            <form onSubmit={handleAddAktifMusteri} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Firma Adı</label>
-                  <input type="text" required value={clientFormData.name} onChange={e => setClientFormData({ ...clientFormData, name: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Kapsam / Paket</label>
-                  <input type="text" required value={clientFormData.package} onChange={e => setClientFormData({ ...clientFormData, package: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="Sosyal Medya Yönetimi vb." />
-                </div>
-              </div>
-
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ color: '#ccc', fontSize: '0.9rem' }}>İlerleme Durumu (Otomatik Hesaplanır)</label>
-                  <div style={{ background: 'var(--accent)', color: '#000', padding: '4px 10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '800' }}>
-                    %{(() => {
-                      const c = clientFormData.completed.split(',').filter(s => s.trim() !== '').length;
-                      const a = clientFormData.active.split(',').filter(s => s.trim() !== '').length;
-                      const p = clientFormData.pending.split(',').filter(s => s.trim() !== '').length;
-                      const tot = c + a + p;
-                      return tot > 0 ? Math.round((c / tot) * 100) : 0;
-                    })()}
-                  </div>
-                </div>
-                <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', width: '100%' }}>
-                  <div style={{
-                    height: '100%',
-                    background: 'var(--accent)',
-                    borderRadius: '10px',
-                    transition: 'width 0.3s ease',
-                    width: (() => {
-                      const c = clientFormData.completed.split(',').filter(s => s.trim() !== '').length;
-                      const a = clientFormData.active.split(',').filter(s => s.trim() !== '').length;
-                      const p = clientFormData.pending.split(',').filter(s => s.trim() !== '').length;
-                      const tot = c + a + p;
-                      return `${tot > 0 ? Math.round((c / tot) * 100) : 0}%`;
-                    })()
-                  }}></div>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tamamlananlar (Virgülle Ayırın)</label>
-                <TextareaAutosize minRows={2} value={clientFormData.completed} onChange={e => setClientFormData({ ...clientFormData, completed: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Logolar onaylandı, Web sitesi yayında" />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Şu An Yapılanlar</label>
-                  <TextareaAutosize minRows={2} value={clientFormData.active} onChange={e => setClientFormData({ ...clientFormData, active: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Reels kurguları, Blog yazımı" />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Bizi Bekleyenler / Plan</label>
-                  <TextareaAutosize minRows={2} value={clientFormData.pending} onChange={e => setClientFormData({ ...clientFormData, pending: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Raporlama süreci, Saha çekimi" />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <input
-                  type="checkbox"
-                  id="new_ads_active"
-                  checked={clientFormData.ads_active}
-                  onChange={e => setClientFormData({ ...clientFormData, ads_active: e.target.checked })}
-                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                />
-                <label htmlFor="new_ads_active" style={{ color: '#fff', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '600' }}>Reklamlar Aktif</label>
-              </div>
-
-              <button type="submit" className="btn" style={{ background: 'var(--accent)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>Projeyi Kaydet</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Takvime Kayıt Modalı */}
-      {isShootModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '24px', padding: '40px', width: '100%', maxWidth: '500px', position: 'relative' }}>
-            <button onClick={() => { setIsShootModalOpen(false); setEditingAppt(null); setShootFiles([]); }} style={{ position: 'absolute', top: '24px', right: '24px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '30px', color: editingAppt ? 'var(--accent)' : 'var(--primary)' }}>{editingAppt ? 'Kaydı Düzenle' : 'Takvime Kayıt Ekle'}</h2>
-            <form onSubmit={editingAppt ? handleUpdateAppt : handleSaveShoot} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '15px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Konu / Başlık</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="Örn: Misafir Gelecek, Çekim..." 
-                    value={shootFormData.clientName} 
-                    onChange={e => setShootFormData({ ...shootFormData, clientName: e.target.value })} 
-                    style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} 
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tür</label>
-                  <select value={shootFormData.type} onChange={e => setShootFormData({ ...shootFormData, type: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }}>
-                    <option value="Çekim">📸 Çekim</option>
-                    <option value="Toplantı">📅 Toplantı</option>
-                    <option value="Not">📝 Not / Hatırlatma</option>
-                    <option value="Özel">📌 Özel Durum</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Tarih</label>
-                  <input type="date" required value={shootFormData.date} onChange={e => setShootFormData({ ...shootFormData, date: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Saat</label>
-                  <input type="time" required value={shootFormData.time} onChange={e => setShootFormData({ ...shootFormData, time: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>İlgili Kişiler / Ekip</label>
-                <input type="text" placeholder="Katılacak personeller" value={shootFormData.staffName} onChange={e => setShootFormData({ ...shootFormData, staffName: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Not / Detaylar</label>
-                <TextareaAutosize minRows={3} value={shootFormData.details} onChange={e => setShootFormData({ ...shootFormData, details: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none', resize: 'none' }} placeholder="Ekstra bilgiler..." />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.9rem' }}>Ek Dosyalar (Kurgu, Brief vb.)</label>
-                <input
-                  type="file"
-                  multiple
-                  id="shoot-files"
-                  onChange={e => setShootFiles(Array.from(e.target.files))}
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="shoot-files" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#ccc', cursor: 'pointer', textAlign: 'center', justifyContent: 'center' }}>
-                  <Camera size={18} /> {shootFiles.length > 0 ? `${shootFiles.length} dosya seçildi` : 'Dosya(lar) Seç'}
-                </label>
-              </div>
-
-              <button type="submit" className="btn" style={{ background: editingAppt ? 'var(--accent)' : 'var(--primary)', color: '#000', padding: '14px', fontSize: '1rem', marginTop: '10px', fontWeight: '800' }}>
-                {editingAppt ? 'Güncelle' : 'Kaydet'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* Müşteri Detay & Geçmiş Modalı */}
-      {isLeadDetailModalOpen && selectedLead && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 3000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}>
-          <div className="glass" style={{ border: '1px solid var(--surface-border)', borderRadius: '32px', width: '100%', maxWidth: '800px', position: 'relative', margin: 'auto' }}>
-
-            <button onClick={() => setIsLeadDetailModalOpen(false)} style={{ position: 'absolute', top: '24px', right: '24px', color: '#888', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 10 }}>
-              <X size={24} />
-            </button>
-
-            <div style={{ padding: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
-              {!isEditingLead ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1.5rem', fontWeight: '900' }}>{(selectedLead.name.split(' | ')[0] || '').charAt(0)}</div>
-                    <div>
-                      <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff' }}>{selectedLead.name.split(' | ')[0]}</h2>
-                      <div style={{ display: 'flex', gap: '15px', marginTop: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--accent)' }}>{selectedLead.service}</span>
-                        {selectedLead.name.split(' | ')[1] && (
-                          <>
-                            <span style={{ fontSize: '0.9rem', color: '#888' }}>•</span>
-                            <span style={{ fontSize: '0.9rem', color: '#aaa', fontWeight: '600' }}>{selectedLead.name.split(' | ')[1]}</span>
-                          </>
-                        )}
-                        <span style={{ fontSize: '0.9rem', color: '#888' }}>•</span>
-                        <span style={{ fontSize: '0.9rem', color: '#888' }}>{selectedLead.phone || 'Telefon Yok'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setIsEditingLead(true)}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #444', color: '#fff', padding: '10px 15px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <Edit3 size={18} /> Düzenle
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleUpdateLead} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <input 
-                      value={editLeadData.name} 
-                      onChange={e => setEditLeadData({...editLeadData, name: e.target.value})}
-                      placeholder="İsim Soyisim"
-                      style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff' }}
-                    />
-                    <input 
-                      value={editLeadData.phone} 
-                      onChange={e => setEditLeadData({...editLeadData, phone: e.target.value})}
-                      placeholder="Telefon"
-                      style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff' }}
-                    />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <input 
-                      value={editLeadData.email} 
-                      onChange={e => setEditLeadData({...editLeadData, email: e.target.value})}
-                      placeholder="E-posta (İsteğe bağlı)"
-                      style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff' }}
-                    />
-                    <select 
-                      value={editLeadData.platform?.split(' (')[0]} 
-                      onChange={e => setEditLeadData({...editLeadData, platform: e.target.value})}
-                      style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                    >
-                      <option value="WhatsApp">WhatsApp</option>
-                      <option value="Instagram DM">Instagram DM</option>
-                      <option value="Telefon">Telefon Görüşmesi</option>
-                      <option value="Mail">E-posta</option>
-                    </select>
-                  </div>
-                  {editLeadData.platform?.includes('Instagram') && (
-                    <div style={{ position: 'relative', marginTop: '-5px' }}>
-                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: 'bold' }}>@</span>
-                      <input 
-                        type="text" 
-                        placeholder="Instagram Kullanıcı Adı"
-                        value={editLeadData.instagram_username} 
-                        onChange={e => setEditLeadData({ ...editLeadData, instagram_username: e.target.value })} 
-                        style={{ width: '100%', padding: '12px 12px 12px 30px', background: 'rgba(0,229,255,0.05)', border: '1px solid var(--accent)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '8px' }}>İlgilenilen Hizmetler:</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '12px', border: '1px solid #333' }}>
-                      {[
-                        "Sosyal Medya Yönetimi",
-                        "Video / Reels Prodüksiyon",
-                        "Reklam Yönetimi",
-                        "Web / Yazılım",
-                        "Kurumsal Kimlik",
-                        "Fotoğraf Çekimi",
-                        "Sunuculu Tanıtım",
-                        "Grafik Tasarım",
-                        "Influencer Marketing"
-                      ].map(srv => {
-                        const isChecked = editLeadData.service?.split(', ').includes(srv);
-                        return (
-                          <label key={srv} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: isChecked ? 'var(--primary)' : '#ccc' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={isChecked} 
-                              onChange={() => toggleEditLeadService(srv)}
-                              style={{ accentColor: 'var(--primary)' }}
-                            />
-                            {srv}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px' }}>Kaydet</button>
-                    <button type="button" onClick={() => setIsEditingLead(false)} style={{ background: 'transparent', color: '#888', padding: '8px 20px' }}>Vazgeç</button>
-                  </div>
-                </form>
-              )}
-            </div>
-
-            {/* Modal Content - Scrollable */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '40px' }}>
-
-              {/* Lead Bilgileri Kartı */}
-              {(() => {
-                const reactionText = selectedLead.reaction || '';
-                const companyMatch = reactionText.match(/Şirket:\s*([^|]+)/i);
-                const webMatch = reactionText.match(/Web:\s*([^\n|]+)/i);
-                
-                const parsedCompany = companyMatch ? companyMatch[1].trim() : null;
-                const parsedWeb = webMatch ? webMatch[1].trim() : null;
-
-                const nameParts = selectedLead.name.split(' | ');
-                const companyName = parsedCompany && parsedCompany !== '-' ? parsedCompany : (nameParts[1] || '');
-                
-                // Formlardan gelen siteler platform kolonunda saklanıyor
-                const platformIsUrl = selectedLead.platform && 
-                  (selectedLead.platform.includes('.') || selectedLead.platform.startsWith('http')) && 
-                  !selectedLead.platform.includes('Instagram') && 
-                  !selectedLead.platform.includes('Meta Ads') && 
-                  !selectedLead.platform.includes('WhatsApp');
-                
-                const websiteUrl = parsedWeb && parsedWeb !== '-' 
-                  ? parsedWeb 
-                  : (platformIsUrl ? selectedLead.platform : '');
-
-                const displayPlatform = platformIsUrl ? "Web Sitesi / Form" : (selectedLead.platform || 'Bilinmiyor');
-
-                return (
-                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '25px', marginBottom: '35px' }}>
-                    <h4 style={{ color: '#fff', fontSize: '1rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      <Activity size={16} color="var(--primary)" /> Müşteri Kartı Bilgileri
-                    </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-                      <div>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                          <Mail size={12} /> E-Posta
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: selectedLead.email ? '#fff' : '#444' }}>{selectedLead.email || 'Belirtilmemiş'}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                          <Phone size={12} /> Telefon
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: selectedLead.phone ? '#fff' : '#444' }}>{selectedLead.phone || 'Belirtilmemiş'}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                          <Briefcase size={12} /> Şirket / Marka
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: companyName ? '#fff' : '#444', fontWeight: companyName ? 'bold' : 'normal' }}>{companyName || 'Belirtilmemiş'}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                          <ExternalLink size={12} /> Web Sitesi
-                        </span>
-                        {websiteUrl ? (
-                          <a 
-                            href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            style={{ fontSize: '0.95rem', color: 'var(--accent)', textDecoration: 'underline', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            {websiteUrl} <ExternalLink size={10} />
-                          </a>
-                        ) : (
-                          <span style={{ fontSize: '0.95rem', color: '#444' }}>Belirtilmemiş</span>
-                        )}
-                      </div>
-                      <div>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                          <Layout size={12} /> Platform / Kanal
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: '#fff' }}>{displayPlatform}</span>
-                      </div>
-                      <div>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                          <UserCheck size={12} /> Temsilci
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: '#fff' }}>{selectedLead.rep || '-'}</span>
-                      </div>
-                    </div>
-
-                    {/* İlk Form Detayları */}
-                    {selectedLead.reaction && (
-                      <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ display: 'block', fontSize: '0.75rem', color: '#666', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Başvuru Notu / Açıklama</span>
-                        <div style={{ fontSize: '0.95rem', color: '#fff', background: 'rgba(0,0,0,0.2)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                          {selectedLead.reaction}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              <div style={{ marginBottom: '40px' }}>
-                <h3 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <MessageSquare size={18} color="var(--primary)" /> Süreç Notu Ekle / Güncelle
-                </h3>
-                <form onSubmit={handleAddHistoryNote} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <TextareaAutosize
-                    minRows={2}
-                    value={noteInput}
-                    onChange={(e) => setNoteInput(e.target.value)}
-                    placeholder="Müşteriyle son görüşme ne durumda? Bir not bırakın..."
-                    style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.03)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', resize: 'none' }}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                      <input
-                        type="file"
-                        id="lead-file-upload"
-                        onChange={(e) => setSelectedFile(e.target.files[0])}
-                        style={{ display: 'none' }}
-                        accept=".pdf,.png,.jpg,.jpeg"
-                      />
-                      <label 
-                        htmlFor="lead-file-upload" 
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '8px', 
-                          padding: '10px 15px', 
-                          background: 'rgba(255,255,255,0.05)', 
-                          border: '1px solid #444', 
-                          borderRadius: '10px', 
-                          color: '#ccc', 
-                          fontSize: '0.85rem', 
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <Camera size={16} />
-                        {selectedFile ? selectedFile.name : 'Dosya Ekle (PDF, PNG, JPG)'}
-                        {selectedFile && <X size={14} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedFile(null); }} style={{ marginLeft: 'auto' }} />}
-                      </label>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button 
-                        type="submit" 
-                        className="btn btn-primary" 
-                        disabled={isUploading}
-                        style={{ padding: '0 30px', height: '42px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                      >
-                        {isUploading ? 'Yükleniyor...' : 'Notu Kaydet'}
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={handleGeminiAnalysis}
-                        disabled={isAnalyzing}
-                        style={{ padding: '0 20px', height: '42px', background: 'linear-gradient(45deg, #2979ff, #00e5ff)', color: '#000', border: 'none', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(0,229,255,0.3)' }}
-                      >
-                        {isAnalyzing ? <div style={{ width: '16px', height: '16px', border: '2px solid #000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div> : <Zap size={16} />}
-                        {isAnalyzing ? 'Analiz Ediliyor...' : 'AI Strateji Oluştur'}
-                      </button>
-                      {currentUser.permissions === 'all' && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteLead(selectedLead.id)}
-                          style={{ padding: '0 15px', height: '42px', background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', border: '1px solid rgba(255,0,85,0.2)', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }}
-                        >
-                          Kaydı Sil
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </form>
-                
-                {aiAnalysis && (
-                  <div style={{ marginTop: '30px', animation: 'slideUp 0.4s ease' }}>
-                    <div style={{ background: 'rgba(0,229,255,0.05)', border: '1px solid var(--accent)', borderRadius: '20px', padding: '25px', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ position: 'absolute', top: 0, right: 0, width: '100px', height: '100px', background: 'var(--accent)', filter: 'blur(80px)', opacity: 0.2 }}></div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                        <h4 style={{ color: 'var(--accent)', fontSize: '1rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <Bot size={20} /> YAPAY ZEKA SATIŞ STRATEJİSİ
-                        </h4>
-                        <button onClick={() => setAiAnalysis(null)} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}>Kapat</button>
-                      </div>
-                      <div style={{ whiteSpace: 'pre-line', color: '#eee', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                        {aiAnalysis}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h3 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Activity size={18} color="var(--accent)" /> Geçmiş Hareketler & Zaman Çizelgesi
-                </h3>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                  {leadHistory.map((history, idx) => (
-                    <div key={history.id} style={{ display: 'flex', gap: '20px', borderLeft: idx === leadHistory.length - 1 ? 'none' : '2px solid rgba(255,255,255,0.05)', marginLeft: '10px', paddingLeft: '30px', paddingBottom: '30px', position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: '-7px', top: '0', width: '12px', height: '12px', borderRadius: '50%', background: history.type === 'durum_degisikligi' ? 'var(--accent)' : 'var(--primary)', boxShadow: `0 0 10px ${history.type === 'durum_degisikligi' ? 'var(--accent)' : 'var(--primary)'}` }}></div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ color: '#888', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px', display: 'flex', justifyContent: 'space-between' }}>
-                          <span>{new Date(history.created_at).toLocaleString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                          {history.author_name && <span style={{ color: 'var(--primary)' }}>İŞLEMİ YAPAN: {history.author_name}</span>}
-                        </div>
-                        <div style={{ color: history.type === 'durum_degisikligi' ? '#ccc' : '#fff', fontSize: '1rem', lineHeight: '1.5', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                          {history.note}
-                          {history.attachment_url && (
-                            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                              <a 
-                                href={history.attachment_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                style={{ 
-                                  display: 'inline-flex', 
-                                  alignItems: 'center', 
-                                  gap: '8px', 
-                                  color: 'var(--primary)', 
-                                  textDecoration: 'none',
-                                  fontSize: '0.9rem',
-                                  fontWeight: 'bold',
-                                  background: 'rgba(0,229,255,0.1)',
-                                  padding: '8px 14px',
-                                  borderRadius: '10px',
-                                  border: '1px solid rgba(0,229,255,0.2)'
-                                }}
-                              >
-                                {history.file_name?.toLowerCase().endsWith('.pdf') ? <FileText size={16} /> : <Camera size={16} />}
-                                {history.file_name || 'Eki Görüntüle'}
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {leadHistory.length === 0 && (
-                    <div style={{ textAlign: 'center', color: '#666', padding: '20px' }}>Kayıtlı geçmiş bulunamadı.</div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Aktivite Log Tablosu */}
       {activeTab === 'log' && (
@@ -4130,46 +3105,46 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               </div>
             </div>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table className="potansiyel-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>TARİH / SAAT</th>
-                  <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>KULLANICI</th>
-                  <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>İŞLEM</th>
-                  <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '0.9rem' }}>HEDEF / DETAY</th>
+                  <th style={{ borderTopLeftRadius: '24px' }}>TARİH / SAAT</th>
+                  <th>KULLANICI</th>
+                  <th>İŞLEM</th>
+                  <th style={{ borderTopRightRadius: '24px' }}>HEDEF / DETAY</th>
                 </tr>
               </thead>
               <tbody>
-                {activityLogs.map((log, idx) => (
+                {activityLogs.map((log) => (
                   <tr 
                     key={log.id} 
                     onClick={() => { setSelectedLog(log); setIsLogModalOpen(true); }}
                     className="table-row-hover"
-                    style={{ borderBottom: idx !== activityLogs.length - 1 ? '1px solid var(--surface-border)' : 'none', cursor: 'pointer' }}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <td style={{ padding: '15px 24px', fontSize: '0.85rem', color: '#888' }}>
+                    <td style={{ color: '#888' }}>
                       {new Date(log.created_at).toLocaleString('tr-TR')}
                     </td>
-                    <td style={{ padding: '15px 24px' }}>
-                      <span style={{ color: 'var(--primary)', fontWeight: '600' }}>{log.user_name}</span>
+                    <td>
+                      <span style={{ color: 'var(--primary)', fontWeight: '800' }}>{log.user_name}</span>
                     </td>
-                    <td style={{ padding: '15px 24px' }}>
+                    <td>
                       <span style={{
                         background: log.action.includes('Silindi') ? 'rgba(255,0,85,0.1)' : 'rgba(0,229,255,0.1)',
                         color: log.action.includes('Silindi') ? 'var(--secondary)' : 'var(--primary)',
                         padding: '4px 10px',
                         borderRadius: '6px',
                         fontSize: '0.8rem',
-                        fontWeight: 'bold',
+                        fontWeight: '800',
                         whiteSpace: 'nowrap'
                       }}>{log.action}</span>
                     </td>
-                    <td style={{ padding: '15px 24px' }}>
-                      <div style={{ fontWeight: '600', color: '#fff' }}>{log.target_name}</div>
+                    <td>
+                      <div style={{ fontWeight: '800', color: '#fff' }}>{log.target_name}</div>
                       <div style={{ 
                         fontSize: '0.8rem', 
-                        color: '#888', 
+                        color: '#a1a1aa', 
                         marginTop: '4px',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -4212,525 +3187,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
 
       {/* Müsaitlik Ayarları Tabı */}
-      {activeTab === 'availability' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          
-          {/* TAKVİM BURAYA GELECEK */}
-          {renderCalendar()}
+      {activeTab === "availability" && null}
 
-          {/* Üst Kısım: Randevu Bekleyenler */}
-          <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255, 171, 0, 0.2)' }}>
-            <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255, 171, 0, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Clock size={20} color="#ffab00" /> Siteden Gelen Randevu Talepleri (Bekleyenler)
-              </h3>
-              <span style={{ fontSize: '0.8rem', color: '#ffab00', fontWeight: 'bold' }}>{appointments.filter(a => a.status === 'Beklemede').length} YENİ TALEP</span>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>MÜŞTERİ BİLGİSİ</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>İSTENEN TARİH / SAAT</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>HİZMETLER</th>
-                    <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'right' }}>İŞLEMLER</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appointments.filter(a => a.status === 'Beklemede').map((appt) => (
-                    <tr key={appt.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                      <td style={{ padding: '15px 24px' }}>
-                        <div style={{ fontWeight: '700', color: '#fff' }}>{appt.full_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#888' }}>{appt.email} | {appt.phone}</div>
-                      </td>
-                      <td style={{ padding: '15px 24px' }}>
-                        <div style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{appt.appointment_date}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{appt.appointment_time}</div>
-                      </td>
-                      <td style={{ padding: '15px 24px', fontSize: '0.8rem', color: '#ccc' }}>
-                        {appt.services}
-                      </td>
-                      <td style={{ padding: '15px 24px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => handleApproveAppointment(appt)}
-                            style={{ background: '#00e676', color: '#000', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '800', cursor: 'pointer' }}
-                          >
-                            ONAYLA & KAPAT
-                          </button>
-                          <button
-                            onClick={() => handleCancelAppointment(appt.id)}
-                            style={{ background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', border: '1px solid rgba(255,0,85,0.2)', padding: '8px 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '800', cursor: 'pointer' }}
-                          >
-                            İPTAL ET
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {appointments.filter(a => a.status === 'Beklemede').length === 0 && (
-                    <tr>
-                      <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Bekleyen randevu talebi bulunmuyor.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '30px' }}>
-
-            {/* Alt Sol: Manuel Randevu / Tarih Kapatma */}
-            <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Plus size={20} color="var(--primary)" /> Manuel Randevu Ekle / Blokla
-              </h3>
-
-              <form onSubmit={handleManualAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.85rem' }}>Müşteri Ad Soyad</label>
-                  <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} placeholder="Örn: Mehmet Öz" />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.85rem' }}>E-posta</label>
-                    <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.85rem' }}>Telefon</label>
-                    <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }} />
-                  </div>
-                </div>
-                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '5px 0' }}></div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.85rem' }}>Tarih Seçin</label>
-                  <input
-                    type="date"
-                    required
-                    value={blockDate}
-                    onChange={e => setBlockDate(e.target.value)}
-                    style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#ccc', fontSize: '0.85rem' }}>Saat Dilimi</label>
-                  <select
-                    value={blockTime}
-                    onChange={e => setBlockTime(e.target.value)}
-                    style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                  >
-                    <option value="Tüm Gün">🚀 Tüm Gün (Full Kapalı)</option>
-                    <option value="09:00 - 10:00">09:00 - 10:00</option>
-                    <option value="10:00 - 11:00">10:00 - 11:00</option>
-                    <option value="11:00 - 12:00">11:00 - 12:00</option>
-                    <option value="12:00 - 13:00">12:00 - 13:00</option>
-                    <option value="13:00 - 14:00">13:00 - 14:00</option>
-                    <option value="14:00 - 15:00">14:00 - 15:00</option>
-                    <option value="15:00 - 16:00">15:00 - 16:00</option>
-                    <option value="16:00 - 17:00">16:00 - 17:00</option>
-                    <option value="17:00 - 18:00">17:00 - 18:00</option>
-                  </select>
-                </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={currentUser?.permissions !== 'all'}
-                  style={{ fontWeight: '800', padding: '15px', opacity: currentUser?.permissions === 'all' ? 1 : 0.5, cursor: currentUser?.permissions === 'all' ? 'pointer' : 'not-allowed' }}
-                >
-                  {currentUser?.permissions === 'all' ? 'Randevu Ekle & Takvimi Kapat' : 'Yalnızca Yönetici İşlem Yapabilir'}
-                </button>
-              </form>
-            </div>
-
-            {/* Alt Sağ: Mevcut Kapatmalar */}
-            <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden' }}>
-              <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Kapalı / Dolu Randevu Dilimleri</h3>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>TARİH</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>SAAT DİLİMİ</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>DURUM</th>
-                      <th style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'right' }}>İŞLEM</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {blockedSlots.map((slot) => (
-                      <tr key={slot.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                        <td style={{ padding: '15px 24px', color: '#fff', fontWeight: '600' }}>{slot.blocked_date}</td>
-                        <td style={{ padding: '15px 24px', color: '#aaa' }}>{slot.time_slot || 'Tüm Gün'}</td>
-                        <td style={{ padding: '15px 24px' }}>
-                          <span style={{ background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>DOLU / KAPALI</span>
-                        </td>
-                        <td style={{ padding: '15px 24px', textAlign: 'right' }}>
-                          {currentUser.permissions === 'all' && (
-                            <button
-                              onClick={() => handleUnblockSlot(slot.id)}
-                              style={{ background: 'rgba(0,230,118,0.1)', color: '#00e676', border: '1px solid rgba(0,230,118,0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold' }}
-                            >
-                              Geri Aç
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    {blockedSlots.length === 0 && (
-                      <tr>
-                        <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Şu an kapatılmış bir tarih bulunmuyor.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-        {activeTab === 'reports' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            {/* Kalan Süre Bilgilendirmesi */}
-            <div className="glass" style={{ padding: '15px 25px', borderRadius: '16px', background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.15)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-               <Clock size={18} color="var(--primary)" />
-               <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>
-                 Bugün saat <span style={{ color: 'var(--primary)' }}>23:59</span>&apos;a kadar raporunuzu dilediğiniz kadar güncelleyebilirsiniz. 
-                 {(() => {
-                   const endOfDay = new Date();
-                   endOfDay.setHours(23, 59, 59, 999);
-                   const diff = endOfDay - new Date();
-                   const hours = Math.floor(diff / (1000 * 60 * 60));
-                   const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                   return <span style={{ marginLeft: '10px', opacity: 0.7 }}>(Kalan: {hours}s {mins}d)</span>;
-                 })()}
-               </span>
-            </div>
-
-            {/* Rapor Gönderme Formu */}
-            <div id="report-form-area" className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <FileText size={20} color="var(--primary)" /> {staffReports.some(r => r.staff_name === currentUser.name && r.created_at.startsWith(new Date().toISOString().split('T')[0])) ? 'Bugünkü Raporu Güncelle' : 'Bugün Naptım? (Günlük Rapor)'}
-              </h3>
-              <form onSubmit={handleUploadStaffReport} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <textarea
-                  value={reportInput}
-                  onChange={e => setReportInput(e.target.value)}
-                  placeholder="Bugün neler yaptın? Özetle..."
-                  required
-                  rows="4"
-                  style={{ width: '100%', padding: '15px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none', resize: 'vertical' }}
-                />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {reportLinks.map((link, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: '10px' }}>
-                        <input
-                          type="text"
-                          value={link}
-                          onChange={e => {
-                            const newLinks = [...reportLinks];
-                            newLinks[idx] = e.target.value;
-                            setReportLinks(newLinks);
-                          }}
-                          placeholder={idx === 0 ? "Dosya/sunum linki (Drive, Dropbox vb.)" : "Ekstra link..."}
-                          style={{ flex: 1, padding: '12px', background: 'rgba(0,0,0,0.4)', border: '1px solid #333', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                        />
-                        {reportLinks.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => setReportLinks(reportLinks.filter((_, i) => i !== idx))}
-                            style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', border: '1px solid rgba(255,23,68,0.2)', borderRadius: '10px', padding: '0 15px', cursor: 'pointer' }}
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setReportLinks([...reportLinks, ''])}
-                      style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                      + Başka Link Ekle
-                    </button>
-                  </div>
-
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="file"
-                      multiple
-                      id="report-file"
-                      onChange={e => setReportFiles(Array.from(e.target.files))}
-                      style={{ display: 'none' }}
-                    />
-                    <label htmlFor="report-file" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #333', borderRadius: '10px', color: '#ccc', cursor: 'pointer', textAlign: 'center', justifyContent: 'center' }}>
-                      <Camera size={18} /> {reportFiles.length > 0 ? `${reportFiles.length} dosya seçildi` : 'Dosya(lar) Yükle (Çoklu Seçim)'}
-                    </label>
-                  </div>
-                </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={isUploadingReport}
-                  className="btn btn-primary"
-                  style={{ padding: '15px', fontWeight: '800' }}
-                >
-                  {isUploadingReport ? 'GÖNDERİLİYOR...' : (editingReportId ? 'RAPORU GÜNCELLE' : 'RAPORU GÖNDER')}
-                </button>
-                {editingReportId && (
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setEditingReportId(null);
-                      setReportInput('');
-                      setReportLinks(['']);
-                      setReportFiles([]);
-                    }}
-                    style={{ marginTop: '10px', background: 'rgba(255,255,255,0.05)', color: '#888', border: 'none', padding: '12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                  >
-                    Vazgeç (Yeni Rapor Yaz)
-                  </button>
-                )}
-              </form>
-            </div>
-
-            {/* Eski Raporlar Listesi */}
-            <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden' }}>
-              <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Gönderilen Raporlar</h3>
-                <div style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 'bold' }}>
-                  {new Date(selectedReportDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })}
-                </div>
-              </div>
-
-              {/* Yatay Tarih Seçici */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                padding: '15px 25px', 
-                overflowX: 'auto', 
-                background: 'rgba(0,0,0,0.2)',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none'
-              }}>
-                {(() => {
-                  const dates = [];
-                  for (let i = 0; i < 30; i++) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    dates.push(d.toLocaleDateString('en-CA'));
-                  }
-                  return dates.map(dateStr => {
-                    const d = new Date(dateStr);
-                    const isSelected = selectedReportDate === dateStr;
-                    return (
-                      <div
-                        key={dateStr}
-                        onClick={() => setSelectedReportDate(dateStr)}
-                        style={{
-                          minWidth: '80px',
-                          padding: '12px 10px',
-                          borderRadius: '16px',
-                          background: isSelected ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.03)',
-                          color: isSelected ? '#000' : '#888',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '2px'
-                        }}
-                      >
-                        <span style={{ fontSize: '0.65rem', fontWeight: '900', opacity: 0.7 }}>
-                          {d.toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase()}
-                        </span>
-                        <span style={{ fontSize: '1.1rem', fontWeight: '900' }}>
-                          {d.getDate()}
-                        </span>
-                        <span style={{ fontSize: '0.6rem', fontWeight: '800' }}>
-                          {d.toLocaleDateString('tr-TR', { month: 'short' }).toUpperCase()}
-                        </span>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-              <div style={{ padding: '25px' }}>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-                  gap: '20px' 
-                }}>
-                  {staffReports.filter(r => {
-                    const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
-                    const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toLocaleDateString('en-CA') === selectedReportDate);
-                    return isOwner && isSameDate;
-                  }).map((report) => (
-                    <div 
-                      key={report.id} 
-                      className="glass" 
-                      onClick={() => setSelectedReportDetail(report)}
-                      style={{ 
-                        borderRadius: '20px', 
-                        padding: '20px', 
-                        cursor: 'pointer', 
-                        transition: 'all 0.3s',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                        background: 'rgba(255,255,255,0.02)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '15px',
-                        position: 'relative'
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'translateY(-5px)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={{ fontWeight: '800', color: 'var(--primary)', fontSize: '1rem' }}>{report.staff_name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#888', fontWeight: '600' }}>{report.staff_role}</div>
-                        </div>
-                        <div style={{ fontSize: '0.7rem', color: '#555', background: 'rgba(255,255,255,0.03)', padding: '4px 8px', borderRadius: '6px' }}>
-                          {new Date(report.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-
-                      <div style={{ 
-                        fontSize: '0.85rem', 
-                        color: '#bbb', 
-                        lineHeight: '1.5',
-                        display: '-webkit-box',
-                        WebkitLineClamp: '3',
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {report.content}
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          {(report.file_url || (report.files && report.files.length > 0) || report.external_link || (report.external_links && report.external_links.length > 0)) ? (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <FileText size={12} /> { (report.external_links?.length || 0) + (report.files?.length || (report.file_url ? 1 : 0)) + (report.external_link ? 1 : 0) } Ek
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.75rem', color: '#444' }}>Ek yok</span>
-                          )}
-                        </div>
-                        
-                        {(() => {
-                          const reportDate = (report.report_date || new Date(report.created_at).toLocaleDateString('en-CA'));
-                          const isToday = new Date().toLocaleDateString('en-CA') === reportDate;
-                          const isMyReport = report.staff_name === currentUser?.name;
-                          if (isMyReport) {
-                            return (
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteReport(report.id);
-                                  }}
-                                  style={{ background: 'rgba(255,23,68,0.1)', color: '#ff1744', border: 'none', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                >
-                                  <Trash2 size={12} /> SİL
-                                </button>
-                                {isToday && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingReportId(report.id);
-                                      setReportInput(report.content);
-                                      setReportLinks(report.external_links || (report.external_link ? [report.external_link] : ['']));
-                                      document.getElementById('report-form-area')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }}
-                                    style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', border: 'none', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '800', cursor: 'pointer' }}
-                                  >
-                                    DÜZENLE
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {staffReports.filter(r => {
-                  const isOwner = currentUser.permissions === 'all' || r.staff_name === currentUser.name;
-                  const isSameDate = (r.report_date === selectedReportDate) || (new Date(r.created_at).toISOString().split('T')[0] === selectedReportDate);
-                  return isOwner && isSameDate;
-                }).length === 0 && 
-                  <div style={{ textAlign: 'center', padding: '60px 0', color: '#555' }}>
-                    <FileText size={48} style={{ opacity: 0.1, marginBottom: '15px' }} />
-                    <p>Bu tarihte henüz rapor girilmemiş.</p>
-                  </div>
-                }
-              </div>
-            </div>
-
-            {/* Rapor Detay Modalı */}
-            {selectedReportDetail && (
-              <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div className="glass" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden', borderRadius: '24px', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>Rapor Detayı</h3>
-                      <div style={{ fontSize: '0.9rem', color: '#888' }}>{selectedReportDetail.staff_name} • {new Date(selectedReportDetail.created_at).toLocaleString('tr-TR')}</div>
-                    </div>
-                    <button onClick={() => setSelectedReportDetail(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-                      <X size={20} />
-                    </button>
-                  </div>
-                  <div style={{ padding: '30px', overflowY: 'auto', flex: 1 }}>
-                    <div style={{ fontSize: '1.05rem', lineHeight: '1.8', color: '#eee', whiteSpace: 'pre-line', marginBottom: '30px' }}>
-                      {selectedReportDetail.content}
-                    </div>
-
-                    {(selectedReportDetail.file_url || (selectedReportDetail.files && selectedReportDetail.files.length > 0) || selectedReportDetail.external_link || (selectedReportDetail.external_links && selectedReportDetail.external_links.length > 0)) && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                        <h4 style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '15px', fontWeight: '800' }}>EKLER VE LİNKLER</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
-                          {selectedReportDetail.files && selectedReportDetail.files.length > 0 ? (
-                            selectedReportDetail.files.map((file, i) => (
-                              <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
-                                <Download size={16} color="var(--accent)" /> {file.name || `Dosya ${i+1}`}
-                              </a>
-                            ))
-                          ) : selectedReportDetail.file_url && (
-                            <a href={selectedReportDetail.file_url} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
-                              <Download size={16} color="var(--accent)" /> {selectedReportDetail.file_name || 'Dosya'}
-                            </a>
-                          )}
-                          {selectedReportDetail.external_link && (
-                            <a href={selectedReportDetail.external_link.startsWith('http') ? selectedReportDetail.external_link : `https://${selectedReportDetail.external_link}`} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
-                              <ExternalLink size={16} color="var(--primary)" /> Linke Git
-                            </a>
-                          )}
-                          {selectedReportDetail.external_links && selectedReportDetail.external_links.map((link, i) => (
-                            <a key={i} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="glass" style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
-                              <ExternalLink size={16} color="var(--primary)" /> Link {selectedReportDetail.external_links.length > 1 ? i + 1 : ''}
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+      {activeTab === "reports" && null}
 
         {/* Müşteri Talepleri Tabı */}
         {activeTab === 'support' && (
@@ -4859,788 +3318,9 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
       )}
 
       {/* Çalışanlar (Eski Performans) Tabı */}
-      {activeTab === 'performance' && (
-        <div className={`performance-layout ${perfEmployee ? 'detail-active' : 'list-active'}`} style={{ display: 'grid', gap: '30px', animation: 'fadeIn 0.5s ease' }}>
-
-          {/* Sol Kolon: Çalışan Listesi */}
-          <div className="side-panel" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-            <div className="glass" style={{ borderRadius: '24px', padding: '25px', position: 'sticky', top: '20px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Users size={20} color="var(--primary)" /> Ekip Üyeleri
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {isTakip.map((emp) => (
-                  <div
-                    key={emp.rep}
-                    onClick={() => setPerfEmployee(emp.rep)}
-                    style={{
-                      padding: '16px 20px',
-                      borderRadius: '16px',
-                      background: perfEmployee === emp.rep ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.02)',
-                      color: perfEmployee === emp.rep ? '#000' : '#fff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      transition: 'all 0.3s ease',
-                      border: '1px solid rgba(255,255,255,0.05)'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: '700' }}>{emp.rep}</div>
-                      <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>{emp.role}</div>
-                    </div>
-                    <ChevronRight size={18} opacity={0.5} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sağ Kolon: Çalışan Detayları, Talepler ve Puanlama */}
-          <div className="main-panel">
-            {perfEmployee ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                <button className="mobile-only-btn" onClick={() => setPerfEmployee(null)} style={{ border: 'none', background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', marginBottom: '10px', fontWeight: 'bold' }}>← Personele Dön</button>
-                {/* Üst Başlık ve Genel Skor */}
-                <div className="glass" style={{ borderRadius: '24px', padding: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: '900', marginBottom: '5px' }}>{perfEmployee}</h2>
-                    <p style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Activity size={16} /> Çalışan Portalı & Performans Takibi
-                    </p>
-                    {currentUser?.permissions === 'all' && (
-                      <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                        <button
-                          onClick={() => handleSendBuzz(perfEmployee)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '14px', fontSize: '0.9rem', fontWeight: '900', cursor: 'pointer', transition: '0.3s' }}
-                          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                        >
-                          <Zap size={18} fill="#000" /> DÜRT / BİLDİRİM GÖNDER
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '1px', marginBottom: '5px' }}>GENEL PERFORMANS</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {(() => {
-                        const empTasks = isTakip.find(e => e.rep === perfEmployee);
-                        const allTasks = [...empTasks.activeTasks, ...empTasks.pendingTasks, ...empTasks.completedTasks];
-                        const ratedTasks = allTasks.filter(t => t.rating);
-                        const avg = ratedTasks.length > 0 ? (ratedTasks.reduce((a, b) => a + b.rating, 0) / ratedTasks.length).toFixed(1) : '---';
-                        return <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary)' }}>{avg} <span style={{ fontSize: '1.2rem' }}>⭐</span></div>;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Önemli Talepler Bölümü (Brief & Ek Süre) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-                  <div className="glass" style={{ borderRadius: '24px', padding: '25px', border: '1px solid rgba(255, 64, 129, 0.2)' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#ff4081', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <FileText size={18} /> Brief Talepleri
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      {(() => {
-                        const emp = isTakip.find(e => e.rep === perfEmployee);
-                        const briefRequests = [...emp.activeTasks, ...emp.pendingTasks].filter(t => t.brief_request);
-                        return briefRequests.length > 0 ? briefRequests.map(t => (
-                          <div key={t.id} style={{ padding: '15px', background: 'rgba(255,64,129,0.05)', borderRadius: '15px', border: '1px solid rgba(255,64,129,0.1)' }}>
-                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px', wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
-                            <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>"{t.brief_request}"</div>
-
-                            {t.brief_response ? (
-                              <div style={{ fontSize: '0.8rem', color: '#00e676', background: 'rgba(0,230,118,0.1)', padding: '8px', borderRadius: '8px' }}>
-                                <b>Yanıtınız:</b> {t.brief_response}
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <input
-                                  id={`brief-resp-${t.id}`}
-                                  placeholder="Brief yanıtınızı buraya yazın..."
-                                  style={{ flex: 1, padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '0.8rem' }}
-                                />
-                                <button
-                                  onClick={async () => {
-                                    const val = document.getElementById(`brief-resp-${t.id}`).value;
-                                    if (!val) return;
-                                    const { error } = await supabase.from('tasks').update({ brief_response: val }).eq('id', t.id);
-                                    if (error) alert('HATA: ' + error.message);
-                                    else { alert('Yanıt iletildi.'); fetchAllData(); }
-                                  }}
-                                  style={{ padding: '8px 15px', background: '#ff4081', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
-                                >
-                                  Yanıtla
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )) : <p style={{ color: '#444', fontSize: '0.85rem' }}>Bekleyen brief talebi yok.</p>;
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className="glass" style={{ borderRadius: '24px', padding: '25px', border: '1px solid rgba(255, 171, 0, 0.2)' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#ffab00', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Clock size={18} /> Ek Süre Talepleri
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      {(() => {
-                        const emp = isTakip.find(e => e.rep === perfEmployee);
-                        const timeRequests = [...emp.activeTasks, ...emp.pendingTasks].filter(t => t.extension_request);
-                        return timeRequests.length > 0 ? timeRequests.map(t => (
-                          <div key={t.id} style={{ padding: '15px', background: 'rgba(255,171,0,0.05)', borderRadius: '15px', border: '1px solid rgba(255,171,0,0.1)' }}>
-                            <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px', wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
-                            <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>"{t.extension_request}"</div>
-
-                            {t.extension_response ? (
-                              <div style={{ fontSize: '0.8rem', color: '#ffab00', background: 'rgba(255,171,0,0.1)', padding: '8px', borderRadius: '8px' }}>
-                                <b>Yanıtınız:</b> {t.extension_response}
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <input
-                                  id={`ext-resp-${t.id}`}
-                                  placeholder="Örn: Onaylandı +2 gün"
-                                  style={{ flex: 1, padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '0.8rem' }}
-                                />
-                                <button
-                                  onClick={async () => {
-                                    const val = document.getElementById(`ext-resp-${t.id}`).value;
-                                    if (!val) return;
-                                    const { error } = await supabase.from('tasks').update({ extension_response: val }).eq('id', t.id);
-                                    if (error) alert('HATA: ' + error.message);
-                                    else { alert('Yanıt iletildi.'); fetchAllData(); }
-                                  }}
-                                  style={{ padding: '8px 15px', background: '#ffab00', border: 'none', borderRadius: '8px', color: '#000', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
-                                >
-                                  Yanıtla
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )) : <p style={{ color: '#444', fontSize: '0.85rem' }}>Bekleyen ek süre talebi yok.</p>;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Görev Durum Özetleri (Elindeki, Tamamlanan, Başarısız) */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '25px', marginTop: '25px' }}>
-                  <div className="glass" style={{ borderRadius: '24px', padding: '25px', border: '1px solid rgba(0, 229, 255, 0.2)' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Zap size={18} /> Elindeki İşler
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {(() => {
-                        const emp = isTakip.find(e => e.rep === perfEmployee);
-                        const currentTasks = [...emp.activeTasks, ...emp.pendingTasks];
-                        return currentTasks.length > 0 ? currentTasks.map(t => (
-                           <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'flex-start', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', flexShrink: 0, marginTop: '7px' }}></div> 
-                            <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
-                          </div>
-                        )) : <p style={{ color: '#444', fontSize: '0.8rem' }}>Şu an devam eden iş yok.</p>;
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className="glass" style={{ borderRadius: '24px', padding: '25px', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#00e676', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <CheckCircle2 size={18} /> Tamamladığı İşler
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {(() => {
-                        const emp = isTakip.find(e => e.rep === perfEmployee);
-                        const doneTasks = (emp.completedTasks || []).filter(t => t.status === 'Yaptım');
-                        return doneTasks.length > 0 ? doneTasks.map(t => (
-                          <div key={t.id} style={{ fontSize: '0.85rem', color: '#ccc', padding: '10px 15px', background: 'rgba(0,230,118,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flex: 1 }}>
-                              <CheckSquare size={14} color="#00e676" style={{ flexShrink: 0, marginTop: '2px' }} /> 
-                              <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
-                            </div>
-                            {currentUser?.permissions === 'all' && (
-                              <button 
-                                onClick={() => handleTaskStatusChange(emp.id, t, 'completedTasks', 'Revize')}
-                                style={{ background: 'rgba(213,0,249,0.1)', color: '#d500f9', border: '1px solid rgba(213,0,249,0.2)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}
-                              >
-                                REVİZE İSTE
-                              </button>
-                            )}
-                          </div>
-                        )) : <p style={{ color: '#444', fontSize: '0.8rem' }}>Henüz tamamlanan iş yok.</p>;
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className="glass" style={{ borderRadius: '24px', padding: '25px', border: '1px solid rgba(255, 23, 68, 0.2)' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#ff1744', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <XCircle size={18} /> Tamamlayamadığı İşler
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {(() => {
-                        const emp = isTakip.find(e => e.rep === perfEmployee);
-                        const failedTasks = (emp.completedTasks || []).filter(t => t.status === 'Tamamlanamadı');
-                        return failedTasks.length > 0 ? failedTasks.map(t => (
-                          <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '12px', background: 'rgba(255,23,68,0.03)', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '0.85rem', color: '#ccc', display: 'flex', alignItems: 'flex-start', gap: '8px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                              <AlertCircle size={14} color="#ff1744" style={{ flexShrink: 0, marginTop: '2px' }} /> 
-                              <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content" />
-                            </div>
-                            {t.fail_reason && (
-                              <div style={{ fontSize: '0.75rem', color: '#999', fontStyle: 'italic', paddingLeft: '22px' }}>
-                                <b>Sebep:</b> {t.fail_reason}
-                              </div>
-                            )}
-                          </div>
-                        )) : <p style={{ color: '#444', fontSize: '0.8rem' }}>Maalesef tamamlanamayan iş yok. Harika!</p>;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ height: '5px' }}></div>
-
-                {/* Görev Başarı ve Puanlama Tablosu */}
-                <div className="glass" style={{ borderRadius: '24px', padding: '30px' }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <ClipboardList size={20} color="var(--primary)" /> İş Karnesi ve Puanlama
-                  </h3>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {(() => {
-                      const emp = isTakip.find(e => e.rep === perfEmployee);
-                      // Sadece tamamlanan ve tamamlanamayanları göster (Puanlama için)
-                      const tasksToRate = [...emp.completedTasks, ...([...emp.activeTasks, ...emp.pendingTasks].filter(t => t.status === 'Tamamlanamadı'))];
-
-                      return tasksToRate.length > 0 ? tasksToRate.map(t => (
-                        <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', minHeight: '150px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <span style={{ padding: '4px 12px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '900', background: t.status === 'Yaptım' ? 'rgba(0,230,118,0.1)' : 'rgba(255,23,68,0.1)', color: t.status === 'Yaptım' ? '#00e676' : '#ff1744' }}>
-                                {t.status === 'Yaptım' ? 'TAMAMLANDI' : 'GECİKTİ / BAŞARISIZ'}
-                              </span>
-                              <span style={{ color: '#666', fontSize: '0.8rem', fontWeight: '700' }}>{t.client_name || 'Genel'}</span>
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#444', fontWeight: '700' }}>
-                              {t.due_date ? `Teslim: ${t.due_date}` : 'Tarih yok'}
-                            </div>
-                          </div>
-
-                          <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', wordBreak: 'break-word', lineHeight: '1.4' }}>
-                            {t.task_text}
-                          </div>
-
-                          <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              {t.rating ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                  <div style={{ display: 'flex', gap: '4px' }}>
-                                    {[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill={s <= t.rating ? 'var(--primary)' : 'transparent'} color={s <= t.rating ? 'var(--primary)' : '#444'} />)}
-                                  </div>
-                                  <div style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic' }}>"${t.rating_comment || 'Not yok'}"</div>
-                                </div>
-                              ) : (
-                                ['Celal', 'Ercan'].includes(currentUser?.name) ? (
-                                  <button
-                                    onClick={() => openActionModal('rating', t)}
-                                    style={{ padding: '10px 20px', borderRadius: '12px', background: 'var(--primary)', color: '#000', border: 'none', fontSize: '0.85rem', fontWeight: '900', cursor: 'pointer' }}
-                                  >
-                                    Puan Ver
-                                  </button>
-                                ) : (
-                                  <div style={{ fontSize: '0.8rem', color: '#555', fontStyle: 'italic' }}>Henüz puanlanmamış</div>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )) : <p style={{ textAlign: 'center', padding: '40px', color: '#444' }}>Henüz puanlanacak bir iş kaydı bulunamadı.</p>;
-                    })()}
-                  </div>
-                </div>
-
-              </div>
-            ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', flexDirection: 'column', gap: '20px' }}>
-                <Users size={60} opacity={0.1} />
-                <p>Detayları görmek için soldan bir çalışan seçin.</p>
-              </div>
-            )}
-          </div>
-
-        </div>
-      )}
+      {activeTab === "performance" && null}
 {/* Görev Listem Tabı */}
-      {activeTab === 'gorevList' && (() => {
-        const isAdmin = currentUser?.permissions === 'all';
-
-        // Tüm görevleri topla
-        const rawTasks = isTakip.flatMap(p => [
-          ...p.activeTasks.map(t => ({ ...t, empName: p.rep })),
-          ...p.pendingTasks.map(t => ({ ...t, empName: p.rep })),
-          ...p.completedTasks.map(t => ({ ...t, empName: p.rep }))
-        ]);
-
-        // Çalışan: sadece kendi görevleri | Yönetici: hepsi
-        const allTasks = isAdmin
-          ? rawTasks
-          : rawTasks.filter(t => t.empName === currentUser?.name || t.assignee_name === currentUser?.name);
-
-        const totalTamamlanan = allTasks.filter(t => t.status === 'Yaptım').length;
-        const totalYapıyorum = allTasks.filter(t => t.status === 'Yapıyorum').length;
-        const totalSirada = allTasks.filter(t => t.status === 'Sırada').length;
-        const totalRevize = allTasks.filter(t => t.status === 'Revize').length;
-        const totalBitmis = allTasks.filter(t => t.status === 'Tamamlanamadı').length;
-        const totalAktif = totalYapıyorum + totalSirada + totalRevize;
-
-        const filterMap = {
-          'Aktif': t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status),
-          'Tamamlanan': t => t.status === 'Yaptım',
-          'Tamamlanamayan': t => t.status === 'Tamamlanamadı',
-        };
-
-        const subFilterMap = {
-          'Hepsi': t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status),
-          'Sirada': t => t.status === 'Sırada',
-          'Yapiyorum': t => t.status === 'Yapıyorum',
-          'Revize': t => t.status === 'Revize',
-        };
-
-        const filteredTasks = allTasks.filter(t => {
-          if (gorevFilter === 'Aktif') {
-            return subFilterMap[subGorevFilter](t);
-          }
-          return filterMap[gorevFilter](t);
-        });
-
-        const getWorkloadTrend = (emp) => {
-          const total = emp.activeTasks.length + emp.pendingTasks.length + emp.completedTasks.length;
-          return total > 0 ? Math.round((emp.completedTasks.length / total) * 100) : 0;
-        };
-
-        const getLogDiscipline = (repName) => {
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          const logs = activityLogs.filter(l => l.user_name === repName && new Date(l.created_at) > sevenDaysAgo);
-          const distinctDays = new Set(logs.map(l => new Date(l.created_at).toDateString())).size;
-          return Math.round((distinctDays / 7) * 100);
-        };
-
-        const filterButtons = [
-          { key: 'Aktif', label: 'Yapılan (Aktif)', count: totalAktif, color: 'var(--primary)' },
-          { key: 'Tamamlanan', label: 'Tamamlanan', count: totalTamamlanan, color: '#00e676' },
-          { key: 'Tamamlanamayan', label: 'Tamamlanamayan', count: totalBitmis, color: '#ff1744' },
-        ];
-
-        const subFilterButtons = [
-          { key: 'Hepsi', label: 'Hepsi', count: totalAktif, color: 'var(--primary)' },
-          { key: 'Sirada', label: 'Sırada', count: totalSirada, color: '#ffab00' },
-          { key: 'Yapiyorum', label: 'Yapıyorum', count: totalYapıyorum, color: '#00e5ff' },
-          { key: 'Revize', label: 'Revize', count: totalRevize, color: '#d500f9' },
-        ];
-
-        const priorityLabel = (p) => {
-          if (p === '#ff1744') return { label: 'ACİL', color: '#ff1744' };
-          if (p === '#00e676') return { label: 'ESNEK', color: '#00e676' };
-          return { label: 'NORMAL', color: '#2979ff' };
-        };
-        const phaseLabel = (ph) => {
-          const map = { 1: '1. Evre: Planlama', 2: '2. Evre: Prodüksiyon', 3: '3. Evre: Kreatif/Kurgu', 4: '4. Evre: Onay/Revize', 5: '5. Evre: Yayın/Rapor' };
-          return map[ph] || `${ph}. Evre`;
-        };
-        const statusStyle = (s) => {
-          const map = { 'Yaptım': { bg: 'rgba(0,230,118,0.15)', color: '#00e676' }, 'Yapıyorum': { bg: 'rgba(0,229,255,0.15)', color: '#00e5ff' }, 'Sırada': { bg: 'rgba(255,171,0,0.15)', color: '#ffab00' }, 'Revize': { bg: 'rgba(213,0,249,0.15)', color: '#d500f9' }, 'Tamamlanamadı': { bg: 'rgba(255,23,68,0.15)', color: '#ff1744' } };
-          return map[s] || { bg: 'rgba(255,255,255,0.05)', color: '#888' };
-        };
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', animation: 'fadeIn 0.5s ease' }}>
-
-            {/* EKİP VERİMLİLİK VE LOG DİSİPLİNİ (SADECE ADMIN) */}
-            {isAdmin && (
-              <div className="glass" style={{ padding: '30px', borderRadius: '24px' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <TrendingUp size={22} color="var(--primary)" /> Ekip Verimlilik ve Log Disiplini
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                  {isTakip.map(emp => {
-                    const wt = getWorkloadTrend(emp);
-                    const ld = getLogDiscipline(emp.rep);
-                    return (
-                      <div key={emp.rep} style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-gradient)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900' }}>{emp.rep.charAt(0)}</div>
-                            <div style={{ fontWeight: '800', color: '#fff' }}>{emp.rep}</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.65rem', color: '#666', fontWeight: '800' }}>ROL</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700' }}>{emp.role}</div>
-                          </div>
-                        </div>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                          <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}>
-                              <span style={{ color: '#aaa', fontWeight: '700' }}>VERİMLİLİK (TAMAMLANAN)</span>
-                              <span style={{ color: '#fff', fontWeight: '900' }}>%{wt}</span>
-                            </div>
-                            <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${wt}%`, background: 'var(--primary-gradient)', borderRadius: '4px', transition: 'width 1s ease-out' }}></div>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}>
-                              <span style={{ color: '#aaa', fontWeight: '700' }}>LOG DİSİPLİNİ (7 GÜN)</span>
-                              <span style={{ color: ld > 70 ? '#00e676' : ld > 40 ? '#ffab00' : '#ff1744', fontWeight: '900' }}>%{ld}</span>
-                            </div>
-                            <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${ld}%`, background: ld > 70 ? '#00e676' : ld > 40 ? '#ffab00' : '#ff1744', borderRadius: '4px', transition: 'width 1s ease-out' }}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Detaylı Metrik Paneli */}
-            <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 2fr' : '1fr', gap: '24px' }}>
-
-              {/* Sol: Kategori ve Durum Özeti */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                {(() => {
-                  const urgentCount = allTasks.filter(t => t.priority === '#ff1744' && t.status !== 'Yaptım').length;
-                  const photoCount = allTasks.filter(t => (t.category || '').toLowerCase().includes('foto')).length;
-                  const videoCount = allTasks.filter(t => (t.category || '').toLowerCase().includes('video')).length;
-                  const otherCount = allTasks.length - (photoCount + videoCount);
-
-                  const statsData = [
-                    { label: 'FOTOĞRAF İŞLERİ', count: photoCount, color: 'var(--primary)', icon: <Camera size={18} /> },
-                    { label: 'VİDEO İŞLERİ', count: videoCount, color: 'var(--accent)', icon: <Video size={18} /> },
-                    { label: 'ACİL BEKLEYEN', count: urgentCount, color: '#ff1744', icon: <AlertCircle size={18} /> },
-                    { label: 'DİĞER İŞLER', count: otherCount, color: '#aaa', icon: <PlusCircle size={18} /> },
-                  ];
-
-                  return statsData.map((s, i) => (
-                    <div key={i} className="glass" style={{ padding: '20px', borderRadius: '18px', borderLeft: `4px solid ${s.color}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff' }}>{s.count}</div>
-                        <div style={{ fontSize: '0.6rem', fontWeight: '800', color: '#666', letterSpacing: '1px', marginTop: '4px' }}>{s.label}</div>
-                      </div>
-                      <div style={{ color: s.color, opacity: 0.3 }}>{s.icon}</div>
-                    </div>
-                  ));
-                })()}
-              </div>
-
-              {/* Sağ: Durum ve Ekip Dağılımı (Admin için Dağılım, Çalışan için Kendi Durumları) */}
-              <div className="glass" style={{ padding: '24px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: '800', letterSpacing: '1px', color: '#888' }}>
-                    {isAdmin ? 'EKİP GÖREV DAĞILIMI' : 'ALDİĞİM PUANLAR'}
-                  </h4>
-                </div>
-
-                <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
-                  {isAdmin ? (
-                    // ADMIN GÖRÜNÜMÜ: Ekip Dağılımı
-                    isTakip.map(emp => {
-                      const empTasks = rawTasks.filter(t => t.empName === emp.rep);
-                      const active = empTasks.filter(t => t.status !== 'Yaptım').length;
-                      if (active === 0) return null;
-                      return (
-                        <div key={emp.rep} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '10px 18px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'var(--primary)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '0.9rem' }}>
-                            {emp.rep.charAt(0)}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{emp.rep}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold' }}>{active} Aktif İş</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    // ÇALIŞAN GÖRÜNÜMÜ: Aldığım Puanlar
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '40px', width: '100%' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          {(() => {
-                            const rated = allTasks.filter(t => t.rating > 0);
-                            const avg = rated.length > 0 ? (rated.reduce((a, b) => a + b.rating, 0) / rated.length).toFixed(1) : '0.0';
-                            return avg;
-                          })()}
-                          <Star size={24} fill="var(--primary)" />
-                        </div>
-                        <div style={{ fontSize: '0.7rem', color: '#555', fontWeight: '800', letterSpacing: '1px' }}>GENEL PERFORMANS PUANIM</div>
-                      </div>
-
-                      <div style={{ width: '1px', height: '50px', background: 'rgba(255,255,255,0.05)' }}></div>
-
-                      <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '5px', flex: 1 }}>
-                        {allTasks.filter(t => t.rating > 0).sort((a, b) => new Date(b.due_date) - new Date(a.due_date)).slice(0, 5).map(t => (
-                          <div key={t.id} style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', minWidth: '150px' }}>
-                            <div style={{ display: 'flex', gap: '2px', marginBottom: '4px' }}>
-                              {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill={s <= t.rating ? 'var(--primary)' : 'transparent'} color={s <= t.rating ? 'var(--primary)' : '#333'} />)}
-                            </div>
-                            <div style={{ fontSize: '0.7rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} dangerouslySetInnerHTML={{ __html: t.task_text }} className="task-html-content"></div>
-                          </div>
-                        ))}
-                        {allTasks.filter(t => t.rating > 0).length === 0 && <p style={{ color: '#444', fontSize: '0.8rem' }}>Henüz puanlanmış bir işiniz bulunmuyor.</p>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Görev Listesi Kartı */}
-            <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden' }}>
-
-              {/* Başlık + Filtre Butonları */}
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <h3 style={{ fontWeight: '800', fontSize: '1.05rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                    <ListTodo size={18} color="var(--primary)" />
-                    {isAdmin ? 'Tüm Ekip Görevleri' : `${currentUser?.name}'in Görev Listesi`}
-                    {isAdmin && (
-                      <span style={{ fontSize: '0.65rem', background: 'rgba(0,229,255,0.1)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '5px', fontWeight: '700', letterSpacing: '1px' }}>YÖNETİCİ</span>
-                    )}
-                  </h3>
-                  <span style={{ fontSize: '0.75rem', color: '#555' }}>{filteredTasks.length} kayıt gösteriliyor</span>
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {filterButtons.map(fb => (
-                      <button
-                        key={fb.key}
-                        onClick={() => { setGorevFilter(fb.key); setSubGorevFilter('Hepsi'); }}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '12px',
-                          border: `1px solid ${fb.color}33`,
-                          background: gorevFilter === fb.key ? fb.color : 'rgba(255,255,255,0.02)',
-                          color: gorevFilter === fb.key ? '#000' : fb.color,
-                          fontSize: '0.8rem',
-                          fontWeight: '800',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                      >
-                        {fb.label}
-                        <span style={{
-                          background: gorevFilter === fb.key ? 'rgba(0,0,0,0.2)' : `${fb.color}22`,
-                          color: gorevFilter === fb.key ? '#000' : fb.color,
-                          borderRadius: '6px',
-                          padding: '1px 8px',
-                          fontSize: '0.75rem',
-                          fontWeight: '900'
-                        }}>{fb.count}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {gorevFilter === 'Aktif' && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      {subFilterButtons.map(sfb => (
-                        <button
-                          key={sfb.key}
-                          onClick={() => setSubGorevFilter(sfb.key)}
-                          style={{
-                            padding: '5px 12px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            background: subGorevFilter === sfb.key ? sfb.color : 'transparent',
-                            color: subGorevFilter === sfb.key ? '#000' : '#888',
-                            fontSize: '0.7rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {sfb.label} ({sfb.count})
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* Görev Listesi Başlangıç */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(255,255,255,0.02)' }}>
-                {isAdmin ? (
-                  // %%%%%%%%%%%% ADMIN GÖRÜNÜMÜ: SIRALI LİSTELER %%%%%%%%%%%%
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {/* 1. AKTİF İŞLER */}
-                    <div style={{ padding: '15px 24px', background: 'rgba(0,229,255,0.05)', color: 'var(--primary)', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid rgba(0,229,255,0.1)' }}>🔥🔥 AKTİF / DEVAM EDEN GÖREVLER</div>
-                    {allTasks.filter(t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status)).length > 0 ? (
-                      allTasks.filter(t => ['Yapıyorum', 'Sırada', 'Revize'].includes(t.status)).map((t, i) => (
-                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} onCardClick={task => { setSelectedTask(task); setIsTaskDetailModalOpen(true); }} />
-                      ))
-                    ) : <div style={{ padding: '30px', textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>Şu an aktif görev bulunmuyor.</div>}
-
-                    {/* 2. TAMAMLANANLAR */}
-                    <div style={{ padding: '15px 24px', background: 'rgba(0,230,118,0.05)', color: '#00e676', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid rgba(0,230,118,0.1)', marginTop: '20px' }}>✅ TAMAMLANAN GÖREVLER</div>
-                    {allTasks.filter(t => t.status === 'Yaptım').length > 0 ? (
-                      allTasks.filter(t => t.status === 'Yaptım').map((t, i) => (
-                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} onCardClick={task => { setSelectedTask(task); setIsTaskDetailModalOpen(true); }} />
-                      ))
-                    ) : <div style={{ padding: '30px', textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>Henüz tamamlanan görev yok.</div>}
-
-                    {/* 3. TAMAMLANAMAYANLAR */}
-                    <div style={{ padding: '15px 24px', background: 'rgba(255,23,68,0.05)', color: '#ff1744', fontWeight: '900', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,23,68,0.1)', marginTop: '20px' }}>❌ BAŞARISIZ / TAMAMLANAMAYANLAR</div>
-                    {allTasks.filter(t => t.status === 'Tamamlanamadı').length > 0 ? (
-                      allTasks.filter(t => t.status === 'Tamamlanamadı').map((t, i) => (
-                        <ManagerTaskRow key={i} t={t} pri={priorityLabel(t.priority)} ss={statusStyle(t.status)} now={now} phaseLabel={phaseLabel} onCardClick={task => { setSelectedTask(task); setIsTaskDetailModalOpen(true); }} />
-                      ))
-                    ) : <div style={{ padding: '30px', textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>Başarısız kayıt bulunmuyor.</div>}
-                  </div>
-                ) : (
-                  // %%%%%%%%%%%% ÇALIŞAN GÖRÜNÜMÜ: DETAYLI KARTLAR %%%%%%%%%%%%
-                  <div className="task-list-grid" style={{ padding: '20px', background: 'rgba(0,0,0,0.1)' }}>
-                    {filteredTasks.length > 0 ? filteredTasks.map((t, i) => (
-                      <div key={i} className="glass" style={{ padding: '28px', borderRadius: '24px', border: `1px solid ${priorityLabel(t.priority).color}22`, borderLeft: `6px solid ${priorityLabel(t.priority).color}`, position: 'relative', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-                        {/* Kart Üst Bilgi */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                          <span style={{ fontSize: '0.7rem', fontWeight: '900', background: 'rgba(255,255,255,0.08)', color: '#aaa', padding: '6px 12px', borderRadius: '8px', letterSpacing: '1px' }}>
-                            {t.category?.toUpperCase() || 'PROJE'}
-                          </span>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <span style={{ fontSize: '0.7rem', fontWeight: '800', border: `1px solid ${priorityLabel(t.priority).color}`, color: priorityLabel(t.priority).color, padding: '4px 12px', borderRadius: '10px' }}>
-                              {priorityLabel(t.priority).label}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Görev Açıklaması (BÜYÜK VE NET) */}
-                        <div style={{
-                          fontSize: '1.35rem',
-                          fontWeight: '800',
-                          color: t.status === 'Yaptım' ? '#444' : '#fff',
-                          lineHeight: '1.5',
-                          textDecoration: t.status === 'Yaptım' ? 'line-through' : 'none',
-                          wordBreak: 'break-word',
-                          padding: '5px 0'
-                        }}>
-                          {t.task_text}
-                        </div>
-
-                        {/* Marka ve Evre Bilgisi */}
-                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                          <div style={{ background: 'rgba(0,229,255,0.05)', padding: '10px 15px', borderRadius: '12px', border: '1px solid rgba(0,229,255,0.1)' }}>
-                            <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 'bold', marginBottom: '4px' }}>MARKA / MÜŞTERİ</div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{t.client_name || 'Genel Görev'}</div>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ fontSize: '0.65rem', color: '#666', fontWeight: 'bold', marginBottom: '4px' }}>SÜREÇ EVRESİ</div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{phaseLabel(t.phase)}</div>
-                          </div>
-                        </div>
-
-                        {/* Teslim Tarihi ve Sayaç */}
-                        {t.due_date && (
-                          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px dotted rgba(255,255,255,0.1)' }}>
-                            <div>
-                              <div style={{ fontSize: '0.65rem', color: '#555', fontWeight: 'bold' }}>TESLİM TARİHİ</div>
-                              <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#fff' }}>{t.due_date}</div>
-                            </div>
-                            {(() => {
-                              const due = new Date(t.due_date + 'T23:59:59');
-                              const diffMs = due - now;
-                              const isOverdue = diffMs < 0;
-                              if (isOverdue) return <div style={{ color: '#ff1744', fontWeight: '900', fontSize: '0.75rem' }}>SÜRESİ DOLDU!</div>;
-                              return (
-                                <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: '0.65rem', color: '#555', fontWeight: 'bold' }}>KALAN SÜRE</div>
-                                  <div style={{ color: 'var(--primary)', fontWeight: '900', fontSize: '1rem' }}>{Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))} Gün Kaldı</div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        )}
-
-                        {/* YÖNETİCİ CEVAPLARI (GERİ BİLDİRİM) */}
-                        {(t.brief_response || t.extension_response || t.revision_note) && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '18px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            {t.revision_note && (
-                              <div style={{ padding: '12px', background: 'rgba(213,0,249,0.08)', borderRadius: '12px', border: '1px solid rgba(213,0,249,0.1)' }}>
-                                <div style={{ fontSize: '0.65rem', color: '#d500f9', fontWeight: '900', marginBottom: '5px', letterSpacing: '1px' }}>🔄 REVİZYON TALEBİ</div>
-                                <div style={{ fontSize: '0.85rem', color: '#eee', lineHeight: '1.4' }}>{t.revision_note}</div>
-                              </div>
-                            )}
-                            {t.brief_response && (
-                              <div style={{ fontSize: '0.8rem', color: '#ccc' }}>
-                                <span style={{ color: '#ff4081', fontWeight: 'bold' }}>Brief Yanıtı:</span> {t.brief_response}
-                              </div>
-                            )}
-                            {t.extension_response && (
-                              <div style={{ fontSize: '0.8rem', color: '#ccc' }}>
-                                <span style={{ color: '#ffab00', fontWeight: 'bold' }}>Süre Yanıtı:</span> {t.extension_response}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Aksiyon Alanı */}
-                        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => openActionModal('brief', t)} style={{ padding: '8px 12px', borderRadius: '10px', background: t.brief_request ? '#ff4081' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-                              Brief İste
-                            </button>
-                            <button onClick={() => openActionModal('extension', t)} style={{ padding: '8px 12px', borderRadius: '10px', background: t.extension_request ? '#ffab00' : 'rgba(255,255,255,0.05)', color: t.extension_request ? '#000' : '#fff', border: 'none', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-                              Süre İste
-                            </button>
-                          </div>
-
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <select
-                              disabled={t.status === 'Yaptım'}
-                              value={t.status}
-                              onChange={e => handleStaffTaskStatusChange(t, e.target.value)}
-                              style={{
-                                padding: '8px 15px',
-                                background: statusStyle(t.status).bg,
-                                color: statusStyle(t.status).color,
-                                border: 'none',
-                                borderRadius: '10px',
-                                fontSize: '0.8rem',
-                                fontWeight: '900',
-                                outline: 'none',
-                                cursor: t.status === 'Yaptım' ? 'not-allowed' : 'pointer',
-                                opacity: t.status === 'Yaptım' ? 0.7 : 1
-                              }}
-                            >
-                              <option value="Sırada">⏳ Sırada</option>
-                              <option value="Yapıyorum">🔥 Yapıyorum</option>
-                              <option value="Revize">🔄 Revize</option>
-                              <option value="Yaptım">✅ Yaptım</option>
-                              <option value="Tamamlanamadı">❌ Başarısız</option>
-                            </select>
-                          </div>
-                        </div>
-
-                      </div>
-                    )) : <div style={{ padding: '100px', gridColumn: '1/-1', textAlign: 'center', color: '#444', fontSize: '1.2rem' }}>Henüz atanmış bir göreviniz bulunmuyor.</div>}
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
-        );
-      })()}
+      {activeTab === "gorevList" && null}
       {/* PWA Kurulum Bilgilendirme Modalı */}
       {showPwaInfo && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
