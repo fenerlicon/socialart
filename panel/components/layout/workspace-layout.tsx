@@ -141,7 +141,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     // CRM
     if (hasPermission('crm.view')) {
-      menuItems.push({ label: 'CRM', icon: '📞', href: '#crm', isPlaceholder: true })
+      menuItems.push({ label: 'CRM', icon: '📞', href: '/crm' })
     }
 
     // KPI
@@ -198,6 +198,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setIsMobileMenuOpen(false)
     if (item.href === '#logout') {
       handleLogout()
+    } else if (item.href === '/crm') {
+      window.location.href = '/crm'
     } else if (item.isPlaceholder) {
       toast.info('Geliştirme Aşamasında', {
         description: `"${item.label}" alt sayfası MVP kapsamında şimdilik aktifleştirilmemiştir.`,
