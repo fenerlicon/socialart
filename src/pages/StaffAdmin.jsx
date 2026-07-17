@@ -2361,14 +2361,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '6px 16px', borderRadius: '50px', border: '1px solid var(--surface-border)' }}>
-              <div style={{ width: '8px', height: '8px', background: '#00e676', borderRadius: '50%', boxShadow: '0 0 10px #00e676' }}></div>
-              <span style={{ fontSize: '0.8rem', color: '#888' }}>Database Connect: Supabase Active</span>
-              <div style={{ width: '1px', height: '16px', background: 'var(--surface-border)', margin: '0 8px' }}></div>
-              <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: 'var(--secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Çıkış Yap">
-                <LogOut size={16} />
-              </button>
-            </div>
             {activeTab === 'potansiyel' && (
               <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
                 <Plus size={18} style={{ marginRight: '8px' }} /> Yeni Müşteri Ekle

@@ -10,7 +10,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 try {
   // 0. Install panel dependencies
   console.log('--- Installing panel dependencies... ---');
-  execSync('npm install', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
+  execSync('npm.cmd install', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
 
   // 0.5. Generate panel/.env.local for client-side bundling
   console.log('--- Generating panel/.env.local for static export... ---');
@@ -21,7 +21,7 @@ try {
 
   // 1. Build panel app
   console.log('--- Building Next.js crm panel (social-art-base)... ---');
-  execSync('npm run build', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
+  execSync('npm.cmd run build', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
 
   // 2. Clean and create public/admin
   const publicAdminDir = path.join(__dirname, '../public/admin');
@@ -38,7 +38,7 @@ try {
 
   // 4. Build Vite app
   console.log('--- Building main Vite application... ---');
-  execSync('npx vite build', { stdio: 'inherit' });
+  execSync('npx.cmd vite build', { stdio: 'inherit' });
 
   console.log('--- Build all completed successfully! ---');
 } catch (error) {
