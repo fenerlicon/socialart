@@ -2,10 +2,20 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables from the root .env file
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 try {
   // 0. Install panel dependencies
   console.log('--- Installing panel dependencies... ---');
   execSync('npm install', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
+
+  // 0.5. Generate panel/.env.local for client-side bundling
+  console.log('--- Generating panel/.env.local for static export... ---');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  const envContent = `NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl}\nNEXT_PUBLIC_SUPABASE_ANON_KEY=${supabaseAnonKey}\n`;
+  fs.writeFileSync(path.join(__dirname, '../panel/.env.local'), envContent);
 
   // 1. Build panel app
   console.log('--- Building Next.js crm panel (social-art-base)... ---');
