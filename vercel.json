@@ -48,6 +48,18 @@
   ],
   "rewrites": [
     {
+      "source": "/admin/brands/:id",
+      "destination": "/admin/brands/temp.html"
+    },
+    {
+      "source": "/admin/employees/:id/edit",
+      "destination": "/admin/employees/temp/edit.html"
+    },
+    {
+      "source": "/admin/employees/:id",
+      "destination": "/admin/employees/temp.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/index.html"
     },
