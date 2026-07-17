@@ -28,6 +28,7 @@ import {
   ArrowLeft,
   Save,
   Globe,
+  Wand2,
   Instagram,
   User,
   Calendar,
@@ -390,6 +391,86 @@ export default function BrandDetailPage() {
     })
   }
 
+  const handleAutoAssign = () => {
+    const activeEmployees = employees.filter((e) => e.employeeStatus === 'active')
+    if (activeEmployees.length === 0) {
+      toast.error('Aktif çalışan bulunamadı')
+      return
+    }
+
+    // Title → sorumluluk eşleştirmesi
+    const titleToResponsibility: Record<string, string> = {
+      'grafik tasarımcı': 'Grafik Tasarım',
+      'grafik designer': 'Grafik Tasarım',
+      'video editor': 'Video Kurgu',
+      'video editör': 'Video Kurgu',
+      'kurgu uzmanı': 'Video Kurgu',
+      'sosyal medya uzmanı': 'Sosyal Medya Yönetimi',
+      'sosyal medya yöneticisi': 'Sosyal Medya Yönetimi',
+      'sosyal medya': 'Sosyal Medya Yönetimi',
+      'dijital pazarlama uzmanı': 'Dijital Pazarlama',
+      'dijital pazarlama': 'Dijital Pazarlama',
+      'pazarlama uzmanı': 'Dijital Pazarlama',
+      'içerik üreticisi': 'İçerik Üretimi',
+      'içerik yazarı': 'İçerik Üretimi',
+      'metin yazarı': 'İçerik Üretimi',
+      'copywriter': 'İçerik Üretimi',
+      'fotoğrafçı': 'Fotoğraf Üretimi',
+      'kameraman': 'Video Üretimi',
+      'account manager': 'Strateji & Müşteri İletişimi',
+      'müşteri temsilcisi': 'Strateji & Müşteri İletişimi',
+      'proje yöneticisi': 'Operasyon Sorumlusu',
+      'operasyon sorumlusu': 'Operasyon Sorumlusu',
+      'kreatif direktör': 'Kreatif Direktör',
+      'art director': 'Kreatif Direktör',
+    }
+
+    const getResponsibility = (title: string): string => {
+      const lower = title.toLowerCase().trim()
+      for (const [key, val] of Object.entries(titleToResponsibility)) {
+        if (lower.includes(key)) return val
+      }
+      return title || 'Ekip Üyesi'
+    }
+
+    let addedCount = 0
+    let skippedCount = 0
+    const newAssignments: BrandAssignment[] = []
+
+    for (const emp of activeEmployees) {
+      const responsibility = getResponsibility(emp.title || '')
+      const alreadyAssigned = localAssignments.some((a) => a.employeeId === emp.id)
+      if (alreadyAssigned) {
+        skippedCount++
+        continue
+      }
+      newAssignments.push({
+        id: crypto.randomUUID(),
+        employeeId: emp.id,
+        responsibility,
+        roleLabel: emp.title || 'Çalışan',
+        permissions: [],
+      })
+      addedCount++
+    }
+
+    if (addedCount === 0) {
+      toast.info('Tüm aktif çalışanlar zaten atanmış', {
+        description: `${skippedCount} çalışan zaten bu markada kayıtlı.`,
+      })
+      return
+    }
+
+    setLocalAssignments((prev) => [...prev, ...newAssignments])
+    setIsModified(true)
+    toast.success(`${addedCount} çalışan otomatik olarak atandı!`, {
+      description: skippedCount > 0
+        ? `${skippedCount} çalışan zaten atanmış olduğu için atlandı. Değişiklikleri Kaydet butonuna basmayı unutmayın.`
+        : 'Sorumluluklar unvanlara göre otomatik belirlendi. Kaydet butonuyla kalıcı hale getirin.',
+      duration: 5000,
+    })
+  }
+
   const hasPermission = useMemo(() => {
     if (!activeEmployee) return false
     const effective = resolveEffectivePermissions({
@@ -592,13 +673,24 @@ export default function BrandDetailPage() {
               Bu markada görev alan çalışanları ve marka içi sorumluluklarını yönetin.
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => setShowAssignModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 px-4 flex items-center gap-1.5 self-start sm:self-auto"
-          >
-            <Plus className="h-4 w-4" /> Çalışan Ata
-          </Button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Button
+              type="button"
+              onClick={handleAutoAssign}
+              variant="outline"
+              className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300 font-semibold text-xs h-9 px-4 flex items-center gap-1.5"
+              title="Tüm aktif çalışanları unvanlarına göre otomatik atar"
+            >
+              <Wand2 className="h-4 w-4" /> Otomatik Ata
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setShowAssignModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 px-4 flex items-center gap-1.5"
+            >
+              <Plus className="h-4 w-4" /> Çalışan Ata
+            </Button>
+          </div>
         </div>
 
         {localAssignments.length > 0 ? (

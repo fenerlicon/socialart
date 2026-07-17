@@ -26,6 +26,7 @@ import {
   Sparkles,
   ClipboardList,
   AlertTriangle,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -55,6 +56,8 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
     title: string
   } | null>(null)
   const [reports, setReports] = useState<Report[]>([])
+  const [isDailyReportDismissed, setIsDailyReportDismissed] = useState(false)
+  const [isBlinkingAlertDismissed, setIsBlinkingAlertDismissed] = useState(false)
 
   const loadData = async () => {
     const storedBrands = await getStoredBrands()
@@ -93,6 +96,13 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
   }, [handoffs, employee.id])
 
   const hasDailyReportToday = useMemo(() => {
+    const isManager =
+      employee.rolePackageId === 'operasyon-yonetimi' ||
+      employee.rolePackageId === 'kreatif-yonetim' ||
+      employee.rolePackageId === 'kreatif-direktor'
+
+    if (isManager) return true
+
     const todayDateStr = getLocalDateString()
     return reports.some(
       (r) =>
@@ -100,7 +110,7 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
         r.type === 'daily' &&
         r.date === todayDateStr
     )
-  }, [reports, employee.id])
+  }, [reports, employee.id, employee.rolePackageId])
 
   // Filter unread notifications
   const unreadNotifications = useMemo(() => {
@@ -394,8 +404,8 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Günlük Rapor Eksik Bannerı */}
-      {!hasDailyReportToday && (
-        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/[0.08] to-purple-500/[0.08] p-5 backdrop-blur-md relative overflow-hidden animate-pulse ring-2 ring-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col sm:flex-row items-center justify-between gap-4">
+      {!hasDailyReportToday && !isDailyReportDismissed && (
+        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/[0.08] to-purple-500/[0.08] p-5 backdrop-blur-md relative overflow-hidden animate-pulse ring-2 ring-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col sm:flex-row items-center justify-between gap-4 pr-10">
           <div className="flex items-start gap-3">
             <div className="bg-amber-500/25 border border-amber-500/35 p-2 rounded-xl shrink-0 animate-bounce">
               <AlertTriangle className="h-5 w-5 text-amber-400" />
@@ -409,19 +419,31 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
               </p>
             </div>
           </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              onClick={() => router.push('/reports')}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-5 rounded-xl shadow-lg transition-all hover:scale-105 duration-200"
+            >
+              Şimdi Rapor Yaz
+            </Button>
+          </div>
           <Button
             type="button"
-            onClick={() => router.push('/reports')}
-            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-5 rounded-xl shadow-lg shrink-0 transition-all hover:scale-105 duration-200"
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsDailyReportDismissed(true)}
+            className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-white hover:bg-neutral-800/40 rounded-full"
+            title="Kapat"
           >
-            Şimdi Rapor Yaz
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       )}
 
       {/* Blinking Alert Banner */}
-      {blinkingAlerts.length > 0 && (
-        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/[0.08] to-purple-500/[0.08] p-5 backdrop-blur-md relative overflow-hidden animate-pulse ring-2 ring-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col sm:flex-row items-center justify-between gap-4">
+      {blinkingAlerts.length > 0 && !isBlinkingAlertDismissed && (
+        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/[0.08] to-purple-500/[0.08] p-5 backdrop-blur-md relative overflow-hidden animate-pulse ring-2 ring-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col sm:flex-row items-center justify-between gap-4 pr-10">
           <div className="flex items-start gap-3">
             <div className="bg-amber-500/25 border border-amber-500/35 p-2 rounded-xl shrink-0 animate-bounce">
               <Bell className="h-5 w-5 text-amber-400" />
@@ -435,19 +457,31 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
               </p>
             </div>
           </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              onClick={() => {
+                const hasHandoff = blinkingAlerts.some(a => a.type === 'handoff_requested')
+                if (hasHandoff) {
+                  setActiveTab('handoffs')
+                } else {
+                  router.push('/my-work')
+                }
+              }}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-5 rounded-xl shadow-lg transition-all hover:scale-105 duration-200"
+            >
+              Detayları Gör
+            </Button>
+          </div>
           <Button
             type="button"
-            onClick={() => {
-              const hasHandoff = blinkingAlerts.some(a => a.type === 'handoff_requested')
-              if (hasHandoff) {
-                setActiveTab('handoffs')
-              } else {
-                router.push('/my-work')
-              }
-            }}
-            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-5 rounded-xl shadow-lg shrink-0 transition-all hover:scale-105 duration-200"
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsBlinkingAlertDismissed(true)}
+            className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-white hover:bg-neutral-800/40 rounded-full"
+            title="Kapat"
           >
-            Detayları Gör
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       )}

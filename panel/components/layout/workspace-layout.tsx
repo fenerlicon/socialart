@@ -163,7 +163,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     // Sistem Ayarları
     if (hasPermission('settings.manage')) {
-      menuItems.push({ label: 'Sistem Ayarları', icon: '⚙', href: '#settings', isPlaceholder: true })
+      menuItems.push({ label: 'Sistem Ayarları', icon: '⚙', href: '/settings' })
     }
 
     return menuItems
@@ -250,6 +250,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       segments.push({ label: 'Ekip Üyeleri', href: '/employees' }, { label: 'Yeni Çalışan', href: '/employees/new' })
     } else if (pathname?.startsWith('/employees/')) {
       segments.push({ label: 'Ekip Üyeleri', href: '/employees' }, { label: 'Profil Detayı', href: pathname })
+    } else if (pathname === '/settings') {
+      segments.push({ label: 'Sistem Ayarları', href: '/settings' })
     }
 
     return segments
@@ -355,7 +357,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
         {/* Mobil Yan Menü Çekmecesi */}
         {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-x-0 top-14 bottom-0 bg-neutral-950/95 backdrop-blur-lg z-45 p-6 space-y-6 flex flex-col justify-between overflow-y-auto">
+          <div className="md:hidden fixed inset-x-0 top-14 bottom-0 bg-[#09090b] z-[9999] p-6 space-y-6 flex flex-col justify-between overflow-y-auto">
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Menü</span>

@@ -43,7 +43,6 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
     defaultPermissions: [
       'tasks.view',
       'tasks.create',
-      'tasks.assign',
       'brands.view',
       'brands.edit',
       'brands.manage',
@@ -61,7 +60,6 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
     defaultPermissions: [
       'tasks.view',
       'tasks.create',
-      'tasks.assign',
       'workflow.view',
       'brands.view',
       'brands.edit',

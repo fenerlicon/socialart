@@ -11,7 +11,13 @@ import type { Report } from '@/types/domain'
 export async function checkAndGenerateMissingReports(): Promise<number> {
   try {
     const employees = await getStoredEmployees()
-    const activeEmployees = employees.filter((e) => e.employeeStatus === 'active')
+    const activeEmployees = employees.filter(
+      (e) =>
+        e.employeeStatus === 'active' &&
+        e.rolePackageId !== 'operasyon-yonetimi' &&
+        e.rolePackageId !== 'kreatif-yonetim' &&
+        e.rolePackageId !== 'kreatif-direktor'
+    )
     if (activeEmployees.length === 0) return 0
 
     const reports = await getStoredReports()

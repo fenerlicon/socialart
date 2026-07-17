@@ -38,6 +38,7 @@ import {
   ArrowRightLeft,
   Sparkles,
   X,
+  Send,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -158,6 +159,17 @@ export function TasksPage() {
   const isManagerExposed = useMemo(() => {
     if (!activeEmployee) return false
     return activeEmployee.teamIds.includes('merkezi-operasyon') || activeEmployee.rolePackageId === 'operasyon-yonetimi'
+  }, [activeEmployee])
+
+  // Can pass/reassign tasks to others (tasks.assign permission)
+  const canPassTask = useMemo(() => {
+    if (!activeEmployee) return false
+    const effective = resolveEffectivePermissions({
+      rolePackageId: activeEmployee.rolePackageId,
+      teamIds: activeEmployee.teamIds,
+      permissionOverrides: activeEmployee.permissionOverrides || {},
+    })
+    return effective.grantedKeys.has('tasks.assign')
   }, [activeEmployee])
 
   // Map step responsibility to team
@@ -848,6 +860,19 @@ export function TasksPage() {
 
                     {/* Yönetim Butonları */}
                     <div className="flex items-center gap-1">
+                      {/* Başkasına Pasla — sadece tasks.assign yetkisi olanlara görünür */}
+                      {canPassTask && (
+                        <Button
+                          onClick={() => openAssignModal(step)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 px-3 rounded-lg text-xs flex items-center gap-1.5 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20 font-semibold"
+                          title="Bu görevi başka bir çalışana pasla"
+                        >
+                          <Send className="h-3.5 w-3.5" /> Pasla
+                        </Button>
+                      )}
+
                       {/* Detayları Görüntüle */}
                       <Button
                         onClick={() => {
@@ -926,14 +951,28 @@ export function TasksPage() {
         )}
       </div>
 
-      {/* 1. ATAMA MODALI */}
+      {/* 1. ATAMA / PASLAMA MODALI */}
       {activeModal === 'assign' && selectedStep && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-950 border border-neutral-900 w-full max-w-md p-6 rounded-2xl space-y-4">
-            <h3 className="text-base font-extrabold text-white">Görevi Çalışana Ata</h3>
-            <p className="text-xs text-muted-foreground">"{selectedStep.title}" görevini atamak istediğiniz ekip üyesini seçin.</p>
+            <div className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-purple-400" />
+              <h3 className="text-base font-extrabold text-white">
+                {selectedStep.assignedEmployeeId ? 'Görevi Başkasına Pasla' : 'Görevi Çalışana Ata'}
+              </h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-neutral-300">"{selectedStep.title}"</span> görevini atamak istediğiniz ekip üyesini seçin.
+            </p>
+            {selectedStep.assignedEmployeeId && (
+              <div className="flex items-center gap-2 bg-neutral-900/60 border border-neutral-800 rounded-xl px-3 py-2">
+                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Mevcut Sorumlu:</span>
+                <span className="text-xs font-semibold text-purple-300">{getEmployeeName(selectedStep.assignedEmployeeId)}</span>
+                <ArrowRightLeft className="h-3 w-3 text-neutral-500 ml-auto" />
+              </div>
+            )}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Çalışan Seçimi</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Yeni Sorumlu Seçimi</label>
               <Select value={assigneeId} onValueChange={setAssigneeId}>
                 <SelectTrigger className="h-10 text-xs bg-muted/10 border-neutral-850">
                   <SelectValue placeholder="Seçin..." />
