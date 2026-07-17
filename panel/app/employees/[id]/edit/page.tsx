@@ -1,11 +1,9 @@
-'use client'
-
-import { useParams } from 'next/navigation'
 import { EmployeeEditPage } from '@/features/employees/components/employee-edit-page'
 
-export default function EditEmployeePage() {
-  const params = useParams()
-  const id = params.id as string
+export function generateStaticParams() {
+  return [{ id: 'temp' }]
+}
 
-  return <EmployeeEditPage id={id} />
+export default function EditEmployeePage({ params }: { params: { id: string } }) {
+  return <EmployeeEditPage id={params.id} />
 }

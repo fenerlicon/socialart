@@ -38,24 +38,23 @@
       ]
     }
   ],
+  "cleanUrls": true,
   "redirects": [
     {
       "source": "/home",
       "destination": "/",
       "permanent": true
-    },
-    {
-      "source": "/admin",
-      "destination": "https://panel.socialartmedya.com",
-      "permanent": false
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "https://panel.socialartmedya.com/:path*",
-      "permanent": false
     }
   ],
   "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/admin/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
