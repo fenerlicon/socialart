@@ -203,7 +203,10 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     if (item.href === '#logout') {
       handleLogout()
     } else if (item.href === '/crm') {
-      window.location.href = '/crm'
+      if (typeof window !== 'undefined') {
+        const isDev = window.location.hostname === 'localhost'
+        window.location.href = isDev ? 'http://localhost:5173/crm' : '/crm'
+      }
     } else if (item.isPlaceholder) {
       toast.info('Geliştirme Aşamasında', {
         description: `"${item.label}" alt sayfası MVP kapsamında şimdilik aktifleştirilmemiştir.`,
