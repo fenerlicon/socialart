@@ -149,7 +149,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
+      {!['/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -284,7 +284,7 @@ function App() {
             <Route path="/hizmetlerimiz" element={<Services />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/crm" element={<Admin />} />
             <Route path="/fiyatlar" element={<Pricing />} />
             <Route path="/musteri" element={<ClientPortal />} />
             <Route path="/ugc-basvuru" element={<UGCApplication />} />
@@ -314,7 +314,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/admin', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
+      {!['/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>

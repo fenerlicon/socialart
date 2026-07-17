@@ -52,7 +52,7 @@ function Login({ onLoginSuccess }) {
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
-        navigate('/admin');
+        navigate('/crm');
       }
     }
   };

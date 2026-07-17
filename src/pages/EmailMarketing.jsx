@@ -196,7 +196,7 @@ function EmailMarketing() {
             <span style={{ fontSize: '1.2rem', fontWeight: '800' }}>SOCIAL<span style={{ color: 'var(--primary)' }}>ART</span></span>
           </div>
         </div>
-        <Link to="/admin" className="sidebar-link"><Briefcase size={18} /> Admin Panel</Link>
+        <Link to="/crm" className="sidebar-link"><Briefcase size={18} /> Admin Panel</Link>
         <div className="sidebar-link active"><Mail size={18} /> E-Mail Marketing</div>
         <Link to="/" className="sidebar-link" style={{ marginTop: 'auto', color: 'var(--secondary)' }}><XCircle size={18} /> Çıkış Yap</Link>
       </div>

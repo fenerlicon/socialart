@@ -464,7 +464,7 @@ function Admin() {
             vibrate: [200, 100, 200],
             badge: '/logo.png',
             tag: 'mi-notif-' + Date.now(),
-            data: { url: window.location.origin + '/admin' }
+            data: { url: window.location.origin + '/crm' }
           });
         }).catch(() => {
           new Notification(title, { body, icon: '/app-icon.png' });
