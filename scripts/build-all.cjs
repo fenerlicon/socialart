@@ -2,6 +2,8 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables from the panel .env.local first (to preserve separate database settings)
+require('dotenv').config({ path: path.join(__dirname, '../panel/.env.local') });
 // Load environment variables from the root .env file
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
