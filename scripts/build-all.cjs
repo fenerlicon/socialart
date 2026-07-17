@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 try {
+  // 0. Install panel dependencies
+  console.log('--- Installing panel dependencies... ---');
+  execSync('npm install', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
+
   // 1. Build panel app
   console.log('--- Building Next.js crm panel (social-art-base)... ---');
   execSync('npm run build', { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
