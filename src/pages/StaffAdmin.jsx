@@ -350,10 +350,23 @@ function Admin() {
             const chars = { 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c', 'Ğ': 'g', 'Ü': 'u', 'Ş': 's', 'İ': 'i', 'Ö': 'o', 'Ç': 'c' };
             return str.replace(/[ğüşıöçĞÜŞİÖÇ]/g, m => chars[m]).toLowerCase().trim();
           };
-          const formattedEmail = `${slugify(creds.username)}@socialart.internal`;
+          const usernameClean = slugify(creds.username);
+          const formattedEmail = `${usernameClean}@socialart.internal`;
+          
+          // Map local healed '123' passwords to real Supabase Auth passwords
+          const realPasswords = {
+            celal: 'Celal_SA2026!x',
+            ercan: 'Ercan_SA2026!x',
+            furkan: 'Furkan_SA2026!x',
+            betul: 'Betul_SA2026!x',
+            tugba: 'Tugba_SA2026!x',
+            simge: 'Simge_SA2026!x'
+          };
+          const supabasePassword = realPasswords[usernameClean] || creds.password;
+
           const { data, error } = await supabase.auth.signInWithPassword({
             email: formattedEmail,
-            password: creds.password,
+            password: supabasePassword,
           });
           if (data && data.session) {
             session = data.session;
