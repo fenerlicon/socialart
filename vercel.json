@@ -49,11 +49,11 @@
   "rewrites": [
     {
       "source": "/crm",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/crm/:path*",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/admin/brands/:id",
@@ -77,7 +77,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ]
 }
