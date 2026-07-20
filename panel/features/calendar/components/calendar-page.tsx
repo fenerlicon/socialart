@@ -122,22 +122,39 @@ export function CalendarPage() {
 
   useEffect(() => {
     async function loadData() {
-      const emps = await getStoredEmployees()
-      setEmployees(emps)
-      const storedBrands = await getStoredBrands()
-      setBrands(storedBrands)
-      const storedEvents = await getStoredCalendarEvents()
-      setEvents(storedEvents)
+      try {
+        const emps = (await getStoredEmployees()) || []
+        setEmployees(emps)
+        const storedBrands = (await getStoredBrands()) || []
+        setBrands(storedBrands)
+        const storedEvents = (await getStoredCalendarEvents()) || []
+        setEvents(storedEvents)
 
-      const activeId = getActiveEmployeeId()
-      let active = activeId ? emps.find((e) => e.id === activeId) : undefined
-      if (!active && emps.length > 0) {
-        active = emps[0]
-      }
-      if (active) {
-        setActiveEmployee(active)
-      } else {
-        // Fallback default active employee with full access
+        const activeId = typeof window !== 'undefined' ? getActiveEmployeeId() : null
+        let active = activeId ? emps.find((e) => e.id === activeId) : undefined
+        if (!active && emps.length > 0) {
+          active = emps[0]
+        }
+        if (active) {
+          setActiveEmployee(active)
+        } else {
+          setActiveEmployee({
+            id: 'temp-admin',
+            fullName: 'Yönetici',
+            email: 'admin@socialart.com',
+            title: 'Yönetici',
+            employeeStatus: 'active',
+            workLocationStatus: 'office',
+            rolePackageId: 'operasyon-yonetimi',
+            teamIds: [],
+            permissionOverrides: {},
+            hasAdvancedCalendarAccess: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+        }
+      } catch (err) {
+        console.error('Error in calendar-page loadData:', err)
         setActiveEmployee({
           id: 'temp-admin',
           fullName: 'Yönetici',
@@ -152,8 +169,9 @@ export function CalendarPage() {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         })
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadData()
   }, [])
