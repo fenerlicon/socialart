@@ -487,7 +487,11 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                         {onDeleteNote && (
                           <button
                             type="button"
-                            onClick={() => onDeleteNote(lead.id, note.id)}
+                            onClick={() => {
+                              if (window.confirm('Bu temsilci notunu silmek istediğinizden emin misiniz?')) {
+                                onDeleteNote(lead.id, note.id);
+                              }
+                            }}
                             className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors"
                             title="Notu Sil"
                           >
