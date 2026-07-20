@@ -63,7 +63,7 @@ function mapDbRowToLead(row) {
       let parsedNotes = [];
       const seenNoteTexts = new Set();
       
-      const addNote = (text, authorLabel = 'Temsilci') => {
+      const addNote = (text, authorLabel = 'Temsilci Notu - Son Görüşme / Not') => {
         if (!text || typeof text !== 'string' || !text.trim()) return;
         const cleanText = text.trim();
         if (seenNoteTexts.has(cleanText)) return; // prevent exact duplicate notes
@@ -131,13 +131,13 @@ function mapDbRowToLead(row) {
                 seenNoteTexts.add(t);
                 parsedNotes.push({
                   id: item.id || `note-${Math.random()}`,
-                  author: item.author || item.user || item.rep || 'Temsilci',
+                  author: item.author || item.user || item.rep || 'Temsilci Notu - Son Görüşme / Not',
                   text: t,
                   createdAt: item.createdAt || item.created_at || item.date || row.created_at || new Date().toISOString()
                 });
               }
             } else if (typeof item === 'string') {
-              addNote(item, 'Temsilci Notu');
+              addNote(item, 'Temsilci Notu - Son Görüşme / Not');
             }
           });
         } else if (typeof val === 'object' && val !== null) {
@@ -146,13 +146,13 @@ function mapDbRowToLead(row) {
             seenNoteTexts.add(t);
             parsedNotes.push({
               id: val.id || `note-${Math.random()}`,
-              author: val.author || val.user || 'Temsilci',
+              author: val.author || val.user || 'Temsilci Notu - Son Görüşme / Not',
               text: t,
               createdAt: val.createdAt || val.created_at || row.created_at || new Date().toISOString()
             });
           }
         } else {
-          addNote(String(val), 'Temsilci Notu');
+          addNote(String(val), 'Temsilci Notu - Son Görüşme / Not');
         }
       });
 
@@ -167,18 +167,18 @@ function mapDbRowToLead(row) {
       for (const [key, value] of Object.entries(row)) {
         if (!standardNonNoteKeys.has(key) && value) {
           if (typeof value === 'string') {
-            addNote(value, 'Temsilci Notu');
+            addNote(value, 'Temsilci Notu - Son Görüşme / Not');
           } else if (Array.isArray(value)) {
             value.forEach(item => {
-              if (typeof item === 'string') addNote(item, 'Temsilci Notu');
+              if (typeof item === 'string') addNote(item, 'Temsilci Notu - Son Görüşme / Not');
               else if (typeof item === 'object' && item !== null) {
                 const t = item.text || item.note || item.content || item.message || '';
-                if (t) addNote(t, item.author || 'Temsilci');
+                if (t) addNote(t, item.author || 'Temsilci Notu - Son Görüşme / Not');
               }
             });
           } else if (typeof value === 'object' && value !== null) {
             const t = value.text || value.note || value.content || value.message || '';
-            if (t) addNote(t, value.author || 'Temsilci');
+            if (t) addNote(t, value.author || 'Temsilci Notu - Son Görüşme / Not');
           }
         }
       }
@@ -333,7 +333,7 @@ export default function CRMPage({ embedded = false }) {
   const handleAddNote = async (leadId, noteText) => {
     const newNote = {
       id: `note-${Date.now()}`,
-      author: 'Temsilci',
+      author: 'Temsilci Notu - Son Görüşme / Not',
       text: noteText,
       createdAt: new Date().toISOString()
     };
