@@ -449,7 +449,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           <div className="space-y-3">
             <h3 className="font-bold text-slate-300 text-xs uppercase tracking-wider flex items-center gap-2">
               <FileText className="w-4 h-4 text-indigo-400" />
-              <span>Temsilci Notu - Son Görüşme / Not ({lead.notes.length})</span>
+              <span>Temsilci Notu ({lead.assignedTo || 'Atanmadı'}) - Son Görüşme / Not ({lead.notes.length})</span>
             </h3>
 
             {/* Add Note Form */}
