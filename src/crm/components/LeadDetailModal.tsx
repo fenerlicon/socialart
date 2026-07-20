@@ -56,6 +56,10 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const [retargetingNote, setRetargetingNote] = useState(lead.retargetingNote || '');
   const [isSavedRetargeting, setIsSavedRetargeting] = useState(false);
 
+  // Custom Delete Confirm States
+  const [showDeleteLeadConfirm, setShowDeleteLeadConfirm] = useState(false);
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<string | null>(null);
+
   // Edit Lead Info Form State
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState({
@@ -169,13 +173,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             {onDeleteLead && (
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm(`"${lead.title || lead.contactName || 'Bu müşteriyi'}" sistemden tamamen silmek istediğinizden emin misiniz?`)) {
-                    onDeleteLead(lead.id);
-                    onClose();
-                  }
-                }}
-                className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                onClick={() => setShowDeleteLeadConfirm(true)}
+                className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm hover:shadow-rose-500/10"
                 title="Müşteriyi Sil"
               >
                 <Trash2 className="w-4 h-4" />
@@ -505,18 +504,37 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span>{new Date(note.createdAt).toLocaleString('tr-TR')}</span>
                         {onDeleteNote && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm('Bu temsilci notunu silmek istediğinizden emin misiniz?')) {
-                                onDeleteNote(lead.id, note.id);
-                              }
-                            }}
-                            className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors"
-                            title="Notu Sil"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          confirmDeleteNoteId === note.id ? (
+                            <div className="flex items-center gap-1 bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/40 text-[10px] animate-fade-in">
+                              <span className="text-rose-300 font-bold">Silinsin mi?</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onDeleteNote(lead.id, note.id);
+                                  setConfirmDeleteNoteId(null);
+                                }}
+                                className="text-rose-400 hover:text-rose-200 font-extrabold underline px-1"
+                              >
+                                Evet
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteNoteId(null)}
+                                className="text-slate-400 hover:text-slate-200 px-1"
+                              >
+                                Vazgeç
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteNoteId(note.id)}
+                              className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors opacity-70 group-hover:opacity-100"
+                              title="Notu Sil"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )
                         )}
                       </div>
                     </div>
@@ -529,6 +547,45 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
         </div>
       </div>
+
+      {/* Custom Delete Lead Confirmation Modal */}
+      {showDeleteLeadConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 text-center relative overflow-hidden">
+            <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+              <Trash2 className="w-6 h-6 animate-pulse" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-100">Müşteri Kaydını Sil</h3>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                <strong className="text-slate-200">&quot;{lead.title || lead.contactName}&quot;</strong> isimli müşteriyi ve bağlı tüm temsilci notlarını silmek üzeresiniz. Bu işlem geri alınamaz.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteLeadConfirm(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteLead) onDeleteLead(lead.id);
+                  setShowDeleteLeadConfirm(false);
+                  onClose();
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/20 transition-all"
+              >
+                Evet, Müşteriyi Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
