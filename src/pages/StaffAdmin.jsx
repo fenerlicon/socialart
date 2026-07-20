@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles } from 'lucide-react';
+import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles, Menu } from 'lucide-react';
 import Login from './Login';
 import { supabase } from '../lib/supabase';
 import TextareaAutosize from 'react-textarea-autosize';
@@ -178,6 +178,7 @@ const AdminStyles = () => (
 
     @media (max-width: 1024px) {
       .admin-layout { flex-direction: column; gap: 20px; margin-top: 80px; }
+      .main-content-area { padding: 75px 15px 25px 15px !important; }
       .admin-sidebar-nav {
         position: fixed; top: 0; left: -320px; height: 100vh; width: 300px;
         background: #09090b; z-index: 10001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2793,20 +2794,84 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           `}</style>
         </div>
       )}
+      {/* Mobile Top Header */}
+      <div 
+        className="mobile-header" 
+        style={{ 
+          display: 'none', 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          height: '60px', 
+          background: '#09090b', 
+          borderBottom: '1px solid rgba(255,255,255,0.08)', 
+          zIndex: 10000, 
+          alignItems: 'center', 
+          justify: 'space-between', 
+          padding: '0 16px' 
+        }}
+      >
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '10px',
+            padding: '8px',
+            color: '#fff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Menu size={20} />
+          <span style={{ fontSize: '0.8rem', fontWeight: '700' }}>Menü</span>
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.7rem' }}>SA</div>
+          <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>Social Art CRM</span>
+        </div>
+      </div>
+
+      {/* Mobile Overlay Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 10000
+          }}
+        />
+      )}
+
       <div className="container" style={{ display: 'flex', width: '100%', maxWidth: '100%', margin: 0, padding: 0 }}>
         <AdminStyles />
 
         {/* 1. Left Sidebar Navigation (Matching NextJS design) */}
-        <aside className="admin-sidebar-nav" style={{ width: '260px', background: 'rgba(9, 9, 11, 0.45)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 20px', minHeight: '100vh', position: 'sticky', top: 0, shrink: 0, gap: '25px', zIndex: 100 }}>
+        <aside className={`admin-sidebar-nav ${isSidebarOpen ? 'open' : ''}`} style={{ width: '260px', background: 'rgba(9, 9, 11, 0.45)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 20px', minHeight: '100vh', position: 'sticky', top: 0, shrink: 0, gap: '25px', zIndex: 10001 }}>
           {/* Logo & Brand Info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)' }}>
-              SA
+          <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)' }}>
+                SA
+              </div>
+              <div style={{ lineHeight: '1.2' }}>
+                <span style={{ fontWeight: '850', fontSize: '0.9rem', display: 'block', letterSpacing: '-0.3px' }}>Social Art</span>
+                <span style={{ fontSize: '0.55rem', color: '#71717a', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Base Workspace</span>
+              </div>
             </div>
-            <div style={{ lineHeight: '1.2' }}>
-              <span style={{ fontWeight: '850', fontSize: '0.9rem', display: 'block', letterSpacing: '-0.3px' }}>Social Art</span>
-              <span style={{ fontSize: '0.55rem', color: '#71717a', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Base Workspace</span>
-            </div>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="mobile-only"
+              style={{ background: 'transparent', border: 'none', color: '#a1a1aa', padding: '4px', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
           </div>
 
           {/* Sidebar Nav Buttons */}
@@ -2902,7 +2967,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </aside>
 
         {/* 2. Right Main Panel */}
-        <main style={{ flex: 1, padding: '40px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '30px', overflowY: 'auto' }}>
+        <main className="main-content-area" style={{ flex: 1, padding: '40px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '30px', overflowY: 'auto' }}>
           {/* Top Breadcrumb & Action Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
             <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', fontWeight: '700', color: '#71717a', textTransform: 'uppercase', letterSpacing: '1.5px' }}>

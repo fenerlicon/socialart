@@ -45,7 +45,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           return (
             <div
               key={stage.id}
-              className="w-80 shrink-0 flex flex-col bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 shadow-sm min-h-[calc(100vh-220px)] max-h-[calc(100vh-220px)] overflow-hidden"
+              className="w-[280px] sm:w-80 shrink-0 flex flex-col bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 shadow-sm min-h-[calc(100vh-220px)] max-h-[calc(100vh-220px)] overflow-hidden"
             >
               {/* Column Header */}
               <div className="pb-3 border-b border-slate-800/80 mb-3 flex items-center justify-between">
