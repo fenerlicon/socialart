@@ -39,21 +39,26 @@ const AdminStyles = () => (
       background: linear-gradient(135deg, #09090b 0%, #111115 50%, #1a112d 100%);
     }
 
-    .admin-sidebar-nav {
-      width: 260px;
-      flex-shrink: 0;
-      background: rgba(9, 9, 11, 0.45);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-right: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 24px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      height: 100vh;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* Masaüstü (1025px ve üzeri) Sidebar Stili */
+    @media (min-width: 1025px) {
+      .admin-sidebar-nav {
+        width: 260px;
+        flex-shrink: 0;
+        background: rgba(9, 9, 11, 0.45);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .mobile-header-bar { display: none !important; }
+      .mobile-sidebar-backdrop { display: none !important; }
     }
 
     .admin-sidebar-nav button {
@@ -176,6 +181,7 @@ const AdminStyles = () => (
       background: rgba(255, 255, 255, 0.015) !important;
     }
 
+    /* Mobil & Tablet (1024px ve altı) Sidebar Stili */
     @media (max-width: 1024px) {
       .admin-layout { flex-direction: column !important; gap: 0 !important; margin-top: 0 !important; }
       .main-content-area { padding: 65px 10px 20px 10px !important; width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; }

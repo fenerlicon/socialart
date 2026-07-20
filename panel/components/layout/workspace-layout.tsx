@@ -272,7 +272,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-[#09090b] via-[#111115] to-[#1a112d] text-neutral-100 antialiased">
       {/* 1. Masaüstü Sidebar */}
-      <aside className="w-64 border-r border-neutral-900/60 bg-neutral-950/20 backdrop-blur-md hidden md:flex flex-col justify-between shrink-0 p-5 min-h-screen sticky top-0">
+      <aside className="w-64 border-r border-neutral-900/60 bg-neutral-950/20 backdrop-blur-md hidden lg:flex flex-col justify-between shrink-0 p-5 min-h-screen sticky top-0">
         <div className="space-y-6">
           {/* Logo */}
           <div className="flex items-center gap-2 px-2 pb-2 border-b border-neutral-900/40">
