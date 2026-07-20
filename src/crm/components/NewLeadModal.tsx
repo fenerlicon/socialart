@@ -43,7 +43,7 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({
       pipeline,
       title,
       contactName,
-      email: email || `${contactName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+      email: email.trim() || '',
       phone,
       city,
       source,
@@ -163,10 +163,10 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-400 mb-1 font-medium">E-Posta</label>
+              <label className="block text-slate-400 mb-1 font-medium">E-Posta <span className="text-slate-500 font-normal">(Opsiyonel)</span></label>
               <input
                 type="email"
-                placeholder="ali@marka.com"
+                placeholder="ali@marka.com (Opsiyonel)"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
