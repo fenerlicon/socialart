@@ -80,7 +80,7 @@ export const INITIAL_LEADS: Lead[] = [
     metaCampaignName: 'Meta Ads - B2B Prodüksiyon Kampanyası (Q3)',
     stage: 'NEW',
     priority: 'HIGH',
-    assignedTo: 'Caner K.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-19T14:30:00Z',
     updatedAt: '2026-07-19T14:30:00Z',
     productionDetails: {
@@ -117,7 +117,7 @@ export const INITIAL_LEADS: Lead[] = [
     source: 'WEBSITE',
     stage: 'CONTACTED',
     priority: 'MEDIUM',
-    assignedTo: 'Burak A.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-18T10:15:00Z',
     updatedAt: '2026-07-18T16:20:00Z',
     productionDetails: {
@@ -129,7 +129,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-2',
-        author: 'Burak A.',
+        author: 'Celal (Temsilci)',
         text: 'Telefonla görüşüldü. Yeni kahve serisi lansmanı için 3 adet 30sn sosyal medya reklam filmi istiyorlar.',
         createdAt: '2026-07-18T16:20:00Z'
       }
@@ -154,7 +154,7 @@ export const INITIAL_LEADS: Lead[] = [
     source: 'WEBSITE',
     stage: 'PROPOSAL_SENT',
     priority: 'URGENT',
-    assignedTo: 'Caner K.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-15T09:00:00Z',
     updatedAt: '2026-07-17T11:45:00Z',
     productionDetails: {
@@ -166,7 +166,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-3',
-        author: 'Caner K.',
+        author: 'Celal (Temsilci)',
         text: 'VFX ve 3D Animasyon destekli teklif dosyası PDF olarak gönderildi (240.000 ₺ + KDV).',
         createdAt: '2026-07-17T11:45:00Z'
       }
@@ -192,7 +192,7 @@ export const INITIAL_LEADS: Lead[] = [
     metaCampaignName: 'Meta Ads - Gayrimenkul Prodüksiyon',
     stage: 'WAITING',
     priority: 'MEDIUM',
-    assignedTo: 'Burak A.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-12T13:20:00Z',
     updatedAt: '2026-07-16T15:10:00Z',
     productionDetails: {
@@ -204,7 +204,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-4',
-        author: 'Burak A.',
+        author: 'Celal (Temsilci)',
         text: 'Teklif incelemedeler. Yönetim kurulu haftaya Cuma toplanacakmış.',
         createdAt: '2026-07-16T15:10:00Z'
       }
@@ -223,7 +223,7 @@ export const INITIAL_LEADS: Lead[] = [
     metaCampaignName: 'Meta Ads - Moda & Lookbook Prodüksiyon',
     stage: 'RETARGETING',
     priority: 'LOW',
-    assignedTo: 'Caner K.',
+    assignedTo: 'Celal',
     createdAt: '2026-06-20T11:00:00Z',
     updatedAt: '2026-07-10T10:00:00Z',
     retargetingDate: '2026-09-01',
@@ -237,7 +237,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-5',
-        author: 'Caner K.',
+        author: 'Celal (Temsilci)',
         text: 'Müşteri çekim bütçesini 3. çeyreğe kaydırdı. Retargeting listesine alındı.',
         createdAt: '2026-07-10T10:00:00Z'
       }
@@ -255,7 +255,7 @@ export const INITIAL_LEADS: Lead[] = [
     source: 'MANUAL',
     stage: 'WON',
     priority: 'HIGH',
-    assignedTo: 'Burak A.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-01T09:30:00Z',
     updatedAt: '2026-07-14T17:00:00Z',
     productionDetails: {
@@ -267,7 +267,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-6',
-        author: 'Burak A.',
+        author: 'Celal (Temsilci)',
         text: 'Sözleşme imzalandı %50 avans hesaba yattı. Çekim günü 25 Temmuz.',
         createdAt: '2026-07-14T17:00:00Z'
       }
@@ -288,7 +288,7 @@ export const INITIAL_LEADS: Lead[] = [
     metaCampaignName: 'Meta Ads - Sağlık & Medikal Sosyal Medya',
     stage: 'NEW',
     priority: 'HIGH',
-    assignedTo: 'Zeynep S.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-19T18:10:00Z',
     updatedAt: '2026-07-19T18:10:00Z',
     socialMediaDetails: {
@@ -318,7 +318,7 @@ export const INITIAL_LEADS: Lead[] = [
     source: 'WEBSITE',
     stage: 'CONTACTED',
     priority: 'MEDIUM',
-    assignedTo: 'Zeynep S.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-17T11:00:00Z',
     updatedAt: '2026-07-18T14:15:00Z',
     socialMediaDetails: {
@@ -330,7 +330,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-sm-2',
-        author: 'Zeynep S.',
+        author: 'Celal (Temsilci)',
         text: 'UGC içerik üreticileri ile çalışmak istiyorlar. Brief alındı.',
         createdAt: '2026-07-18T14:15:00Z'
       }
@@ -348,7 +348,7 @@ export const INITIAL_LEADS: Lead[] = [
     source: 'WEBSITE',
     stage: 'PROPOSAL_SENT',
     priority: 'MEDIUM',
-    assignedTo: 'Zeynep S.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-14T09:30:00Z',
     updatedAt: '2026-07-16T16:00:00Z',
     socialMediaDetails: {
@@ -360,7 +360,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-sm-3',
-        author: 'Zeynep S.',
+        author: 'Celal (Temsilci)',
         text: 'Aylık 30.000 ₺ içerik + LinkedIn bülten stratejisi paket teklifi yollandı.',
         createdAt: '2026-07-16T16:00:00Z'
       }
@@ -379,7 +379,7 @@ export const INITIAL_LEADS: Lead[] = [
     metaCampaignName: 'Meta Ads - Spor & Fitness Sosyal Medya',
     stage: 'RETARGETING',
     priority: 'MEDIUM',
-    assignedTo: 'Zeynep S.',
+    assignedTo: 'Celal',
     createdAt: '2026-06-15T10:00:00Z',
     updatedAt: '2026-07-05T12:00:00Z',
     retargetingDate: '2026-08-15',
@@ -393,7 +393,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-sm-4',
-        author: 'Zeynep S.',
+        author: 'Celal (Temsilci)',
         text: 'Ağustos ayında 3. şube açıldığında başlanacak. Retargeting takvimine eklendi.',
         createdAt: '2026-07-05T12:00:00Z'
       }
@@ -411,7 +411,7 @@ export const INITIAL_LEADS: Lead[] = [
     source: 'MANUAL',
     stage: 'WON',
     priority: 'HIGH',
-    assignedTo: 'Zeynep S.',
+    assignedTo: 'Celal',
     createdAt: '2026-07-01T15:00:00Z',
     updatedAt: '2026-07-10T11:00:00Z',
     socialMediaDetails: {
@@ -423,7 +423,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: [
       {
         id: 'note-sm-5',
-        author: 'Zeynep S.',
+        author: 'Celal (Temsilci)',
         text: '1 Yıllık sözleşme bağlandı. Aylık 60.000 TL + Reklam Yönetim Ücreti.',
         createdAt: '2026-07-10T11:00:00Z'
       }

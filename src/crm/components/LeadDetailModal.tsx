@@ -32,7 +32,7 @@ interface LeadDetailModalProps {
   onUpdateLeadInfo?: (leadId: string, updatedData: any) => void;
 }
 
-const STAFF_LIST = ['Celal', 'Burak A.', 'Caner K.', 'Elif K.', 'Atanmadı'];
+const STAFF_LIST = ['Celal', 'Atanmadı'];
 
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   lead,
