@@ -315,7 +315,61 @@ export default function CRMPage({ embedded = false }) {
   }, []);
 
   useEffect(() => {
+    // İlk yükleme
     fetchLeads();
+
+    // ── Supabase Realtime: Yeni lead veya güncelleme anında gelsin ──
+    const channel = supabase
+      .channel('crm-leads-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'leads' },
+        (payload) => {
+          if (!payload.new) return;
+          const newLead = mapDbRowToLead(payload.new);
+          // LocalStorage override varsa uygula
+          try {
+            const stored = localStorage.getItem('crm_lead_overrides_v1');
+            const overrides = stored ? JSON.parse(stored) : {};
+            const merged = overrides[newLead.id] ? { ...newLead, ...overrides[newLead.id] } : newLead;
+            setLeads(prev => {
+              // Zaten listede varsa ekleme
+              if (prev.some(l => l.id === merged.id)) return prev;
+              return [merged, ...prev];
+            });
+            setNotification(`🔔 Yeni Lead: ${newLead.title || newLead.contactName || 'Yeni Müşteri'}`);
+            setTimeout(() => setNotification(null), 5000);
+          } catch {
+            setLeads(prev => {
+              if (prev.some(l => l.id === newLead.id)) return prev;
+              return [newLead, ...prev];
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'leads' },
+        (payload) => {
+          if (!payload.new) return;
+          const updatedLead = mapDbRowToLead(payload.new);
+          setLeads(prev => prev.map(l => l.id === updatedLead.id ? { ...updatedLead } : l));
+        }
+      )
+      .subscribe();
+
+    // ── Sayfa arka plandan geri gelince otomatik yenile ──
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLeads();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [fetchLeads]);
 
   // Helper to save overrides to localStorage
