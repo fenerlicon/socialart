@@ -2961,22 +2961,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* 2. Right Main Panel */}
         <main className="main-content-area" style={{ flex: 1, padding: '40px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '30px', overflowY: 'auto' }}>
-          {/* Top Breadcrumb & Action Row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', fontWeight: '700', color: '#71717a', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
-              <span>Social Art Base</span>
-              <ChevronRight size={12} />
-              <span>CRM</span>
-              <ChevronRight size={12} />
-              <span style={{ color: 'var(--primary)' }}>
-                {activeTab === 'potansiyel' ? 'Potansiyel Müşteriler' : activeTab === 'basvurular' ? 'Gelen Başvurular' : 'Müşteri Talepleri'}
-              </span>
-            </nav>
-
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              {/* Yeni Müşteri butonu CRMPage içinde zaten var */}
-            </div>
-          </div>
+          {/* Top Breadcrumb & Action Row - Removed to avoid leaking behind sticky CRM Header */}
 
           {/* Kişisel Karşılama Paneli (Inside right area) */}
           {!isLeadDetailModalOpen && activeTab !== 'potansiyel' && (
