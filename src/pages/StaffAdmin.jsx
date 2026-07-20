@@ -177,25 +177,28 @@ const AdminStyles = () => (
     }
 
     @media (max-width: 1024px) {
-      .admin-layout { flex-direction: column; gap: 0; margin-top: 0; }
-      .main-content-area { padding: 75px 15px 25px 15px !important; width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; }
+      .admin-layout { flex-direction: column !important; gap: 0 !important; margin-top: 0 !important; }
+      .main-content-area { padding: 65px 10px 20px 10px !important; width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; }
       .admin-sidebar-nav {
         position: fixed !important;
         top: 0 !important;
-        left: -340px !important;
+        left: 0 !important;
         height: 100vh !important;
-        width: 300px !important;
+        width: 285px !important;
         background: #09090b !important;
         z-index: 99999 !important;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         padding: 24px 20px !important;
         overflow-y: auto !important;
-        box-shadow: 20px 0 60px rgba(0,0,0,0.9) !important;
+        box-shadow: 25px 0 70px rgba(0,0,0,0.95) !important;
         display: flex !important;
         flex-direction: column !important;
         gap: 20px !important;
       }
-      .admin-sidebar-nav.open { left: 0 !important; }
+      .admin-sidebar-nav.open { 
+        transform: translateX(0) !important; 
+      }
       .mobile-header { display: flex !important; }
       .mobile-only { display: flex !important; }
       .welcome-panel { margin-top: 40px; }
