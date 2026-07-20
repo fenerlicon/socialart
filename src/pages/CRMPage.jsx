@@ -81,6 +81,7 @@ function mapDbRowToLead(row) {
     notes: (() => {
       let parsedNotes = [];
       const seenNoteTexts = new Set();
+      const seenNoteIds = new Set();
       
       const isInvalidNote = (txt) => {
         if (!txt || typeof txt !== 'string') return true;
@@ -163,10 +164,11 @@ function mapDbRowToLead(row) {
           val.forEach(item => {
             if (typeof item === 'object' && item !== null) {
               const t = item.text || item.note || item.content || item.message || '';
-              if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
-                seenNoteTexts.add(t);
+              const noteId = item.id || `note-${Math.random()}`;
+              if (t && !isInvalidNote(t) && !seenNoteIds.has(noteId)) {
+                seenNoteIds.add(noteId);
                 parsedNotes.push({
-                  id: item.id || `note-${Math.random()}`,
+                  id: noteId,
                   author: item.author || item.user || item.rep || defaultAuthorLabel,
                   text: t,
                   createdAt: item.createdAt || item.created_at || item.date || row.created_at || new Date().toISOString()
@@ -178,10 +180,11 @@ function mapDbRowToLead(row) {
           });
         } else if (typeof val === 'object' && val !== null) {
           const t = val.text || val.note || val.content || val.message || '';
-          if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
-            seenNoteTexts.add(t);
+          const noteId = val.id || `note-${Math.random()}`;
+          if (t && !isInvalidNote(t) && !seenNoteIds.has(noteId)) {
+            seenNoteIds.add(noteId);
             parsedNotes.push({
-              id: val.id || `note-${Math.random()}`,
+              id: noteId,
               author: val.author || val.user || defaultAuthorLabel,
               text: t,
               createdAt: val.createdAt || val.created_at || row.created_at || new Date().toISOString()
@@ -492,17 +495,34 @@ export default function CRMPage({ embedded = false }) {
       .eq('id', leadId);
   };
 
-  // Add note → sync to Supabase
+  // Add note → sync to Supabase & LocalStorage
   const handleAddNote = async (leadId, noteText) => {
     const currentLead = leads.find(l => l.id === leadId);
     const repName = currentLead?.assignedTo || 'Celal';
     const newNote = {
-      id: `note-${Date.now()}`,
+      id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       author: `${repName} (Temsilci Notu)`,
       text: noteText,
       createdAt: new Date().toISOString()
     };
     const updatedNotes = [newNote, ...(currentLead?.notes || [])];
+
+    // Save to LocalStorage immediately to guarantee persistence on refresh
+    saveOverride(leadId, { notes: updatedNotes });
+
+    // Also update if it is in manual leads storage
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {
+      console.warn('Manual lead notes update error:', e);
+    }
 
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
