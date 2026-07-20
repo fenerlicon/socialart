@@ -11,7 +11,8 @@ import {
   Filter,
   Layers,
   PhoneCall,
-  Flame
+  Flame,
+  ArrowLeft
 } from 'lucide-react';
 import { PipelineType } from '../types/crm';
 
@@ -25,6 +26,7 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   selectedSourceFilter: string;
   onSourceFilterChange: (source: string) => void;
+  onGoToAdmin?: () => void;
   stats: {
     totalLeads: number;
     totalPipelineValue: number;
@@ -44,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   selectedSourceFilter,
   onSourceFilterChange,
+  onGoToAdmin,
   stats
 }) => {
   return (
@@ -123,6 +126,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5 w-full md:w-auto justify-end">
+          {/* Admin Paneline Dön Butonu */}
+          <button
+            onClick={() => {
+              if (onGoToAdmin) {
+                onGoToAdmin();
+              } else {
+                window.location.href = '/admin';
+              }
+            }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            title="Admin Yönetim Paneline Geri Dön"
+          >
+            <ArrowLeft className="w-4 h-4 text-indigo-400" />
+            <span>Admin Paneline Dön</span>
+          </button>
+
           {/* New Lead Button */}
           <button
             onClick={onOpenNewLeadModal}

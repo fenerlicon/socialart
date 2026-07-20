@@ -687,6 +687,11 @@ export default function CRMPage({ embedded = false }) {
         onSearchChange={setSearchQuery}
         selectedSourceFilter={selectedSourceFilter}
         onSourceFilterChange={setSelectedSourceFilter}
+        onGoToAdmin={() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/admin';
+          }
+        }}
         stats={stats}
       />
 

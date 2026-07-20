@@ -55,7 +55,6 @@ const DijitalPazarlamaDanismanligi = lazy(() => import('./pages/services/Dijital
 const UGCApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.UGCApplication })));
 const JobApplication = lazy(() => import('./pages/ApplicationForms').then(m => ({ default: m.JobApplication })));
 
-const EmailMarketing = lazy(() => import('./pages/EmailMarketing'));
 const PostProduction = lazy(() => import('./pages/PostProduction'));
 const EventCekimi = lazy(() => import('./pages/services/EventCekimi'));
 const CaseStudies = lazy(() => import('./pages/CaseStudies'));
@@ -292,7 +291,6 @@ function App() {
             <Route path="/musteri" element={<ClientPortal />} />
             <Route path="/ugc-basvuru" element={<UGCApplication />} />
             <Route path="/is-basvurusu" element={<JobApplication />} />
-            <Route path="/email-marketing" element={<EmailMarketing />} />
             <Route path="/post-produksiyon" element={<PostProduction />} />
             
             {/* Service Detail Routes */}
