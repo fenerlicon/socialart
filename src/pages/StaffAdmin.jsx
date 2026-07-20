@@ -2961,7 +2961,45 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* 2. Right Main Panel */}
         <main className="main-content-area" style={{ flex: 1, padding: '40px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '30px', overflowY: 'auto' }}>
-          {/* Top Breadcrumb & Action Row - Removed to avoid leaking behind sticky CRM Header */}
+          {/* HALA TEMASA GEÇİLMEYEN MÜŞTERİLER VAR ALARMI */}
+          {(() => {
+            const uncontactedCount = (allLeadsData || []).filter(l => l.stage === 'NEW' || l.status === 'Geldi (Yeni Lead)' || l.durum === 'Geldi (Yeni Lead)').length;
+            if (uncontactedCount === 0) return null;
+            return (
+              <div
+                onClick={() => setActiveTab('potansiyel')}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.2) 0%, rgba(159, 18, 57, 0.3) 100%)',
+                  border: '1px solid rgba(244, 63, 94, 0.4)',
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 30px rgba(225, 29, 72, 0.2)',
+                  gap: '15px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ padding: '10px', background: 'rgba(244, 63, 94, 0.2)', borderRadius: '12px', color: '#f43f5e' }}>
+                    <AlertCircle size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '900', color: '#fecdd3', fontSize: '0.9rem', letterSpacing: '0.5px' }}>
+                      🚨 HALA TEMASA GEÇİLMEYEN MÜŞTERİLER VAR!
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#fda4af', marginTop: '2px' }}>
+                      CRM sisteminde henüz iletişim kurulmamış <strong style={{ color: '#fff', textDecoration: 'underline' }}>{uncontactedCount} adet yeni müşteri (lead)</strong> bekliyor!
+                    </div>
+                  </div>
+                </div>
+                <button style={{ background: '#e11d48', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '10px', fontWeight: '800', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  CRM Potansiyel Müşterilere Git ({uncontactedCount})
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Kişisel Karşılama Paneli (Inside right area) */}
           {!isLeadDetailModalOpen && activeTab !== 'potansiyel' && (

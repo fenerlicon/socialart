@@ -689,6 +689,38 @@ export default function CRMPage({ embedded = false }) {
         stats={stats}
       />
 
+      {/* HALA TEMASA GEÇİLMEYEN MÜŞTERİLER VAR ALARMI */}
+      {(() => {
+        const uncontactedCount = leads.filter(l => l.stage === 'NEW').length;
+        if (uncontactedCount === 0) return null;
+        return (
+          <div className="mx-4 sm:mx-6 my-3 p-4 rounded-2xl bg-gradient-to-r from-rose-900/80 via-red-900/60 to-amber-900/80 border border-rose-500/40 shadow-lg shadow-rose-950/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                <AlertCircle className="w-6 h-6 text-rose-400 animate-bounce" />
+              </div>
+              <div>
+                <h4 className="text-sm font-extrabold text-rose-200 tracking-wide uppercase flex items-center gap-2">
+                  🚨 HALA TEMASA GEÇİLMEYEN MÜŞTERİLER VAR!
+                </h4>
+                <p className="text-xs text-rose-300/90 mt-0.5">
+                  Sistemde henüz iletişime geçilmemiş <strong className="text-white underline">{uncontactedCount} Adet Yeni Müşteri (Lead)</strong> bekliyor!
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedSourceFilter('ALL');
+                setSearchQuery('');
+              }}
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all whitespace-nowrap"
+            >
+              Müşterileri İncele ({uncontactedCount})
+            </button>
+          </div>
+        );
+      })()}
+
       {/* Body */}
       <main className="flex-1">
         {isLoading ? (
