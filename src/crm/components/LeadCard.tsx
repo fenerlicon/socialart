@@ -83,7 +83,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({
         if (!isNaN(Date.parse(txt)) && (txt.length === 10 || txt.includes('T') || txt.includes('Z'))) return false;
         return true;
       });
-      if (validNotes.length > 0) return validNotes[0].text;
+      if (validNotes.length > 0) {
+        // Önce anlamlı (20+ karakter) en yeni notu göster
+        const meaningful = validNotes.find(n => n.text.trim().length >= 20);
+        return meaningful ? meaningful.text : validNotes[0].text;
+      }
     }
     return 'Form Doldurdu';
   };
