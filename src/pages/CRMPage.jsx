@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AlertCircle } from 'lucide-react';
 import '../crm-tailwind.css';
 import { supabase } from '../lib/supabase';
 import { Header } from '../crm/components/Header';
