@@ -293,9 +293,8 @@ export const ListView: React.FC<ListViewProps> = ({
                               return true;
                             });
                             if (validNotes.length > 0) {
-                              // Önce anlamlı (20+ karakter) en yeni notu göster
-                              const meaningful = validNotes.find(n => n.text.trim().length >= 20);
-                              noteTxt = meaningful ? meaningful.text : validNotes[0].text;
+                              const repNote = validNotes.find(n => n.author && n.author.includes('Temsilci'));
+                              noteTxt = repNote ? repNote.text : validNotes[0].text;
                             }
                           }
                           return (

@@ -84,9 +84,12 @@ export const LeadCard: React.FC<LeadCardProps> = ({
         return true;
       });
       if (validNotes.length > 0) {
-        // Önce anlamlı (20+ karakter) en yeni notu göster
-        const meaningful = validNotes.find(n => n.text.trim().length >= 20);
-        return meaningful ? meaningful.text : validNotes[0].text;
+        // 1. Temsilci tarafından yazılmış/eklenmiş NOT varsa kesinlikle son temsilci notunu göster (karakter uzunluğu farketmeksizin)
+        const repNote = validNotes.find(n => n.author && n.author.includes('Temsilci'));
+        if (repNote) return repNote.text;
+
+        // 2. Temsilci notu yoksa, en yeni geçerli notu göster
+        return validNotes[0].text;
       }
     }
     return 'Form Doldurdu';
