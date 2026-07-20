@@ -159,7 +159,7 @@ function mapDbRowToLead(row) {
           val.forEach(item => {
             if (typeof item === 'object' && item !== null) {
               const t = item.text || item.note || item.content || item.message || '';
-              if (t && !seenNoteTexts.has(t)) {
+              if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
                 seenNoteTexts.add(t);
                 parsedNotes.push({
                   id: item.id || `note-${Math.random()}`,
@@ -174,7 +174,7 @@ function mapDbRowToLead(row) {
           });
         } else if (typeof val === 'object' && val !== null) {
           const t = val.text || val.note || val.content || val.message || '';
-          if (t && !seenNoteTexts.has(t)) {
+          if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
             seenNoteTexts.add(t);
             parsedNotes.push({
               id: val.id || `note-${Math.random()}`,
@@ -189,16 +189,23 @@ function mapDbRowToLead(row) {
       });
 
       // EVRENSEL AKILLI TARAMA: Standart dışındaki tüm string & object alanları da Not olarak çek!
+      // Tarih, servis, sistem alanları gibi not olmayan sütunlar hariç tutulur
       const standardNonNoteKeys = new Set([
         'id', 'name', 'full_name', 'company', 'title', 'email', 'phone', 'city', 
         'budget', 'status', 'stage', 'source', 'pipeline', 'created_at', 'updated_at', 
         'assigned_to', 'priority', 'retargeting_date', 'retargeting_note',
-        'meta_campaign_name', 'ads_active', 'monthly_fee', 'payment_day'
+        'meta_campaign_name', 'ads_active', 'monthly_fee', 'payment_day',
+        'service', 'hizmet', 'service_type', 'form_type', 'form_date',
+        'submitted_at', 'date', 'timestamp', 'time', 'ip', 'ip_address',
+        'url', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
+        'ad_id', 'adset_id', 'campaign_id', 'form_id', 'lead_id',
+        'field_data', 'retailer_item_id', 'partner_name'
       ]);
 
       for (const [key, value] of Object.entries(row)) {
         if (!standardNonNoteKeys.has(key) && value) {
           if (typeof value === 'string') {
+            // addNote already calls isInvalidNote inside
             addNote(value, 'Temsilci Notu - Son Görüşme / Not');
           } else if (Array.isArray(value)) {
             value.forEach(item => {
@@ -214,6 +221,13 @@ function mapDbRowToLead(row) {
           }
         }
       }
+
+      // En yeni nota göre sırala (son eklenen en başta)
+      parsedNotes.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      });
 
       return parsedNotes;
     })(),
