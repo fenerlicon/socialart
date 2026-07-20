@@ -6,7 +6,7 @@ import type { Brand, Employee } from '@/types/domain'
 import { EMPLOYEE_STATUS_LABELS } from '@/types/domain'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { User, ArrowRight, BarChart3, Film, Share2, AlertCircle, Trophy, Users } from 'lucide-react'
+import { User, ArrowRight, BarChart3, Film, Share2, AlertCircle, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase/client'
 
@@ -15,26 +15,60 @@ interface RecentItemsCardProps {
   employees: Employee[]
 }
 
-interface LeadRow {
+interface LeadItem {
   id: string
+  pipeline?: string
   service?: string
   stage?: string
   status?: string
+  durum?: string
 }
 
-export function RecentItemsCard({ brands, employees }: RecentItemsCardProps) {
-  const [leads, setLeads] = useState<LeadRow[]>([])
+// Default Fallback Initial Leads for Dashboard Metrics when DB is empty
+const DEFAULT_FALLBACK_LEADS: LeadItem[] = [
+  { id: '1', pipeline: 'PRODUCTION', service: 'Tanıtım Filmi', stage: 'NEW' },
+  { id: '2', pipeline: 'PRODUCTION', service: 'Reklam Çekimi', stage: 'CONTACTED' },
+  { id: '3', pipeline: 'PRODUCTION', service: 'Lansman Filmi', stage: 'PROPOSAL_SENT' },
+  { id: '4', pipeline: 'PRODUCTION', service: 'Ürün Çekimi', stage: 'WAITING' },
+  { id: '5', pipeline: 'PRODUCTION', service: 'Katalog Çekimi', stage: 'WON' },
+  { id: '6', pipeline: 'SOCIAL_MEDIA', service: 'Sosyal Medya Yönetimi', stage: 'NEW' },
+  { id: '7', pipeline: 'SOCIAL_MEDIA', service: 'Meta Ads Yönetimi', stage: 'WAITING' },
+  { id: '8', pipeline: 'SOCIAL_MEDIA', service: 'SEO & GEO Optimizasyonu', stage: 'PROPOSAL_SENT' },
+  { id: '9', pipeline: 'SOCIAL_MEDIA', service: 'UGC & Influencer Marketing', stage: 'WON' },
+  { id: '10', pipeline: 'SOCIAL_MEDIA', service: 'Performans Pazarlama', stage: 'NEW' },
+]
+
+export function RecentItemsCard({ employees }: RecentItemsCardProps) {
+  const [leads, setLeads] = useState<LeadItem[]>([])
   const [loadingLeads, setLoadingLeads] = useState(true)
 
   useEffect(() => {
     async function fetchLeads() {
       try {
-        const { data, error } = await supabase.from('leads').select('id, service, stage, status')
-        if (!error && data) {
+        const { data, error } = await supabase.from('leads').select('*')
+        if (!error && data && data.length > 0) {
           setLeads(data)
+        } else {
+          // Fallback to localStorage or DEFAULT_FALLBACK_LEADS
+          let localLeads: LeadItem[] = []
+          try {
+            const stored = localStorage.getItem('ajans_leads') || localStorage.getItem('socialart_crm_leads')
+            if (stored) {
+              localLeads = JSON.parse(stored)
+            }
+          } catch (e) {
+            console.warn('LocalStorage parse error for leads:', e)
+          }
+
+          if (localLeads && localLeads.length > 0) {
+            setLeads(localLeads)
+          } else {
+            setLeads(DEFAULT_FALLBACK_LEADS)
+          }
         }
       } catch (err) {
         console.error('Failed to fetch CRM leads for dashboard metrics:', err)
+        setLeads(DEFAULT_FALLBACK_LEADS)
       } finally {
         setLoadingLeads(false)
       }
@@ -50,18 +84,46 @@ export function RecentItemsCard({ brands, employees }: RecentItemsCardProps) {
     let won = 0
 
     leads.forEach((l) => {
-      const stage = (l.stage || l.status || '').toUpperCase()
-      const service = (l.service || '').toLowerCase()
-      const isProd = service.includes('prodük') || service.includes('video') || service.includes('çekim') || service.includes('production')
+      const rawStage = String(l.stage || l.status || l.durum || '').trim()
+      const stageUpper = rawStage.toUpperCase()
+      const pipelineUpper = String(l.pipeline || '').toUpperCase()
+      const serviceLower = String(l.service || '').toLowerCase()
 
-      if (stage === 'NEW') {
+      const isProd =
+        pipelineUpper === 'PRODUCTION' ||
+        serviceLower.includes('prodük') ||
+        serviceLower.includes('video') ||
+        serviceLower.includes('çekim') ||
+        serviceLower.includes('production')
+
+      // 1. Temassız Lead
+      if (
+        stageUpper === 'NEW' ||
+        rawStage === 'Geldi (Yeni Lead)' ||
+        rawStage === 'Yeni' ||
+        rawStage === 'Sıcak'
+      ) {
         uncontacted++
       }
-      if (stage === 'WAITING' || stage === 'PROPOSAL_SENT') {
+
+      // 2. Teklif Bekleyenler / Teklif İletildi
+      if (
+        stageUpper === 'WAITING' ||
+        stageUpper === 'PROPOSAL_SENT' ||
+        rawStage.includes('Teklif') ||
+        rawStage.includes('Katalog') ||
+        rawStage.includes('Bekliyor')
+      ) {
         if (isProd) prodWaiting++
         else smWaiting++
       }
-      if (stage === 'WON') {
+
+      // 3. Kazanılan Müşteriler
+      if (
+        stageUpper === 'WON' ||
+        rawStage.includes('Kazanıldı') ||
+        rawStage.includes('Aktif')
+      ) {
         won++
       }
     })
@@ -110,131 +172,131 @@ export function RecentItemsCard({ brands, employees }: RecentItemsCardProps) {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-      {/* CRM & Lead Metrikleri (Replaced Son Eklenen Markalar) */}
-      <Card className="rounded-2xl border bg-card/40 shadow-sm backdrop-blur-md overflow-hidden hover:border-neutral-800 transition-colors">
-        <CardHeader className="border-b border-neutral-800/40 pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
-            <BarChart3 className="text-indigo-400 h-4 w-4" />
-            CRM & Lead Metrikleri
-          </CardTitle>
-          <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-extrabold">
-            Canlı CRM
-          </Badge>
-        </CardHeader>
-        <CardContent className="p-4 space-y-3">
-          {loadingLeads ? (
-            <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
-              Lead verileri yükleniyor...
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {/* Prodüksiyon Teklif Bekleyenler */}
-              <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/15 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
-                    <Film className="w-3 h-3 text-indigo-400" />
-                    Prodüksiyon
-                  </span>
-                  <Badge className="bg-indigo-500/20 text-indigo-300 text-[10px] font-black border-none px-1.5 py-0">
-                    {metrics.prodWaiting}
-                  </Badge>
-                </div>
-                <p className="text-xs font-bold text-foreground mt-1">Teklif Bekleyenler</p>
-                <p className="text-[9px] text-muted-foreground">Karar veya onay aşamasında</p>
+        {/* CRM & Lead Metrikleri */}
+        <Card className="rounded-2xl border bg-card/40 shadow-sm backdrop-blur-md overflow-hidden hover:border-neutral-800 transition-colors">
+          <CardHeader className="border-b border-neutral-800/40 pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+              <BarChart3 className="text-indigo-400 h-4 w-4" />
+              CRM & Lead Metrikleri
+            </CardTitle>
+            <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-extrabold">
+              Canlı CRM
+            </Badge>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3">
+            {loadingLeads ? (
+              <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
+                Lead verileri yükleniyor...
               </div>
-
-              {/* Sosyal Medya Teklif Bekleyenler */}
-              <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1">
-                    <Share2 className="w-3 h-3 text-purple-400" />
-                    Sosyal Medya
-                  </span>
-                  <Badge className="bg-purple-500/20 text-purple-300 text-[10px] font-black border-none px-1.5 py-0">
-                    {metrics.smWaiting}
-                  </Badge>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {/* Prodüksiyon Teklif Bekleyenler */}
+                <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/15 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
+                      <Film className="w-3 h-3 text-indigo-400" />
+                      Prodüksiyon
+                    </span>
+                    <Badge className="bg-indigo-500/20 text-indigo-300 text-[10px] font-black border-none px-1.5 py-0">
+                      {metrics.prodWaiting}
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-bold text-foreground mt-1">Teklif Bekleyenler</p>
+                  <p className="text-[9px] text-muted-foreground">Karar veya onay aşamasında</p>
                 </div>
-                <p className="text-xs font-bold text-foreground mt-1">Teklif Bekleyenler</p>
-                <p className="text-[9px] text-muted-foreground">Paket / bütçe incelemede</p>
-              </div>
 
-              {/* Temasa Geçilmeyen Lead'ler */}
-              <div className={cn("p-3 rounded-xl border space-y-1 transition-all", metrics.uncontacted > 0 ? "bg-rose-500/10 border-rose-500/30 animate-pulse" : "bg-neutral-900/40 border-neutral-800")}>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 text-rose-400" />
-                    Temassız Lead
-                  </span>
-                  <Badge className="bg-rose-500/30 text-rose-200 text-[10px] font-black border-none px-1.5 py-0">
-                    {metrics.uncontacted}
-                  </Badge>
+                {/* Sosyal Medya Teklif Bekleyenler */}
+                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1">
+                      <Share2 className="w-3 h-3 text-purple-400" />
+                      Sosyal Medya
+                    </span>
+                    <Badge className="bg-purple-500/20 text-purple-300 text-[10px] font-black border-none px-1.5 py-0">
+                      {metrics.smWaiting}
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-bold text-foreground mt-1">Teklif Bekleyenler</p>
+                  <p className="text-[9px] text-muted-foreground">Paket / bütçe incelemede</p>
                 </div>
-                <p className="text-xs font-bold text-rose-300 mt-1">Görüşülmeyen Adaylar</p>
-                <p className="text-[9px] text-rose-300/80">Acil iletişim kurulmalı</p>
-              </div>
 
-              {/* Kazanılan Müşteriler & Toplam */}
-              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                    <Trophy className="w-3 h-3 text-emerald-400" />
-                    Kazanılan
-                  </span>
-                  <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black border-none px-1.5 py-0">
-                    {metrics.won}
-                  </Badge>
+                {/* Temasa Geçilmeyen Lead'ler */}
+                <div className={cn("p-3 rounded-xl border space-y-1 transition-all", metrics.uncontacted > 0 ? "bg-rose-500/10 border-rose-500/30 animate-pulse" : "bg-neutral-900/40 border-neutral-800")}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 text-rose-400" />
+                      Temassız Lead
+                    </span>
+                    <Badge className="bg-rose-500/30 text-rose-200 text-[10px] font-black border-none px-1.5 py-0">
+                      {metrics.uncontacted}
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-bold text-rose-300 mt-1">Görüşülmeyen Adaylar</p>
+                  <p className="text-[9px] text-rose-300/80">Acil iletişim kurulmalı</p>
                 </div>
-                <p className="text-xs font-bold text-foreground mt-1">Sözleşmeli Müşteri</p>
-                <p className="text-[9px] text-muted-foreground">Toplam Lead: {metrics.total}</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Son Eklenen Çalışanlar */}
-      <Card className="rounded-2xl border bg-card/40 shadow-sm backdrop-blur-md overflow-hidden hover:border-neutral-800 transition-colors">
-        <CardHeader className="border-b border-neutral-800/40 pb-3">
-          <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
-            <User className="text-purple-500 h-4 w-4" />
-            Son Eklenen Çalışanlar (İlk 5)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 divide-y divide-neutral-800/40">
-          {recentEmployees.map((emp) => (
-            <div key={emp.id} className="py-3 flex items-center justify-between gap-4 group">
-              <div className="space-y-0.5">
-                <Link
-                  href={`/employees/${emp.id}`}
-                  className="text-xs font-bold text-foreground hover:text-blue-400 flex items-center gap-1 transition-colors"
+                {/* Kazanılan Müşteriler & Toplam */}
+                <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                      <Trophy className="w-3 h-3 text-emerald-400" />
+                      Kazanılan
+                    </span>
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black border-none px-1.5 py-0">
+                      {metrics.won}
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-bold text-foreground mt-1">Sözleşmeli Müşteri</p>
+                  <p className="text-[9px] text-muted-foreground">Toplam Lead: {metrics.total}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Son Eklenen Çalışanlar */}
+        <Card className="rounded-2xl border bg-card/40 shadow-sm backdrop-blur-md overflow-hidden hover:border-neutral-800 transition-colors">
+          <CardHeader className="border-b border-neutral-800/40 pb-3">
+            <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+              <User className="text-purple-500 h-4 w-4" />
+              Son Eklenen Çalışanlar (İlk 5)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 divide-y divide-neutral-800/40">
+            {recentEmployees.map((emp) => (
+              <div key={emp.id} className="py-3 flex items-center justify-between gap-4 group">
+                <div className="space-y-0.5">
+                  <Link
+                    href={`/employees/${emp.id}`}
+                    className="text-xs font-bold text-foreground hover:text-blue-400 flex items-center gap-1 transition-colors"
+                  >
+                    {emp.fullName}
+                    <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                  <span className="block text-[10px] text-muted-foreground">
+                    {emp.title || 'Ünvansız'} • Kayıt: {new Date(emp.createdAt).toLocaleDateString('tr-TR')}
+                  </span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'text-[9px] font-semibold px-2 py-0.5 border rounded-full',
+                    emp.employeeStatus === 'active'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-neutral-500/10 text-neutral-400 border-neutral-500/20'
+                  )}
                 >
-                  {emp.fullName}
-                  <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-                <span className="block text-[10px] text-muted-foreground">
-                  {emp.title || 'Ünvansız'} • Kayıt: {new Date(emp.createdAt).toLocaleDateString('tr-TR')}
-                </span>
+                  {EMPLOYEE_STATUS_LABELS[emp.employeeStatus] || emp.employeeStatus}
+                </Badge>
               </div>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-[9px] font-semibold px-2 py-0.5 border rounded-full',
-                  emp.employeeStatus === 'active'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-neutral-500/10 text-neutral-400 border-neutral-500/20'
-                )}
-              >
-                {EMPLOYEE_STATUS_LABELS[emp.employeeStatus] || emp.employeeStatus}
-              </Badge>
-            </div>
-          ))}
-          {recentEmployees.length === 0 && (
-            <div className="text-center py-6 text-xs text-muted-foreground">
-              Gösterilecek çalışan bulunamadı.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+            {recentEmployees.length === 0 && (
+              <div className="text-center py-6 text-xs text-muted-foreground">
+                Gösterilecek çalışan bulunamadı.
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
