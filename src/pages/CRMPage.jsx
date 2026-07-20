@@ -20,25 +20,35 @@ function mapDbRowToLead(row) {
     'Yeni': 'NEW',
     'new': 'NEW',
     'NEW': 'NEW',
+    'Geldi (Yeni Lead)': 'NEW',
     'İlk İletişim': 'CONTACTED',
     'contacted': 'CONTACTED',
     'CONTACTED': 'CONTACTED',
+    'Görüşülüyor': 'CONTACTED',
+    'Görüşme Yapıldı': 'CONTACTED',
+    'Görüşüldü': 'CONTACTED',
     'Teklif Bekliyor': 'WAITING',
     'Beklemede': 'WAITING',
     'waiting': 'WAITING',
     'WAITING': 'WAITING',
     'Teklif İletildi': 'PROPOSAL_SENT',
+    'Teklif Gönderildi': 'PROPOSAL_SENT',
+    'Teklif Verildi': 'PROPOSAL_SENT',
     'Katalog İletildi': 'PROPOSAL_SENT',
     'proposal_sent': 'PROPOSAL_SENT',
     'PROPOSAL_SENT': 'PROPOSAL_SENT',
     'negotiating': 'PROPOSAL_SENT',
+    'Teklif': 'PROPOSAL_SENT',
     'Ertelendi': 'RETARGETING',
     'retargeting': 'RETARGETING',
     'RETARGETING': 'RETARGETING',
+    'Takipte': 'RETARGETING',
+    'Yeniden Ulaşılacak': 'RETARGETING',
     'Anlaşıldı': 'WON',
     'Kazanıldı': 'WON',
     'won': 'WON',
     'WON': 'WON',
+    'Satış Yapıldı': 'WON',
     'Reddedildi': 'LOST',
     'Kaybedildi': 'LOST',
     'Olumsuz': 'LOST',
@@ -297,23 +307,7 @@ export default function CRMPage({ embedded = false }) {
         loadedLeads = data.map(mapDbRowToLead);
       }
 
-      // Merge local stage & info overrides
-      try {
-        const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
-        if (storedOverrides) {
-          const overrides = JSON.parse(storedOverrides);
-          loadedLeads = loadedLeads.map(l => {
-            if (overrides[l.id]) {
-              return { ...l, ...overrides[l.id] };
-            }
-            return l;
-          });
-        }
-      } catch (e) {
-        // Ignore JSON parse error
-      }
-
-      // Merge manual leads saved in LocalStorage
+      // Merge manual leads saved in LocalStorage first
       try {
         const storedManual = localStorage.getItem('socialart_crm_manual_leads');
         if (storedManual) {
@@ -328,6 +322,22 @@ export default function CRMPage({ embedded = false }) {
         }
       } catch (e) {
         // Ignore parse error
+      }
+
+      // Merge local stage, info & note overrides LAST to guarantee highest priority
+      try {
+        const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
+        if (storedOverrides) {
+          const overrides = JSON.parse(storedOverrides);
+          loadedLeads = loadedLeads.map(l => {
+            if (overrides[l.id]) {
+              return { ...l, ...overrides[l.id] };
+            }
+            return l;
+          });
+        }
+      } catch (e) {
+        // Ignore JSON parse error
       }
 
       // Filter out deleted leads saved in LocalStorage
@@ -387,7 +397,16 @@ export default function CRMPage({ embedded = false }) {
         { event: 'UPDATE', schema: 'public', table: 'leads' },
         (payload) => {
           if (!payload.new) return;
-          const updatedLead = mapDbRowToLead(payload.new);
+          let updatedLead = mapDbRowToLead(payload.new);
+          try {
+            const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
+            if (storedOverrides) {
+              const overrides = JSON.parse(storedOverrides);
+              if (overrides[updatedLead.id]) {
+                updatedLead = { ...updatedLead, ...overrides[updatedLead.id] };
+              }
+            }
+          } catch (e) {}
           setLeads(prev => prev.map(l => l.id === updatedLead.id ? { ...updatedLead } : l));
         }
       )
@@ -473,6 +492,20 @@ export default function CRMPage({ embedded = false }) {
 
     // Save to LocalStorage immediately to guarantee persistence on refresh
     saveOverride(leadId, { stage: newStage });
+
+    // Also update stage in manual leads storage
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, stage: newStage } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {
+      console.warn('Manual lead stage update error:', e);
+    }
 
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
