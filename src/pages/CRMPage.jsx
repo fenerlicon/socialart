@@ -307,6 +307,23 @@ export default function CRMPage({ embedded = false }) {
         // Ignore JSON parse error
       }
 
+      // Merge manual leads saved in LocalStorage
+      try {
+        const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+        if (storedManual) {
+          const manualLeadsList = JSON.parse(storedManual);
+          if (Array.isArray(manualLeadsList)) {
+            manualLeadsList.forEach(m => {
+              if (!loadedLeads.some(l => l.id === m.id)) {
+                loadedLeads.unshift(m);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        // Ignore parse error
+      }
+
       setLeads(loadedLeads);
     } catch (err) {
       console.error('Lead fetch error:', err);
@@ -576,33 +593,86 @@ export default function CRMPage({ embedded = false }) {
       .eq('id', leadId);
   };
 
-  // Add manual lead → insert to Supabase
+  // Add manual lead → instant UI update + persistence in localStorage & Supabase
   const handleAddManualLead = async (leadData) => {
-    const newStatus = stageToStatus[leadData.stage] || 'Sıcak';
-    const { data, error } = await supabase
-      .from('leads')
-      .insert({
-        name: leadData.title,
-        rep: leadData.contactName,
-        email: leadData.email,
-        phone: leadData.phone,
-        city: leadData.city,
-        service: leadData.socialMediaDetails?.industry || (leadData.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya'),
-        status: newStatus,
-        source: leadData.source || 'MANUAL',
-        budget: leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget || null,
-        notes: [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    const newStatus = stageToStatus[leadData.stage] || 'Geldi (Yeni Lead)';
+    const nowIso = new Date().toISOString();
+    const generatedId = `lead-manual-${Date.now()}`;
 
-    if (!error && data) {
-      const newLead = mapDbRowToLead(data);
-      setLeads(prev => [newLead, ...prev]);
-      setCurrentPipeline(newLead.pipeline);
-      showToast(`"${newLead.title}" CRM'e eklendi!`);
+    const newLeadObj = {
+      id: generatedId,
+      pipeline: leadData.pipeline,
+      title: leadData.title,
+      contactName: leadData.contactName,
+      email: leadData.email || '',
+      phone: leadData.phone,
+      city: leadData.city || 'İstanbul',
+      source: leadData.source || 'MANUAL',
+      stage: leadData.stage || 'NEW',
+      priority: leadData.priority || 'MEDIUM',
+      assignedTo: leadData.assignedTo || 'Celal',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      productionDetails: leadData.productionDetails,
+      socialMediaDetails: leadData.socialMediaDetails,
+      notes: [
+        {
+          id: `note-${Date.now()}`,
+          author: 'Sistem',
+          text: `Manuel Lead eklendi. ${leadData.contactName} (${leadData.phone})`,
+          createdAt: nowIso
+        }
+      ],
+      activities: [
+        {
+          id: `act-${Date.now()}`,
+          title: 'Manuel Lead Eklenme Kaydı',
+          date: nowIso,
+          type: 'STAGE_CHANGE'
+        }
+      ]
+    };
+
+    // 1. Instant UI update
+    setLeads(prev => [newLeadObj, ...prev]);
+    setCurrentPipeline(leadData.pipeline);
+    showToast(`"${leadData.title}" başarıyla CRM'e eklendi!`);
+
+    // 2. Save to LocalStorage
+    try {
+      const storedLocal = localStorage.getItem('socialart_crm_manual_leads');
+      const manualLeadsList = storedLocal ? JSON.parse(storedLocal) : [];
+      localStorage.setItem('socialart_crm_manual_leads', JSON.stringify([newLeadObj, ...manualLeadsList]));
+    } catch (e) {
+      console.warn('LocalStorage error saving manual lead:', e);
+    }
+
+    // 3. Sync to Supabase in background
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .insert({
+          name: leadData.title,
+          rep: leadData.contactName,
+          email: leadData.email || '',
+          phone: leadData.phone,
+          city: leadData.city || 'İstanbul',
+          service: leadData.socialMediaDetails?.industry || (leadData.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya'),
+          status: newStatus,
+          source: leadData.source || 'MANUAL',
+          budget: leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget || null,
+          notes: newLeadObj.notes,
+          created_at: nowIso,
+          updated_at: nowIso,
+        })
+        .select()
+        .single();
+
+      if (!error && data && data.id) {
+        setLeads(prev => prev.map(l => l.id === generatedId ? { ...l, id: String(data.id) } : l));
+      }
+    } catch (err) {
+      console.warn('Supabase insert failed (lead safely retained locally):', err);
     }
   };
 
