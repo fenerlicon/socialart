@@ -28,7 +28,11 @@ interface LeadDetailModalProps {
   onAddNote: (leadId: string, noteText: string) => void;
   onUpdateRetargeting: (leadId: string, date: string, note: string) => void;
   onUpdateBudget: (leadId: string, newBudget: number | null) => void;
+  onUpdateAssignedTo?: (leadId: string, newStaff: string) => void;
+  onUpdateLeadInfo?: (leadId: string, updatedData: any) => void;
 }
+
+const STAFF_LIST = ['Celal', 'Burak A.', 'Caner K.', 'Elif K.', 'Atanmadı'];
 
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   lead,
@@ -36,7 +40,9 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateStage,
   onAddNote,
   onUpdateRetargeting,
-  onUpdateBudget
+  onUpdateBudget,
+  onUpdateAssignedTo,
+  onUpdateLeadInfo
 }) => {
   if (!lead) return null;
 
@@ -44,6 +50,17 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const [retargetingDate, setRetargetingDate] = useState(lead.retargetingDate || '');
   const [retargetingNote, setRetargetingNote] = useState(lead.retargetingNote || '');
   const [isSavedRetargeting, setIsSavedRetargeting] = useState(false);
+
+  // Edit Lead Info Form State
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({
+    title: lead.title || '',
+    contactName: lead.contactName || '',
+    phone: lead.phone || '',
+    email: lead.email || '',
+    city: lead.city || ''
+  });
+  const [isInfoSaved, setIsInfoSaved] = useState(false);
 
   const isProduction = lead.pipeline === 'PRODUCTION';
   const currentBudget = isProduction ? lead.productionDetails?.budget : lead.socialMediaDetails?.monthlyBudget;
@@ -75,6 +92,18 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     setTimeout(() => setIsBudgetSaved(false), 2000);
   };
 
+  const handleSaveInfoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onUpdateLeadInfo) {
+      onUpdateLeadInfo(lead.id, infoForm);
+      setIsInfoSaved(true);
+      setTimeout(() => {
+        setIsInfoSaved(false);
+        setIsEditingInfo(false);
+      }, 1500);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-2xl bg-slate-900 border-l border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden">
@@ -99,13 +128,36 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               )}
             </div>
 
-            <h2 className="text-xl font-extrabold text-slate-100">{lead.title}</h2>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-              <User className="w-3.5 h-3.5 text-slate-500" />
-              <span>{lead.contactName}</span>
+            <h2 className="text-xl font-extrabold text-slate-100 flex items-center gap-2">
+              <span>{lead.title}</span>
+              <button 
+                onClick={() => setIsEditingInfo(!isEditingInfo)}
+                className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-[10px] text-indigo-400 font-bold border border-slate-700 transition-colors"
+                title="Firma & İletişim Bilgilerini Düzenle"
+              >
+                {isEditingInfo ? 'Kapat' : '✏️ Bilgileri Düzenle'}
+              </button>
+            </h2>
+
+            <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-slate-500" />
+                {lead.contactName}
+              </span>
               {lead.city && <span>• {lead.city}</span>}
-              <span>• Temsilci: <strong className="text-slate-300">{lead.assignedTo || 'Atanmadı'}</strong></span>
-            </p>
+              <span className="flex items-center gap-1.5 ml-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-800">
+                <span className="text-slate-500 font-medium">Temsilci:</span>
+                <select
+                  value={lead.assignedTo || 'Atanmadı'}
+                  onChange={(e) => onUpdateAssignedTo && onUpdateAssignedTo(lead.id, e.target.value)}
+                  className="bg-transparent text-indigo-300 font-bold focus:outline-none cursor-pointer text-xs"
+                >
+                  {STAFF_LIST.map(staff => (
+                    <option key={staff} value={staff} className="bg-slate-900 text-slate-200">{staff}</option>
+                  ))}
+                </select>
+              </span>
+            </div>
           </div>
 
           <button
@@ -118,6 +170,78 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
+          {/* Edit Lead Info Form Panel */}
+          {isEditingInfo && (
+            <form onSubmit={handleSaveInfoSubmit} className="bg-indigo-950/40 border border-indigo-500/30 p-4 rounded-xl space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between border-b border-indigo-500/20 pb-2">
+                <span className="font-bold text-xs text-indigo-300">✏️ Firma & Müşteri Bilgilerini Güncelle</span>
+                {isInfoSaved && <span className="text-xs text-emerald-400 font-bold">✓ Güncellendi!</span>}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Firma / Şirket Adı:</label>
+                  <input
+                    type="text"
+                    value={infoForm.title}
+                    onChange={(e) => setInfoForm({ ...infoForm, title: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Yetkili Kişi Adı:</label>
+                  <input
+                    type="text"
+                    value={infoForm.contactName}
+                    onChange={(e) => setInfoForm({ ...infoForm, contactName: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Telefon Numarası:</label>
+                  <input
+                    type="text"
+                    value={infoForm.phone}
+                    onChange={(e) => setInfoForm({ ...infoForm, phone: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">E-Posta Adresi:</label>
+                  <input
+                    type="email"
+                    value={infoForm.email}
+                    onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-400 mb-1 font-semibold">Şehir / Lokasyon:</label>
+                  <input
+                    type="text"
+                    value={infoForm.city}
+                    onChange={(e) => setInfoForm({ ...infoForm, city: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingInfo(false)}
+                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors"
+                >
+                  Değişiklikleri Kaydet
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* Stage Switcher Banner */}
           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

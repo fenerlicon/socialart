@@ -63,8 +63,20 @@ function mapDbRowToLead(row) {
       let parsedNotes = [];
       const seenNoteTexts = new Set();
       
+      const isInvalidNote = (txt) => {
+        if (!txt || typeof txt !== 'string') return true;
+        const clean = txt.trim();
+        if (clean.length < 2) return true;
+        // Check if string is ISO Date or Date-Time string like 2026-07-05T04:59:17
+        if (/^\d{4}-\d{2}-\d{2}/.test(clean)) return true;
+        if (!isNaN(Date.parse(clean)) && (clean.length === 10 || clean.includes('T') || clean.includes('Z'))) return true;
+        // Filter boolean/number strings
+        if (clean === 'true' || clean === 'false' || clean === 'null' || clean === 'undefined') return true;
+        return false;
+      };
+
       const addNote = (text, authorLabel = 'Temsilci Notu - Son Görüşme / Not') => {
-        if (!text || typeof text !== 'string' || !text.trim()) return;
+        if (!text || typeof text !== 'string' || isInvalidNote(text)) return;
         const cleanText = text.trim();
         if (seenNoteTexts.has(cleanText)) return; // prevent exact duplicate notes
 
@@ -75,7 +87,7 @@ function mapDbRowToLead(row) {
               parsed.forEach(item => {
                 if (typeof item === 'object' && item !== null) {
                   const t = item.text || item.content || item.note || item.message || '';
-                  if (t && !seenNoteTexts.has(t)) {
+                  if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
                     seenNoteTexts.add(t);
                     parsedNotes.push({
                       id: item.id || `note-${Math.random()}`,
@@ -84,7 +96,7 @@ function mapDbRowToLead(row) {
                       createdAt: item.createdAt || item.created_at || row.created_at || new Date().toISOString()
                     });
                   }
-                } else if (typeof item === 'string' && item.trim()) {
+                } else if (typeof item === 'string' && item.trim() && !isInvalidNote(item)) {
                   if (!seenNoteTexts.has(item.trim())) {
                     seenNoteTexts.add(item.trim());
                     parsedNotes.push({
@@ -356,6 +368,45 @@ export default function CRMPage({ embedded = false }) {
       .eq('id', leadId);
   };
 
+  // Update Assigned Staff
+  const handleUpdateAssignedTo = async (leadId, newStaff) => {
+    setLeads(prev => prev.map(lead => {
+      if (lead.id === leadId) {
+        const updated = { ...lead, assignedTo: newStaff, updatedAt: new Date().toISOString() };
+        if (selectedLead?.id === leadId) setSelectedLead(updated);
+        return updated;
+      }
+      return lead;
+    }));
+    await supabase
+      .from('leads')
+      .update({ assigned_to: newStaff, updated_at: new Date().toISOString() })
+      .eq('id', leadId);
+  };
+
+  // Update Lead Info (Title, Contact, Phone, Email, City)
+  const handleUpdateLeadInfo = async (leadId, updatedData) => {
+    setLeads(prev => prev.map(lead => {
+      if (lead.id === leadId) {
+        const updated = { ...lead, ...updatedData, updatedAt: new Date().toISOString() };
+        if (selectedLead?.id === leadId) setSelectedLead(updated);
+        return updated;
+      }
+      return lead;
+    }));
+    await supabase
+      .from('leads')
+      .update({
+        title: updatedData.title,
+        name: updatedData.contactName,
+        phone: updatedData.phone,
+        email: updatedData.email,
+        city: updatedData.city,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', leadId);
+  };
+
   // Update retargeting
   const handleUpdateRetargeting = async (leadId, date, note) => {
     setLeads(prev => prev.map(lead => {
@@ -554,6 +605,8 @@ export default function CRMPage({ embedded = false }) {
         onAddNote={handleAddNote}
         onUpdateRetargeting={handleUpdateRetargeting}
         onUpdateBudget={handleUpdateBudget}
+        onUpdateAssignedTo={handleUpdateAssignedTo}
+        onUpdateLeadInfo={handleUpdateLeadInfo}
       />
       <NewLeadModal
         isOpen={isNewLeadModalOpen}
