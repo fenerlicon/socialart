@@ -293,7 +293,7 @@ export default function CRMPage({ embedded = false }) {
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Fetch leads from Supabase with Local Overrides Merge
+  // Fetch leads from Supabase directly (Host is single source of truth)
   const fetchLeads = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -302,56 +302,12 @@ export default function CRMPage({ embedded = false }) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      let loadedLeads = [];
-      if (!error && data && data.length > 0) {
-        loadedLeads = data.map(mapDbRowToLead);
+      if (!error && data) {
+        const loadedLeads = data.map(mapDbRowToLead);
+        setLeads(loadedLeads);
+      } else if (error) {
+        console.error('Supabase fetch error:', error);
       }
-
-      // Merge manual leads saved in LocalStorage first
-      try {
-        const storedManual = localStorage.getItem('socialart_crm_manual_leads');
-        if (storedManual) {
-          const manualLeadsList = JSON.parse(storedManual);
-          if (Array.isArray(manualLeadsList)) {
-            manualLeadsList.forEach(m => {
-              if (!loadedLeads.some(l => l.id === m.id)) {
-                loadedLeads.unshift(m);
-              }
-            });
-          }
-        }
-      } catch (e) {
-        // Ignore parse error
-      }
-
-      // Merge local stage, info & note overrides LAST to guarantee highest priority
-      try {
-        const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
-        if (storedOverrides) {
-          const overrides = JSON.parse(storedOverrides);
-          loadedLeads = loadedLeads.map(l => {
-            if (overrides[l.id]) {
-              return { ...l, ...overrides[l.id] };
-            }
-            return l;
-          });
-        }
-      } catch (e) {
-        // Ignore JSON parse error
-      }
-
-      // Filter out deleted leads saved in LocalStorage
-      try {
-        const deletedIds = JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]');
-        if (Array.isArray(deletedIds) && deletedIds.length > 0) {
-          const deletedSet = new Set(deletedIds);
-          loadedLeads = loadedLeads.filter(l => !deletedSet.has(l.id));
-        }
-      } catch (e) {
-        // Ignore parse error
-      }
-
-      setLeads(loadedLeads);
     } catch (err) {
       console.error('Lead fetch error:', err);
     } finally {
@@ -360,6 +316,13 @@ export default function CRMPage({ embedded = false }) {
   }, []);
 
   useEffect(() => {
+    // Tarayıcıdaki sahte kalıntı test verilerini bir defaya mahsus temizle (Host ile tam eşitlik için)
+    try {
+      localStorage.removeItem('socialart_crm_manual_leads');
+      localStorage.removeItem('crm_lead_overrides_v1');
+      localStorage.removeItem('socialart_crm_deleted_lead_ids');
+    } catch (e) {}
+
     // İlk yükleme
     fetchLeads();
 
