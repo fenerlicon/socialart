@@ -16,7 +16,8 @@ import {
   Clock, 
   CheckCircle2, 
   FileText,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { Lead, StageId } from '../types/crm';
 import { STAGES } from '../mock/initialData';
@@ -26,6 +27,7 @@ interface LeadDetailModalProps {
   onClose: () => void;
   onUpdateStage: (leadId: string, newStage: StageId) => void;
   onAddNote: (leadId: string, noteText: string) => void;
+  onDeleteNote?: (leadId: string, noteId: string) => void;
   onUpdateRetargeting: (leadId: string, date: string, note: string) => void;
   onUpdateBudget: (leadId: string, newBudget: number | null) => void;
   onUpdateAssignedTo?: (leadId: string, newStaff: string) => void;
@@ -39,6 +41,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onClose,
   onUpdateStage,
   onAddNote,
+  onDeleteNote,
   onUpdateRetargeting,
   onUpdateBudget,
   onUpdateAssignedTo,
@@ -476,12 +479,24 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                 <p className="text-xs text-slate-500 italic py-2">Henüz not eklenmedi.</p>
               ) : (
                 lead.notes.map((note) => (
-                  <div key={note.id} className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                  <div key={note.id} className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1 group relative">
                     <div className="flex items-center justify-between text-slate-400 font-medium text-[11px]">
                       <span className="text-indigo-400 font-bold">{note.author}</span>
-                      <span>{new Date(note.createdAt).toLocaleString('tr-TR')}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{new Date(note.createdAt).toLocaleString('tr-TR')}</span>
+                        {onDeleteNote && (
+                          <button
+                            type="button"
+                            onClick={() => onDeleteNote(lead.id, note.id)}
+                            className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors"
+                            title="Notu Sil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-slate-200 leading-relaxed">{note.text}</p>
+                    <p className="text-slate-200 leading-relaxed pr-4">{note.text}</p>
                   </div>
                 ))
               )}

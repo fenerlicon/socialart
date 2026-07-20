@@ -538,6 +538,45 @@ export default function CRMPage({ embedded = false }) {
       .eq('id', leadId);
   };
 
+  // Delete note → sync to Supabase & LocalStorage
+  const handleDeleteNote = async (leadId, noteId) => {
+    const currentLead = leads.find(l => l.id === leadId);
+    if (!currentLead) return;
+
+    const updatedNotes = (currentLead.notes || []).filter(n => n.id !== noteId);
+
+    saveOverride(leadId, { notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {
+      console.warn('Manual lead notes delete error:', e);
+    }
+
+    setLeads(prev => prev.map(lead => {
+      if (lead.id === leadId) {
+        const updated = { ...lead, notes: updatedNotes, updatedAt: new Date().toISOString() };
+        if (selectedLead?.id === leadId) setSelectedLead(updated);
+        return updated;
+      }
+      return lead;
+    }));
+
+    showToast('Not silindi!');
+
+    await supabase
+      .from('leads')
+      .update({ notes: updatedNotes, updated_at: new Date().toISOString() })
+      .eq('id', leadId);
+  };
+
   // Update Assigned Staff
   const handleUpdateAssignedTo = async (leadId, newStaff) => {
     saveOverride(leadId, { assignedTo: newStaff });
@@ -835,6 +874,7 @@ export default function CRMPage({ embedded = false }) {
         onClose={() => setSelectedLead(null)}
         onUpdateStage={handleStageChange}
         onAddNote={handleAddNote}
+        onDeleteNote={handleDeleteNote}
         onUpdateRetargeting={handleUpdateRetargeting}
         onUpdateBudget={handleUpdateBudget}
         onUpdateAssignedTo={handleUpdateAssignedTo}
