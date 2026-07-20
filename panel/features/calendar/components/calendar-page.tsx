@@ -400,7 +400,7 @@ export function CalendarPage() {
 
                     <div className="space-y-1 overflow-y-auto max-h-[75px] scrollbar-thin">
                       {dayEvents.map((evt) => {
-                        const style = EVENT_TYPE_COLORS[evt.type]
+                        const style = EVENT_TYPE_COLORS[evt.type] || { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-400', label: 'Etkinlik' }
                         return (
                           <div
                             key={evt.id}
@@ -449,9 +449,14 @@ export function CalendarPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest block">ETKİNLİK TİPİ</span>
-                  <Badge className={`mt-1 font-bold text-[9px] ${EVENT_TYPE_COLORS[selectedEvent.type].bg} ${EVENT_TYPE_COLORS[selectedEvent.type].border} ${EVENT_TYPE_COLORS[selectedEvent.type].text} shadow-none rounded-lg border`}>
-                    {EVENT_TYPE_COLORS[selectedEvent.type].label}
-                  </Badge>
+                  {(() => {
+                    const style = EVENT_TYPE_COLORS[selectedEvent.type] || { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-400', label: selectedEvent.type || 'Etkinlik' }
+                    return (
+                      <Badge className={`mt-1 font-bold text-[9px] ${style.bg} ${style.border} ${style.text} shadow-none rounded-lg border`}>
+                        {style.label}
+                      </Badge>
+                    )
+                  })()}
                 </div>
 
                 {selectedEvent.brandId && (

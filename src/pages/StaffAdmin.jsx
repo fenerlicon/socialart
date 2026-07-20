@@ -2808,31 +2808,33 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
           borderBottom: '1px solid rgba(255,255,255,0.08)', 
           zIndex: 10000, 
           alignItems: 'center', 
-          justify: 'space-between', 
+          justifyContent: 'space-between', 
           padding: '0 16px' 
         }}
       >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.75rem' }}>SA</div>
+          <span style={{ fontWeight: '850', fontSize: '0.9rem', letterSpacing: '-0.3px' }}>Social Art CRM</span>
+        </div>
+
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          aria-label="Workspace Menüsünü Aç"
+          title="Workspace Menüsü"
           style={{
             background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '10px',
-            padding: '8px',
+            padding: '8px 12px',
             color: '#fff',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '6px'
           }}
         >
-          <Menu size={20} />
-          <span style={{ fontSize: '0.8rem', fontWeight: '700' }}>Menü</span>
+          <MoreVertical size={20} />
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.7rem' }}>SA</div>
-          <span style={{ fontWeight: '800', fontSize: '0.85rem' }}>Social Art CRM</span>
-        </div>
       </div>
 
       {/* Mobile Overlay Backdrop */}
@@ -2855,23 +2857,14 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         {/* 1. Left Sidebar Navigation (Matching NextJS design) */}
         <aside className={`admin-sidebar-nav ${isSidebarOpen ? 'open' : ''}`} style={{ width: '260px', background: 'rgba(9, 9, 11, 0.45)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 20px', minHeight: '100vh', position: 'sticky', top: 0, shrink: 0, gap: '25px', zIndex: 10001 }}>
           {/* Logo & Brand Info */}
-          <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)' }}>
-                SA
-              </div>
-              <div style={{ lineHeight: '1.2' }}>
-                <span style={{ fontWeight: '850', fontSize: '0.9rem', display: 'block', letterSpacing: '-0.3px' }}>Social Art</span>
-                <span style={{ fontSize: '0.55rem', color: '#71717a', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Base Workspace</span>
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)' }}>
+              SA
             </div>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="mobile-only"
-              style={{ background: 'transparent', border: 'none', color: '#a1a1aa', padding: '4px', cursor: 'pointer' }}
-            >
-              <X size={20} />
-            </button>
+            <div style={{ lineHeight: '1.2' }}>
+              <span style={{ fontWeight: '850', fontSize: '0.9rem', display: 'block', letterSpacing: '-0.3px' }}>Social Art</span>
+              <span style={{ fontSize: '0.55rem', color: '#71717a', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Base Workspace</span>
+            </div>
           </div>
 
           {/* Sidebar Nav Buttons */}
@@ -2982,25 +2975,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               {/* Yeni Müşteri butonu CRMPage içinde zaten var */}
-
-              <button 
-                onClick={() => setIsAISettingsOpen(true)}
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#fff',
-                  padding: '10px 16px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.8rem',
-                  fontWeight: '600'
-                }}
-              >
-                <Zap size={16} color="var(--accent)" /> AI Ayarları
-              </button>
             </div>
           </div>
 
