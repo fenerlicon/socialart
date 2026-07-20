@@ -112,14 +112,13 @@ function mapDbRowToLead(row) {
         });
       };
 
-      // 1. Bilinen öncelikli not alanları
-      const possibleNoteKeys = [
-        'notes', 'note', 'internal_notes', 'details', 'message', 'description', 
-        'comments', 'temsilci_notu', 'aciklama', 'gorusme_notlari', 'notlar', 
-        'gorusme_gecmisi', 'history', 'remark', 'remarks', 'service'
+      // 1. Sadece GERÇEK TEMSİLCİ NOTLARI (notes, note, internal_notes, temsilci_notu, gorusme_notlari, notlar, gorusme_gecmisi, comments, remarks)
+      const repNoteKeys = [
+        'notes', 'note', 'internal_notes', 'temsilci_notu', 'aciklama', 'gorusme_notlari', 
+        'notlar', 'gorusme_gecmisi', 'comments', 'history', 'remark', 'remarks'
       ];
 
-      possibleNoteKeys.forEach(key => {
+      repNoteKeys.forEach(key => {
         const val = row[key];
         if (!val) return;
 
@@ -155,33 +154,6 @@ function mapDbRowToLead(row) {
           addNote(String(val), 'Temsilci Notu - Son Görüşme / Not');
         }
       });
-
-      // 2. EVRENSEL AKILLI TARAMA: Standart dışındaki tüm string & object alanları da Not olarak çek!
-      const standardNonNoteKeys = new Set([
-        'id', 'name', 'full_name', 'company', 'title', 'email', 'phone', 'city', 
-        'budget', 'status', 'stage', 'source', 'pipeline', 'created_at', 'updated_at', 
-        'assigned_to', 'priority', 'retargeting_date', 'retargeting_note',
-        'meta_campaign_name', 'ads_active', 'monthly_fee', 'payment_day'
-      ]);
-
-      for (const [key, value] of Object.entries(row)) {
-        if (!standardNonNoteKeys.has(key) && value) {
-          if (typeof value === 'string') {
-            addNote(value, 'Temsilci Notu - Son Görüşme / Not');
-          } else if (Array.isArray(value)) {
-            value.forEach(item => {
-              if (typeof item === 'string') addNote(item, 'Temsilci Notu - Son Görüşme / Not');
-              else if (typeof item === 'object' && item !== null) {
-                const t = item.text || item.note || item.content || item.message || '';
-                if (t) addNote(t, item.author || 'Temsilci Notu - Son Görüşme / Not');
-              }
-            });
-          } else if (typeof value === 'object' && value !== null) {
-            const t = value.text || value.note || value.content || value.message || '';
-            if (t) addNote(t, value.author || 'Temsilci Notu - Son Görüşme / Not');
-          }
-        }
-      }
 
       return parsedNotes;
     })(),
