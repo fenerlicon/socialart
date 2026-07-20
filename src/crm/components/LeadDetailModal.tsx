@@ -341,88 +341,55 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           </div>
 
           {/* Service Specs & Budget Box */}
-          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3 text-xs">
-            <h3 className="font-bold text-slate-300 text-xs uppercase tracking-wider mb-2">Hizmet & Bütçe Detayları</h3>
+          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-4 text-xs">
+            <h3 className="font-bold text-slate-300 text-xs uppercase tracking-wider">Hizmet & Bütçe Detayları</h3>
 
-            {isProduction && lead.productionDetails && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-slate-500 block mb-1">Proje Türü:</span>
-                  <span className="font-bold text-indigo-400">{lead.productionDetails.projectType}</span>
+            {/* Bütçe Formu - HER MÜŞTERİ İÇİN EKRANDA VE DÜZENLENEBİLİR */}
+            <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-2">
+              <form onSubmit={handleSaveBudget} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 font-bold text-xs">
+                    {isProduction ? 'Teklif / Proje Bütçesi (₺):' : 'Aylık Hizmet Bütçesi (₺/ay):'}
+                  </span>
+                  {editableBudget && (
+                    <span className="text-emerald-400 font-extrabold text-sm">
+                      ₺{Number(editableBudget).toLocaleString('tr-TR')}
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <form onSubmit={handleSaveBudget}>
-                    <span className="text-slate-500 block mb-1">Teklif / Bütçe (₺):</span>
-                    <div className="flex gap-1.5">
-                      <input
-                        type="number"
-                        placeholder="Örn: 150000 (Boş ise Belirsiz)"
-                        value={editableBudget}
-                        onChange={(e) => setEditableBudget(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-emerald-400 font-bold focus:outline-none focus:border-indigo-500"
-                      />
-                      <button
-                        type="submit"
-                        className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors whitespace-nowrap text-[11px]"
-                      >
-                        {isBudgetSaved ? '✓' : 'Kaydet'}
-                      </button>
-                    </div>
-                  </form>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Örn: 40000 (Boş ise Belirtilmedi)"
+                    value={editableBudget}
+                    onChange={(e) => setEditableBudget(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-emerald-400 font-extrabold text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold rounded-lg shadow-lg transition-all text-xs whitespace-nowrap flex items-center justify-center shrink-0 min-w-[90px]"
+                  >
+                    {isBudgetSaved ? '✓ Kaydedildi' : 'Kaydet'}
+                  </button>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">Çekim Süresi:</span>
-                  <span className="font-medium text-slate-300">{lead.productionDetails.estimatedDurationDays || 1} Gün</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Çekim Lokasyonu:</span>
-                  <span className="font-medium text-slate-300">{lead.productionDetails.shootingLocation || 'Belirtilmedi'}</span>
-                </div>
-              </div>
-            )}
+              </form>
+            </div>
 
-            {!isProduction && lead.socialMediaDetails && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-slate-500 block mb-1">Sektör / Marka Türü:</span>
-                  <span className="font-bold text-purple-400">{lead.socialMediaDetails.industry}</span>
-                </div>
-                <div>
-                  <form onSubmit={handleSaveBudget}>
-                    <span className="text-slate-500 block mb-1">Aylık Bütçe (₺/ay):</span>
-                    <div className="flex gap-1.5">
-                      <input
-                        type="number"
-                        placeholder="Örn: 40000 (Boş ise Belirsiz)"
-                        value={editableBudget}
-                        onChange={(e) => setEditableBudget(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-emerald-400 font-bold focus:outline-none focus:border-indigo-500"
-                      />
-                      <button
-                        type="submit"
-                        className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors whitespace-nowrap text-[11px]"
-                      >
-                        {isBudgetSaved ? '✓' : 'Kaydet'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Hedef Platformlar:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {lead.socialMediaDetails.platforms.map(p => (
-                      <span key={p} className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Aylık İçerik Hedefi:</span>
-                  <span className="font-medium text-slate-300">{lead.socialMediaDetails.monthlyReelsCount} Adet Reels/Post</span>
-                </div>
+            {/* Ek Detaylar */}
+            <div className="grid grid-cols-2 gap-4 pt-1 border-t border-slate-800/60">
+              <div>
+                <span className="text-slate-500 block">Hizmet Kategorisi:</span>
+                <span className="font-bold text-purple-400">
+                  {isProduction ? (lead.productionDetails?.shootType || lead.productionDetails?.projectType || 'Prodüksiyon') : 'Sosyal Medya Yönetimi'}
+                </span>
               </div>
-            )}
+              <div>
+                <span className="text-slate-500 block">Kapsam:</span>
+                <span className="font-medium text-slate-300">
+                  {isProduction ? `${lead.productionDetails?.estimatedDurationDays || 1} Gün Çekim` : `${lead.socialMediaDetails?.monthlyReelsCount || 12} Reels / Ay`}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Retargeting & Reminders Box */}

@@ -748,8 +748,9 @@ export default function CRMPage({ embedded = false }) {
         const isProd = lead.pipeline === 'PRODUCTION';
         const updated = {
           ...lead,
-          productionDetails: isProd && lead.productionDetails ? { ...lead.productionDetails, budget: newBudget } : lead.productionDetails,
-          socialMediaDetails: !isProd && lead.socialMediaDetails ? { ...lead.socialMediaDetails, monthlyBudget: newBudget } : lead.socialMediaDetails,
+          budget: newBudget,
+          productionDetails: isProd ? { ...(lead.productionDetails || {}), budget: newBudget } : lead.productionDetails,
+          socialMediaDetails: !isProd ? { ...(lead.socialMediaDetails || {}), monthlyBudget: newBudget } : lead.socialMediaDetails,
           updatedAt: new Date().toISOString()
         };
         if (selectedLead?.id === leadId) setSelectedLead(updated);
@@ -757,10 +758,15 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
-    await supabase
-      .from('leads')
-      .update({ budget: newBudget, updated_at: new Date().toISOString() })
-      .eq('id', leadId);
+
+    try {
+      await supabase
+        .from('leads')
+        .update({ budget: newBudget, updated_at: new Date().toISOString() })
+        .eq('id', leadId);
+    } catch (e) {
+      console.warn('Supabase budget update error:', e);
+    }
   };
 
   // Add manual lead → instant UI update + persistence in localStorage & Supabase
