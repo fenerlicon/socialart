@@ -16,19 +16,34 @@ import { STAGES } from '../crm/mock/initialData';
 function mapDbRowToLead(row) {
   const statusMap = {
     'Sıcak': 'NEW',
+    'Yeni': 'NEW',
+    'new': 'NEW',
+    'NEW': 'NEW',
     'İlk İletişim': 'CONTACTED',
+    'contacted': 'CONTACTED',
+    'CONTACTED': 'CONTACTED',
     'Teklif Bekliyor': 'WAITING',
+    'Beklemede': 'WAITING',
+    'waiting': 'WAITING',
+    'WAITING': 'WAITING',
     'Teklif İletildi': 'PROPOSAL_SENT',
     'Katalog İletildi': 'PROPOSAL_SENT',
-    'Beklemede': 'WAITING',
-    'Anlaşıldı': 'WON',
-    'won': 'WON',
-    'negotiating': 'PROPOSAL_SENT',
     'proposal_sent': 'PROPOSAL_SENT',
+    'PROPOSAL_SENT': 'PROPOSAL_SENT',
+    'negotiating': 'PROPOSAL_SENT',
     'Ertelendi': 'RETARGETING',
+    'retargeting': 'RETARGETING',
+    'RETARGETING': 'RETARGETING',
+    'Anlaşıldı': 'WON',
+    'Kazanıldı': 'WON',
+    'won': 'WON',
+    'WON': 'WON',
     'Reddedildi': 'LOST',
+    'Kaybedildi': 'LOST',
+    'Olumsuz': 'LOST',
+    'İptal': 'LOST',
     'lost': 'LOST',
-    'new': 'NEW',
+    'LOST': 'LOST'
   };
 
   const pipelineMap = {
@@ -46,6 +61,9 @@ function mapDbRowToLead(row) {
     (service.toLowerCase().includes('prodük') || service.toLowerCase().includes('video') || service.toLowerCase().includes('çekim')
       ? 'PRODUCTION' : 'SOCIAL_MEDIA');
 
+  const rawStatus = String(row.stage || row.status || row.durum || '').trim();
+  const stage = statusMap[rawStatus] || statusMap[rawStatus.toLowerCase()] || (['NEW', 'CONTACTED', 'WAITING', 'PROPOSAL_SENT', 'RETARGETING', 'WON', 'LOST'].includes(rawStatus) ? rawStatus : 'NEW');
+
   return {
     id: String(row.id),
     pipeline,
@@ -55,7 +73,7 @@ function mapDbRowToLead(row) {
     phone: row.phone || '',
     city: row.city || '',
     source: row.source || 'MANUAL',
-    stage: statusMap[row.status] || 'NEW',
+    stage,
     assignedTo: row.assigned_to || '',
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
@@ -244,7 +262,7 @@ export default function CRMPage({ embedded = false }) {
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Fetch leads from Supabase
+  // Fetch leads from Supabase with Local Overrides Merge
   const fetchLeads = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -253,9 +271,28 @@ export default function CRMPage({ embedded = false }) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setLeads(data.map(mapDbRowToLead));
+      let loadedLeads = [];
+      if (!error && data && data.length > 0) {
+        loadedLeads = data.map(mapDbRowToLead);
       }
+
+      // Merge local stage & info overrides
+      try {
+        const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
+        if (storedOverrides) {
+          const overrides = JSON.parse(storedOverrides);
+          loadedLeads = loadedLeads.map(l => {
+            if (overrides[l.id]) {
+              return { ...l, ...overrides[l.id] };
+            }
+            return l;
+          });
+        }
+      } catch (e) {
+        // Ignore JSON parse error
+      }
+
+      setLeads(loadedLeads);
     } catch (err) {
       console.error('Lead fetch error:', err);
     } finally {
@@ -266,6 +303,18 @@ export default function CRMPage({ embedded = false }) {
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
+
+  // Helper to save overrides to localStorage
+  const saveOverride = (leadId, partialData) => {
+    try {
+      const stored = localStorage.getItem('crm_lead_overrides_v1');
+      const overrides = stored ? JSON.parse(stored) : {};
+      overrides[leadId] = { ...(overrides[leadId] || {}), ...partialData };
+      localStorage.setItem('crm_lead_overrides_v1', JSON.stringify(overrides));
+    } catch (e) {
+      console.error('Save override error:', e);
+    }
+  };
 
   // Pipeline Confirmation Modal State
   const [pipelineConfirmState, setPipelineConfirmState] = useState({
@@ -289,6 +338,8 @@ export default function CRMPage({ embedded = false }) {
     const leadId = targetLead.id;
     const newService = newPipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya';
     
+    saveOverride(leadId, { pipeline: newPipeline });
+
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
         const updated = {
@@ -313,9 +364,13 @@ export default function CRMPage({ embedded = false }) {
       .eq('id', leadId);
   };
 
-  // Stage change → sync to Supabase
+  // Stage change → sync to Supabase & LocalStorage
   const handleStageChange = async (leadId, newStage) => {
     const newStatus = stageToStatus[newStage];
+
+    // Save to LocalStorage immediately to guarantee persistence on refresh
+    saveOverride(leadId, { stage: newStage });
+
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
         const updated = {
@@ -337,9 +392,14 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
+
     await supabase
       .from('leads')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({ 
+        status: newStatus,
+        stage: newStage,
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', leadId);
   };
 
@@ -370,6 +430,7 @@ export default function CRMPage({ embedded = false }) {
 
   // Update Assigned Staff
   const handleUpdateAssignedTo = async (leadId, newStaff) => {
+    saveOverride(leadId, { assignedTo: newStaff });
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
         const updated = { ...lead, assignedTo: newStaff, updatedAt: new Date().toISOString() };
@@ -386,6 +447,7 @@ export default function CRMPage({ embedded = false }) {
 
   // Update Lead Info (Title, Contact, Phone, Email, City)
   const handleUpdateLeadInfo = async (leadId, updatedData) => {
+    saveOverride(leadId, updatedData);
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
         const updated = { ...lead, ...updatedData, updatedAt: new Date().toISOString() };

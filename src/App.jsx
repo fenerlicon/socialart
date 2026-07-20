@@ -286,6 +286,7 @@ function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/crm" element={<Admin />} />
+            <Route path="/crrm" element={<Navigate to="/crm" replace />} />
 
             <Route path="/fiyatlar" element={<Pricing />} />
             <Route path="/musteri" element={<ClientPortal />} />

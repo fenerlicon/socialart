@@ -73,6 +73,21 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   const daysInactive = getDaysInactive();
   const isInactiveAlert = daysInactive >= 3 && lead.stage !== 'WON' && lead.stage !== 'LOST';
 
+  const getLatestNoteDisplay = () => {
+    if (lead.notes && lead.notes.length > 0) {
+      const validNotes = lead.notes.filter(n => {
+        if (!n.text || typeof n.text !== 'string') return false;
+        const txt = n.text.trim();
+        if (txt.length < 2) return false;
+        if (/^\d{4}-\d{2}-\d{2}/.test(txt)) return false;
+        if (!isNaN(Date.parse(txt)) && (txt.length === 10 || txt.includes('T') || txt.includes('Z'))) return false;
+        return true;
+      });
+      if (validNotes.length > 0) return validNotes[0].text;
+    }
+    return 'Form Doldurdu';
+  };
+
   return (
     <div 
       onClick={() => onSelect(lead)}
@@ -210,13 +225,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({
           </div>
         )}
 
-        {/* Latest Note Badge (e.g. "AÇMADI") */}
-        {lead.notes && lead.notes.length > 0 && (
-          <div className="mb-3 bg-slate-950/90 border border-slate-800/90 rounded-lg px-2.5 py-1.5 text-[11px] text-indigo-300/90 font-medium italic flex items-center gap-1.5">
-            <span className="text-indigo-400 font-bold shrink-0">💬</span>
-            <span className="line-clamp-1">"{lead.notes[0].text}"</span>
-          </div>
-        )}
+        {/* Latest Note Badge */}
+        <div className="mb-3 bg-slate-950/90 border border-slate-800/90 rounded-lg px-2.5 py-1.5 text-[11px] text-indigo-300/90 font-medium italic flex items-center gap-1.5">
+          <span className="text-indigo-400 font-bold shrink-0">💬</span>
+          <span className="line-clamp-1">"{getLatestNoteDisplay()}"</span>
+        </div>
       </div>
 
       {/* Footer & Quick Actions */}

@@ -281,13 +281,27 @@ export const ListView: React.FC<ListViewProps> = ({
 
                       {/* Son Not Cell */}
                       <td className="py-4 px-4 max-w-[200px]">
-                        {lead.notes && lead.notes.length > 0 ? (
-                          <div className="text-[11px] text-indigo-300 font-medium italic truncate" title={lead.notes[0].text}>
-                            "{lead.notes[0].text}"
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-slate-600 italic">Not yok</span>
-                        )}
+                        {(() => {
+                          let noteTxt = 'Form Doldurdu';
+                          if (lead.notes && lead.notes.length > 0) {
+                            const validNotes = lead.notes.filter(n => {
+                              if (!n.text || typeof n.text !== 'string') return false;
+                              const txt = n.text.trim();
+                              if (txt.length < 2) return false;
+                              if (/^\d{4}-\d{2}-\d{2}/.test(txt)) return false;
+                              if (!isNaN(Date.parse(txt)) && (txt.length === 10 || txt.includes('T') || txt.includes('Z'))) return false;
+                              return true;
+                            });
+                            if (validNotes.length > 0) {
+                              noteTxt = validNotes[0].text;
+                            }
+                          }
+                          return (
+                            <div className="text-[11px] text-indigo-300 font-medium italic truncate" title={noteTxt}>
+                              "{noteTxt}"
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Contact Info */}
