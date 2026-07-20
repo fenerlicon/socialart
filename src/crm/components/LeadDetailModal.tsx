@@ -28,6 +28,7 @@ interface LeadDetailModalProps {
   onUpdateStage: (leadId: string, newStage: StageId) => void;
   onAddNote: (leadId: string, noteText: string) => void;
   onDeleteNote?: (leadId: string, noteId: string) => void;
+  onDeleteLead?: (leadId: string) => void;
   onUpdateRetargeting: (leadId: string, date: string, note: string) => void;
   onUpdateBudget: (leadId: string, newBudget: number | null) => void;
   onUpdateAssignedTo?: (leadId: string, newStaff: string) => void;
@@ -42,6 +43,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateStage,
   onAddNote,
   onDeleteNote,
+  onDeleteLead,
   onUpdateRetargeting,
   onUpdateBudget,
   onUpdateAssignedTo,
@@ -163,12 +165,30 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onDeleteLead && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`"${lead.title || lead.contactName || 'Bu müşteriyi'}" sistemden tamamen silmek istediğinizden emin misiniz?`)) {
+                    onDeleteLead(lead.id);
+                    onClose();
+                  }
+                }}
+                className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                title="Müşteriyi Sil"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Müşteriyi Sil</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}

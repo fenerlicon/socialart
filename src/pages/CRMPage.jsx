@@ -330,6 +330,17 @@ export default function CRMPage({ embedded = false }) {
         // Ignore parse error
       }
 
+      // Filter out deleted leads saved in LocalStorage
+      try {
+        const deletedIds = JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]');
+        if (Array.isArray(deletedIds) && deletedIds.length > 0) {
+          const deletedSet = new Set(deletedIds);
+          loadedLeads = loadedLeads.filter(l => !deletedSet.has(l.id));
+        }
+      } catch (e) {
+        // Ignore parse error
+      }
+
       setLeads(loadedLeads);
     } catch (err) {
       console.error('Lead fetch error:', err);
@@ -575,6 +586,42 @@ export default function CRMPage({ embedded = false }) {
       .from('leads')
       .update({ notes: updatedNotes, updated_at: new Date().toISOString() })
       .eq('id', leadId);
+  };
+
+  // Delete Lead Completely
+  const handleDeleteLead = async (leadId) => {
+    // Immediate UI Update
+    setLeads(prev => prev.filter(l => l.id !== leadId));
+    if (selectedLead?.id === leadId) setSelectedLead(null);
+
+    // LocalStorage sync
+    try {
+      const deletedIds = JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]');
+      if (!deletedIds.includes(leadId)) {
+        deletedIds.push(leadId);
+        localStorage.setItem('socialart_crm_deleted_lead_ids', JSON.stringify(deletedIds));
+      }
+
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updated = manualLeadsList.filter(m => m.id !== leadId);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updated));
+        }
+      }
+    } catch (e) {
+      console.warn('Error syncing deleted lead to localStorage:', e);
+    }
+
+    showToast('Müşteri kaydı silindi');
+
+    // Supabase DB Delete
+    try {
+      await supabase.from('leads').delete().eq('id', leadId);
+    } catch (e) {
+      console.warn('Supabase delete error:', e);
+    }
   };
 
   // Update Assigned Staff
@@ -875,6 +922,7 @@ export default function CRMPage({ embedded = false }) {
         onUpdateStage={handleStageChange}
         onAddNote={handleAddNote}
         onDeleteNote={handleDeleteNote}
+        onDeleteLead={handleDeleteLead}
         onUpdateRetargeting={handleUpdateRetargeting}
         onUpdateBudget={handleUpdateBudget}
         onUpdateAssignedTo={handleUpdateAssignedTo}
