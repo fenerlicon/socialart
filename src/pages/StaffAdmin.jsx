@@ -177,17 +177,25 @@ const AdminStyles = () => (
     }
 
     @media (max-width: 1024px) {
-      .admin-layout { flex-direction: column; gap: 20px; margin-top: 80px; }
-      .main-content-area { padding: 75px 15px 25px 15px !important; }
+      .admin-layout { flex-direction: column; gap: 0; margin-top: 0; }
+      .main-content-area { padding: 75px 15px 25px 15px !important; width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; }
       .admin-sidebar-nav {
-        position: fixed; top: 0; left: -320px; height: 100vh; width: 300px;
-        background: #09090b; z-index: 10001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        padding: 20px; overflow-y: auto; box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        position: fixed !important;
+        top: 0 !important;
+        left: -340px !important;
+        height: 100vh !important;
+        width: 300px !important;
+        background: #09090b !important;
+        z-index: 99999 !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 24px 20px !important;
+        overflow-y: auto !important;
+        box-shadow: 20px 0 60px rgba(0,0,0,0.9) !important;
         display: flex !important;
-        flex-direction: column;
-        gap: 5px;
+        flex-direction: column !important;
+        gap: 20px !important;
       }
-      .admin-sidebar-nav.open { left: 0; }
+      .admin-sidebar-nav.open { left: 0 !important; }
       .mobile-header { display: flex !important; }
       .mobile-only { display: flex !important; }
       .welcome-panel { margin-top: 40px; }
@@ -2837,17 +2845,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         </button>
       </div>
 
-      {/* Mobile Overlay Backdrop */}
+      {/* Mobile Backdrop Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
+          className="mobile-sidebar-backdrop"
           onClick={() => setIsSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(5px)',
-            zIndex: 10000
-          }}
         />
       )}
 
@@ -2855,16 +2857,26 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
         <AdminStyles />
 
         {/* 1. Left Sidebar Navigation (Matching NextJS design) */}
-        <aside className={`admin-sidebar-nav ${isSidebarOpen ? 'open' : ''}`} style={{ width: '260px', background: 'rgba(9, 9, 11, 0.45)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', flexDirection: 'column', padding: '24px 20px', minHeight: '100vh', position: 'sticky', top: 0, shrink: 0, gap: '25px', zIndex: 10001 }}>
-          {/* Logo & Brand Info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)' }}>
-              SA
+        <aside className={`admin-sidebar-nav ${isSidebarOpen ? 'open' : ''}`}>
+          {/* Logo & Brand Info & Mobile Close Button */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', gap: '10px', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#fff', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)' }}>
+                SA
+              </div>
+              <div style={{ lineHeight: '1.2' }}>
+                <span style={{ fontWeight: '850', fontSize: '0.9rem', display: 'block', letterSpacing: '-0.3px' }}>Social Art</span>
+                <span style={{ fontSize: '0.55rem', color: '#71717a', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Base Workspace</span>
+              </div>
             </div>
-            <div style={{ lineHeight: '1.2' }}>
-              <span style={{ fontWeight: '850', fontSize: '0.9rem', display: 'block', letterSpacing: '-0.3px' }}>Social Art</span>
-              <span style={{ fontSize: '0.55rem', color: '#71717a', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>Base Workspace</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', cursor: 'pointer', padding: '6px' }}
+            >
+              <X size={18} />
+            </button>
           </div>
 
           {/* Sidebar Nav Buttons */}
