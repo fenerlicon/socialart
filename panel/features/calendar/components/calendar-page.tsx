@@ -76,8 +76,10 @@ export function CalendarPage() {
   const [timeStr, setTimeStr] = useState('12:00')
   const [location, setLocation] = useState('')
 
-  // Event Detail Modal State
+  // Event Detail Modal & Edit State
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
 
   // Generate Month Grid Data
   const year = viewDate.getFullYear()
@@ -206,9 +208,7 @@ export function CalendarPage() {
     setViewDate(new Date(year, month + 1, 1))
   }
 
-  // Edit Mode State
-  const [isEditing, setIsEditing] = useState(false)
-  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+ 
 
   // Start Edit Mode from selected event
   const handleStartEdit = (evt: CalendarEvent) => {
