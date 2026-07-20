@@ -32,6 +32,7 @@ const About = lazy(() => import('./pages/About'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const Admin = lazy(() => import('./pages/StaffAdmin'));
+const CRMPage = lazy(() => import('./pages/CRMPage'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const ClientPortal = lazy(() => import('./pages/ClientPortal'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -285,6 +286,7 @@ function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/crm" element={<Admin />} />
+
             <Route path="/fiyatlar" element={<Pricing />} />
             <Route path="/musteri" element={<ClientPortal />} />
             <Route path="/ugc-basvuru" element={<UGCApplication />} />
