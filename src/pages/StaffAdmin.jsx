@@ -2961,8 +2961,8 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* 2. Right Main Panel */}
         <main className="main-content-area" style={{ flex: 1, padding: '40px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '30px', overflowY: 'auto' }}>
-          {/* HALA TEMASA GEÇİLMEYEN MÜŞTERİLER VAR ALARMI */}
-          {(() => {
+          {/* HALA TEMASA GEÇİLMEYEN MÜŞTERİLER VAR ALARMI (Yalnızca Dashboard'da göster) */}
+          {activeTab !== 'potansiyel' && (() => {
             const uncontactedCount = (potansiyel || []).filter(l => l.stage === 'NEW' || l.status === 'Geldi (Yeni Lead)' || l.durum === 'Geldi (Yeni Lead)').length;
             if (uncontactedCount === 0) return null;
             return (
