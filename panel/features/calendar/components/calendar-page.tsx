@@ -6,7 +6,7 @@ import type { Brand, Employee } from '@/types/domain'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
 import { AccessDenied } from '@/components/shared/access-denied'
-import { getStoredCalendarEvents, createCalendarEvent, type CalendarEvent, type CalendarEventType } from '@/lib/storage/local-calendar-store'
+import { getStoredCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, type CalendarEvent, type CalendarEventType } from '@/lib/storage/local-calendar-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,8 @@ import {
   ShieldAlert,
   Home,
   X,
+  Trash2,
+  Edit,
 } from 'lucide-react'
 
 const EVENT_TYPE_COLORS: Record<CalendarEventType, { bg: string; border: string; text: string; label: string }> = {
@@ -167,6 +169,59 @@ export function CalendarPage() {
 
   const handleNextMonth = () => {
     setViewDate(new Date(year, month + 1, 1))
+  }
+
+  // Edit Mode State
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+
+  // Start Edit Mode from selected event
+  const handleStartEdit = (evt: CalendarEvent) => {
+    setEditingEventId(evt.id)
+    setTitle(evt.title)
+    setType(evt.type)
+    setBrandId(evt.brandId || '')
+    setEmployeeId(evt.employeeId || '')
+    setDateStr(evt.date || '2026-07-09')
+    setTimeStr(evt.time || '12:00')
+    setLocation(evt.location || '')
+    setIsEditing(true)
+  }
+
+  // Save Edit Event
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingEventId || !title.trim() || !dateStr) {
+      toast.error('Lütfen başlık ve tarih alanlarını doldurun.')
+      return
+    }
+
+    await updateCalendarEvent(editingEventId, {
+      title,
+      type,
+      brandId: brandId || undefined,
+      employeeId: employeeId || undefined,
+      date: dateStr,
+      time: timeStr,
+      location: location || undefined,
+    })
+
+    const storedEvents = await getStoredCalendarEvents()
+    setEvents(storedEvents)
+    setIsEditing(false)
+    setSelectedEvent(null)
+    toast.success('Etkinlik güncellendi!')
+  }
+
+  // Delete Event
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm('Bu etkinlik kaydını silmek istediğinize emin misiniz?')) return
+
+    await deleteCalendarEvent(eventId)
+    const storedEvents = await getStoredCalendarEvents()
+    setEvents(storedEvents)
+    setSelectedEvent(null)
+    toast.success('Etkinlik silindi!')
   }
 
   // Add Event submit
@@ -436,7 +491,163 @@ export function CalendarPage() {
                   </div>
                 </div>
               )}
+
+              {/* Action Buttons: Edit & Delete */}
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-neutral-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const evt = selectedEvent
+                    setSelectedEvent(null)
+                    handleStartEdit(evt)
+                  }}
+                  className="h-8 text-xs gap-1.5 rounded-xl border-neutral-800 text-neutral-300 hover:text-purple-400 hover:border-purple-500/50"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                  Düzenle
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteEvent(selectedEvent.id)}
+                  className="h-8 text-xs gap-1.5 rounded-xl border-rose-900/50 text-rose-400 hover:bg-rose-950/40 hover:border-rose-500"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Sil
+                </Button>
+              </div>
             </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Etkinlik Düzenleme Modali */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <Card className="w-full max-w-md rounded-2xl border bg-neutral-900 shadow-2xl p-6 relative">
+            <button
+              onClick={() => setIsEditing(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-neutral-800 text-neutral-400"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <h2 className="text-base font-bold text-foreground mb-4">Etkinliği Düzenle</h2>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-title">Başlık</Label>
+                <Input
+                  id="edit-title"
+                  placeholder="Etkinlik veya randevu başlığı..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-type">Tip</Label>
+                  <select
+                    id="edit-type"
+                    value={type}
+                    onChange={(e) => setType(e.target.value as CalendarEventType)}
+                    className="h-9 w-full rounded-xl bg-neutral-950/60 border border-neutral-850 px-3 text-xs text-neutral-200"
+                  >
+                    <option value="meeting">Toplantı</option>
+                    <option value="shoot">Çekim / Prodüksiyon</option>
+                    <option value="revision">Revizyon / Teslimat</option>
+                    <option value="deadline">Bitiş Tarihi (Deadline)</option>
+                    <option value="other">Diğer</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-brand">İlişkili Marka</Label>
+                  <select
+                    id="edit-brand"
+                    value={brandId}
+                    onChange={(e) => setBrandId(e.target.value)}
+                    className="h-9 w-full rounded-xl bg-neutral-950/60 border border-neutral-850 px-3 text-xs text-neutral-200"
+                  >
+                    <option value="">Marka Yok</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-date">Tarih</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={dateStr}
+                    onChange={(e) => setDateStr(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-time">Saat</Label>
+                  <Input
+                    id="edit-time"
+                    type="time"
+                    value={timeStr}
+                    onChange={(e) => setTimeStr(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-employee">Sorumlu</Label>
+                  <select
+                    id="edit-employee"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    className="h-9 w-full rounded-xl bg-neutral-950/60 border border-neutral-850 px-3 text-xs text-neutral-200"
+                  >
+                    <option value="">Sorumlu Yok</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>{emp.fullName}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-loc">Lokasyon</Label>
+                  <Input
+                    id="edit-loc"
+                    placeholder="Konum veya link..."
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  className="h-9 text-xs rounded-xl font-semibold border-neutral-850"
+                >
+                  Vazgeç
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs h-9 px-4 rounded-xl shadow-md"
+                >
+                  Güncelle
+                </Button>
+              </div>
+            </form>
           </Card>
         </div>
       )}

@@ -57,3 +57,17 @@ export async function createCalendarEvent(input: Omit<CalendarEvent, 'id'>): Pro
   await CalendarRepository.save(dbEvent)
   return newEvt
 }
+
+export async function updateCalendarEvent(id: string, input: Partial<Omit<CalendarEvent, 'id'>>): Promise<void> {
+  const existingList = await getStoredCalendarEvents()
+  const existing = existingList.find(e => e.id === id)
+  if (!existing) return
+
+  const updated: CalendarEvent = { ...existing, ...input }
+  const dbEvent = translateLocalToDb(updated)
+  await CalendarRepository.save(dbEvent)
+}
+
+export async function deleteCalendarEvent(id: string): Promise<void> {
+  await CalendarRepository.delete(id)
+}

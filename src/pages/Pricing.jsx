@@ -23,7 +23,7 @@ function Pricing() {
     },
     {
       name: "Business Paket",
-      price: "55.000",
+      price: "60.000",
       description: "Markasını sosyal medyada hızlıca var etmek ve Marka algısı inşa etmek isteyenler için ideal.",
       features: [
         "8 Adet Reels",
@@ -42,7 +42,7 @@ function Pricing() {
     },
     {
       name: "Booster Paket",
-      price: "132.000",
+      price: "146.000",
       description: "Markasına Sosyal medyada ve web de agresif büyüme hızı isteyen ve tam kapsamlı ajans hizmeti almak isteyenler için ideal.",
       features: [
         "10 Adet Reels",
