@@ -335,7 +335,11 @@ export default function CRMPage({ embedded = false }) {
           if (partial.notes) updateObj.notes = partial.notes;
           if (partial.assignedTo) updateObj.assigned_to = partial.assignedTo;
 
-          await supabase.from('leads').update(updateObj).eq('id', leadId).catch(() => {});
+          // Convert string ID to numeric ID if possible for Postgres compatibility
+          const numericId = Number(leadId);
+          const targetQueryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+
+          await supabase.from('leads').update(updateObj).eq('id', targetQueryId).catch(() => {});
         }
       }
     } catch (err) {
