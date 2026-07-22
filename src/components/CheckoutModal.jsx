@@ -289,61 +289,94 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                 </div>
               </div>
 
-              {/* Order Summary Pill */}
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                borderRadius: '16px',
-                padding: '16px 20px',
-                marginTop: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Ödenecek Toplam Tutar:</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#ffffff' }}>₺ {selectedPlan.price}</div>
-                </div>
-                <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <ShieldCheck size={16} /> 256-bit SSL & 3D Secure
-                </div>
-              </div>
+              {/* Order Summary Pill with KDV Breakdown */}
+              {(() => {
+                const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
+                const totalNum = parseFloat(cleanPriceStr) || 0;
+                const netNum = totalNum / 1.20;
+                const kdvNum = totalNum - netNum;
 
-              {/* Mandatory Policy Agreement & PDF links for iyzico */}
+                const formatMoney = (val) => val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                return (
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '16px',
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
+                      <span>Paket Bedeli (Net):</span>
+                      <span style={{ color: '#e2e8f0', fontWeight: '600' }}>₺ {formatMoney(netNum)}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
+                      <span>KDV (%20):</span>
+                      <span style={{ color: '#e2e8f0', fontWeight: '600' }}>₺ {formatMoney(kdvNum)}</span>
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '2px 0' }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: '600' }}>ÖDENECEK GENEL TOPLAM</div>
+                        <div style={{ fontSize: '1.45rem', fontWeight: '900', color: 'var(--primary, #00e5ff)' }}>
+                          ₺ {totalNum.toLocaleString('tr-TR')} <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>(KDV Dahil)</span>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(52, 211, 153, 0.1)', padding: '6px 12px', borderRadius: '10px' }}>
+                        <ShieldCheck size={16} /> 256-bit SSL & 3D Secure
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Mandatory Policy Agreement & PDF Links for iyzico Compliance */}
               <div style={{
-                fontSize: '0.78rem',
+                fontSize: '0.8rem',
                 color: '#94a3b8',
                 background: 'rgba(255, 255, 255, 0.02)',
-                padding: '12px 14px',
-                borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                padding: '14px 16px',
+                borderRadius: '14px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px'
               }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', lineHeight: '1.4' }}>
-                  <input type="checkbox" required defaultChecked style={{ marginTop: '3px', accentColor: '#00e5ff' }} />
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', lineHeight: '1.5' }}>
+                  <input type="checkbox" required defaultChecked style={{ marginTop: '4px', accentColor: '#00e5ff', width: '16px', height: '16px' }} />
                   <span>
-                    Ödemeye devam ederek <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>Gizlilik Politikası</a> ve <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>İptal ve İade Koşulları</a>'nı okuduğumu ve kabul ettiğimi beyan ederim.
+                    Ödemeye devam ederek <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline', fontWeight: '600' }}>📄 Gizlilik Politikası (PDF)</a> ve <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline', fontWeight: '600' }}>📄 İptal ve İade Koşulları (PDF)</a>'nı okuduğumu ve kabul ettiğimi onaylıyorum.
                   </span>
                 </label>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', paddingLeft: '26px' }}>
+                  Ayrıca web sitemizdeki <a href="/iptal-ve-iade-kosullari" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>İptal ve İade Politikası</a> sayfasından tüm tüketici haklarınızı inceleyebilirsiniz.
+                </div>
               </div>
 
-              {/* Payment Methods Logo Banner */}
+              {/* Official Payment Methods Logos Image Banner */}
               <div style={{
                 background: '#ffffff',
-                borderRadius: '12px',
-                padding: '8px 12px',
+                borderRadius: '14px',
+                padding: '10px 16px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                gap: '4px',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)'
               }}>
                 <img 
                   src="/iyzico-payment-logos.png" 
-                  alt="iyzico, Mastercard, Visa, American Express, Troy Ödeme Logoları" 
-                  style={{ maxHeight: '36px', width: 'auto', objectFit: 'contain' }}
+                  alt="iyzico, Visa, Mastercard, American Express, Troy Ödeme Logoları" 
+                  style={{ maxHeight: '42px', width: 'auto', objectFit: 'contain' }}
                 />
+                <span style={{ fontSize: '0.7rem', color: '#475569', fontWeight: '600' }}>
+                  Anlaşmalı Tüm Banka Kartları İle Max 6 Taksit İmkanı
+                </span>
               </div>
 
               <button

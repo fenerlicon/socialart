@@ -114,6 +114,11 @@ function Pricing() {
               <div style={{ marginBottom: '40px' }}>
                 <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff' }}>₺ {plan.price}</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}> / Ay</span>
+                <div style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: '600', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>+ %20 KDV Dahil</span>
+                  <span>•</span>
+                  <span style={{ color: '#34d399' }}>3D Secure & Max 6 Taksit</span>
+                </div>
               </div>
 
               <div style={{ flex: 1 }}>
@@ -128,10 +133,28 @@ function Pricing() {
                 </div>
               </div>
 
+              {/* Payment Methods Logo Badge on Card */}
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                padding: '6px 12px',
+                marginTop: '25px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}>
+                <img 
+                  src="/iyzico-payment-logos.png" 
+                  alt="iyzico, Visa, Mastercard, American Express, Troy Ödeme Logoları" 
+                  style={{ maxHeight: '32px', width: 'auto', objectFit: 'contain' }}
+                />
+              </div>
+
               <button 
                 onClick={() => handleOpenCheckout(plan)} 
                 style={{ 
-                  marginTop: '40px', 
+                  marginTop: '16px', 
                   width: '100%', 
                   padding: '18px', 
                   borderRadius: '16px', 
@@ -182,7 +205,7 @@ function Pricing() {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.5px' }}>
-            🛡️ 256-BIT SSL İLE 3D SECURE GÜVENLİ ÖDEME VE TAKSİT İMKANI
+            🛡️ 256-BIT SSL İLE 3D SECURE GÜVENLİ ÖDEME VE MAX 6 TAKSİT İMKANI
           </div>
 
           <div style={{
@@ -193,18 +216,22 @@ function Pricing() {
           }}>
             <img 
               src="/iyzico-payment-logos.png" 
-              alt="iyzico, Mastercard, Visa, American Express, Troy Ödeme Yöntemleri" 
-              style={{ maxHeight: '42px', width: 'auto', objectFit: 'contain' }}
+              alt="iyzico, Visa, Mastercard, American Express, Troy Ödeme Logoları" 
+              style={{ maxHeight: '44px', width: 'auto', objectFit: 'contain' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline', fontWeight: '600' }}>
               📄 Gizlilik Politikası (PDF)
             </a>
             <span>•</span>
-            <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>
+            <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline', fontWeight: '600' }}>
               📄 İptal ve İade Koşulları (PDF)
+            </a>
+            <span>•</span>
+            <a href="/iptal-ve-iade-kosullari" target="_blank" rel="noopener noreferrer" style={{ color: '#ffffff', textDecoration: 'underline', fontWeight: '600' }}>
+              🌐 İade ve İptal Şartları Sayfası
             </a>
           </div>
         </div>
