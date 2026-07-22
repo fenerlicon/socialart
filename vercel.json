@@ -76,6 +76,10 @@
       "destination": "/admin/:path*"
     },
     {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

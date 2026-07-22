@@ -1,0 +1,121 @@
+import Iyzipay from 'iyzipay';
+
+export default async function handler(req, res) {
+  // Enforce POST method
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { planName, price, buyerInfo } = req.body || {};
+
+    if (!price || !buyerInfo?.email || !buyerInfo?.name) {
+      return res.status(400).json({ error: 'Lütfen ad soyad, e-posta ve gerekli bilgileri doldurun.' });
+    }
+
+    const rawApiKey = process.env.IYZICO_API_KEY;
+    const rawSecretKey = process.env.IYZICO_SECRET_KEY;
+    const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
+
+    // Sandbox test credentials fallback if live keys are not configured yet
+    const iyzipay = new Iyzipay({
+      apiKey: rawApiKey || 'sandbox-4Wd0wX5K1aZ61LdK1rZ61LdK1rZ61LdK',
+      secretKey: rawSecretKey || 'sandbox-4Wd0wX5K1aZ61LdK1rZ61LdK1rZ61LdK',
+      uri: baseUrl
+    });
+
+    const numericPrice = parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      return res.status(400).json({ error: 'Geçersiz fiyat tutarı.' });
+    }
+
+    const formattedPrice = numericPrice.toFixed(2);
+    const conversationId = `SOC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    const host = req.headers.host || 'www.socialartmedya.com';
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const siteUrl = process.env.VITE_SITE_URL || `${protocol}://${host}`;
+    const callbackUrl = `${siteUrl}/api/iyzico-callback`;
+
+    // Split name into first and last name if provided together
+    const fullNameParts = String(buyerInfo.name).trim().split(' ');
+    const firstName = fullNameParts[0] || 'Müşteri';
+    const lastName = fullNameParts.slice(1).join(' ') || firstName;
+
+    const cleanPhone = String(buyerInfo.phone || '+905000000000').replace(/\s+/g, '');
+    const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+90${cleanPhone.replace(/^0/, '')}`;
+
+    const requestData = {
+      locale: Iyzipay.LOCALE.TR,
+      conversationId: conversationId,
+      price: formattedPrice,
+      paidPrice: formattedPrice,
+      currency: Iyzipay.CURRENCY.TRY,
+      basketId: `BSK-${conversationId}`,
+      paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
+      callbackUrl: callbackUrl,
+      enabledInstallments: [1, 2, 3, 6],
+      buyer: {
+        id: `BYR-${Date.now()}`,
+        name: firstName,
+        surname: lastName,
+        gsmNumber: formattedPhone,
+        email: buyerInfo.email,
+        identityNumber: buyerInfo.identityNumber || '11111111111',
+        registrationAddress: buyerInfo.address || 'İstanbul, Türkiye',
+        ip: (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '85.105.0.1').split(',')[0].trim(),
+        city: buyerInfo.city || 'İstanbul',
+        country: 'Turkey'
+      },
+      shippingAddress: {
+        contactName: `${firstName} ${lastName}`.trim(),
+        city: buyerInfo.city || 'İstanbul',
+        country: 'Turkey',
+        address: buyerInfo.address || 'İstanbul, Türkiye'
+      },
+      billingAddress: {
+        contactName: `${firstName} ${lastName}`.trim(),
+        city: buyerInfo.city || 'İstanbul',
+        country: 'Turkey',
+        address: buyerInfo.address || 'İstanbul, Türkiye'
+      },
+      basketItems: [
+        {
+          id: `ITM-${Date.now()}`,
+          name: planName || 'SocialArt Dijital Hizmet Paketi',
+          category1: 'Dijital Hizmetler',
+          category2: 'Sosyal Medya ve Prodüksiyon',
+          itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
+          price: formattedPrice
+        }
+      ]
+    };
+
+    iyzipay.checkoutFormInitialize.create(requestData, (err, result) => {
+      if (err) {
+        console.error('Iyzico Init Error:', err);
+        return res.status(500).json({ error: 'iyzico bağlantı hatası oluştu', details: String(err) });
+      }
+
+      if (result.status !== 'success') {
+        console.error('Iyzico Result Error:', result);
+        return res.status(400).json({
+          error: result.errorMessage || 'Ödeme formu başlatılamadı.',
+          errorCode: result.errorCode
+        });
+      }
+
+      return res.status(200).json({
+        status: 'success',
+        token: result.token,
+        checkoutFormContent: result.checkoutFormContent,
+        paymentPageUrl: result.paymentPageUrl,
+        conversationId: conversationId
+      });
+    });
+
+  } catch (error) {
+    console.error('iyzico handler error:', error);
+    return res.status(500).json({ error: error.message || 'Sunucu hatası' });
+  }
+}
