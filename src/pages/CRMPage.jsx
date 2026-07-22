@@ -100,6 +100,25 @@ function mapDbRowToLead(row) {
 
     const defaultRepName = row.rep || row.assigned_to || 'Celal';
     const defaultAuthorLabel = `${defaultRepName} (Temsilci Notu)`;
+    const fallbackNoteIso = row.updated_at || row.created_at || new Date().toISOString();
+
+    const extractDateFromText = (text, defaultIso) => {
+      if (text && typeof text === 'string') {
+        const match = text.match(/(\d{2})[./](\d{2})[./](\d{4})/) || text.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+          let parsedDate;
+          if (match[3] && match[3].length === 4) {
+            parsedDate = new Date(`${match[3]}-${match[2]}-${match[1]}`);
+          } else {
+            parsedDate = new Date(match[0]);
+          }
+          if (!isNaN(parsedDate.getTime())) {
+            return parsedDate.toISOString();
+          }
+        }
+      }
+      return defaultIso;
+    };
 
     const addNote = (text, authorLabel = defaultAuthorLabel) => {
       if (!text || typeof text !== 'string' || isInvalidNote(text)) return;
@@ -115,21 +134,23 @@ function mapDbRowToLead(row) {
                 const t = item.text || item.content || item.note || item.message || '';
                 if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
                   seenNoteTexts.add(t);
+                  const noteDate = item.createdAt || item.created_at || item.date || extractDateFromText(t, fallbackNoteIso);
                   notesArr.push({
                     id: item.id || `note-${Math.random()}`,
                     author: item.author || authorLabel,
                     text: t,
-                    createdAt: item.createdAt || item.created_at || row.created_at || new Date().toISOString()
+                    createdAt: noteDate
                   });
                 }
               } else if (typeof item === 'string' && item.trim() && !isInvalidNote(item)) {
                 if (!seenNoteTexts.has(item.trim())) {
                   seenNoteTexts.add(item.trim());
+                  const noteDate = extractDateFromText(item.trim(), fallbackNoteIso);
                   notesArr.push({
                     id: `note-${Math.random()}`,
                     author: authorLabel,
                     text: item.trim(),
-                    createdAt: row.created_at || new Date().toISOString()
+                    createdAt: noteDate
                   });
                 }
               }
@@ -142,11 +163,12 @@ function mapDbRowToLead(row) {
       }
 
       seenNoteTexts.add(cleanText);
+      const noteDate = extractDateFromText(cleanText, fallbackNoteIso);
       notesArr.push({
         id: `note-${Math.random()}`,
         author: authorLabel,
         text: cleanText,
-        createdAt: row.created_at || new Date().toISOString()
+        createdAt: noteDate
       });
     };
 
@@ -518,7 +540,12 @@ export default function CRMPage({ embedded = false }) {
     try {
       const stored = localStorage.getItem('crm_lead_overrides_v1');
       const overrides = stored ? JSON.parse(stored) : {};
-      overrides[leadId] = { ...(overrides[leadId] || {}), ...partialData };
+      const nowIso = new Date().toISOString();
+      overrides[leadId] = {
+        ...(overrides[leadId] || {}),
+        ...partialData,
+        updatedAt: nowIso
+      };
       localStorage.setItem('crm_lead_overrides_v1', JSON.stringify(overrides));
     } catch (e) {
       console.error('Save override error:', e);
@@ -927,10 +954,25 @@ export default function CRMPage({ embedded = false }) {
 
     if (Array.isArray(lead.notes) && lead.notes.length > 0) {
       lead.notes.forEach(n => {
-        const noteDateStr = n.createdAt || n.created_at || n.date;
+        const noteDateStr = n.createdAt || n.created_at || n.date || n.timestamp;
         if (noteDateStr) {
           const t = new Date(noteDateStr).getTime();
           if (!isNaN(t) && t > latestTime) latestTime = t;
+        }
+
+        if (n.text && typeof n.text === 'string') {
+          const match = n.text.match(/(\d{2})[./](\d{2})[./](\d{4})/) || n.text.match(/(\d{4})-(\d{2})-(\d{2})/);
+          if (match) {
+            let parsedDate;
+            if (match[3] && match[3].length === 4) {
+              parsedDate = new Date(`${match[3]}-${match[2]}-${match[1]}`);
+            } else {
+              parsedDate = new Date(match[0]);
+            }
+            if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > latestTime) {
+              latestTime = parsedDate.getTime();
+            }
+          }
         }
       });
     }
@@ -938,6 +980,15 @@ export default function CRMPage({ embedded = false }) {
     if (lead.retargetingDate) {
       const t = new Date(lead.retargetingDate).getTime();
       if (!isNaN(t) && t > latestTime) latestTime = t;
+    }
+
+    if (Array.isArray(lead.activities) && lead.activities.length > 0) {
+      lead.activities.forEach(a => {
+        if (a.date) {
+          const t = new Date(a.date).getTime();
+          if (!isNaN(t) && t > latestTime) latestTime = t;
+        }
+      });
     }
 
     if (latestTime === 0 && lead.createdAt) {

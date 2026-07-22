@@ -73,10 +73,25 @@ export const LeadCard: React.FC<LeadCardProps> = ({
 
     if (Array.isArray(lead.notes) && lead.notes.length > 0) {
       lead.notes.forEach((n: any) => {
-        const noteDateStr = n.createdAt || n.created_at || n.date;
+        const noteDateStr = n.createdAt || n.created_at || n.date || n.timestamp;
         if (noteDateStr) {
           const t = new Date(noteDateStr).getTime();
           if (!isNaN(t) && t > latestTime) latestTime = t;
+        }
+
+        if (n.text && typeof n.text === 'string') {
+          const match = n.text.match(/(\d{2})[./](\d{2})[./](\d{4})/) || n.text.match(/(\d{4})-(\d{2})-(\d{2})/);
+          if (match) {
+            let parsedDate;
+            if (match[3] && match[3].length === 4) {
+              parsedDate = new Date(`${match[3]}-${match[2]}-${match[1]}`);
+            } else {
+              parsedDate = new Date(match[0]);
+            }
+            if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > latestTime) {
+              latestTime = parsedDate.getTime();
+            }
+          }
         }
       });
     }
@@ -86,6 +101,15 @@ export const LeadCard: React.FC<LeadCardProps> = ({
       if (!isNaN(t) && t > latestTime) latestTime = t;
     }
 
+    if (Array.isArray(lead.activities) && lead.activities.length > 0) {
+      lead.activities.forEach((a: any) => {
+        if (a.date) {
+          const t = new Date(a.date).getTime();
+          if (!isNaN(t) && t > latestTime) latestTime = t;
+        }
+      });
+    }
+
     if (latestTime === 0 && lead.createdAt) {
       const t = new Date(lead.createdAt).getTime();
       if (!isNaN(t)) latestTime = t;
@@ -93,7 +117,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
 
     const lastDate = latestTime > 0 ? new Date(latestTime) : new Date();
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+    const diffTime = Math.max(0, now.getTime() - lastDate.getTime());
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
