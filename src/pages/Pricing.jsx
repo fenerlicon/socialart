@@ -168,7 +168,48 @@ function Pricing() {
           ))}
         </div>
 
-        <div className="glass" style={{ marginTop: '80px', borderRadius: '32px', padding: '50px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
+        {/* iyzico Payment Logos & Legal Policies Banner */}
+        <div style={{
+          marginTop: '50px',
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: '24px',
+          padding: '24px 30px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.5px' }}>
+            🛡️ 256-BIT SSL İLE 3D SECURE GÜVENLİ ÖDEME VE TAKSİT İMKANI
+          </div>
+
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '10px 24px',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)'
+          }}>
+            <img 
+              src="/iyzico-payment-logos.png" 
+              alt="iyzico, Mastercard, Visa, American Express, Troy Ödeme Yöntemleri" 
+              style={{ maxHeight: '42px', width: 'auto', objectFit: 'contain' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>
+              📄 Gizlilik Politikası (PDF)
+            </a>
+            <span>•</span>
+            <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>
+              📄 İptal ve İade Koşulları (PDF)
+            </a>
+          </div>
+        </div>
+
+        <div className="glass" style={{ marginTop: '50px', borderRadius: '32px', padding: '50px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', marginBottom: '20px' }}>Size Özel Bir Plan mı Lazım?</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 40px' }}>
             Kurumsal markalar veya çok kanallı projeleriniz için size özel bir strateji ve fiyatlandırma hazırlayabiliriz.

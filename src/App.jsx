@@ -39,6 +39,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const ThankYou = lazy(() => import('./pages/ThankYou'));
 const Contact = lazy(() => import('./pages/Contact'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const CancellationPolicy = lazy(() => import('./pages/CancellationPolicy'));
 
 // Service Detail Pages
 const MetaAds = lazy(() => import('./pages/services/MetaAds'));
@@ -309,6 +310,7 @@ function App() {
             <Route path="/iletisim" element={<Contact />} />
 
             <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
+            <Route path="/iptal-ve-iade-kosullari" element={<CancellationPolicy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -353,13 +355,13 @@ function App() {
               </div>
 
               <div className="footer-col">
-                <h4>Kurumsal</h4>
+                <h4>Kurumsal & Yasal</h4>
                 <ul className="footer-links" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <li><Link to="/hakkimizda" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hakkımızda</Link></li>
                   <li><Link to="/hizmetlerimiz" style={{ fontSize: '0.9rem', color: '#ccc' }}>Hizmetlerimiz</Link></li>
-                  <li><Link to="/blog" style={{ fontSize: '0.9rem', color: '#ccc' }}>Blog</Link></li>
-                  <li><Link to="/fiyatlar" style={{ fontSize: '0.9rem', color: '#ccc' }}>Fiyatlar</Link></li>
-                  <li><Link to="/iletisim" style={{ fontSize: '0.9rem', color: '#ccc' }}>İletişim</Link></li>
+                  <li><Link to="/fiyatlar" style={{ fontSize: '0.9rem', color: '#ccc' }}>Fiyatlar & Ödeme</Link></li>
+                  <li><Link to="/gizlilik-politikasi" style={{ fontSize: '0.9rem', color: '#ccc' }}>Gizlilik Politikası</Link></li>
+                  <li><Link to="/iptal-ve-iade-kosullari" style={{ fontSize: '0.9rem', color: '#ccc' }}>İptal ve İade Koşulları</Link></li>
                 </ul>
               </div>
 
@@ -371,10 +373,36 @@ function App() {
               </div>
             </div>
             
-            <div className="footer-bottom" style={{border: 'none', paddingTop: '20px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)'}}>
-              &copy; {new Date().getFullYear()} Socialart Ajans. Tüm hakları saklıdır.
-              <span style={{ margin: '0 10px', color: '#333' }}>|</span> 
-              <Link to="/gizlilik-politikasi" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#fff'} onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}>Gizlilik Politikası & KVKK</Link>
+            <div className="footer-bottom" style={{border: 'none', paddingTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', fontSize: '0.85rem', color: 'var(--text-muted)'}}>
+              
+              {/* Payment Logos Banner in Footer */}
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                padding: '8px 20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+              }}>
+                <img 
+                  src="/iyzico-payment-logos.png" 
+                  alt="iyzico, Mastercard, Visa, American Express, Troy Ödeme Logoları" 
+                  style={{ maxHeight: '38px', width: 'auto', objectFit: 'contain' }}
+                />
+              </div>
+
+              <div>
+                &copy; {new Date().getFullYear()} Socialart Ajans. Tüm hakları saklıdır.
+                <span style={{ margin: '0 10px', color: '#333' }}>|</span> 
+                <Link to="/gizlilik-politikasi" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}>Gizlilik Politikası</Link>
+                <span style={{ margin: '0 8px', color: '#333' }}>•</span>
+                <Link to="/iptal-ve-iade-kosullari" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}>İptal ve İade Koşulları</Link>
+                <span style={{ margin: '0 8px', color: '#333' }}>•</span>
+                <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>Gizlilik PDF</a>
+                <span style={{ margin: '0 8px', color: '#333' }}>•</span>
+                <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>İade PDF</a>
+              </div>
             </div>
           </div>
         </footer>

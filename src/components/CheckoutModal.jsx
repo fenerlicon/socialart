@@ -309,11 +309,48 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                 </div>
               </div>
 
+              {/* Mandatory Policy Agreement & PDF links for iyzico */}
+              <div style={{
+                fontSize: '0.78rem',
+                color: '#94a3b8',
+                background: 'rgba(255, 255, 255, 0.02)',
+                padding: '12px 14px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', lineHeight: '1.4' }}>
+                  <input type="checkbox" required defaultChecked style={{ marginTop: '3px', accentColor: '#00e5ff' }} />
+                  <span>
+                    Ödemeye devam ederek <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>Gizlilik Politikası</a> ve <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #00e5ff)', textDecoration: 'underline' }}>İptal ve İade Koşulları</a>'nı okuduğumu ve kabul ettiğimi beyan ederim.
+                  </span>
+                </label>
+              </div>
+
+              {/* Payment Methods Logo Banner */}
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+              }}>
+                <img 
+                  src="/iyzico-payment-logos.png" 
+                  alt="iyzico, Mastercard, Visa, American Express, Troy Ödeme Logoları" 
+                  style={{ maxHeight: '36px', width: 'auto', objectFit: 'contain' }}
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading}
                 style={{
-                  marginTop: '12px',
+                  marginTop: '4px',
                   width: '100%',
                   padding: '16px',
                   borderRadius: '14px',
@@ -383,12 +420,21 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
           color: '#64748b',
           textAlign: 'center',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '16px'
+          gap: '10px'
         }}>
-          <span>🛡️ iyzico Güvenli Ödeme Altyapısı</span>
-          <span>💳 Visa, Mastercard, Troy & 6 Taksit Seçeneği</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <span>🛡️ iyzico Güvenli Ödeme Altyapısı</span>
+            <span>💳 Visa, Mastercard, AMEX, Troy & 6 Taksit</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem', color: '#94a3b8' }}>
+            <a href="/gizlilik-politikasi.pdf" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>Gizlilik Politikası (PDF)</a>
+            <span>•</span>
+            <a href="/iptal-ve-iade-kosullari.pdf" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline' }}>İptal ve İade Koşulları (PDF)</a>
+          </div>
         </div>
 
       </div>
