@@ -81,6 +81,185 @@ function mapDbRowToLead(row) {
   const rawStatus = String(row.status || row.durum || row.stage || '').trim();
   const stage = statusMap[rawStatus] || statusMap[rawStatus.toLowerCase()] || (['NEW', 'CONTACTED', 'WAITING', 'PROPOSAL_SENT', 'RETARGETING', 'WON', 'LOST'].includes(rawStatus) ? rawStatus : 'NEW');
 
+  const parsedNotes = (() => {
+    let notesArr = [];
+    const seenNoteTexts = new Set();
+    const seenNoteIds = new Set();
+    
+    const isInvalidNote = (txt) => {
+      if (!txt || typeof txt !== 'string') return true;
+      const clean = txt.trim();
+      if (clean.length < 2) return true;
+      // Check if string is ISO Date or Date-Time string like 2026-07-05T04:59:17
+      if (/^\d{4}-\d{2}-\d{2}/.test(clean)) return true;
+      if (!isNaN(Date.parse(clean)) && (clean.length === 10 || clean.includes('T') || clean.includes('Z'))) return true;
+      // Filter boolean/number strings
+      if (clean === 'true' || clean === 'false' || clean === 'null' || clean === 'undefined') return true;
+      return false;
+    };
+
+    const defaultRepName = row.rep || row.assigned_to || 'Celal';
+    const defaultAuthorLabel = `${defaultRepName} (Temsilci Notu)`;
+
+    const addNote = (text, authorLabel = defaultAuthorLabel) => {
+      if (!text || typeof text !== 'string' || isInvalidNote(text)) return;
+      const cleanText = text.trim();
+      if (seenNoteTexts.has(cleanText)) return; // prevent exact duplicate notes
+
+      if (cleanText.startsWith('[') || cleanText.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(cleanText);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(item => {
+              if (typeof item === 'object' && item !== null) {
+                const t = item.text || item.content || item.note || item.message || '';
+                if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
+                  seenNoteTexts.add(t);
+                  notesArr.push({
+                    id: item.id || `note-${Math.random()}`,
+                    author: item.author || authorLabel,
+                    text: t,
+                    createdAt: item.createdAt || item.created_at || row.created_at || new Date().toISOString()
+                  });
+                }
+              } else if (typeof item === 'string' && item.trim() && !isInvalidNote(item)) {
+                if (!seenNoteTexts.has(item.trim())) {
+                  seenNoteTexts.add(item.trim());
+                  notesArr.push({
+                    id: `note-${Math.random()}`,
+                    author: authorLabel,
+                    text: item.trim(),
+                    createdAt: row.created_at || new Date().toISOString()
+                  });
+                }
+              }
+            });
+            return;
+          }
+        } catch (e) {
+          // Not valid JSON, process as plain string
+        }
+      }
+
+      seenNoteTexts.add(cleanText);
+      notesArr.push({
+        id: `note-${Math.random()}`,
+        author: authorLabel,
+        text: cleanText,
+        createdAt: row.created_at || new Date().toISOString()
+      });
+    };
+
+    // Tüm olası not sütunları (detaylar, mesajlar, notlar)
+    const allPossibleNoteKeys = [
+      'notes', 'note', 'internal_notes', 'details', 'message', 'description', 
+      'comments', 'temsilci_notu', 'aciklama', 'gorusme_notlari', 'notlar', 
+      'gorusme_gecmisi', 'history', 'remark', 'remarks', 'content', 'user_notes',
+      'staff_notes', 'agent_notes', 'lead_notes', 'lead_note', 'notes_text',
+      'custom_fields', 'not_gecmisi', 'latest_note', 'last_note'
+    ];
+
+    allPossibleNoteKeys.forEach(key => {
+      const val = row[key];
+      if (!val) return;
+
+      if (Array.isArray(val)) {
+        val.forEach(item => {
+          if (typeof item === 'object' && item !== null) {
+            const t = item.text || item.note || item.content || item.message || '';
+            const noteId = item.id || `note-${Math.random()}`;
+            if (t && !isInvalidNote(t) && !seenNoteIds.has(noteId)) {
+              seenNoteIds.add(noteId);
+              notesArr.push({
+                id: noteId,
+                author: item.author || item.user || item.rep || defaultAuthorLabel,
+                text: t,
+                createdAt: item.createdAt || item.created_at || item.date || row.created_at || new Date().toISOString()
+              });
+            }
+          } else if (typeof item === 'string') {
+            addNote(item, defaultAuthorLabel);
+          }
+        });
+      } else if (typeof val === 'object' && val !== null) {
+        const t = val.text || val.note || val.content || val.message || '';
+        const noteId = val.id || `note-${Math.random()}`;
+        if (t && !isInvalidNote(t) && !seenNoteIds.has(noteId)) {
+          seenNoteIds.add(noteId);
+          notesArr.push({
+            id: noteId,
+            author: val.author || val.user || defaultAuthorLabel,
+            text: t,
+            createdAt: val.createdAt || val.created_at || row.created_at || new Date().toISOString()
+          });
+        }
+      } else {
+        addNote(String(val), defaultAuthorLabel);
+      }
+    });
+
+    // EVRENSEL AKILLI TARAMA
+    const standardNonNoteKeys = new Set([
+      'id', 'name', 'full_name', 'company', 'title', 'email', 'phone', 'city', 
+      'budget', 'status', 'stage', 'source', 'pipeline', 'created_at', 'updated_at', 
+      'assigned_to', 'priority', 'retargeting_date', 'retargeting_note',
+      'meta_campaign_name', 'ads_active', 'monthly_fee', 'payment_day',
+      'service', 'hizmet', 'service_type', 'form_type', 'form_date',
+      'submitted_at', 'date', 'timestamp', 'time', 'ip', 'ip_address',
+      'url', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
+      'ad_id', 'adset_id', 'campaign_id', 'form_id', 'lead_id',
+      'field_data', 'retailer_item_id', 'partner_name'
+    ]);
+
+    for (const [key, value] of Object.entries(row)) {
+      if (!standardNonNoteKeys.has(key) && value) {
+        if (typeof value === 'string') {
+          addNote(value, defaultAuthorLabel);
+        } else if (Array.isArray(value)) {
+          value.forEach(item => {
+            if (typeof item === 'string') addNote(item, defaultAuthorLabel);
+            else if (typeof item === 'object' && item !== null) {
+              const t = item.text || item.note || item.content || item.message || '';
+              if (t) addNote(t, item.author || defaultAuthorLabel);
+            }
+          });
+        } else if (typeof value === 'object' && value !== null) {
+          const t = value.text || value.note || value.content || value.message || '';
+          if (t) addNote(t, value.author || defaultAuthorLabel);
+        }
+      }
+    }
+
+    // En yeni nota göre sırala
+    notesArr.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+
+    return notesArr;
+  })();
+
+  // Akıllı En Son İşlem Tarihi Belirleme (Notlar, Güncelleme veya Oluşturulma)
+  let latestActivityIso = row.updated_at || row.created_at || new Date().toISOString();
+  let maxTime = new Date(latestActivityIso).getTime();
+
+  if (parsedNotes.length > 0 && parsedNotes[0].createdAt) {
+    const noteTime = new Date(parsedNotes[0].createdAt).getTime();
+    if (!isNaN(noteTime) && noteTime > maxTime) {
+      maxTime = noteTime;
+      latestActivityIso = parsedNotes[0].createdAt;
+    }
+  }
+
+  if (row.retargeting_date) {
+    const rtTime = new Date(row.retargeting_date).getTime();
+    if (!isNaN(rtTime) && rtTime > maxTime) {
+      maxTime = rtTime;
+      latestActivityIso = row.retargeting_date;
+    }
+  }
+
   return {
     id: String(row.id),
     pipeline,
@@ -93,167 +272,8 @@ function mapDbRowToLead(row) {
     stage,
     assignedTo: row.assigned_to || '',
     createdAt: row.created_at || new Date().toISOString(),
-    updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
-    notes: (() => {
-      let parsedNotes = [];
-      const seenNoteTexts = new Set();
-      const seenNoteIds = new Set();
-      
-      const isInvalidNote = (txt) => {
-        if (!txt || typeof txt !== 'string') return true;
-        const clean = txt.trim();
-        if (clean.length < 2) return true;
-        // Check if string is ISO Date or Date-Time string like 2026-07-05T04:59:17
-        if (/^\d{4}-\d{2}-\d{2}/.test(clean)) return true;
-        if (!isNaN(Date.parse(clean)) && (clean.length === 10 || clean.includes('T') || clean.includes('Z'))) return true;
-        // Filter boolean/number strings
-        if (clean === 'true' || clean === 'false' || clean === 'null' || clean === 'undefined') return true;
-        return false;
-      };
-
-      const defaultRepName = row.rep || row.assigned_to || 'Celal';
-      const defaultAuthorLabel = `${defaultRepName} (Temsilci Notu)`;
-
-      const addNote = (text, authorLabel = defaultAuthorLabel) => {
-        if (!text || typeof text !== 'string' || isInvalidNote(text)) return;
-        const cleanText = text.trim();
-        if (seenNoteTexts.has(cleanText)) return; // prevent exact duplicate notes
-
-        if (cleanText.startsWith('[') || cleanText.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(cleanText);
-            if (Array.isArray(parsed)) {
-              parsed.forEach(item => {
-                if (typeof item === 'object' && item !== null) {
-                  const t = item.text || item.content || item.note || item.message || '';
-                  if (t && !isInvalidNote(t) && !seenNoteTexts.has(t)) {
-                    seenNoteTexts.add(t);
-                    parsedNotes.push({
-                      id: item.id || `note-${Math.random()}`,
-                      author: item.author || authorLabel,
-                      text: t,
-                      createdAt: item.createdAt || item.created_at || row.created_at || new Date().toISOString()
-                    });
-                  }
-                } else if (typeof item === 'string' && item.trim() && !isInvalidNote(item)) {
-                  if (!seenNoteTexts.has(item.trim())) {
-                    seenNoteTexts.add(item.trim());
-                    parsedNotes.push({
-                      id: `note-${Math.random()}`,
-                      author: authorLabel,
-                      text: item.trim(),
-                      createdAt: row.created_at || new Date().toISOString()
-                    });
-                  }
-                }
-              });
-              return;
-            }
-          } catch (e) {
-            // Not valid JSON, process as plain string
-          }
-        }
-
-        seenNoteTexts.add(cleanText);
-        parsedNotes.push({
-          id: `note-${Math.random()}`,
-          author: authorLabel,
-          text: cleanText,
-          createdAt: row.created_at || new Date().toISOString()
-        });
-      };
-
-      // Tüm olası not sütunları (detaylar, mesajlar, notlar)
-      const allPossibleNoteKeys = [
-        'notes', 'note', 'internal_notes', 'details', 'message', 'description', 
-        'comments', 'temsilci_notu', 'aciklama', 'gorusme_notlari', 'notlar', 
-        'gorusme_gecmisi', 'history', 'remark', 'remarks', 'content', 'user_notes',
-        'staff_notes', 'agent_notes', 'lead_notes', 'lead_note', 'notes_text',
-        'custom_fields', 'not_gecmisi', 'latest_note', 'last_note'
-      ];
-
-      allPossibleNoteKeys.forEach(key => {
-        const val = row[key];
-        if (!val) return;
-
-        if (Array.isArray(val)) {
-          val.forEach(item => {
-            if (typeof item === 'object' && item !== null) {
-              const t = item.text || item.note || item.content || item.message || '';
-              const noteId = item.id || `note-${Math.random()}`;
-              if (t && !isInvalidNote(t) && !seenNoteIds.has(noteId)) {
-                seenNoteIds.add(noteId);
-                parsedNotes.push({
-                  id: noteId,
-                  author: item.author || item.user || item.rep || defaultAuthorLabel,
-                  text: t,
-                  createdAt: item.createdAt || item.created_at || item.date || row.created_at || new Date().toISOString()
-                });
-              }
-            } else if (typeof item === 'string') {
-              addNote(item, defaultAuthorLabel);
-            }
-          });
-        } else if (typeof val === 'object' && val !== null) {
-          const t = val.text || val.note || val.content || val.message || '';
-          const noteId = val.id || `note-${Math.random()}`;
-          if (t && !isInvalidNote(t) && !seenNoteIds.has(noteId)) {
-            seenNoteIds.add(noteId);
-            parsedNotes.push({
-              id: noteId,
-              author: val.author || val.user || defaultAuthorLabel,
-              text: t,
-              createdAt: val.createdAt || val.created_at || row.created_at || new Date().toISOString()
-            });
-          }
-        } else {
-          addNote(String(val), defaultAuthorLabel);
-        }
-      });
-
-      // EVRENSEL AKILLI TARAMA: Standart dışındaki tüm string & object alanları da Not olarak çek!
-      // Tarih, servis, sistem alanları gibi not olmayan sütunlar hariç tutulur
-      const standardNonNoteKeys = new Set([
-        'id', 'name', 'full_name', 'company', 'title', 'email', 'phone', 'city', 
-        'budget', 'status', 'stage', 'source', 'pipeline', 'created_at', 'updated_at', 
-        'assigned_to', 'priority', 'retargeting_date', 'retargeting_note',
-        'meta_campaign_name', 'ads_active', 'monthly_fee', 'payment_day',
-        'service', 'hizmet', 'service_type', 'form_type', 'form_date',
-        'submitted_at', 'date', 'timestamp', 'time', 'ip', 'ip_address',
-        'url', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
-        'ad_id', 'adset_id', 'campaign_id', 'form_id', 'lead_id',
-        'field_data', 'retailer_item_id', 'partner_name'
-      ]);
-
-      for (const [key, value] of Object.entries(row)) {
-        if (!standardNonNoteKeys.has(key) && value) {
-          if (typeof value === 'string') {
-            // addNote already calls isInvalidNote inside
-            addNote(value, defaultAuthorLabel);
-          } else if (Array.isArray(value)) {
-            value.forEach(item => {
-              if (typeof item === 'string') addNote(item, defaultAuthorLabel);
-              else if (typeof item === 'object' && item !== null) {
-                const t = item.text || item.note || item.content || item.message || '';
-                if (t) addNote(t, item.author || defaultAuthorLabel);
-              }
-            });
-          } else if (typeof value === 'object' && value !== null) {
-            const t = value.text || value.note || value.content || value.message || '';
-            if (t) addNote(t, value.author || defaultAuthorLabel);
-          }
-        }
-      }
-
-      // En yeni nota göre sırala (son eklenen en başta)
-      parsedNotes.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA;
-      });
-
-      return parsedNotes;
-    })(),
+    updatedAt: latestActivityIso,
+    notes: parsedNotes,
     activities: [],
     priority: 'MEDIUM',
     productionDetails: pipeline === 'PRODUCTION' ? {
@@ -897,6 +917,37 @@ export default function CRMPage({ embedded = false }) {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  const getLeadLastActivityTime = (lead) => {
+    let latestTime = 0;
+
+    if (lead.updatedAt) {
+      const t = new Date(lead.updatedAt).getTime();
+      if (!isNaN(t) && t > latestTime) latestTime = t;
+    }
+
+    if (Array.isArray(lead.notes) && lead.notes.length > 0) {
+      lead.notes.forEach(n => {
+        const noteDateStr = n.createdAt || n.created_at || n.date;
+        if (noteDateStr) {
+          const t = new Date(noteDateStr).getTime();
+          if (!isNaN(t) && t > latestTime) latestTime = t;
+        }
+      });
+    }
+
+    if (lead.retargetingDate) {
+      const t = new Date(lead.retargetingDate).getTime();
+      if (!isNaN(t) && t > latestTime) latestTime = t;
+    }
+
+    if (latestTime === 0 && lead.createdAt) {
+      const t = new Date(lead.createdAt).getTime();
+      if (!isNaN(t)) latestTime = t;
+    }
+
+    return latestTime > 0 ? latestTime : new Date().getTime();
+  };
+
   // Filter leads
   const filteredLeads = leads.filter(lead => {
     const matchesSearch =
@@ -909,8 +960,8 @@ export default function CRMPage({ embedded = false }) {
       if (lead.stage === 'WON' || lead.stage === 'LOST') {
         matchesFilter = false;
       } else {
-        const lastDate = new Date(lead.updatedAt || lead.createdAt).getTime();
-        const diffDays = Math.floor((new Date().getTime() - lastDate) / (1000 * 60 * 60 * 24));
+        const lastTime = getLeadLastActivityTime(lead);
+        const diffDays = Math.floor((new Date().getTime() - lastTime) / (1000 * 60 * 60 * 24));
         matchesFilter = diffDays >= 3;
       }
     } else if (selectedSourceFilter !== 'ALL') {
@@ -932,8 +983,8 @@ export default function CRMPage({ embedded = false }) {
   const nowTime = new Date().getTime();
   const inactiveCount = pipelineLeads.filter(l => {
     if (l.stage === 'WON' || l.stage === 'LOST') return false;
-    const lastDate = new Date(l.updatedAt || l.createdAt).getTime();
-    const diffDays = Math.floor((nowTime - lastDate) / (1000 * 60 * 60 * 24));
+    const lastTime = getLeadLastActivityTime(l);
+    const diffDays = Math.floor((nowTime - lastTime) / (1000 * 60 * 60 * 24));
     return diffDays >= 3;
   }).length;
 

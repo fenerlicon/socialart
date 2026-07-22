@@ -64,7 +64,34 @@ export const LeadCard: React.FC<LeadCardProps> = ({
 
   // Calculate inactive days
   const getDaysInactive = () => {
-    const lastDate = new Date(lead.updatedAt || lead.createdAt);
+    let latestTime = 0;
+
+    if (lead.updatedAt) {
+      const t = new Date(lead.updatedAt).getTime();
+      if (!isNaN(t) && t > latestTime) latestTime = t;
+    }
+
+    if (Array.isArray(lead.notes) && lead.notes.length > 0) {
+      lead.notes.forEach((n: any) => {
+        const noteDateStr = n.createdAt || n.created_at || n.date;
+        if (noteDateStr) {
+          const t = new Date(noteDateStr).getTime();
+          if (!isNaN(t) && t > latestTime) latestTime = t;
+        }
+      });
+    }
+
+    if (lead.retargetingDate) {
+      const t = new Date(lead.retargetingDate).getTime();
+      if (!isNaN(t) && t > latestTime) latestTime = t;
+    }
+
+    if (latestTime === 0 && lead.createdAt) {
+      const t = new Date(lead.createdAt).getTime();
+      if (!isNaN(t)) latestTime = t;
+    }
+
+    const lastDate = latestTime > 0 ? new Date(latestTime) : new Date();
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - lastDate.getTime());
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
