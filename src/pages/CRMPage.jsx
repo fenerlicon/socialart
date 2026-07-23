@@ -82,6 +82,15 @@ function mapDbRowToLead(row) {
   const stage = statusMap[rawStatus] || statusMap[rawStatus.toLowerCase()] || (['NEW', 'CONTACTED', 'WAITING', 'PROPOSAL_SENT', 'RETARGETING', 'WON', 'LOST'].includes(rawStatus) ? rawStatus : 'NEW');
 
   const parsedNotes = (() => {
+    // Fast path: if Supabase already stored proper note objects, use them directly
+    if (Array.isArray(row.notes) && row.notes.length > 0 && typeof row.notes[0] === 'object' && row.notes[0].text) {
+      return row.notes.map(n => ({
+        id: n.id || `note-${Math.random()}`,
+        author: n.author || 'Temsilci Notu',
+        text: n.text,
+        createdAt: n.createdAt || n.created_at || new Date().toISOString()
+      })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
     let notesArr = [];
     const seenNoteTexts = new Set();
     const seenNoteIds = new Set();
@@ -647,13 +656,12 @@ export default function CRMPage({ embedded = false }) {
       .from('leads')
       .update({ 
         status: newStatus,
-        stage: newStage,
-        updated_at: new Date().toISOString() 
+        stage: newStage
       })
       .eq('id', leadId);
   };
 
-  // Add note → sync to Supabase & LocalStorage
+  // Add note → Supabase (primary) + LocalStorage (backup)
   const handleAddNote = async (leadId, noteText) => {
     const currentLead = leads.find(l => l.id === leadId);
     const repName = currentLead?.assignedTo || 'Celal';
@@ -665,23 +673,7 @@ export default function CRMPage({ embedded = false }) {
     };
     const updatedNotes = [newNote, ...(currentLead?.notes || [])];
 
-    // Save to LocalStorage immediately to guarantee persistence on refresh
-    saveOverride(leadId, { notes: updatedNotes });
-
-    // Also update if it is in manual leads storage
-    try {
-      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
-      if (storedManual) {
-        const manualLeadsList = JSON.parse(storedManual);
-        if (Array.isArray(manualLeadsList)) {
-          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, notes: updatedNotes } : m);
-          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
-        }
-      }
-    } catch (e) {
-      console.warn('Manual lead notes update error:', e);
-    }
-
+    // Update UI immediately
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
         const updated = { ...lead, notes: updatedNotes, updatedAt: new Date().toISOString() };
@@ -690,13 +682,24 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
-    await supabase
+
+    // Save to Supabase (primary storage)
+    const { error } = await supabase
       .from('leads')
-      .update({ notes: updatedNotes, updated_at: new Date().toISOString() })
+      .update({ notes: updatedNotes })
       .eq('id', leadId);
+
+    if (error) {
+      console.error('Not kaydedilemedi, localStorage yedeğe alındı:', error.message);
+      // Fallback: save to localStorage if Supabase fails
+      saveOverride(leadId, { notes: updatedNotes });
+    } else {
+      // Also keep localStorage in sync
+      saveOverride(leadId, { notes: updatedNotes });
+    }
   };
 
-  // Delete note → sync to Supabase & LocalStorage
+  // Delete note → Supabase (primary) + LocalStorage (backup)
   const handleDeleteNote = async (leadId, noteId) => {
     const currentLead = leads.find(l => l.id === leadId);
     if (!currentLead) return;
