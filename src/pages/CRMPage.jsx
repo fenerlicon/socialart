@@ -407,69 +407,45 @@ export default function CRMPage({ embedded = false }) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      let loadedLeads = [];
-      if (!error && data && data.length > 0) {
-        loadedLeads = data.map(mapDbRowToLead);
+      if (error) {
+        console.error('Supabase fetch error:', error.message);
+        setIsLoading(false);
+        return;
       }
 
-      let hasLocalChanges = false;
-      let manualLeadsList = [];
-      let overrides = {};
+      let loadedLeads = (data || []).map(mapDbRowToLead);
 
-      // Merge manual leads saved in LocalStorage first
-      try {
-        const storedManual = localStorage.getItem('socialart_crm_manual_leads');
-        if (storedManual) {
-          manualLeadsList = JSON.parse(storedManual);
-          if (Array.isArray(manualLeadsList) && manualLeadsList.length > 0) {
-            manualLeadsList.forEach(m => {
-              if (!loadedLeads.some(l => l.id === m.id)) {
-                loadedLeads.unshift(m);
-                hasLocalChanges = true;
-              }
-            });
-          }
-        }
-      } catch (e) {
-        // Ignore parse error
-      }
-
-      // Merge local stage, info & note overrides LAST to guarantee highest priority
+      // Apply stage/notes overrides from localStorage ONLY for leads not yet in Supabase
+      // (kept for backward compatibility, will be phased out)
       try {
         const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
         if (storedOverrides) {
-          overrides = JSON.parse(storedOverrides);
-          if (Object.keys(overrides).length > 0) {
-            loadedLeads = loadedLeads.map(l => {
-              if (overrides[l.id]) {
-                hasLocalChanges = true;
-                return { ...l, ...overrides[l.id] };
-              }
-              return l;
-            });
-          }
+          const overrides = JSON.parse(storedOverrides);
+          loadedLeads = loadedLeads.map(l => {
+            const ov = overrides[l.id];
+            if (!ov) return l;
+            // Only apply override if Supabase doesn't already have the data
+            const merged = { ...l };
+            if (ov.stage && !l.stage) merged.stage = ov.stage;
+            if (ov.pipeline && !l.pipeline) merged.pipeline = ov.pipeline;
+            if (ov.notes && ov.notes.length > 0 && (!l.notes || l.notes.length === 0)) {
+              merged.notes = ov.notes;
+            }
+            return merged;
+          });
         }
-      } catch (e) {
-        // Ignore JSON parse error
-      }
+      } catch (e) { /* ignore */ }
 
-      // Filter out deleted leads saved in LocalStorage
+      // Filter out locally deleted leads
       try {
         const deletedIds = JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]');
         if (Array.isArray(deletedIds) && deletedIds.length > 0) {
           const deletedSet = new Set(deletedIds);
           loadedLeads = loadedLeads.filter(l => !deletedSet.has(l.id));
         }
-      } catch (e) {
-        // Ignore parse error
-      }
+      } catch (e) { /* ignore */ }
 
       setLeads(loadedLeads);
-
-      // Auto sync local data to Supabase DB in background if present
-      if (hasLocalChanges) {
-        syncLocalChangesToSupabase(manualLeadsList, overrides);
-      }
     } catch (err) {
       console.error('Error fetching leads:', err);
     } finally {
