@@ -115,7 +115,7 @@ function Pricing() {
                 <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff' }}>₺ {plan.price}</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}> / Ay</span>
                 <div style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: '600', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>+ %20 KDV Dahil</span>
+                  <span>+ %20 KDV</span>
                   <span>•</span>
                   <span style={{ color: '#34d399' }}>3D Secure & Max 6 Taksit</span>
                 </div>

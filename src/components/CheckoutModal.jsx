@@ -41,12 +41,16 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
     setErrorMessage('');
 
     try {
+      const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
+      const netNum = parseFloat(cleanPriceStr) || 0;
+      const totalPriceWithKdv = (netNum * 1.20).toFixed(2);
+
       const response = await fetch('/api/iyzico-init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planName: selectedPlan.name,
-          price: selectedPlan.price,
+          price: totalPriceWithKdv,
           buyerInfo: formData
         })
       });
@@ -292,9 +296,9 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
               {/* Order Summary Pill with KDV Breakdown */}
               {(() => {
                 const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
-                const totalNum = parseFloat(cleanPriceStr) || 0;
-                const netNum = totalNum / 1.20;
-                const kdvNum = totalNum - netNum;
+                const netNum = parseFloat(cleanPriceStr) || 0;
+                const kdvNum = netNum * 0.20;
+                const totalNum = netNum * 1.20;
 
                 const formatMoney = (val) => val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -324,7 +328,7 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                       <div>
                         <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: '600' }}>ÖDENECEK GENEL TOPLAM</div>
                         <div style={{ fontSize: '1.45rem', fontWeight: '900', color: 'var(--primary, #00e5ff)' }}>
-                          ₺ {totalNum.toLocaleString('tr-TR')} <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>(KDV Dahil)</span>
+                          ₺ {formatMoney(totalNum)} <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>(KDV Dahil)</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(52, 211, 153, 0.1)', padding: '6px 12px', borderRadius: '10px' }}>
