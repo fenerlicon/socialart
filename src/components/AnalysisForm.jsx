@@ -228,15 +228,28 @@ const AnalysisForm = ({ defaultService = "" }) => {
               </div>
             </div>
 
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ 
+              width: '100%', 
+              padding: '18px', 
+              marginTop: '10px', 
+              marginBottom: '30px',
+              fontSize: '1.2rem', 
+              fontWeight: '800',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              borderRadius: '16px'
+            }}>
+              {loading ? 'Gönderiliyor...' : 'Toplantı Talebi Gönder'}
+            </button>
+
             {/* APPOINTMENT PICKER */}
             <div className="appointment-picker-container" style={{ 
               background: 'rgba(0,0,0,0.4)', 
               padding: '25px', 
               borderRadius: '24px', 
-              border: '1px solid rgba(255,255,255,0.08)',
-              marginTop: '30px'
+              border: '1px solid rgba(255,255,255,0.08)'
             }}>
-              <label style={{marginBottom: '20px', display: 'block', fontWeight: '800', color: '#fff', fontSize: '1.1rem'}}>📅 Toplantı Tarihi ve Saati Seçin</label>
+              <label style={{marginBottom: '20px', display: 'block', fontWeight: '800', color: '#fff', fontSize: '1.1rem'}}>📅 Lütfen bir toplantı tarihi ve saati seçiniz</label>
               
               <div className="picker-grid" style={{ 
                 display: 'grid', 
@@ -326,19 +339,6 @@ const AnalysisForm = ({ defaultService = "" }) => {
                 </div>
               </div>
             </div>
-
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ 
-              width: '100%', 
-              padding: '18px', 
-              marginTop: '40px', 
-              fontSize: '1.2rem', 
-              fontWeight: '800',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              borderRadius: '16px'
-            }}>
-              {loading ? 'Gönderiliyor...' : 'Toplantı Talebi Gönder'}
-            </button>
           </form>
         )}
       </div>
