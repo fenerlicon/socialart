@@ -894,27 +894,31 @@ export default function CRMPage({ embedded = false }) {
       const { data, error } = await supabase
         .from('leads')
         .insert({
-          name: leadData.title,
-          rep: leadData.contactName,
+          name: leadData.title || leadData.contactName || 'İsimsiz Müşteri',
+          rep: leadData.contactName || '',
           email: leadData.email || '',
-          phone: leadData.phone,
+          phone: leadData.phone || '',
           city: leadData.city || 'İstanbul',
           service: leadData.socialMediaDetails?.industry || (leadData.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya'),
           status: newStatus,
+          stage: leadData.stage || 'NEW',
+          pipeline: leadData.pipeline || 'PRODUCTION',
           source: leadData.source || 'MANUAL',
           budget: leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget || null,
-          notes: newLeadObj.notes,
+          notes: newLeadObj.notes || [],
           created_at: nowIso,
-          updated_at: nowIso,
         })
         .select()
         .single();
 
-      if (!error && data && data.id) {
+      if (error) {
+        console.error('Supabase manual lead insert error:', error);
+        showToast('Müşteri veritabanına eklenirken bir uyarı oluştu: ' + error.message, 'warning');
+      } else if (data && data.id) {
         setLeads(prev => prev.map(l => l.id === generatedId ? { ...l, id: String(data.id) } : l));
       }
     } catch (err) {
-      console.warn('Supabase insert failed (lead safely retained locally):', err);
+      console.error('Supabase insert exception:', err);
     }
   };
 
