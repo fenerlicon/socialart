@@ -904,7 +904,7 @@ export default function CRMPage({ embedded = false }) {
           stage: leadData.stage || 'NEW',
           pipeline: leadData.pipeline || 'PRODUCTION',
           source: leadData.source || 'MANUAL',
-          budget: leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget || null,
+          reaction: (leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget) ? `Bütçe: ${leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget}` : 'Manuel Lead Eklendi',
           notes: newLeadObj.notes || [],
           created_at: nowIso,
         })
