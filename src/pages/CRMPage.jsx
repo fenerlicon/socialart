@@ -341,8 +341,32 @@ export default function CRMPage({ embedded = false }) {
   const [leads, setLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [currentPipeline, setCurrentPipeline] = useState('PRODUCTION');
-  const [currentView, setCurrentView] = useState('KANBAN');
+  const [currentPipeline, setCurrentPipeline] = useState(() => {
+    try {
+      return localStorage.getItem('socialart_crm_active_pipeline') || 'PRODUCTION';
+    } catch {
+      return 'PRODUCTION';
+    }
+  });
+
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      return localStorage.getItem('socialart_crm_active_view') || 'KANBAN';
+    } catch {
+      return 'KANBAN';
+    }
+  });
+
+  const handlePipelineTabChange = (p) => {
+    setCurrentPipeline(p);
+    try { localStorage.setItem('socialart_crm_active_pipeline', p); } catch {}
+  };
+
+  const handleViewTabChange = (v) => {
+    setCurrentView(v);
+    try { localStorage.setItem('socialart_crm_active_view', v); } catch {}
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState('ALL');
 
@@ -366,18 +390,16 @@ export default function CRMPage({ embedded = false }) {
           pipeline: m.pipeline || 'PRODUCTION',
           stage: m.stage || 'NEW',
           status: stageToStatus[m.stage] || 'Sıcak',
-          budget: m.productionDetails?.budget || m.socialMediaDetails?.monthlyBudget || m.budget || null,
           notes: m.notes,
-          created_at: m.createdAt || new Date().toISOString(),
-          updated_at: m.updatedAt || new Date().toISOString()
+          created_at: m.createdAt || new Date().toISOString()
         }));
         await supabase.from('leads').upsert(rowsToInsert, { ignoreDuplicates: true }).catch(() => {});
       }
 
-      // 2. Sync stage overrides (like İletişime Geçildi, Teklif Gönderildi) to Supabase DB
+      // 2. Sync stage overrides to Supabase DB
       if (overrides && Object.keys(overrides).length > 0) {
         for (const [leadId, partial] of Object.entries(overrides)) {
-          const updateObj = { updated_at: new Date().toISOString() };
+          const updateObj = {};
           if (partial.stage) {
             updateObj.stage = partial.stage;
             updateObj.status = stageToStatus[partial.stage] || partial.stage;
@@ -385,6 +407,8 @@ export default function CRMPage({ embedded = false }) {
           if (partial.pipeline) updateObj.pipeline = partial.pipeline;
           if (partial.notes) updateObj.notes = partial.notes;
           if (partial.assignedTo) updateObj.assigned_to = partial.assignedTo;
+
+          if (Object.keys(updateObj).length === 0) continue;
 
           // Convert string ID to numeric ID if possible for Postgres compatibility
           const numericId = Number(leadId);
@@ -1058,9 +1082,9 @@ export default function CRMPage({ embedded = false }) {
       {/* CRM Header */}
       <Header
         currentPipeline={currentPipeline}
-        onPipelineChange={setCurrentPipeline}
+        onPipelineChange={handlePipelineTabChange}
         currentView={currentView}
-        onViewChange={setCurrentView}
+        onViewChange={handleViewTabChange}
         onOpenNewLeadModal={() => setIsNewLeadModalOpen(true)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
