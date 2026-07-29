@@ -579,10 +579,18 @@ export default function CRMPage({ embedded = false }) {
     setPipelineConfirmState({ lead: null, targetPipeline: null });
     showToast(`"${targetLead.title}" ${newPipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya'} kanalına taşındı!`);
 
-    await supabase
+    const { error } = await supabase
       .from('leads')
-      .update({ service: newService, updated_at: new Date().toISOString() })
+      .update({
+        pipeline: newPipeline,
+        service: newService
+      })
       .eq('id', leadId);
+
+    if (error) {
+      console.error('Supabase pipeline update error:', error);
+      showToast('Kanal güncelleme hatası: ' + error.message, 'warning');
+    }
   };
 
   // Stage change → sync to Supabase & LocalStorage
