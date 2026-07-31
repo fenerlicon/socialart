@@ -433,27 +433,64 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
           )}
 
           {step === 2 && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{
-                background: 'rgba(52, 211, 153, 0.1)',
-                border: '1px solid rgba(52, 211, 153, 0.2)',
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.05))',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
                 color: '#34d399',
-                padding: '12px 16px',
-                borderRadius: '12px',
+                padding: '14px 18px',
+                borderRadius: '16px',
                 fontSize: '0.85rem',
-                marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                justifyContent: 'space-between',
+                gap: '10px'
               }}>
-                <CheckCircle2 size={18} /> iyzico Korumalı Ödeme Formu Yüklendi. Kart bilgilerinizi giriniz.
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700' }}>
+                  <CheckCircle2 size={18} /> iyzico Korumalı Ödeme Formu Yüklendi
+                </div>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.2)', padding: '4px 10px', borderRadius: '20px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  🔒 256-Bit SSL Active
+                </span>
               </div>
 
-              {/* iyzico Injected Form Container */}
-              <div id="iyzipay-checkout-form" className="responsive" style={{ minHeight: '350px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', color: '#94a3b8', gap: '12px' }}>
-                  <Loader size={32} style={{ animation: 'spin 1s linear infinite' }} />
-                  <span>Ödeme Formu Yükleniyor...</span>
+              {/* Ultra Premium Card Wrapper for iyzico Form */}
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '24px',
+                padding: '16px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 229, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                overflow: 'hidden'
+              }}>
+                {/* Embedded Trust Bar inside Card */}
+                <div style={{
+                  padding: '10px 14px 14px',
+                  marginBottom: '10px',
+                  borderBottom: '1px solid #f1f5f9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldCheck size={16} color="#059669" />
+                    <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#0f172a' }}>
+                      3D Secure Güvenli Ödeme
+                    </span>
+                  </div>
+                  <img 
+                    src="/iyzico-payment-logos.png" 
+                    alt="iyzico Logo" 
+                    style={{ height: '22px', width: 'auto', objectFit: 'contain' }} 
+                  />
+                </div>
+
+                {/* iyzico Injected Form Container */}
+                <div id="iyzipay-checkout-form" className="responsive" style={{ minHeight: '380px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyCenter: 'center', padding: '60px 0', color: '#64748b', gap: '12px' }}>
+                    <Loader size={32} style={{ animation: 'spin 1s linear infinite', color: '#8a2be2' }} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Ödeme Formu Güvenle Yükleniyor...</span>
+                  </div>
                 </div>
               </div>
             </div>
