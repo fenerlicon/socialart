@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
     const rawApiKey = process.env.IYZICO_API_KEY;
     const rawSecretKey = process.env.IYZICO_SECRET_KEY;
-    const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
+    const baseUrl = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com';
 
     // iyzico API credentials configuration
     const iyzipay = new Iyzipay({
