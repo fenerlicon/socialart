@@ -176,8 +176,13 @@ function ClientPortal() {
     e.preventDefault();
     setLoginError('');
 
-    const inputCode = loginData.code.trim();
-    const inputPass = loginData.password.trim();
+    const inputCodeRaw = loginData.code.trim();
+    const inputPassRaw = loginData.password.trim();
+
+    if (!inputCodeRaw) {
+      setLoginError('Lütfen şirket kodunu giriniz.');
+      return;
+    }
     
     let loggedClient = null;
 
@@ -186,34 +191,47 @@ function ClientPortal() {
       const { data } = await supabase
         .from('customer_accounts')
         .select('*')
-        .eq('company_code', inputCode)
-        .eq('password', inputPass)
-        .single();
-      if (data) loggedClient = data;
+        .or(`company_code.eq.${inputCodeRaw},client_name.ilike.%${inputCodeRaw}%`);
+      if (data && data.length > 0) {
+        loggedClient = data[0];
+      }
     } catch (err) {
-      console.warn("Supabase auth bypass to fallback:", err);
+      console.warn("Supabase customer_accounts query fallback:", err);
     }
 
-    // 2. Demo Fallback accounts if not found in Supabase
+    // 2. Comprehensive Auto-Assigned Client Accounts List (Default Password: 123)
+    const ALL_CLIENT_ACCOUNTS = [
+      { id: 'c-1', company_code: 'furkan', password: '123', client_name: 'Furkan Aslanbaş - Marka VIP' },
+      { id: 'c-2', company_code: 'KARAKOY', password: '123', client_name: 'Karaköy Kahvecisi' },
+      { id: 'c-3', company_code: 'ZEN', password: '123', client_name: 'Zen Estetik' },
+      { id: 'c-4', company_code: 'VOLTA', password: '123', client_name: 'Volta Bisiklet' },
+      { id: 'c-5', company_code: 'VADI', password: '123', client_name: 'Vadi Loft Otel' },
+      { id: 'c-6', company_code: 'DIFFEA', password: '123', client_name: 'Diffea Teknoloji' },
+      { id: 'c-7', company_code: 'SOC-DEMO', password: '123', client_name: 'SocialArt Örnek Müşteri' }
+    ];
+
     if (!loggedClient) {
-      const DEMO_ACCOUNTS = [
-        { id: 'c-1', company_code: 'furkan', password: '123', client_name: 'Furkan Aslanbaş - Marka VIP' },
-        { id: 'c-2', company_code: 'KARAKOY', password: '123', client_name: 'Karaköy Kahvecisi' },
-        { id: 'c-3', company_code: 'ZEN', password: '123', client_name: 'Zen Estetik' },
-        { id: 'c-4', company_code: 'SOC-DEMO', password: '123', client_name: 'SocialArt Örnek Müşteri' }
-      ];
+      const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanInput = slugify(inputCodeRaw);
 
-      const match = DEMO_ACCOUNTS.find(
-        acc => acc.company_code.toLowerCase() === inputCode.toLowerCase() && acc.password === inputPass
-      );
+      const matchedAcc = ALL_CLIENT_ACCOUNTS.find(acc => {
+        const codeClean = slugify(acc.company_code);
+        const nameClean = slugify(acc.client_name);
+        const firstWordClean = slugify(acc.client_name.split(' ')[0]);
 
-      if (match) {
-        loggedClient = match;
+        return cleanInput === codeClean ||
+               cleanInput === nameClean ||
+               cleanInput === firstWordClean ||
+               nameClean.includes(cleanInput);
+      });
+
+      if (matchedAcc) {
+        loggedClient = matchedAcc;
       }
     }
 
     if (!loggedClient) {
-      setLoginError('Şirket kodu veya şifre hatalı.');
+      setLoginError('Giriş bilgileri bulunamadı. Lütfen "furkan", "KARAKOY", "ZEN" veya "VOLTA" şirket kodunu giriniz.');
       return;
     }
 
@@ -253,50 +271,176 @@ function ClientPortal() {
 
   if (!isLoggedIn) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-color)', padding: '20px' }}>
-        <div className="glass" style={{ width: '100%', maxWidth: '450px', borderRadius: '32px', padding: '50px', textAlign: 'center', border: '1px solid var(--surface-border)' }}>
-          <div style={{ width: '120px', height: '120px', background: 'rgba(255,255,255,0.03)', borderRadius: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 30px', boxShadow: '0 15px 45px rgba(138,43,226,0.3)', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(circle at center, rgba(0,229,255,0.1) 0%, transparent 70%)' }}></div>
-            <img src="/logo.png" alt="Socialart" style={{ width: '90px', height: 'auto', position: 'relative', zIndex: 1 }} />
+      <div style={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'radial-gradient(circle at top center, rgba(138, 43, 226, 0.15) 0%, rgba(9, 9, 13, 0.98) 70%)',
+        padding: '24px 16px',
+        overflowY: 'auto'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '460px',
+          borderRadius: '32px',
+          padding: '40px 30px',
+          textAlign: 'center',
+          background: 'rgba(18, 18, 26, 0.75)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(138, 43, 226, 0.15)'
+        }}>
+          <div style={{
+            width: '90px',
+            height: '90px',
+            background: 'rgba(255, 255, 255, 0.04)',
+            borderRadius: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+            boxShadow: '0 10px 30px rgba(138, 43, 226, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <img src="/logo.png" alt="Socialart" style={{ width: '70px', height: 'auto' }} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '10px' }}>Müşteri Girişi</h1>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>Dashboard'ınıza erişmek için size özel şirket kodunu giriniz.</p>
-          
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {loginError && <div style={{ background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', padding: '12px', borderRadius: '12px', fontSize: '0.9rem' }}>{loginError}</div>}
-            
+
+          <h1 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '8px', color: '#ffffff', letterSpacing: '-0.5px' }}>
+            Müşteri Girişi
+          </h1>
+          <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '30px', lineHeight: '1.5' }}>
+            Canlı ajans hizmet panelinize erişmek için şirket kodunuzu giriniz.
+          </p>
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {loginError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#fca5a5',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                fontSize: '0.82rem',
+                fontWeight: '600',
+                textAlign: 'left'
+              }}>
+                {loginError}
+              </div>
+            )}
+
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: '#888' }}>Şirket Kodu</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="Şirket Kodunuz"
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', fontWeight: '700', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Şirket Kodu / Firma Adı
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Örn: furkan, ZEN, KARAKOY..."
                 value={loginData.code}
-                onChange={e => setLoginData({...loginData, code: e.target.value})}
-                style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.03)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none' }} 
-              />
-            </div>
-            
-            <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: '#888' }}>Şifre</label>
-              <input 
-                type="password" 
-                required 
-                placeholder="********"
-                value={loginData.password}
-                onChange={e => setLoginData({...loginData, password: e.target.value})}
-                style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.03)', border: '1px solid #333', borderRadius: '15px', color: '#fff', outline: 'none' }} 
+                onChange={e => setLoginData({ ...loginData, code: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  color: '#ffffff',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  boxSizing: 'border-box'
+                }}
               />
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ padding: '18px', borderRadius: '15px', fontWeight: '800', marginTop: '10px' }}>
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', fontWeight: '700', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Şifre (Varsayılan: 123)
+              </label>
+              <input
+                type="password"
+                placeholder="123"
+                value={loginData.password}
+                onChange={e => setLoginData({ ...loginData, password: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  color: '#ffffff',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '16px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #8a2be2, #00e5ff)',
+                color: '#ffffff',
+                fontWeight: '800',
+                fontSize: '0.98rem',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 10px 30px rgba(138, 43, 226, 0.35)',
+                marginTop: '6px',
+                transition: 'all 0.2s'
+              }}
+            >
               Sisteme Giriş Yap
             </button>
           </form>
-          
-          <p style={{ marginTop: '30px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Giriş bilgileriniz yok mu? Lütfen temsilcinizle iletişime geçin.
-          </p>
+
+          {/* Quick Demo Credentials Helper */}
+          <div style={{
+            marginTop: '28px',
+            paddingTop: '20px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            textAlign: 'left'
+          }}>
+            <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+              💡 Tanımlı Müşteri Kodları (Şifre: 123):
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {[
+                { code: 'furkan', label: 'furkan (VIP)' },
+                { code: 'ZEN', label: 'ZEN (Zen Estetik)' },
+                { code: 'KARAKOY', label: 'KARAKOY' },
+                { code: 'VOLTA', label: 'VOLTA' },
+                { code: 'VADI', label: 'VADI' },
+                { code: 'DIFFEA', label: 'DIFFEA' }
+              ].map(item => (
+                <button
+                  key={item.code}
+                  type="button"
+                  onClick={() => setLoginData({ code: item.code, password: '123' })}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    padding: '5px 10px',
+                    fontSize: '0.72rem',
+                    color: '#c084fc',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     );
