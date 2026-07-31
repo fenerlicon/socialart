@@ -17,10 +17,10 @@ export default async function handler(req, res) {
     const rawSecretKey = process.env.IYZICO_SECRET_KEY;
     const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
 
-    // Sandbox test credentials fallback if live keys are not configured yet
+    // iyzico API credentials configuration
     const iyzipay = new Iyzipay({
-      apiKey: rawApiKey || 'sandbox-4Wd0wX5K1aZ61LdK1rZ61LdK1rZ61LdK',
-      secretKey: rawSecretKey || 'sandbox-4Wd0wX5K1aZ61LdK1rZ61LdK1rZ61LdK',
+      apiKey: rawApiKey || 'eOLhjL2rON1eu4aq3DUgtYFjBi8QKZOm',
+      secretKey: rawSecretKey || '4yyU1eNElT4KzNv7TCOBHl0mRt2jSVIF',
       uri: baseUrl
     });
 
