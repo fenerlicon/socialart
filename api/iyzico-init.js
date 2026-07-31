@@ -30,7 +30,23 @@ export default async function handler(req, res) {
       uri: baseUrl
     });
 
-    const numericPrice = parseFloat(String(price).replace(/\./g, '').replace(',', '.'));
+    // Safe price parser (handles 146.000,00 and 175200.00 without multiplying by 100)
+    const rawPriceStr = String(price || '0').replace(/[^0-9.,]/g, '').trim();
+    let normalizedPriceStr = rawPriceStr;
+
+    if (rawPriceStr.includes(',') && rawPriceStr.includes('.')) {
+      if (rawPriceStr.indexOf('.') < rawPriceStr.indexOf(',')) {
+        normalizedPriceStr = rawPriceStr.replace(/\./g, '').replace(',', '.');
+      } else {
+        normalizedPriceStr = rawPriceStr.replace(/,/g, '');
+      }
+    } else if (rawPriceStr.includes(',')) {
+      normalizedPriceStr = rawPriceStr.replace(',', '.');
+    } else if ((rawPriceStr.match(/\./g) || []).length > 1) {
+      normalizedPriceStr = rawPriceStr.replace(/\./g, '');
+    }
+
+    const numericPrice = parseFloat(normalizedPriceStr);
     if (isNaN(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({ error: 'Geçersiz fiyat tutarı.' });
     }
