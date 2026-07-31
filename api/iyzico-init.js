@@ -13,6 +13,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Lütfen ad soyad, e-posta ve gerekli bilgileri doldurun.' });
     }
 
+    // Email regex validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(buyerInfo.email).trim())) {
+      return res.status(400).json({ error: 'Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@firma.com).' });
+    }
+
     const rawApiKey = process.env.IYZICO_API_KEY;
     const rawSecretKey = process.env.IYZICO_SECRET_KEY;
     const baseUrl = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com';
@@ -42,8 +48,45 @@ export default async function handler(req, res) {
     const firstName = fullNameParts[0] || 'Müşteri';
     const lastName = fullNameParts.slice(1).join(' ') || firstName;
 
-    const cleanPhone = String(buyerInfo.phone || '+905000000000').replace(/\s+/g, '');
+    // Clean phone number (numeric and leading + only)
+    const cleanPhone = String(buyerInfo.phone || '+905000000000').replace(/[^0-9+]/g, '');
     const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+90${cleanPhone.replace(/^0/, '')}`;
+
+    // Basket item splitting logic for prices >= 100,000 TL
+    // iyzico limits single basket item to < 100,000.00 TL
+    const MAX_ITEM_PRICE = 95000;
+    const basketItems = [];
+
+    if (numericPrice <= MAX_ITEM_PRICE) {
+      basketItems.push({
+        id: `ITM-${Date.now()}`,
+        name: planName || 'SocialArt Dijital Hizmet Paketi',
+        category1: 'Dijital Hizmetler',
+        category2: 'Sosyal Medya ve Prodüksiyon',
+        itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
+        price: formattedPrice
+      });
+    } else {
+      const partsCount = Math.ceil(numericPrice / MAX_ITEM_PRICE);
+      const equalPartPrice = Math.floor((numericPrice / partsCount) * 100) / 100;
+      let accumulated = 0;
+
+      for (let i = 0; i < partsCount; i++) {
+        const isLast = i === partsCount - 1;
+        const itemVal = isLast ? (numericPrice - accumulated) : equalPartPrice;
+        accumulated += itemVal;
+        const itemPriceFormatted = itemVal.toFixed(2);
+
+        basketItems.push({
+          id: `ITM-${Date.now()}-${i + 1}`,
+          name: `${planName || 'SocialArt Dijital Hizmet Paketi'} (Bölüm ${i + 1}/${partsCount})`,
+          category1: 'Dijital Hizmetler',
+          category2: 'Sosyal Medya ve Prodüksiyon',
+          itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
+          price: itemPriceFormatted
+        });
+      }
+    }
 
     const requestData = {
       locale: Iyzipay.LOCALE.TR,
@@ -79,16 +122,7 @@ export default async function handler(req, res) {
         country: 'Turkey',
         address: buyerInfo.address || 'İstanbul, Türkiye'
       },
-      basketItems: [
-        {
-          id: `ITM-${Date.now()}`,
-          name: planName || 'SocialArt Dijital Hizmet Paketi',
-          category1: 'Dijital Hizmetler',
-          category2: 'Sosyal Medya ve Prodüksiyon',
-          itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
-          price: formattedPrice
-        }
-      ]
+      basketItems: basketItems
     };
 
     iyzipay.checkoutFormInitialize.create(requestData, (err, result) => {
