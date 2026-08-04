@@ -844,9 +844,12 @@ function ClientPortal() {
 
                         <div className="cp-pay-row-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>TUTAR</div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#00e5ff' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' }}>NET TUTAR</div>
+                            <div style={{ fontSize: '1.35rem', fontWeight: '900', color: '#00e5ff' }}>
                               ₺ {Number(reqItem.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#a7f3d0', fontWeight: '600' }}>
+                              + %20 KDV (Toplam ₺ {(Number(reqItem.amount) * 1.20).toLocaleString('tr-TR', { minimumFractionDigits: 2 })})
                             </div>
                           </div>
 

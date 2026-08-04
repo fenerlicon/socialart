@@ -77,7 +77,7 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
       };
 
       const rawNum = parsePrice(selectedPlan.price);
-      const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
+      const isExactPrice = selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
       const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
       const totalPriceWithKdv = totalNum.toFixed(2);
 
@@ -355,11 +355,11 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                 };
 
                 const rawNum = parsePrice(selectedPlan.price);
-                const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
+                const isExactPrice = selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
                 
+                const netNum = rawNum;
+                const kdvNum = isExactPrice ? 0 : rawNum * 0.20;
                 const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
-                const netNum = isExactPrice ? totalNum / 1.20 : rawNum;
-                const kdvNum = isExactPrice ? totalNum - netNum : rawNum * 0.20;
 
                 const formatMoney = (val) => val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -379,8 +379,8 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
-                      <span>KDV (%20 Dahil):</span>
-                      <span style={{ color: '#e2e8f0', fontWeight: '600' }}>₺ {formatMoney(kdvNum)}</span>
+                      <span>KDV (%20 Eklenen):</span>
+                      <span style={{ color: '#00e5ff', fontWeight: '700' }}>+ ₺ {formatMoney(kdvNum)}</span>
                     </div>
 
                     <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '2px 0' }} />
