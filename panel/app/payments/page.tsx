@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { CreditCard, Plus, CheckCircle2, X } from 'lucide-react'
+import { CreditCard, Plus, CheckCircle2, X, Building2 } from 'lucide-react'
 
 interface PaymentRequest {
   id: string
@@ -16,8 +16,25 @@ interface PaymentRequest {
   paid_at?: string
 }
 
+interface BrandOption {
+  name: string
+  code: string
+}
+
+const DEFAULT_BRANDS: BrandOption[] = [
+  { name: 'Furkan Aslanbaş', code: 'furkan' },
+  { name: 'Zen Estetik', code: 'zen' },
+  { name: 'Peugeot Turkey', code: 'peugeot' },
+  { name: 'Koton', code: 'koton' },
+  { name: 'Jeep', code: 'jeep' },
+  { name: 'Karaköy Kahvecisi', code: 'karakoy' },
+  { name: 'Diffea', code: 'diffea' }
+]
+
 export default function PaymentsPage() {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([])
+  const [brandsList, setBrandsList] = useState<BrandOption[]>(DEFAULT_BRANDS)
+  const [selectedBrandOption, setSelectedBrandOption] = useState<string>('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState({
     client_name: '',
@@ -53,9 +70,50 @@ export default function PaymentsPage() {
     }
   }
 
+  const fetchBrands = async () => {
+    try {
+      const { data } = await supabase.from('leads').select('name, company, pipeline').limit(100)
+      if (data && data.length > 0) {
+        const dynamicBrands: BrandOption[] = []
+        const seen = new Set<string>()
+
+        // Include defaults first
+        DEFAULT_BRANDS.forEach(b => {
+          seen.add(b.name.toLowerCase())
+          dynamicBrands.push(b)
+        })
+
+        data.forEach(item => {
+          const bName = (item.company || item.name || '').trim()
+          if (bName && !seen.has(bName.toLowerCase())) {
+            seen.add(bName.toLowerCase())
+            const code = bName.toLowerCase().replace(/[^a-z0-9]/g, '')
+            dynamicBrands.push({ name: bName, code })
+          }
+        })
+        setBrandsList(dynamicBrands)
+      }
+    } catch (err) {
+      console.warn('Fetch brands error:', err)
+    }
+  }
+
   useEffect(() => {
     fetchPaymentRequests()
+    fetchBrands()
   }, [])
+
+  const handleBrandSelectChange = (val: string) => {
+    setSelectedBrandOption(val)
+    if (val === 'custom') {
+      setForm(prev => ({ ...prev, client_name: '', company_code: '' }))
+    } else {
+      const found = brandsList.find(b => b.name === val)
+      if (found) {
+        setForm(prev => ({ ...prev, client_name: found.name, company_code: found.code }))
+      }
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,6 +166,7 @@ export default function PaymentsPage() {
     setPaymentRequests(prev => [newReq, ...prev])
     setIsModalOpen(false)
     setForm({ client_name: '', company_code: '', title: '', amount: '', description: '' })
+    setSelectedBrandOption('')
 
     alert(`✅ Ödeme talebi ("${newReq.title}" - ₺${newReq.amount}) başarıyla oluşturuldu ve "${newReq.client_name}" müşterisinin paneline iletildi!`)
   }
@@ -213,42 +272,65 @@ export default function PaymentsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Brand Selection Dropdown */}
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">Müşteri / Firma Adı *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Örn: Furkan Aslanbaş, Zen Estetik..."
-                  value={form.client_name}
-                  onChange={(e) => setForm(prev => ({ ...prev, client_name: e.target.value }))}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
-                />
+                <label className="block text-xs font-bold text-neutral-300 mb-1 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-cyan-400" /> Müşteri / Marka Seçin *
+                </label>
+                <select
+                  value={selectedBrandOption}
+                  onChange={(e) => handleBrandSelectChange(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-400 font-bold"
+                >
+                  <option value="">-- Müşteriler Listesinden Seçin --</option>
+                  {brandsList.map((brand, idx) => (
+                    <option key={idx} value={brand.name}>
+                      🏢 {brand.name} (Kod: {brand.code})
+                    </option>
+                  ))}
+                  <option value="custom">➕ Özel / Manuel Müşteri Adı Gir</option>
+                </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-300 mb-1">Müşteri Kodu (Opsiyonel)</label>
-                  <input
-                    type="text"
-                    placeholder="Örn: furkan, ZEN..."
-                    value={form.company_code}
-                    onChange={(e) => setForm(prev => ({ ...prev, company_code: e.target.value }))}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
-                  />
-                </div>
+              {/* Show text inputs if custom or pre-filled */}
+              {(selectedBrandOption === 'custom' || form.client_name) && (
+                <div className="space-y-3 bg-neutral-950/60 p-3 rounded-xl border border-neutral-850">
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-400 mb-1">Müşteri / Firma Adı *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Örn: Furkan Aslanbaş, Zen Estetik..."
+                      value={form.client_name}
+                      onChange={(e) => setForm(prev => ({ ...prev, client_name: e.target.value }))}
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-300 mb-1">Tutar (TL) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="1.00 veya 15000"
-                    value={form.amount}
-                    onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-cyan-400"
-                  />
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-400 mb-1">Müşteri Kodu (Panel Giriş Kodu)</label>
+                    <input
+                      type="text"
+                      placeholder="Örn: furkan, ZEN..."
+                      value={form.company_code}
+                      onChange={(e) => setForm(prev => ({ ...prev, company_code: e.target.value }))}
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-cyan-400 font-mono font-bold outline-none focus:border-cyan-400"
+                    />
+                  </div>
                 </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-300 mb-1">Tutar (TL) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="1.00 veya 15000"
+                  value={form.amount}
+                  onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-cyan-400"
+                />
               </div>
 
               <div>

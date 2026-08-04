@@ -3753,12 +3753,61 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             <form onSubmit={handleCreatePaymentRequest} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
+                  🏢 Müşteri / Marka Seçin *
+                </label>
+                <select
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'custom') {
+                      setPaymentForm(prev => ({ ...prev, client_name: '', company_code: '' }));
+                    } else if (val) {
+                      const [name, code] = val.split('|');
+                      setPaymentForm(prev => ({ ...prev, client_name: name, company_code: code || name.toLowerCase().replace(/[^a-z0-9]/g, '') }));
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: '#0f172a',
+                    border: '1px solid rgba(0, 229, 255, 0.3)',
+                    color: '#ffffff',
+                    outline: 'none',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    marginBottom: '10px'
+                  }}
+                >
+                  <option value="">-- Müşteriler / Markalar Listesinden Seçin --</option>
+                  <option value="Furkan Aslanbaş|furkan">🏢 Furkan Aslanbaş (Kod: furkan)</option>
+                  <option value="Zen Estetik|zen">🏢 Zen Estetik (Kod: zen)</option>
+                  <option value="Peugeot Turkey|peugeot">🏢 Peugeot Turkey (Kod: peugeot)</option>
+                  <option value="Koton|koton">🏢 Koton (Kod: koton)</option>
+                  <option value="Jeep|jeep">🏢 Jeep (Kod: jeep)</option>
+                  <option value="Karaköy Kahvecisi|karakoy">🏢 Karaköy Kahvecisi (Kod: karakoy)</option>
+                  <option value="Diffea|diffea">🏢 Diffea (Kod: diffea)</option>
+                  {Array.isArray(potansiyel) && potansiyel.map(p => {
+                    const name = p.company || p.name || p.title;
+                    if (!name) return null;
+                    const code = p.company_code || name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return (
+                      <option key={p.id || Math.random()} value={`${name}|${code}`}>
+                        🏢 {name} (Kod: {code})
+                      </option>
+                    );
+                  })}
+                  <option value="custom">➕ Özel / Manuel Müşteri Adı Gir</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
                   Müşteri / Firma Adı *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Örn: Furkan Aslanbaş, Zen Estetik, Karaköy Kahvecisi..."
+                  placeholder="Örn: Furkan Aslanbaş, Zen Estetik..."
                   value={paymentForm.client_name}
                   onChange={(e) => setPaymentForm(prev => ({ ...prev, client_name: e.target.value }))}
                   style={{
@@ -3790,9 +3839,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                       borderRadius: '12px',
                       background: 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#ffffff',
+                      color: '#00e5ff',
                       outline: 'none',
-                      fontSize: '0.9rem'
+                      fontSize: '0.9rem',
+                      fontWeight: '700'
                     }}
                   />
                 </div>
