@@ -70,8 +70,27 @@ function ClientPortal() {
           fetchSupportMessages(customer.client_name);
         }
       })
-      .subscribe();
     return () => supportSub.unsubscribe();
+  }, [customer]);
+
+  useEffect(() => {
+    if (!customer) return;
+
+    // Real-time listener for Payment Requests
+    const paymentSub = supabase
+      .channel('client_payment_requests_channel')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'notifications'
+      }, () => {
+        fetchPaymentRequests(customer.client_name, customer.company_code);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(paymentSub);
+    };
   }, [customer]);
 
   useEffect(() => {
@@ -151,14 +170,25 @@ function ClientPortal() {
     try {
       let remoteRequests = [];
       try {
-        let query = supabase.from('client_payment_requests').select('*');
-        if (companyCode) {
-          query = query.or(`client_name.ilike.%${clientName}%,company_code.ilike.%${companyCode}%`);
-        } else {
-          query = query.ilike('client_name', `%${clientName}%`);
+        const { data } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('type', 'payment_request')
+          .order('created_at', { ascending: false });
+
+        if (data && data.length > 0) {
+          remoteRequests = data.map(n => {
+            try {
+              return JSON.parse(n.message);
+            } catch {
+              return null;
+            }
+          }).filter(Boolean).filter(r => {
+            const matchesName = clientName && r.client_name && r.client_name.toLowerCase().includes(clientName.toLowerCase());
+            const matchesCode = companyCode && r.company_code && r.company_code.toLowerCase() === companyCode.toLowerCase();
+            return matchesName || matchesCode;
+          });
         }
-        const { data } = await query.order('created_at', { ascending: false });
-        if (data) remoteRequests = data;
       } catch (err) {
         console.warn("Supabase fetch payment requests fallback:", err);
       }
@@ -194,14 +224,19 @@ function ClientPortal() {
 
   const markRequestPaid = async (requestId) => {
     try {
-      // 1. Update Supabase
-      try {
-        await supabase.from('client_payment_requests').update({
-          status: 'paid',
-          paid_at: new Date().toISOString()
-        }).eq('id', requestId);
-      } catch (e) {
-        console.warn("Update payment request status in DB fallback:", e);
+      const targetReq = paymentRequests.find(r => r.id === requestId);
+      const updatedItem = targetReq ? { ...targetReq, status: 'paid', paid_at: new Date().toISOString() } : null;
+
+      // 1. Update Supabase notifications table
+      if (updatedItem) {
+        try {
+          await supabase.from('notifications').update({
+            message: JSON.stringify(updatedItem),
+            is_read: true
+          }).eq('id', requestId);
+        } catch (e) {
+          console.warn("Update payment request status in DB fallback:", e);
+        }
       }
 
       // 2. Update Local Storage

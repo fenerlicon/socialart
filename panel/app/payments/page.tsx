@@ -54,10 +54,19 @@ export default function PaymentsPage() {
       let remoteRequests: PaymentRequest[] = []
       try {
         const { data } = await supabase
-          .from('client_payment_requests')
+          .from('notifications')
           .select('*')
+          .eq('type', 'payment_request')
           .order('created_at', { ascending: false })
-        if (data) remoteRequests = data as PaymentRequest[]
+        if (data && data.length > 0) {
+          remoteRequests = data.map((n: any) => {
+            try {
+              return JSON.parse(n.message) as PaymentRequest
+            } catch {
+              return null
+            }
+          }).filter(Boolean) as PaymentRequest[]
+        }
       } catch (err) {
         console.warn('DB payment requests fetch error:', err)
       }
@@ -191,15 +200,17 @@ export default function PaymentsPage() {
       created_at: new Date().toISOString()
     }
 
-    // Save to DB
+    // Save to DB (using notifications table for real-time client portal sync)
     try {
-      await supabase.from('client_payment_requests').insert([{
-        client_name: newReq.client_name,
-        company_code: newReq.company_code,
+      await supabase.from('notifications').insert([{
+        id: newReq.id,
+        type: 'payment_request',
         title: newReq.title,
-        description: newReq.description,
-        amount: newReq.amount,
-        status: newReq.status
+        message: JSON.stringify(newReq),
+        related_entity_type: 'payment',
+        related_entity_id: newReq.company_code || newReq.client_name,
+        is_read: false,
+        created_at: newReq.created_at
       }])
     } catch (err) {
       console.warn('Supabase insert payment request fallback:', err)
