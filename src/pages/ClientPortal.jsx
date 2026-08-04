@@ -718,202 +718,34 @@ function ClientPortal() {
               </div>
             </div>
 
-            {/* Project Progress */}
+            {/* Project Progress - Çok Yakında */}
             <div className="glass" style={{ borderRadius: '24px', padding: '30px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'var(--primary)', filter: 'blur(100px)', opacity: '0.05' }}></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                     <Target size={22} color="var(--primary)" /> Proje İlerlemesi
                   </h3>
-                  <div style={{ 
-                    fontSize: '0.9rem', 
-                    color: '#00E5FF', 
-                    fontWeight: '800', 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '1.5px',
-                    textShadow: '0 0 10px rgba(0, 229, 255, 0.5)'
-                  }}>
-                    AŞAMA: {clientDetails?.current_phase || 1}. EVRE — {phaseNames[clientDetails?.current_phase || 1]}
-                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                    Proje detaylı görev aşamaları ve canlı evre takibi yakında panelinizde aktifleştirilecektir.
+                  </p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ background: 'var(--primary-gradient)', color: '#000', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800' }}>
-                    %{clientDetails?.progress || 0} TAMAMLANDI
+                <div>
+                  <span style={{ 
+                    background: 'rgba(138, 43, 226, 0.15)', 
+                    color: '#c084fc', 
+                    border: '1px solid rgba(138, 43, 226, 0.3)',
+                    padding: '8px 18px', 
+                    borderRadius: '20px', 
+                    fontSize: '0.82rem', 
+                    fontWeight: '800',
+                    letterSpacing: '0.5px'
+                  }}>
+                    🚀 ÇOK YAKINDA
                   </span>
                 </div>
               </div>
-              
-              {/* Afilli Neom Progress Bar */}
-              <div style={{ 
-                width: '100%', 
-                height: '18px', 
-                background: 'rgba(255,255,255,0.02)', 
-                borderRadius: '20px', 
-                padding: '3px',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)',
-                position: 'relative',
-                marginBottom: '20px'
-              }}>
-                <div style={{ 
-                  width: `${clientDetails?.progress || 0}%`, 
-                  height: '100%', 
-                  background: 'linear-gradient(90deg, #8A2BE2 0%, #00E5FF 100%)', 
-                  borderRadius: '20px',
-                  transition: 'width 2s cubic-bezier(0.22, 1, 0.36, 1)', 
-                  position: 'relative',
-                  boxShadow: '0 0 15px rgba(138, 43, 226, 0.6), 0 0 30px rgba(0, 229, 255, 0.3)',
-                  overflow: 'visible'
-                }}>
-                  {/* Shimmer Wave */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: 0, 
-                    right: 0, 
-                    bottom: 0, 
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)', 
-                    animation: 'shimmer 1.5s infinite linear',
-                    borderRadius: '20px'
-                  }}></div>
-                  
-                  {/* Laser Head Point */}
-                  <div style={{
-                    position: 'absolute',
-                    right: '-2px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '12px',
-                    height: '12px',
-                    background: '#fff',
-                    borderRadius: '50%',
-                    boxShadow: '0 0 20px #fff, 0 0 40px #00E5FF, 0 0 60px #00E5FF',
-                    zIndex: 2,
-                    filter: 'blur(1px)'
-                  }}></div>
-                </div>
-              </div>
-              
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck size={14} color="#00e676" /> Verileriniz Socialart güvencesiyle anlık olarak senkronize edilmektedir.
-              </p>
-              <style>{`
-                @keyframes shimmer {
-                  0% { transform: translateX(-100%); }
-                  100% { transform: translateX(100%); }
-                }
-              `}</style>
             </div>
-
-            {/* Task Breakdown */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-              <TaskBox title="TAMAMLANANLAR" icon={<CheckCircle2 size={18} color="#00e676" />} items={Array.isArray(clientDetails?.completed) ? clientDetails.completed : []} color="#00e676" />
-              <TaskBox title="ŞU AN YAPILANLAR" icon={<Clock size={18} color="var(--accent)" />} items={Array.isArray(clientDetails?.active) ? clientDetails.active : []} color="var(--accent)" />
-              <TaskBox title="SIRADAKİLER" icon={<AlertCircle size={18} color="#ffab00" />} items={Array.isArray(clientDetails?.pending) ? clientDetails.pending : []} color="#ffab00" />
-            </div>
-
-            {/* EK HİZMETLER VİTRİNİ */}
-             <div style={{ marginTop: '50px', marginBottom: '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Zap size={24} color="#FFD700" /> Sosyal Art Plus Çözümleri 
-                  </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#ffb300', background: 'rgba(255,179,0,0.1)', padding: '5px 12px', borderRadius: '20px', fontWeight: '700' }}>SİZE ÖZEL FIRSATLAR</span>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px' }}>
-                  {[
-                    {
-                      title: 'Üst Düzey Video Prodüksiyon',
-                      desc: 'Markanızın ruhunu yansıtan, yüksek dönüşüm odaklı Reels ve reklam filmleri hazırlıyoruz. Sinematik kurgu ve profesyonel çekim gücü.',
-                      img: '/assets/video.png',
-                      color: '#8A2BE2'
-                    },
-                    {
-                      title: 'Veri Odaklı Reklam Yönetimi',
-                      desc: 'Ad Spend optimizasyonu ve ileri seviye hedefleme ile her kuruşun karşılığını alın. Meta ve Google reklamlarında ölçeklendirme gücü.',
-                      img: '/assets/ads.png',
-                      color: '#00E5FF'
-                    },
-                    {
-                      title: 'Kreatif Tasarım & Branding',
-                      desc: 'Dijitaldeki duruşunuzu premium hale getiren logo, kurumsal kimlik ve özgün grafik çalışmalarımızla fark yaratın.',
-                      img: '/assets/design.png',
-                      color: '#FF0055'
-                    },
-                    {
-                      title: 'Sunuculu Ürün Tanıtımı',
-                      desc: 'Ürününüzü profesyonel bir sunucu eşliğinde, güven veren ve satış odaklı bir dille stüdyo ortamında tanıtıyoruz.',
-                      img: '/assets/host.png',
-                      color: '#FFD700'
-                    }
-                  ].map((service, idx) => (
-                    <div key={idx} className="glass" style={{ 
-                      borderRadius: '24px', 
-                      overflow: 'hidden', 
-                      border: '1px solid rgba(255,255,255,0.05)',
-                      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                      display: 'flex',
-                      flexDirection: 'column'
-                    }}>
-                      <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
-                        <img src={service.img} alt={service.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} />
-                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(10,10,10,0.9) 100%)' }}></div>
-                      </div>
-                      <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '10px', color: '#fff' }}>{service.title}</h4>
-                        <p style={{ fontSize: '0.85rem', color: '#aaa', lineHeight: '1.4', marginBottom: '20px', flex: 1 }}>{service.desc}</p>
-                        <button 
-                          onClick={async () => {
-                            const details = `[TALEP] ${customer.client_name} için ${service.title} hizmet talebi oluşturuldu. Lütfen iletişime geçin.`;
-                            const { error } = await supabase.from('client_support_messages').insert([{
-                              client_name: customer.client_name,
-                              message: details,
-                              sender_type: 'client',
-                              is_read: false,
-                              created_at: new Date().toISOString()
-                            }]);
-                            
-                            if (error) {
-                              console.error('Talep gönderilemedi:', error);
-                              alert('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.');
-                            } else {
-                              alert('Talebiniz ekibimize iletildi! En kısa sürede sizinle iletişime geçeceğiz.');
-                            }
-                          }}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            background: 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${service.color}66`,
-                            borderRadius: '12px',
-                            color: '#fff',
-                            fontWeight: '700',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            transition: 'all 0.3s'
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = service.color;
-                            e.currentTarget.style.boxShadow = `0 0 20px ${service.color}88`;
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                        >
-                          <Zap size={16} /> Bu Hizmeti de İstiyorum
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
           </div>
 
@@ -940,12 +772,10 @@ function ClientPortal() {
               </p>
               <div style={{ marginTop: '25px', display: 'flex', gap: '10px' }}>
                 <button 
-                  onClick={() => setIsSupportOpen(true)}
-                  style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid #333', fontSize: '0.85rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  disabled
+                  style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'not-allowed', opacity: 0.8 }}
                 >
-                  <MessageCircle size={16} /> Temsilciye Yaz
+                  <MessageCircle size={16} /> Temsilciye Yaz (Çok Yakında)
                 </button>
               </div>
             </div>
