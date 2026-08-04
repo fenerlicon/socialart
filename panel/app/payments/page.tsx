@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { CreditCard, Plus, CheckCircle2, X, Building2, AlertCircle } from 'lucide-react'
+import { CreditCard, Plus, CheckCircle2, X, Building2, AlertCircle, Trash2 } from 'lucide-react'
 
 interface PaymentRequest {
   id: string
@@ -236,6 +236,32 @@ export default function PaymentsPage() {
     )
   }
 
+  const handleDeleteRequest = async (id: string) => {
+    if (!window.confirm('Bu ödeme talebini silmek istediğinize emin misiniz?')) return
+
+    try {
+      // 1. Delete from Supabase notifications table
+      try {
+        await supabase.from('notifications').delete().eq('id', id)
+      } catch (err) {
+        console.warn('DB payment request delete error:', err)
+      }
+
+      // 2. Delete from localStorage
+      if (typeof window !== 'undefined') {
+        const localStr = localStorage.getItem('socialart_payment_requests') || '[]'
+        const localRequests: PaymentRequest[] = JSON.parse(localStr)
+        const filtered = localRequests.filter(r => r.id !== id)
+        localStorage.setItem('socialart_payment_requests', JSON.stringify(filtered))
+      }
+
+      setPaymentRequests(prev => prev.filter(r => r.id !== id))
+      triggerToast('Ödeme Talebi Silindi 🗑️', 'Seçilen ödeme talebi başarıyla kaldırıldı.', 'success')
+    } catch (e) {
+      console.error('handleDeleteRequest error:', e)
+    }
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 relative">
       {/* Toast Notification Banner */}
@@ -299,12 +325,13 @@ export default function PaymentsPage() {
                 <th className="p-4">TUTAR (TL)</th>
                 <th className="p-4">DURUM</th>
                 <th className="p-4">TARİH</th>
+                <th className="p-4 text-right">İŞLEM</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800/40">
               {paymentRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-neutral-500">
+                  <td colSpan={7} className="p-8 text-center text-neutral-500">
                     Henüz oluşturulmuş bir ödeme talebi bulunmuyor. &quot;+ Yeni Ödeme Talebi Gönder&quot; butonunu kullanarak müşterinize doğrudan talep yollayabilirsiniz.
                   </td>
                 </tr>
@@ -337,6 +364,15 @@ export default function PaymentsPage() {
                       </td>
                       <td className="p-4 text-neutral-500 text-[11px]">
                         {reqItem.created_at ? new Date(reqItem.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => handleDeleteRequest(reqItem.id)}
+                          title="Ödeme Talebini Sil"
+                          className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-all inline-flex items-center gap-1.5 font-bold text-[11px]"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Sil
+                        </button>
                       </td>
                     </tr>
                   )
