@@ -39,10 +39,14 @@ function ClientPortal() {
         const saved = localStorage.getItem('socialart_client');
         if (saved) {
           const parsed = JSON.parse(saved);
-          await fetchClientData(parsed.client_name);
-          await fetchSupportMessages(parsed.client_name);
-          await fetchPaymentRequests(parsed.client_name, parsed.company_code);
-          setCustomer(parsed);
+          const clientName = parsed.client_name || parsed.name || parsed.company || parsed.brand || parsed.company_code || 'Aryanvar';
+          const companyCode = parsed.company_code || parsed.code || clientName;
+          const fullParsed = { ...parsed, client_name: clientName, company_code: companyCode };
+          
+          await fetchClientData(clientName);
+          await fetchSupportMessages(clientName);
+          await fetchPaymentRequests(clientName, companyCode);
+          setCustomer(fullParsed);
           setIsLoggedIn(true);
         }
       } catch (err) {
@@ -168,6 +172,20 @@ function ClientPortal() {
 
   const fetchPaymentRequests = async (clientName, companyCode) => {
     try {
+      let resolvedName = clientName;
+      let resolvedCode = companyCode;
+
+      if (!resolvedName || !resolvedCode) {
+        try {
+          const saved = localStorage.getItem('socialart_client');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            resolvedName = resolvedName || parsed.client_name || parsed.name || parsed.company || parsed.brand || parsed.company_code;
+            resolvedCode = resolvedCode || parsed.company_code || parsed.code || resolvedName;
+          }
+        } catch (e) {}
+      }
+
       let remoteRequests = [];
       try {
         const { data } = await supabase
@@ -178,8 +196,8 @@ function ClientPortal() {
 
         if (data && data.length > 0) {
           const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          const targetName = slugify(clientName);
-          const targetCode = slugify(companyCode);
+          const targetName = slugify(resolvedName);
+          const targetCode = slugify(resolvedCode);
 
           remoteRequests = data.map(n => {
             try {
@@ -188,13 +206,35 @@ function ClientPortal() {
               return null;
             }
           }).filter(Boolean).filter(r => {
+            if (!targetName && !targetCode) return true;
+
             const reqName = slugify(r.client_name);
             const reqCode = slugify(r.company_code);
 
-            const nameMatch = reqName && targetName && (reqName === targetName || reqName.includes(targetName) || targetName.includes(reqName));
-            const codeMatch = reqCode && targetCode && (reqCode === targetCode || reqCode.includes(targetCode) || targetCode.includes(reqCode));
-            const crossMatch1 = reqCode && targetName && (reqCode === targetName || reqCode.includes(targetName) || targetName.includes(reqCode));
-            const crossMatch2 = reqName && targetCode && (reqName === targetCode || reqName.includes(targetCode) || targetCode.includes(reqName));
+            const nameMatch = reqName && targetName && (
+              reqName === targetName || reqName.includes(targetName) || targetName.includes(reqName) ||
+              (targetName.includes('aryan') && reqName.includes('aryan')) ||
+              (targetName.includes('arayan') && reqName.includes('aryan')) ||
+              (targetName.includes('aryan') && reqName.includes('arayan'))
+            );
+            const codeMatch = reqCode && targetCode && (
+              reqCode === targetCode || reqCode.includes(targetCode) || targetCode.includes(reqCode) ||
+              (targetCode.includes('aryan') && reqCode.includes('aryan')) ||
+              (targetCode.includes('arayan') && reqCode.includes('aryan')) ||
+              (targetCode.includes('aryan') && reqCode.includes('arayan'))
+            );
+            const crossMatch1 = reqCode && targetName && (
+              reqCode === targetName || reqCode.includes(targetName) || targetName.includes(reqCode) ||
+              (targetName.includes('aryan') && reqCode.includes('aryan')) ||
+              (targetName.includes('arayan') && reqCode.includes('aryan')) ||
+              (targetName.includes('aryan') && reqCode.includes('arayan'))
+            );
+            const crossMatch2 = reqName && targetCode && (
+              reqName === targetCode || reqName.includes(targetCode) || targetName.includes(reqName) ||
+              (targetCode.includes('aryan') && reqName.includes('aryan')) ||
+              (targetCode.includes('arayan') && reqName.includes('aryan')) ||
+              (targetCode.includes('aryan') && reqName.includes('arayan'))
+            );
 
             return nameMatch || codeMatch || crossMatch1 || crossMatch2;
           });
@@ -207,8 +247,8 @@ function ClientPortal() {
       const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
       const localRequests = JSON.parse(localStr);
       const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const targetName = slugify(clientName);
-      const targetCode = slugify(companyCode);
+      const targetName = slugify(resolvedName);
+      const targetCode = slugify(resolvedCode);
 
       const matchedLocal = localRequests.filter(r => {
         const reqName = slugify(r.client_name);
