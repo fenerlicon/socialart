@@ -728,13 +728,7 @@ function ClientPortal() {
           </button>
         </div>
 
-        {/* Dashboard Grid */}
-        <div className="cp-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
-          <StatCard icon={<Users color="var(--accent)" />} label="Takipçi" value={customer?.metrics?.followers || '---'} growth={customer?.metrics?.growth} />
-          <StatCard icon={<Zap color="var(--primary)" />} label="Erişim" value={customer?.metrics?.reach || '---'} />
-          <StatCard icon={<TrendingUp color="#00e676" />} label="Etkileşim (ROAS)" value={customer?.metrics?.roas || '---'} />
-          <StatCard icon={<BarChart3 color="#ffab00" />} label="Reklam Harcaması" value={customer?.metrics?.ad_spend || '---'} />
-        </div>
+
 
         <div className="cp-main-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
           
