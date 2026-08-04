@@ -620,7 +620,18 @@ function ClientPortal() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-color)', padding: '120px 0 60px 0' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-color)', padding: 'clamp(80px, 10vw, 120px) 0 60px 0' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .cp-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .cp-main-grid { grid-template-columns: 1fr !important; }
+          .cp-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .cp-header h1 { font-size: 1.4rem !important; }
+          .cp-logout-btn { align-self: flex-end; }
+          .cp-pay-row { flex-direction: column !important; align-items: flex-start !important; }
+          .cp-pay-row-right { width: 100% !important; flex-direction: row !important; justify-content: space-between !important; align-items: center !important; }
+        }
+      `}</style>
       
       {/* GLOBAL ADMIN REPLY NOTIFICATION */}
       {newReplyAlert && (
@@ -668,30 +679,30 @@ function ClientPortal() {
       <div className="container">
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px' }}>
+        <div className="cp-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ width: '64px', height: '64px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--surface-border)' }}>
+            <div style={{ width: '64px', height: '64px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--surface-border)', flexShrink: 0 }}>
               <Building2 size={32} color="var(--primary)" />
             </div>
             <div>
-              <h1 style={{ fontSize: '2rem', fontWeight: '800' }}>Hoş Geldiniz, {customer?.client_name || 'Müşterimiz'}</h1>
-              <p style={{ color: 'var(--text-muted)' }}>Markanızın dijital performansını anlık olarak takip edin.</p>
+              <h1 style={{ fontSize: 'clamp(1.3rem, 4vw, 2rem)', fontWeight: '800', margin: 0 }}>Hoş Geldiniz, {customer?.client_name || 'Müşterimiz'}</h1>
+              <p style={{ color: 'var(--text-muted)', margin: '4px 0 0', fontSize: '0.85rem' }}>Markanızın dijital performansını anlık olarak takip edin.</p>
             </div>
           </div>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', padding: '12px 24px', borderRadius: '16px', fontWeight: '700', border: '1px solid rgba(255,0,85,0.2)' }}>
+          <button className="cp-logout-btn" onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,0,85,0.1)', color: 'var(--secondary)', padding: '12px 24px', borderRadius: '16px', fontWeight: '700', border: '1px solid rgba(255,0,85,0.2)', cursor: 'pointer' }}>
             <LogOut size={18} /> Güvenli Çıkış
           </button>
         </div>
 
         {/* Dashboard Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+        <div className="cp-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
           <StatCard icon={<Users color="var(--accent)" />} label="Takipçi" value={customer?.metrics?.followers || '---'} growth={customer?.metrics?.growth} />
           <StatCard icon={<Zap color="var(--primary)" />} label="Erişim" value={customer?.metrics?.reach || '---'} />
           <StatCard icon={<TrendingUp color="#00e676" />} label="Etkileşim (ROAS)" value={customer?.metrics?.roas || '---'} />
           <StatCard icon={<BarChart3 color="#ffab00" />} label="Reklam Harcaması" value={customer?.metrics?.ad_spend || '---'} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+        <div className="cp-main-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
           
           {/* Main Content: Progress & Tasks */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -704,13 +715,22 @@ function ClientPortal() {
               border: '1px solid rgba(0, 229, 255, 0.2)',
               boxShadow: '0 15px 40px rgba(0, 0, 0, 0.3)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#ffffff' }}>
                   <CreditCard size={24} color="#00e5ff" /> Ödeme Talepleriniz
                 </h3>
-                <span style={{ fontSize: '0.8rem', background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>
-                  {paymentRequests ? paymentRequests.filter(r => r.status === 'pending').length : 0} Bekleyen Ödeme
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '0.8rem', background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>
+                    {paymentRequests ? paymentRequests.filter(r => r.status === 'pending').length : 0} Bekleyen Ödeme
+                  </span>
+                  <button
+                    onClick={() => fetchPaymentRequests(customer?.client_name, customer?.company_code)}
+                    title="Yenile"
+                    style={{ background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.2)', color: '#00e5ff', borderRadius: '10px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '700' }}
+                  >
+                    🔄 Yenile
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -723,22 +743,18 @@ function ClientPortal() {
                     const isPending = reqItem.status === 'pending';
 
                     return (
-                      <div 
+                      <div
                         key={reqItem.id}
                         style={{
                           background: 'rgba(255, 255, 255, 0.03)',
                           border: isPending ? '1px solid rgba(0, 229, 255, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)',
                           borderRadius: '18px',
                           padding: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '16px'
                         }}
                       >
+                      <div className="cp-pay-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffffff' }}>
                               {reqItem.title}
                             </span>
@@ -767,7 +783,7 @@ function ClientPortal() {
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div className="cp-pay-row-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>TUTAR</div>
                             <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#00e5ff' }}>
@@ -802,6 +818,7 @@ function ClientPortal() {
                             </div>
                           )}
                         </div>
+                      </div>
                       </div>
                     );
                   })
