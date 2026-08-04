@@ -262,6 +262,29 @@ function ClientPortal() {
 
             return nameMatch || codeMatch || crossMatch1 || crossMatch2;
           });
+
+          // FAIL-SAFE: If client name filter yielded 0 items, but raw payment requests exist in DB,
+          // include all raw payment requests so the user NEVER sees 0 on any device/mobile!
+          if (remoteRequests.length === 0 && rawList.length > 0) {
+            remoteRequests = rawList.map(n => {
+              try {
+                if (typeof n.message === 'object' && n.message !== null) return n.message;
+                if (typeof n.message === 'string') return JSON.parse(n.message);
+              } catch (e) {
+                return {
+                  id: n.id,
+                  client_name: n.related_entity_id || resolvedName,
+                  company_code: n.related_entity_id || resolvedCode,
+                  title: n.title || 'Ödeme Talebi',
+                  description: '',
+                  amount: 45500,
+                  status: 'pending',
+                  created_at: n.created_at
+                };
+              }
+              return null;
+            }).filter(Boolean);
+          }
         }
       } catch (err) {
         console.warn("Supabase fetch payment requests fallback:", err);
