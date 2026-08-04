@@ -290,31 +290,12 @@ function ClientPortal() {
         console.warn("Supabase fetch payment requests fallback:", err);
       }
 
-      // LocalStorage sync & merge
-      const localStr = typeof window !== 'undefined' ? (localStorage.getItem('socialart_payment_requests') || '[]') : '[]';
-      let localRequests = [];
-      try { localRequests = JSON.parse(localStr); } catch (e) {}
-      
-      const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const targetName = slugify(resolvedName);
-      const targetCode = slugify(resolvedCode);
-
-      const matchedLocal = localRequests.filter(r => {
-        const reqName = slugify(r.client_name);
-        const reqCode = slugify(r.company_code);
-        const isAryanUser = targetName.includes('aryan') || targetName.includes('arayan') || targetCode.includes('aryan') || targetCode.includes('arayan');
-        if (isAryanUser && (reqName.includes('aryan') || reqName.includes('arayan') || reqCode.includes('aryan') || reqCode.includes('arayan') || !reqName)) {
-          return true;
-        }
-        return (reqName && targetName && (reqName === targetName || reqName.includes(targetName))) || 
-               (reqCode && targetCode && (reqCode === targetCode || reqCode.includes(targetCode)));
-      });
-
-      const mergedMap = new Map();
-      remoteRequests.forEach(r => { if (r && r.id) mergedMap.set(r.id, r); });
-      matchedLocal.forEach(r => { if (r && r.id && !mergedMap.has(r.id)) mergedMap.set(r.id, r); });
-
-      setPaymentRequests(Array.from(mergedMap.values()));
+      // Supabase DB is single source of truth
+      const finalList = remoteRequests.length > 0 ? remoteRequests : [];
+      setPaymentRequests(finalList);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('socialart_payment_requests', JSON.stringify(finalList));
+      }
     } catch (e) {
       console.error("fetchPaymentRequests error:", e);
     }
