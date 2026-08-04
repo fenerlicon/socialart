@@ -38,16 +38,18 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
 
   const handleStartPayment = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.phone) {
-      setErrorMessage('Lütfen ad soyad, e-posta ve telefon alanlarını doldurun.');
+    if (!formData.name || !formData.phone) {
+      setErrorMessage('Lütfen ad soyad ve telefon alanlarını doldurun.');
       return;
     }
 
-    // Email format validation before proceeding to payment
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      setErrorMessage('Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@firma.com).');
-      return;
+    // Email format validation (only if email is entered)
+    if (formData.email && formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        setErrorMessage('Girdiğiniz e-posta adresi geçersiz. Lütfen kontrol ediniz veya boş bırakınız.');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -258,13 +260,12 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>
-                    E-posta Adresi *
+                    E-posta Adresi (İsteğe Bağlı)
                   </label>
                   <input
                     type="email"
                     name="email"
-                    required
-                    placeholder="ahmet@sirketiniz.com"
+                    placeholder="ahmet@sirketiniz.com (İsteğe Bağlı)"
                     value={formData.email}
                     onChange={handleInputChange}
                     style={inputStyle}

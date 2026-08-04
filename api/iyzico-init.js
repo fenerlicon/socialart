@@ -9,15 +9,19 @@ export default async function handler(req, res) {
   try {
     const { planName, price, buyerInfo } = req.body || {};
 
-    if (!price || !buyerInfo?.email || !buyerInfo?.name) {
-      return res.status(400).json({ error: 'Lütfen ad soyad, e-posta ve gerekli bilgileri doldurun.' });
+    if (!price || !buyerInfo?.name) {
+      return res.status(400).json({ error: 'Lütfen ad soyad ve gerekli bilgileri doldurun.' });
     }
 
-    // Email regex validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(String(buyerInfo.email).trim())) {
-      return res.status(400).json({ error: 'Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@firma.com).' });
+    // Email format validation (only if email is provided)
+    const emailProvided = buyerInfo?.email && String(buyerInfo.email).trim();
+    if (emailProvided) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(String(buyerInfo.email).trim())) {
+        return res.status(400).json({ error: 'Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@firma.com) veya boş bırakınız.' });
+      }
     }
+    const finalEmail = emailProvided ? String(buyerInfo.email).trim() : 'musteri@socialartmedya.com';
 
     const rawApiKey = process.env.IYZICO_API_KEY;
     const rawSecretKey = process.env.IYZICO_SECRET_KEY;
@@ -119,7 +123,7 @@ export default async function handler(req, res) {
         name: firstName,
         surname: lastName,
         gsmNumber: formattedPhone,
-        email: buyerInfo.email,
+        email: finalEmail,
         identityNumber: buyerInfo.identityNumber || '11111111111',
         registrationAddress: buyerInfo.address || 'İstanbul, Türkiye',
         ip: (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '85.105.0.1').split(',')[0].trim(),
