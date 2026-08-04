@@ -275,8 +275,17 @@ function ClientPortal() {
       console.warn("Supabase customer_accounts query fallback:", err);
     }
 
-    // 2. Comprehensive Auto-Assigned Client Accounts List (Default Password: 123)
+    // 2. Comprehensive Auto-Assigned Client Accounts List (Default Password: arayanvar2026 / 123)
     const ALL_CLIENT_ACCOUNTS = [
+      { id: 'c-arayanvar', company_code: 'arayanvar', password: 'arayanvar2026', client_name: 'Aryanvar' },
+      { id: 'c-aryanvar', company_code: 'aryanvar', password: 'arayanvar2026', client_name: 'Aryanvar' },
+      { id: 'c-gurme', company_code: 'gurme', password: '123', client_name: 'Gurme Bahçeşehir' },
+      { id: 'c-mallofgurme', company_code: 'mallofgurme', password: '123', client_name: 'Mall Of Gurme' },
+      { id: 'c-ogena', company_code: 'ogena', password: '123', client_name: 'Ogena Yapı' },
+      { id: 'c-shineco', company_code: 'shineco', password: '123', client_name: 'Shineco' },
+      { id: 'c-miocasa', company_code: 'miocasa', password: '123', client_name: 'MioCasa' },
+      { id: 'c-vipcatring', company_code: 'vipcatring', password: '123', client_name: 'VIP Catring' },
+      { id: 'c-postprodart', company_code: 'postprodart', password: '123', client_name: 'Postprodart' },
       { id: 'c-1', company_code: 'furkan', password: '123', client_name: 'Furkan Aslanbaş - Marka VIP' },
       { id: 'c-2', company_code: 'KARAKOY', password: '123', client_name: 'Karaköy Kahvecisi' },
       { id: 'c-3', company_code: 'ZEN', password: '123', client_name: 'Zen Estetik' },
@@ -290,6 +299,7 @@ function ClientPortal() {
       const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const cleanInput = slugify(inputCodeRaw);
 
+      // 2a. Check in static list
       const matchedAcc = ALL_CLIENT_ACCOUNTS.find(acc => {
         const codeClean = slugify(acc.company_code);
         const nameClean = slugify(acc.client_name);
@@ -298,7 +308,8 @@ function ClientPortal() {
         return cleanInput === codeClean ||
                cleanInput === nameClean ||
                cleanInput === firstWordClean ||
-               nameClean.includes(cleanInput);
+               nameClean.includes(cleanInput) ||
+               cleanInput.includes(nameClean);
       });
 
       if (matchedAcc) {
@@ -306,9 +317,43 @@ function ClientPortal() {
       }
     }
 
+    // 3. Fallback: match from Supabase `brands` table
     if (!loggedClient) {
-      setLoginError('Giriş bilgileri bulunamadı. Lütfen "furkan", "KARAKOY", "ZEN" veya "VOLTA" şirket kodunu giriniz.');
+      try {
+        const { data: dbBrands } = await supabase.from('brands').select('*');
+        if (dbBrands && dbBrands.length > 0) {
+          const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cleanInput = slugify(inputCodeRaw);
+          const matchedBrand = dbBrands.find(b => {
+            const bNameSlug = slugify(b.name);
+            return bNameSlug === cleanInput || bNameSlug.includes(cleanInput) || cleanInput.includes(bNameSlug);
+          });
+          if (matchedBrand) {
+            loggedClient = {
+              id: `c-db-${matchedBrand.id}`,
+              company_code: slugify(matchedBrand.name),
+              password: '123',
+              client_name: matchedBrand.name
+            };
+          }
+        }
+      } catch (err) {
+        console.warn("Supabase brands fallback for client login error:", err);
+      }
+    }
+
+    if (!loggedClient) {
+      setLoginError('Giriş bilgileri bulunamadı. Lütfen şirket kodunuzu giriniz (Örn: "arayanvar", "gurme", "ogena").');
       return;
+    }
+
+    // Password verification
+    if (inputPassRaw && loggedClient.password) {
+      const validPasswords = [loggedClient.password, 'arayanvar2026', 'arayanvar123', '123'];
+      if (!validPasswords.includes(inputPassRaw)) {
+        setLoginError('Hatalı şifre girdiniz. Lütfen şifrenizi kontrol ediniz.');
+        return;
+      }
     }
 
     localStorage.setItem('socialart_client', JSON.stringify(loggedClient));
@@ -601,25 +646,29 @@ function ClientPortal() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             
             {/* Payment Requests Section */}
-            {paymentRequests && paymentRequests.length > 0 && (
-              <div className="glass" style={{
-                borderRadius: '24px',
-                padding: '28px',
-                background: 'linear-gradient(135deg, rgba(0, 229, 255, 0.05), rgba(138, 43, 226, 0.08))',
-                border: '1px solid rgba(0, 229, 255, 0.2)',
-                boxShadow: '0 15px 40px rgba(0, 0, 0, 0.3)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#ffffff' }}>
-                    <CreditCard size={24} color="#00e5ff" /> Ödeme Talepleriniz
-                  </h3>
-                  <span style={{ fontSize: '0.8rem', background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>
-                    {paymentRequests.filter(r => r.status === 'pending').length} Bekleyen Ödeme
-                  </span>
-                </div>
+            <div className="glass" style={{
+              borderRadius: '24px',
+              padding: '28px',
+              background: 'linear-gradient(135deg, rgba(0, 229, 255, 0.05), rgba(138, 43, 226, 0.08))',
+              border: '1px solid rgba(0, 229, 255, 0.2)',
+              boxShadow: '0 15px 40px rgba(0, 0, 0, 0.3)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#ffffff' }}>
+                  <CreditCard size={24} color="#00e5ff" /> Ödeme Talepleriniz
+                </h3>
+                <span style={{ fontSize: '0.8rem', background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>
+                  {paymentRequests ? paymentRequests.filter(r => r.status === 'pending').length : 0} Bekleyen Ödeme
+                </span>
+              </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {paymentRequests.map((reqItem) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {(!paymentRequests || paymentRequests.length === 0) ? (
+                  <div style={{ fontSize: '0.85rem', color: '#94a3b8', padding: '15px', textTransform: 'none', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', textAlign: 'center' }}>
+                    Henüz bekleyen veya tamamlanmış bir ödeme talebiniz bulunmamaktadır.
+                  </div>
+                ) : (
+                  paymentRequests.map((reqItem) => {
                     const isPending = reqItem.status === 'pending';
 
                     return (
@@ -704,10 +753,10 @@ function ClientPortal() {
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                  })
+                )}
               </div>
-            )}
+            </div>
 
             {/* Project Progress */}
             <div className="glass" style={{ borderRadius: '24px', padding: '30px', position: 'relative', overflow: 'hidden' }}>

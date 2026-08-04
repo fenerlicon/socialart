@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { CreditCard, Plus, CheckCircle2, X, Building2 } from 'lucide-react'
+import { CreditCard, Plus, CheckCircle2, X, Building2, AlertCircle } from 'lucide-react'
 
 interface PaymentRequest {
   id: string
@@ -21,21 +21,19 @@ interface BrandOption {
   code: string
 }
 
-const DEFAULT_BRANDS: BrandOption[] = [
-  { name: 'Furkan Aslanbaş', code: 'furkan' },
-  { name: 'Zen Estetik', code: 'zen' },
-  { name: 'Peugeot Turkey', code: 'peugeot' },
-  { name: 'Koton', code: 'koton' },
-  { name: 'Jeep', code: 'jeep' },
-  { name: 'Karaköy Kahvecisi', code: 'karakoy' },
-  { name: 'Diffea', code: 'diffea' }
-]
+interface ToastState {
+  message: string
+  subtext?: string
+  type: 'success' | 'error'
+}
 
 export default function PaymentsPage() {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([])
-  const [brandsList, setBrandsList] = useState<BrandOption[]>(DEFAULT_BRANDS)
+  const [brandsList, setBrandsList] = useState<BrandOption[]>([])
   const [selectedBrandOption, setSelectedBrandOption] = useState<string>('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [toast, setToast] = useState<ToastState | null>(null)
+
   const [form, setForm] = useState({
     client_name: '',
     company_code: '',
@@ -43,6 +41,13 @@ export default function PaymentsPage() {
     amount: '',
     description: ''
   })
+
+  const triggerToast = (message: string, subtext?: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, subtext, type })
+    setTimeout(() => {
+      setToast(null)
+    }, 4500)
+  }
 
   const fetchPaymentRequests = async () => {
     try {
@@ -72,27 +77,72 @@ export default function PaymentsPage() {
 
   const fetchBrands = async () => {
     try {
-      const { data } = await supabase.from('leads').select('name, company, pipeline').limit(100)
-      if (data && data.length > 0) {
-        const dynamicBrands: BrandOption[] = []
-        const seen = new Set<string>()
+      const dynamicBrands: BrandOption[] = []
+      const seen = new Set<string>()
 
-        // Include defaults first
-        DEFAULT_BRANDS.forEach(b => {
-          seen.add(b.name.toLowerCase())
-          dynamicBrands.push(b)
-        })
-
-        data.forEach(item => {
-          const bName = (item.company || item.name || '').trim()
-          if (bName && !seen.has(bName.toLowerCase())) {
-            seen.add(bName.toLowerCase())
-            const code = bName.toLowerCase().replace(/[^a-z0-9]/g, '')
-            dynamicBrands.push({ name: bName, code })
-          }
-        })
-        setBrandsList(dynamicBrands)
+      // 1. Fetch REAL active agency brands from 'brands' table (Markalar)
+      try {
+        const { data: realBrandsData } = await supabase.from('brands').select('id, name, instagram, website').order('name', { ascending: true })
+        if (realBrandsData && realBrandsData.length > 0) {
+          realBrandsData.forEach((b: any) => {
+            const name = (b.name || '').trim()
+            if (name && !seen.has(name.toLowerCase())) {
+              seen.add(name.toLowerCase())
+              const code = name.toLowerCase().replace(/[^a-z0-9]/g, '')
+              dynamicBrands.push({ name, code })
+            }
+          })
+        }
+      } catch (e) {
+        console.warn('Fetch real brands error:', e)
       }
+
+      // 2. Fetch from active_clients
+      try {
+        const { data: clientsData } = await supabase.from('active_clients').select('*')
+        if (clientsData) {
+          clientsData.forEach((c: any) => {
+            const name = (c.brand || c.name || c.company || '').trim()
+            if (name && !seen.has(name.toLowerCase())) {
+              seen.add(name.toLowerCase())
+              const code = c.company_code || c.code || name.toLowerCase().replace(/[^a-z0-9]/g, '')
+              dynamicBrands.push({ name, code })
+            }
+          })
+        }
+      } catch (e) {}
+
+      // 3. Fetch from customer_accounts
+      try {
+        const { data: customerData } = await supabase.from('customer_accounts').select('*')
+        if (customerData) {
+          customerData.forEach((c: any) => {
+            const name = (c.name || c.company || '').trim()
+            if (name && !seen.has(name.toLowerCase())) {
+              seen.add(name.toLowerCase())
+              const code = c.company_code || c.code || name.toLowerCase().replace(/[^a-z0-9]/g, '')
+              dynamicBrands.push({ name, code })
+            }
+          })
+        }
+      } catch (e) {}
+
+      // 4. Fetch from leads
+      try {
+        const { data: leadsData } = await supabase.from('leads').select('name, company')
+        if (leadsData) {
+          leadsData.forEach((l: any) => {
+            const name = (l.company || l.name || '').trim()
+            if (name && !seen.has(name.toLowerCase())) {
+              seen.add(name.toLowerCase())
+              const code = name.toLowerCase().replace(/[^a-z0-9]/g, '')
+              dynamicBrands.push({ name, code })
+            }
+          })
+        }
+      } catch (e) {}
+
+      setBrandsList(dynamicBrands)
     } catch (err) {
       console.warn('Fetch brands error:', err)
     }
@@ -118,13 +168,13 @@ export default function PaymentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.client_name || !form.title || !form.amount) {
-      alert('Lütfen Müşteri Adı, Ödeme Başlığı ve Tutar alanlarını doldurunuz.')
+      triggerToast('Lütfen Zorunlu Alanları Doldurunuz', 'Müşteri Adı, Ödeme Başlığı ve Tutar zorunludur.', 'error')
       return
     }
 
     const numAmount = parseFloat(form.amount)
     if (isNaN(numAmount) || numAmount <= 0) {
-      alert('Lütfen geçerli bir tutar giriniz.')
+      triggerToast('Geçersiz Tutar', 'Lütfen 0\'dan büyük geçerli bir tutar giriniz.', 'error')
       return
     }
 
@@ -168,11 +218,39 @@ export default function PaymentsPage() {
     setForm({ client_name: '', company_code: '', title: '', amount: '', description: '' })
     setSelectedBrandOption('')
 
-    alert(`✅ Ödeme talebi ("${newReq.title}" - ₺${newReq.amount}) başarıyla oluşturuldu ve "${newReq.client_name}" müşterisinin paneline iletildi!`)
+    triggerToast(
+      'Ödeme Talebi Oluşturuldu! 🚀',
+      `"${newReq.title}" (₺${newReq.amount.toLocaleString('tr-TR')}) talebi "${newReq.client_name}" müşterisine iletildi.`,
+      'success'
+    )
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 relative">
+      {/* Toast Notification Banner */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[9999] max-w-md w-full border backdrop-blur-xl rounded-2xl p-4 shadow-2xl flex items-start gap-3 transition-all duration-300 ${
+          toast.type === 'error'
+            ? 'bg-red-950/90 border-red-500/40 shadow-red-500/20'
+            : 'bg-neutral-900/95 border-cyan-500/40 shadow-cyan-500/20'
+        }`}>
+          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
+            toast.type === 'error'
+              ? 'bg-red-500/10 border-red-500/30 text-red-400'
+              : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+          }`}>
+            {toast.type === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-extrabold text-white">{toast.message}</h4>
+            {toast.subtext && <p className="text-[11px] text-neutral-300 mt-0.5 leading-relaxed">{toast.subtext}</p>}
+          </div>
+          <button onClick={() => setToast(null)} className="text-neutral-500 hover:text-white transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header Bar */}
       <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4 backdrop-blur-xl">
         <div>
@@ -282,7 +360,7 @@ export default function PaymentsPage() {
                   onChange={(e) => handleBrandSelectChange(e.target.value)}
                   className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-400 font-bold"
                 >
-                  <option value="">-- Müşteriler Listesinden Seçin --</option>
+                  <option value="">-- Markalar Listesinden Seçin --</option>
                   {brandsList.map((brand, idx) => (
                     <option key={idx} value={brand.name}>
                       🏢 {brand.name} (Kod: {brand.code})
@@ -295,15 +373,25 @@ export default function PaymentsPage() {
               {/* Show text inputs if custom or pre-filled */}
               {(selectedBrandOption === 'custom' || form.client_name) && (
                 <div className="space-y-3 bg-neutral-950/60 p-3 rounded-xl border border-neutral-850">
+                  {selectedBrandOption !== 'custom' && (
+                    <div className="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
+                      🔒 Seçilen markanın bilgileri sabittir, değiştirilemez.
+                    </div>
+                  )}
                   <div>
                     <label className="block text-[11px] font-bold text-neutral-400 mb-1">Müşteri / Firma Adı *</label>
                     <input
                       type="text"
                       required
-                      placeholder="Örn: Furkan Aslanbaş, Zen Estetik..."
+                      readOnly={selectedBrandOption !== 'custom'}
+                      placeholder="Örn: Ogena Yapı, Aryanvar..."
                       value={form.client_name}
                       onChange={(e) => setForm(prev => ({ ...prev, client_name: e.target.value }))}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
+                      className={`w-full border rounded-xl px-3 py-2 text-xs outline-none ${
+                        selectedBrandOption !== 'custom'
+                          ? 'bg-neutral-950/90 border-neutral-800 text-neutral-400 cursor-not-allowed font-semibold'
+                          : 'bg-neutral-900 border-neutral-800 text-white focus:border-cyan-400'
+                      }`}
                     />
                   </div>
 
@@ -311,10 +399,15 @@ export default function PaymentsPage() {
                     <label className="block text-[11px] font-bold text-neutral-400 mb-1">Müşteri Kodu (Panel Giriş Kodu)</label>
                     <input
                       type="text"
-                      placeholder="Örn: furkan, ZEN..."
+                      readOnly={selectedBrandOption !== 'custom'}
+                      placeholder="Örn: ogenayapi, aryanvar..."
                       value={form.company_code}
                       onChange={(e) => setForm(prev => ({ ...prev, company_code: e.target.value }))}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-cyan-400 font-mono font-bold outline-none focus:border-cyan-400"
+                      className={`w-full border rounded-xl px-3 py-2 text-xs font-mono font-bold outline-none ${
+                        selectedBrandOption !== 'custom'
+                          ? 'bg-neutral-950/90 border-neutral-800 text-cyan-500/70 cursor-not-allowed'
+                          : 'bg-neutral-900 border-neutral-800 text-cyan-400 focus:border-cyan-400'
+                      }`}
                     />
                   </div>
                 </div>
@@ -326,7 +419,7 @@ export default function PaymentsPage() {
                   type="number"
                   step="0.01"
                   required
-                  placeholder="1.00 veya 15000"
+                  placeholder="Örn: 5000"
                   value={form.amount}
                   onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
                   className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none focus:border-cyan-400"

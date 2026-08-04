@@ -93,7 +93,13 @@ export default async function handler(req, res) {
           },
           body: JSON.stringify(emailPayload)
         });
-        const resendData = await resendResponse.json();
+        let resendData = {};
+        try {
+          const text = await resendResponse.text();
+          resendData = text ? JSON.parse(text) : {};
+        } catch (e) {
+          resendData = {};
+        }
         console.log('Resend Response:', resendData);
       }
     }

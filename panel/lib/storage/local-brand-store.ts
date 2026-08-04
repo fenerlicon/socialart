@@ -4,7 +4,24 @@ import { v4 as uuidv4 } from 'uuid'
 import { createOnboardingWorkflowForBrand } from '@/lib/workflows/onboarding-workflow'
 
 export async function getStoredBrands(): Promise<Brand[]> {
-  return BrandRepository.getAll()
+  try {
+    const remoteBrands = await BrandRepository.getAll()
+    if (typeof window !== 'undefined') {
+      const localStr = localStorage.getItem('socialart_brands') || '[]'
+      const localBrands: Brand[] = JSON.parse(localStr)
+      const mergedMap = new Map<string, Brand>()
+      remoteBrands.forEach(b => mergedMap.set(b.id, b))
+      localBrands.forEach(b => { if (!mergedMap.has(b.id)) mergedMap.set(b.id, b) })
+      return Array.from(mergedMap.values())
+    }
+    return remoteBrands
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      const localStr = localStorage.getItem('socialart_brands') || '[]'
+      return JSON.parse(localStr)
+    }
+    return []
+  }
 }
 
 export async function getBrandById(id: string): Promise<Brand | undefined> {
@@ -13,8 +30,25 @@ export async function getBrandById(id: string): Promise<Brand | undefined> {
 }
 
 export async function saveBrand(brand: Brand): Promise<Brand[]> {
-  await BrandRepository.save(brand)
-  return BrandRepository.getAll()
+  try {
+    await BrandRepository.save(brand)
+  } catch (err) {
+    console.warn('DB save brand fallback:', err)
+  }
+  
+  if (typeof window !== 'undefined') {
+    const localStr = localStorage.getItem('socialart_brands') || '[]'
+    const localBrands: Brand[] = JSON.parse(localStr)
+    const existingIndex = localBrands.findIndex(b => b.id === brand.id)
+    if (existingIndex >= 0) {
+      localBrands[existingIndex] = brand
+    } else {
+      localBrands.unshift(brand)
+    }
+    localStorage.setItem('socialart_brands', JSON.stringify(localBrands))
+  }
+
+  return getStoredBrands()
 }
 
 export async function createAndStoreBrand(input: CreateBrandInput): Promise<Brand> {
@@ -28,7 +62,19 @@ export async function createAndStoreBrand(input: CreateBrandInput): Promise<Bran
     templateVersion: 1,
     templateUpdatedAt: now,
   }
-  await BrandRepository.save(brand)
+
+  try {
+    await BrandRepository.save(brand)
+  } catch (err) {
+    console.warn('DB brand save fallback:', err)
+  }
+
+  if (typeof window !== 'undefined') {
+    const localStr = localStorage.getItem('socialart_brands') || '[]'
+    const localBrands: Brand[] = JSON.parse(localStr)
+    localBrands.unshift(brand)
+    localStorage.setItem('socialart_brands', JSON.stringify(localBrands))
+  }
   
   try {
     await createOnboardingWorkflowForBrand(brand)
@@ -50,6 +96,16 @@ export async function updateBrandPlanItem(
 }
 
 export async function deleteBrand(id: string): Promise<Brand[]> {
-  await BrandRepository.delete(id)
-  return BrandRepository.getAll()
+  try {
+    await BrandRepository.delete(id)
+  } catch (e) {}
+
+  if (typeof window !== 'undefined') {
+    const localStr = localStorage.getItem('socialart_brands') || '[]'
+    const localBrands: Brand[] = JSON.parse(localStr)
+    const filtered = localBrands.filter(b => b.id !== id)
+    localStorage.setItem('socialart_brands', JSON.stringify(filtered))
+  }
+
+  return getStoredBrands()
 }

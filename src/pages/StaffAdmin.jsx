@@ -665,9 +665,14 @@ function Admin() {
       const { data: leadsData } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
       if (leadsData) setPotansiyel(leadsData);
 
-      // 2. Fetch active clients
+      // 2. Fetch active clients & real agency brands
       const { data: clientsData } = await supabase.from('active_clients').select('*').order('created_at', { ascending: false });
       if (clientsData) setAktifMusteriler(clientsData);
+
+      try {
+        const { data: realBrandsData } = await supabase.from('brands').select('*').order('name', { ascending: true });
+        if (realBrandsData) setRealBrands(realBrandsData);
+      } catch (e) {}
 
       // Fetch Applications
       const { data: ugcData } = await supabase.from('ugc_applications').select('*').order('created_at', { ascending: false });
@@ -752,13 +757,13 @@ function Admin() {
   const handleCreatePaymentRequest = async (e) => {
     e.preventDefault();
     if (!paymentForm.client_name || !paymentForm.title || !paymentForm.amount) {
-      alert('Lütfen Müşteri Adı, Ödeme Başlığı ve Tutar alanlarını doldurunuz.');
+      triggerToast('Lütfen Zorunlu Alanları Doldurunuz', 'Müşteri Adı, Ödeme Başlığı ve Tutar alanları zorunludur.', 'error');
       return;
     }
 
     const numAmount = parseFloat(paymentForm.amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      alert('Lütfen geçerli bir tutar giriniz.');
+      triggerToast('Geçersiz Tutar', 'Lütfen 0\'dan büyük geçerli bir tutar giriniz.', 'error');
       return;
     }
 
@@ -799,7 +804,11 @@ function Admin() {
     setIsCreatePaymentModalOpen(false);
     setPaymentForm({ client_name: '', company_code: '', title: '', amount: '', description: '' });
 
-    alert(`✅ Ödeme talebi ("${newReq.title}" - ₺${newReq.amount}) başarıyla oluşturuldu ve "${newReq.client_name}" müşterisinin paneline iletildi!`);
+    triggerToast(
+      'Ödeme Talebi İletildi! 🚀',
+      `"${newReq.title}" (₺${newReq.amount.toLocaleString('tr-TR')}) ödeme talebi "${newReq.client_name}" müşterisinin paneline iletildi.`,
+      'success'
+    );
   };
 
   const handleConfirmCompletion = async () => {
@@ -980,7 +989,16 @@ function Admin() {
 
   // Custom Payment Requests States
   const [paymentRequests, setPaymentRequests] = useState([]);
+  const [realBrands, setRealBrands] = useState([]);
+  const [isCustomBrand, setIsCustomBrand] = useState(false);
   const [isCreatePaymentModalOpen, setIsCreatePaymentModalOpen] = useState(false);
+  const [customToast, setCustomToast] = useState(null);
+
+  const triggerToast = (message, subtext = '', type = 'success') => {
+    setCustomToast({ message, subtext, type });
+    setTimeout(() => setCustomToast(null), 4500);
+  };
+
   const [paymentForm, setPaymentForm] = useState({
     client_name: '',
     company_code: '',
@@ -2854,6 +2872,55 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
   return (
     <div className="admin-container" style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #111115 50%, #1a112d 100%)', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
 
+      {/* MODERN CUSTOM TOAST NOTIFICATION */}
+      {customToast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '24px',
+            right: '24px',
+            zIndex: 99999,
+            background: customToast.type === 'error' ? 'rgba(30, 10, 10, 0.95)' : 'rgba(15, 23, 42, 0.95)',
+            border: customToast.type === 'error' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(0, 229, 255, 0.5)',
+            backdropFilter: 'blur(16px)',
+            color: '#fff',
+            padding: '16px 20px',
+            borderRadius: '16px',
+            boxShadow: customToast.type === 'error' ? '0 10px 30px rgba(239, 68, 68, 0.25)' : '0 10px 30px rgba(0, 229, 255, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            maxWidth: '420px',
+            width: '100%',
+            animation: 'slideIn 0.3s ease-out'
+          }}
+        >
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            background: customToast.type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 229, 255, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            flexShrink: 0
+          }}>
+            {customToast.type === 'error' ? '⚠️' : '✅'}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#ffffff' }}>{customToast.message}</div>
+            {customToast.subtext && <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '2px', lineHeight: '1.4' }}>{customToast.subtext}</div>}
+          </div>
+          <button
+            onClick={() => setCustomToast(null)}
+            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '16px' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* GLOBAL TALEP ALERT (TOAST) */}
       {newTalepAlert && (
         <div
@@ -3759,8 +3826,10 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val === 'custom') {
+                      setIsCustomBrand(true);
                       setPaymentForm(prev => ({ ...prev, client_name: '', company_code: '' }));
                     } else if (val) {
+                      setIsCustomBrand(false);
                       const [name, code] = val.split('|');
                       setPaymentForm(prev => ({ ...prev, client_name: name, company_code: code || name.toLowerCase().replace(/[^a-z0-9]/g, '') }));
                     }
@@ -3778,27 +3847,46 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     marginBottom: '10px'
                   }}
                 >
-                  <option value="">-- Müşteriler / Markalar Listesinden Seçin --</option>
-                  <option value="Furkan Aslanbaş|furkan">🏢 Furkan Aslanbaş (Kod: furkan)</option>
-                  <option value="Zen Estetik|zen">🏢 Zen Estetik (Kod: zen)</option>
-                  <option value="Peugeot Turkey|peugeot">🏢 Peugeot Turkey (Kod: peugeot)</option>
-                  <option value="Koton|koton">🏢 Koton (Kod: koton)</option>
-                  <option value="Jeep|jeep">🏢 Jeep (Kod: jeep)</option>
-                  <option value="Karaköy Kahvecisi|karakoy">🏢 Karaköy Kahvecisi (Kod: karakoy)</option>
-                  <option value="Diffea|diffea">🏢 Diffea (Kod: diffea)</option>
+                  <option value="">-- Markalar Listesinden Seçin --</option>
+                  {Array.isArray(realBrands) && realBrands.map(b => {
+                    const name = b.name;
+                    if (!name) return null;
+                    const code = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return (
+                      <option key={`brand-${b.id || Math.random()}`} value={`${name}|${code}`}>
+                        🏢 {name} (Kod: {code})
+                      </option>
+                    );
+                  })}
+                  {Array.isArray(aktifMusteriler) && aktifMusteriler.map(c => {
+                    const name = c.brand || c.name || c.company;
+                    if (!name) return null;
+                    const code = c.company_code || c.code || name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return (
+                      <option key={`client-${c.id || Math.random()}`} value={`${name}|${code}`}>
+                        🏢 {name} (Aktif Müşteri - Kod: {code})
+                      </option>
+                    );
+                  })}
                   {Array.isArray(potansiyel) && potansiyel.map(p => {
                     const name = p.company || p.name || p.title;
                     if (!name) return null;
                     const code = p.company_code || name.toLowerCase().replace(/[^a-z0-9]/g, '');
                     return (
-                      <option key={p.id || Math.random()} value={`${name}|${code}`}>
-                        🏢 {name} (Kod: {code})
+                      <option key={`lead-${p.id || Math.random()}`} value={`${name}|${code}`}>
+                        🏢 {name} (Lead - Kod: {code})
                       </option>
                     );
                   })}
                   <option value="custom">➕ Özel / Manuel Müşteri Adı Gir</option>
                 </select>
               </div>
+
+              {!isCustomBrand && paymentForm.client_name && (
+                <div style={{ fontSize: '0.75rem', color: '#00e5ff', fontWeight: '700', marginBottom: '-6px' }}>
+                  🔒 Seçilen markanın bilgileri sabittir, düzenlenemez.
+                </div>
+              )}
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
@@ -3807,18 +3895,21 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <input
                   type="text"
                   required
-                  placeholder="Örn: Furkan Aslanbaş, Zen Estetik..."
+                  readOnly={!isCustomBrand}
+                  placeholder="Örn: Ogena Yapı, Aryanvar..."
                   value={paymentForm.client_name}
                   onChange={(e) => setPaymentForm(prev => ({ ...prev, client_name: e.target.value }))}
                   style={{
                     width: '100%',
                     padding: '12px 14px',
                     borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.04)',
+                    background: !isCustomBrand ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#ffffff',
+                    color: !isCustomBrand ? '#94a3b8' : '#ffffff',
+                    cursor: !isCustomBrand ? 'not-allowed' : 'text',
                     outline: 'none',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    fontWeight: '700'
                   }}
                 />
               </div>
@@ -3830,16 +3921,18 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                   </label>
                   <input
                     type="text"
-                    placeholder="Örn: furkan, ZEN, KARAKOY..."
+                    readOnly={!isCustomBrand}
+                    placeholder="Örn: ogenayapi, aryanvar..."
                     value={paymentForm.company_code}
                     onChange={(e) => setPaymentForm(prev => ({ ...prev, company_code: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '12px 14px',
                       borderRadius: '12px',
-                      background: 'rgba(255,255,255,0.04)',
+                      background: !isCustomBrand ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#00e5ff',
+                      color: !isCustomBrand ? 'rgba(0, 229, 255, 0.6)' : '#00e5ff',
+                      cursor: !isCustomBrand ? 'not-allowed' : 'text',
                       outline: 'none',
                       fontSize: '0.9rem',
                       fontWeight: '700'
@@ -3855,7 +3948,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     type="number"
                     step="0.01"
                     required
-                    placeholder="Örn: 1.00 veya 15000"
+                    placeholder="Örn: 5000"
                     value={paymentForm.amount}
                     onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
                     style={{
@@ -3880,7 +3973,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <input
                   type="text"
                   required
-                  placeholder="Örn: Ağustos Ayı Sosyal Medya Hizmeti veya 1 TL Test Ödemesi"
+                  placeholder="Örn: Ağustos Ayı Sosyal Medya Hizmeti"
                   value={paymentForm.title}
                   onChange={(e) => setPaymentForm(prev => ({ ...prev, title: e.target.value }))}
                   style={{
@@ -3919,18 +4012,19 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button
                   type="button"
                   onClick={() => setIsCreatePaymentModalOpen(false)}
                   style={{
-                    flex: 1,
+                    width: '30%',
                     padding: '14px',
                     borderRadius: '12px',
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.1)',
                     color: '#ffffff',
                     fontWeight: '700',
+                    fontSize: '0.88rem',
                     cursor: 'pointer'
                   }}
                 >
@@ -3939,18 +4033,24 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <button
                   type="submit"
                   style={{
-                    flex: 2,
-                    padding: '14px',
+                    width: '70%',
+                    padding: '14px 20px',
                     borderRadius: '12px',
                     background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
                     border: 'none',
                     color: '#ffffff',
+                    fontSize: '0.92rem',
                     fontWeight: '800',
                     cursor: 'pointer',
-                    boxShadow: '0 8px 20px rgba(0, 229, 255, 0.25)'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 8px 25px rgba(0, 229, 255, 0.3)',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  Müşteri Paneline İlet
+                  🚀 Ödeme Talebini İlet
                 </button>
               </div>
             </form>

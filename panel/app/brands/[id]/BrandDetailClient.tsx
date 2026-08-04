@@ -147,37 +147,47 @@ export default function BrandDetailPage() {
     }
   }
 
+  const [isLoadingBrand, setIsLoadingBrand] = useState(true)
+
   // Load Brand, Employees, and Cycles on Mount
   useEffect(() => {
     if (!id) return
     async function loadData() {
       setIsLoadingAuth(true)
-      const storedEmps = await getStoredEmployees()
-      setEmployees(storedEmps)
+      setIsLoadingBrand(true)
+      try {
+        const storedEmps = await getStoredEmployees()
+        setEmployees(storedEmps)
 
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
-      }
-      setIsLoadingAuth(false)
-
-      const storedBrand = await getBrandById(id)
-      if (storedBrand) {
-        setBrand(storedBrand)
-        setLocalAssignments(storedBrand.brandAssignments || [])
-        
-        const brandCycles = await getCyclesByBrandId(id)
-        brandCycles.sort((a, b) => b.year - a.year || b.month - a.month)
-        setCycles(brandCycles)
-
-        if (brandCycles.length > 0) {
-          setSelectedPlanSource(brandCycles[0].id)
-          setLocalPlan(brandCycles[0].operationPlan)
-        } else {
-          setSelectedPlanSource('template')
-          setLocalPlan(storedBrand.operationPlan)
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
         }
+        setIsLoadingAuth(false)
+
+        const storedBrand = await getBrandById(id)
+        if (storedBrand) {
+          setBrand(storedBrand)
+          setLocalAssignments(storedBrand.brandAssignments || [])
+          
+          const brandCycles = await getCyclesByBrandId(id)
+          brandCycles.sort((a, b) => b.year - a.year || b.month - a.month)
+          setCycles(brandCycles)
+
+          if (brandCycles.length > 0) {
+            setSelectedPlanSource(brandCycles[0].id)
+            setLocalPlan(brandCycles[0].operationPlan)
+          } else {
+            setSelectedPlanSource('template')
+            setLocalPlan(storedBrand.operationPlan)
+          }
+        }
+      } catch (err) {
+        console.error('Error loading brand detail:', err)
+      } finally {
+        setIsLoadingAuth(false)
+        setIsLoadingBrand(false)
       }
     }
     loadData()
@@ -481,10 +491,11 @@ export default function BrandDetailPage() {
     return effective.grantedKeys.has('brand.manage')
   }, [activeEmployee])
 
-  if (isLoadingAuth) {
+  if (isLoadingAuth || isLoadingBrand) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <p className="text-xs text-muted-foreground font-medium">Marka detayları yükleniyor...</p>
       </div>
     )
   }
@@ -496,9 +507,9 @@ export default function BrandDetailPage() {
   if (!brand) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <p className="text-muted-foreground text-sm">Marka bulunamadı veya yükleniyor...</p>
-        <Button onClick={() => router.push('/brands/new')} variant="outline" size="sm">
-          Yeni Marka Ekle
+        <p className="text-muted-foreground text-sm font-semibold">Marka bulunamadı veya silinmiş olabilir.</p>
+        <Button onClick={() => router.push('/brands')} variant="outline" size="sm">
+          Markalar Listesine Dön
         </Button>
       </div>
     )

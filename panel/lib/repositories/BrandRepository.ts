@@ -62,18 +62,82 @@ export const BrandRepository = {
 
   async getById(id: string): Promise<Brand | null> {
     if (!id) return null
-    const { data, error } = await supabase
-      .from('brands')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle()
+    const cleanId = decodeURIComponent(id).trim()
 
-    if (error) {
-      console.error(`Error fetching brand with id ${id}:`, error)
-      throw error
+    // 1. Exact ID query
+    try {
+      const { data } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('id', cleanId)
+        .maybeSingle()
+
+      if (data) return this.mapRowToBrand(data)
+    } catch (err) {}
+
+    // 2. Exact Name query (case-insensitive)
+    try {
+      const { data } = await supabase
+        .from('brands')
+        .select('*')
+        .ilike('name', cleanId)
+        .maybeSingle()
+
+      if (data) return this.mapRowToBrand(data)
+    } catch (err) {}
+
+    // 3. Search across all brands in DB
+    try {
+      const { data: allBrands } = await supabase.from('brands').select('*')
+      if (allBrands && allBrands.length > 0) {
+        const lowerSearch = cleanId.toLowerCase()
+        const slugSearch = lowerSearch.replace(/[^a-z0-9]/g, '')
+
+        const found = allBrands.find(b => {
+          if (!b) return false
+          const bId = String(b.id || '').toLowerCase()
+          const bName = String(b.name || '').toLowerCase()
+          const bSlug = bName.replace(/[^a-z0-9]/g, '')
+          return bId === lowerSearch || bName === lowerSearch || (slugSearch && bSlug === slugSearch)
+        })
+
+        if (found) return this.mapRowToBrand(found)
+      }
+    } catch (err) {}
+
+    // 4. LocalStorage Fallback (for offline or freshly created local brands)
+    if (typeof window !== 'undefined') {
+      try {
+        const localStr = localStorage.getItem('socialart_brands') || '[]'
+        const localBrands: Brand[] = JSON.parse(localStr)
+        const foundLocal = localBrands.find(b =>
+          b.id === cleanId ||
+          b.name.toLowerCase() === cleanId.toLowerCase() ||
+          b.name.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanId.toLowerCase()
+        )
+        if (foundLocal) return foundLocal
+      } catch (err) {}
     }
 
-    return data ? this.mapRowToBrand(data) : null
+    // 5. Last Viewed Brand Fallback (for static export fallback routes)
+    if (typeof window !== 'undefined') {
+      try {
+        const lastViewedStr = localStorage.getItem('socialart_last_viewed_brand')
+        if (lastViewedStr) {
+          const lastViewed: Brand = JSON.parse(lastViewedStr)
+          if (
+            lastViewed.id === cleanId ||
+            lastViewed.name.toLowerCase() === cleanId.toLowerCase() ||
+            lastViewed.name.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanId.toLowerCase() ||
+            cleanId === 'temp'
+          ) {
+            return lastViewed
+          }
+        }
+      } catch (err) {}
+    }
+
+    return null
   },
 
   async save(brand: Brand): Promise<Brand> {

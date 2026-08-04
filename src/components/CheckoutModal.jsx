@@ -89,10 +89,16 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
         })
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        data = {};
+      }
 
       if (!response.ok || data.status !== 'success') {
-        throw new Error(data.error || 'Ödeme formu oluşturulamadı.');
+        throw new Error(data.error || 'Ödeme altyapısına şu an erişilemiyor. Lütfen canlı ortamda veya API sunucusunda tekrar deneyiniz.');
       }
 
       setStep(2);

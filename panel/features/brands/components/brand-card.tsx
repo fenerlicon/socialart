@@ -69,6 +69,11 @@ export function BrandCard({ brand, managerName, onEdit, onDelete }: BrandCardPro
   const teamCount = brand.brandAssignments?.length || 0
 
   const handleCardClick = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('socialart_last_viewed_brand', JSON.stringify(brand))
+      } catch (e) {}
+    }
     router.push(`/brands/${brand.id}`)
   }
 
