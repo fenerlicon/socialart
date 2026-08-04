@@ -13,23 +13,23 @@ export default async function handler(req, res) {
   const siteUrl = process.env.VITE_SITE_URL || `${protocol}://${host}`;
 
   if (!token) {
-    return res.redirect(302, `${siteUrl}/thank-you?payment=failed&reason=${encodeURIComponent('Güvenlik tokenı bulunamadı')}`);
+    return res.redirect(302, `${siteUrl}/tesekkurler?payment=failed&reason=${encodeURIComponent('Güvenlik tokenı bulunamadı')}`);
   }
 
   const rawApiKey = process.env.IYZICO_API_KEY;
   const rawSecretKey = process.env.IYZICO_SECRET_KEY;
-  const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
+  const baseUrl = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com';
 
   const iyzipay = new Iyzipay({
-    apiKey: rawApiKey || 'sandbox-4Wd0wX5K1aZ61LdK1rZ61LdK1rZ61LdK',
-    secretKey: rawSecretKey || 'sandbox-4Wd0wX5K1aZ61LdK1rZ61LdK1rZ61LdK',
+    apiKey: rawApiKey || 'eOLhjL2rON1eu4aq3DUgtYFjBi8QKZOm',
+    secretKey: rawSecretKey || '4yyU1eNElT4KzNv7TCOBHl0mRt2jSVIF',
     uri: baseUrl
   });
 
   iyzipay.checkoutForm.retrieve({ locale: Iyzipay.LOCALE.TR, token }, async (err, result) => {
     if (err || !result || result.status !== 'success' || result.paymentStatus !== 'SUCCESS') {
       const errorMsg = encodeURIComponent(result?.errorMessage || 'Ödeme işlemi onaylanmadı veya iptal edildi.');
-      return res.redirect(302, `${siteUrl}/thank-you?payment=failed&reason=${errorMsg}`);
+      return res.redirect(302, `${siteUrl}/tesekkurler?payment=failed&reason=${errorMsg}`);
     }
 
     // Payment Verified Successfully!
@@ -64,6 +64,6 @@ export default async function handler(req, res) {
     }
 
     // Redirect user to ThankYou page with payment success state
-    return res.redirect(302, `${siteUrl}/thank-you?payment=success&paymentId=${paymentId}&amount=${paidPrice}&name=${encodeURIComponent(buyerName)}&plan=${encodeURIComponent(basketItemName)}`);
+    return res.redirect(302, `${siteUrl}/tesekkurler?payment=success&paymentId=${paymentId}&amount=${paidPrice}&name=${encodeURIComponent(buyerName)}&plan=${encodeURIComponent(basketItemName)}`);
   });
 }

@@ -307,6 +307,7 @@ function App() {
             <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
             <Route path="/spor-salonu-pazarlama" element={<GymMarketing />} />
             <Route path="/tesekkurler" element={<ThankYou />} />
+            <Route path="/thank-you" element={<ThankYou />} />
             <Route path="/iletisim" element={<Contact />} />
 
             <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
