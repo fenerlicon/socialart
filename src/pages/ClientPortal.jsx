@@ -1047,12 +1047,7 @@ function ClientPortal() {
       {/* iyzico 3D Secure Payment Checkout Modal for Custom Invoices */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
-        onClose={() => {
-          setIsCheckoutOpen(false);
-          if (checkoutPlan?.requestId) {
-            markRequestPaid(checkoutPlan.requestId);
-          }
-        }}
+        onClose={() => setIsCheckoutOpen(false)}
         selectedPlan={checkoutPlan}
       />
     </div>
