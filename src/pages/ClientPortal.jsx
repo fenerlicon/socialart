@@ -177,6 +177,10 @@ function ClientPortal() {
           .order('created_at', { ascending: false });
 
         if (data && data.length > 0) {
+          const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const targetName = slugify(clientName);
+          const targetCode = slugify(companyCode);
+
           remoteRequests = data.map(n => {
             try {
               return JSON.parse(n.message);
@@ -184,9 +188,15 @@ function ClientPortal() {
               return null;
             }
           }).filter(Boolean).filter(r => {
-            const matchesName = clientName && r.client_name && r.client_name.toLowerCase().includes(clientName.toLowerCase());
-            const matchesCode = companyCode && r.company_code && r.company_code.toLowerCase() === companyCode.toLowerCase();
-            return matchesName || matchesCode;
+            const reqName = slugify(r.client_name);
+            const reqCode = slugify(r.company_code);
+
+            const nameMatch = reqName && targetName && (reqName === targetName || reqName.includes(targetName) || targetName.includes(reqName));
+            const codeMatch = reqCode && targetCode && (reqCode === targetCode || reqCode.includes(targetCode) || targetCode.includes(reqCode));
+            const crossMatch1 = reqCode && targetName && (reqCode === targetName || reqCode.includes(targetName) || targetName.includes(reqCode));
+            const crossMatch2 = reqName && targetCode && (reqName === targetCode || reqName.includes(targetCode) || targetCode.includes(reqName));
+
+            return nameMatch || codeMatch || crossMatch1 || crossMatch2;
           });
         }
       } catch (err) {
@@ -196,10 +206,16 @@ function ClientPortal() {
       // LocalStorage sync & merge
       const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
       const localRequests = JSON.parse(localStr);
-      const matchedLocal = localRequests.filter(r => 
-        (r.client_name && clientName && r.client_name.toLowerCase().includes(clientName.toLowerCase())) ||
-        (companyCode && r.company_code && r.company_code.toLowerCase() === companyCode.toLowerCase())
-      );
+      const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const targetName = slugify(clientName);
+      const targetCode = slugify(companyCode);
+
+      const matchedLocal = localRequests.filter(r => {
+        const reqName = slugify(r.client_name);
+        const reqCode = slugify(r.company_code);
+        return (reqName && targetName && (reqName === targetName || reqName.includes(targetName))) || 
+               (reqCode && targetCode && (reqCode === targetCode || reqCode.includes(targetCode)));
+      });
 
       const mergedMap = new Map();
       remoteRequests.forEach(r => mergedMap.set(r.id, r));
