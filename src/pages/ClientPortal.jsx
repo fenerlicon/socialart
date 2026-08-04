@@ -460,7 +460,7 @@ function ClientPortal() {
               <input
                 type="text"
                 required
-                placeholder="Örn: furkan, ZEN, KARAKOY..."
+                placeholder="Şirket adınızı veya kodunuzu giriniz..."
                 value={loginData.code}
                 onChange={e => setLoginData({ ...loginData, code: e.target.value })}
                 style={{
@@ -480,11 +480,11 @@ function ClientPortal() {
 
             <div style={{ textAlign: 'left' }}>
               <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.78rem', fontWeight: '700', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Şifre (Varsayılan: 123)
+                Şifre
               </label>
               <input
                 type="password"
-                placeholder="123"
+                placeholder="••••••••"
                 value={loginData.password}
                 onChange={e => setLoginData({ ...loginData, password: e.target.value })}
                 style={{
@@ -522,46 +522,6 @@ function ClientPortal() {
               Sisteme Giriş Yap
             </button>
           </form>
-
-          {/* Quick Demo Credentials Helper */}
-          <div style={{
-            marginTop: '28px',
-            paddingTop: '20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            textAlign: 'left'
-          }}>
-            <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-              💡 Tanımlı Müşteri Kodları (Şifre: 123):
-            </span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {[
-                { code: 'furkan', label: 'furkan (VIP)' },
-                { code: 'ZEN', label: 'ZEN (Zen Estetik)' },
-                { code: 'KARAKOY', label: 'KARAKOY' },
-                { code: 'VOLTA', label: 'VOLTA' },
-                { code: 'VADI', label: 'VADI' },
-                { code: 'DIFFEA', label: 'DIFFEA' }
-              ].map(item => (
-                <button
-                  key={item.code}
-                  type="button"
-                  onClick={() => setLoginData({ code: item.code, password: '123' })}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '10px',
-                    padding: '5px 10px',
-                    fontSize: '0.72rem',
-                    color: '#c084fc',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
         </div>
       </div>

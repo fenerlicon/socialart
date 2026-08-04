@@ -1,0 +1,6 @@
+node_modules
+panel/node_modules
+panel/.next
+.git
+dist
+panel/out

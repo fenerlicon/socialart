@@ -33,3 +33,4 @@ public/assets/videos/
 # Temporary scratch folder
 scratch/
 publish-blog.js
+.vercel
