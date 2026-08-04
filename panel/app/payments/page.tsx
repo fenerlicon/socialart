@@ -428,7 +428,7 @@ export default function PaymentsPage() {
                       type="text"
                       required
                       readOnly={selectedBrandOption !== 'custom'}
-                      placeholder="Örn: Ogena Yapı, Aryanvar..."
+                      placeholder="Örn: Ogena Yapı, Arayanvar..."
                       value={form.client_name}
                       onChange={(e) => setForm(prev => ({ ...prev, client_name: e.target.value }))}
                       className={`w-full border rounded-xl px-3 py-2 text-xs outline-none ${
@@ -444,7 +444,7 @@ export default function PaymentsPage() {
                     <input
                       type="text"
                       readOnly={selectedBrandOption !== 'custom'}
-                      placeholder="Örn: ogenayapi, aryanvar..."
+                      placeholder="Örn: ogenayapi, arayanvar..."
                       value={form.company_code}
                       onChange={(e) => setForm(prev => ({ ...prev, company_code: e.target.value }))}
                       className={`w-full border rounded-xl px-3 py-2 text-xs font-mono font-bold outline-none ${
