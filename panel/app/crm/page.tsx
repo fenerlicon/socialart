@@ -38,7 +38,7 @@ interface Lead {
   status?: string
   budget?: number
   created_at?: string
-  notes?: any[]
+  notes?: unknown[]
 }
 
 const STAGES = [
@@ -462,7 +462,7 @@ export default function CrmPage() {
                   type="submit"
                   className="flex-2 bg-gradient-to-r from-purple-600 to-cyan-400 hover:opacity-90 text-white font-extrabold text-xs py-2.5 rounded-xl shadow-lg"
                 >
-                  CRM'e Kaydet
+                  CRM&apos;e Kaydet
                 </button>
               </div>
             </form>
