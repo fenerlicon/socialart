@@ -180,14 +180,14 @@ function ClientPortal() {
           const saved = localStorage.getItem('socialart_client');
           if (saved) {
             const parsed = JSON.parse(saved);
-            resolvedName = resolvedName || parsed.client_name || parsed.name || parsed.company || parsed.brand || parsed.company_code || 'Aryanvar';
-            resolvedCode = resolvedCode || parsed.company_code || parsed.code || resolvedName || 'aryanvar';
+            resolvedName = resolvedName || parsed.client_name || parsed.name || parsed.company || parsed.brand || parsed.company_code || 'Arayanvar';
+            resolvedCode = resolvedCode || parsed.company_code || parsed.code || resolvedName || 'arayanvar';
           }
         } catch (e) {}
       }
 
-      if (!resolvedName) resolvedName = 'Aryanvar';
-      if (!resolvedCode) resolvedCode = 'aryanvar';
+      if (!resolvedName) resolvedName = 'Arayanvar';
+      if (!resolvedCode) resolvedCode = 'arayanvar';
 
       let remoteRequests = [];
       try {
@@ -421,8 +421,8 @@ function ClientPortal() {
 
     // 2. Comprehensive Auto-Assigned Client Accounts List (Default Password: arayanvar2026 / 123)
     const ALL_CLIENT_ACCOUNTS = [
-      { id: 'c-arayanvar', company_code: 'arayanvar', password: 'arayanvar2026', client_name: 'Aryanvar' },
-      { id: 'c-aryanvar', company_code: 'aryanvar', password: 'arayanvar2026', client_name: 'Aryanvar' },
+      { id: 'c-arayanvar', company_code: 'arayanvar', password: 'arayanvar2026', client_name: 'Arayanvar' },
+      { id: 'c-aryanvar', company_code: 'aryanvar', password: 'arayanvar2026', client_name: 'Arayanvar' },
       { id: 'c-gurme', company_code: 'gurme', password: '123', client_name: 'Gurme Bahçeşehir' },
       { id: 'c-mallofgurme', company_code: 'mallofgurme', password: '123', client_name: 'Mall Of Gurme' },
       { id: 'c-ogena', company_code: 'ogena', password: '123', client_name: 'Ogena Yapı' },
@@ -781,7 +781,7 @@ function ClientPortal() {
                       const btn = e.currentTarget;
                       const orig = btn.innerText;
                       btn.innerText = '⏳ Yenileniyor...';
-                      await fetchPaymentRequests(customer?.client_name || 'Aryanvar', customer?.company_code || 'aryanvar');
+                      await fetchPaymentRequests(customer?.client_name || 'Arayanvar', customer?.company_code || 'arayanvar');
                       setTimeout(() => { btn.innerText = orig; }, 500);
                     }}
                     title="Yenile"
