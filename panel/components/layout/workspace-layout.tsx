@@ -161,6 +161,9 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       menuItems.push({ label: 'Tüm Raporlar', icon: '📊', href: '/reports' })
     }
 
+    // Ödeme Talepleri
+    menuItems.push({ label: 'Ödeme Talepleri', icon: '💳', href: '/payments' })
+
     // Sistem Ayarları
     if (hasPermission('settings.manage')) {
       menuItems.push({ label: 'Sistem Ayarları', icon: '⚙', href: '/settings' })
