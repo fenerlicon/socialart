@@ -54,10 +54,29 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
     setErrorMessage('');
 
     try {
-      const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
-      const netNum = parseFloat(cleanPriceStr) || 0;
-      const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || netNum <= 10;
-      const totalNum = isExactPrice ? netNum : netNum * 1.20;
+      const parsePrice = (val) => {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        let str = String(val).trim();
+        if (str.includes('.') && str.includes(',')) {
+          str = str.indexOf('.') < str.indexOf(',') ? str.replace(/\./g, '').replace(',', '.') : str.replace(/,/g, '');
+          return parseFloat(str) || 0;
+        }
+        if (str.includes(',')) {
+          return parseFloat(str.replace(',', '.')) || 0;
+        }
+        if (str.includes('.')) {
+          const parts = str.split('.');
+          if (parts.length === 2 && parts[1].length === 3 && parseInt(parts[0], 10) > 0) {
+            str = str.replace(/\./g, '');
+          }
+        }
+        return parseFloat(str) || 0;
+      };
+
+      const rawNum = parsePrice(selectedPlan.price);
+      const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
+      const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
       const totalPriceWithKdv = totalNum.toFixed(2);
 
       const response = await fetch('/api/iyzico-init', {
@@ -310,8 +329,25 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
 
               {/* Order Summary Pill with KDV Breakdown */}
               {(() => {
-                const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
-                const rawNum = parseFloat(cleanPriceStr) || 0;
+                const parsePrice = (val) => {
+                  if (typeof val === 'number') return val;
+                  if (!val) return 0;
+                  let str = String(val).trim();
+                  if (str.includes('.') && str.includes(',')) {
+                    str = str.indexOf('.') < str.indexOf(',') ? str.replace(/\./g, '').replace(',', '.') : str.replace(/,/g, '');
+                    return parseFloat(str) || 0;
+                  }
+                  if (str.includes(',')) return parseFloat(str.replace(',', '.')) || 0;
+                  if (str.includes('.')) {
+                    const parts = str.split('.');
+                    if (parts.length === 2 && parts[1].length === 3 && parseInt(parts[0], 10) > 0) {
+                      str = str.replace(/\./g, '');
+                    }
+                  }
+                  return parseFloat(str) || 0;
+                };
+
+                const rawNum = parsePrice(selectedPlan.price);
                 const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
                 
                 const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
