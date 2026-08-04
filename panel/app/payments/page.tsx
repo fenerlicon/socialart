@@ -157,7 +157,7 @@ export default function PaymentsPage() {
               {paymentRequests.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-neutral-500">
-                    Henüz oluşturulmuş bir ödeme talebi bulunmuyor. "+ Yeni Ödeme Talebi Gönder" butonunu kullanarak müşterinize doğrudan talep yollayabilirsiniz.
+                    Henüz oluşturulmuş bir ödeme talebi bulunmuyor. &quot;+ Yeni Ödeme Talebi Gönder&quot; butonunu kullanarak müşterinize doğrudan talep yollayabilirsiniz.
                   </td>
                 </tr>
               ) : (
