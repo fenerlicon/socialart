@@ -56,7 +56,9 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
     try {
       const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
       const netNum = parseFloat(cleanPriceStr) || 0;
-      const totalPriceWithKdv = (netNum * 1.20).toFixed(2);
+      const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || netNum <= 10;
+      const totalNum = isExactPrice ? netNum : netNum * 1.20;
+      const totalPriceWithKdv = totalNum.toFixed(2);
 
       const response = await fetch('/api/iyzico-init', {
         method: 'POST',
@@ -309,9 +311,12 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
               {/* Order Summary Pill with KDV Breakdown */}
               {(() => {
                 const cleanPriceStr = String(selectedPlan.price || '0').replace(/\./g, '').replace(',', '.');
-                const netNum = parseFloat(cleanPriceStr) || 0;
-                const kdvNum = netNum * 0.20;
-                const totalNum = netNum * 1.20;
+                const rawNum = parseFloat(cleanPriceStr) || 0;
+                const isExactPrice = selectedPlan.isCustom || selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
+                
+                const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
+                const netNum = isExactPrice ? totalNum / 1.20 : rawNum;
+                const kdvNum = isExactPrice ? totalNum - netNum : rawNum * 0.20;
 
                 const formatMoney = (val) => val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -326,12 +331,12 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                     gap: '10px'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
-                      <span>Paket Bedeli (Net):</span>
+                      <span>Hizmet Bedeli (Net):</span>
                       <span style={{ color: '#e2e8f0', fontWeight: '600' }}>₺ {formatMoney(netNum)}</span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
-                      <span>KDV (%20):</span>
+                      <span>KDV (%20 Dahil):</span>
                       <span style={{ color: '#e2e8f0', fontWeight: '600' }}>₺ {formatMoney(kdvNum)}</span>
                     </div>
 

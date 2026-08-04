@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, TrendingUp, Users, Target, CheckCircle2, 
   Clock, AlertCircle, LogOut, Lock, Building2, 
-  ChevronRight, BarChart3, ShieldCheck, Zap, MessageCircle, Send, X, Activity
+  ChevronRight, BarChart3, ShieldCheck, Zap, MessageCircle, Send, X, Activity, CreditCard
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import CheckoutModal from '../components/CheckoutModal';
 
 
 function ClientPortal() {
@@ -20,6 +21,9 @@ function ClientPortal() {
   const [supportInput, setSupportInput] = useState('');
   const [clientActivity, setClientActivity] = useState([]);
   const [newReplyAlert, setNewReplyAlert] = useState(null); // { message, adminName }
+  const [paymentRequests, setPaymentRequests] = useState([]);
+  const [checkoutPlan, setCheckoutPlan] = useState(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const phaseNames = {
     1: 'Planlama ve Strateji',
@@ -37,6 +41,7 @@ function ClientPortal() {
           const parsed = JSON.parse(saved);
           await fetchClientData(parsed.client_name);
           await fetchSupportMessages(parsed.client_name);
+          await fetchPaymentRequests(parsed.client_name, parsed.company_code);
           setCustomer(parsed);
           setIsLoggedIn(true);
         }
@@ -142,6 +147,77 @@ function ClientPortal() {
     if (data) setSupportMessages(data);
   };
 
+  const fetchPaymentRequests = async (clientName, companyCode) => {
+    try {
+      let remoteRequests = [];
+      try {
+        let query = supabase.from('client_payment_requests').select('*');
+        if (companyCode) {
+          query = query.or(`client_name.ilike.%${clientName}%,company_code.ilike.%${companyCode}%`);
+        } else {
+          query = query.ilike('client_name', `%${clientName}%`);
+        }
+        const { data } = await query.order('created_at', { ascending: false });
+        if (data) remoteRequests = data;
+      } catch (err) {
+        console.warn("Supabase fetch payment requests fallback:", err);
+      }
+
+      // LocalStorage sync & merge
+      const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
+      const localRequests = JSON.parse(localStr);
+      const matchedLocal = localRequests.filter(r => 
+        (r.client_name && clientName && r.client_name.toLowerCase().includes(clientName.toLowerCase())) ||
+        (companyCode && r.company_code && r.company_code.toLowerCase() === companyCode.toLowerCase())
+      );
+
+      const mergedMap = new Map();
+      remoteRequests.forEach(r => mergedMap.set(r.id, r));
+      matchedLocal.forEach(r => { if (!mergedMap.has(r.id)) mergedMap.set(r.id, r); });
+
+      setPaymentRequests(Array.from(mergedMap.values()));
+    } catch (e) {
+      console.error("fetchPaymentRequests error:", e);
+    }
+  };
+
+  const handlePayRequest = (reqItem) => {
+    setCheckoutPlan({
+      name: reqItem.title,
+      price: String(reqItem.amount),
+      isCustom: true,
+      requestId: reqItem.id,
+      description: reqItem.description || 'Müşteriye Özel Ödeme Talebi'
+    });
+    setIsCheckoutOpen(true);
+  };
+
+  const markRequestPaid = async (requestId) => {
+    try {
+      // 1. Update Supabase
+      try {
+        await supabase.from('client_payment_requests').update({
+          status: 'paid',
+          paid_at: new Date().toISOString()
+        }).eq('id', requestId);
+      } catch (e) {
+        console.warn("Update payment request status in DB fallback:", e);
+      }
+
+      // 2. Update Local Storage
+      const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
+      const localRequests = JSON.parse(localStr);
+      const updated = localRequests.map(r => r.id === requestId ? { ...r, status: 'paid', paid_at: new Date().toISOString() } : r);
+      localStorage.setItem('socialart_payment_requests', JSON.stringify(updated));
+
+      if (customer) {
+        await fetchPaymentRequests(customer.client_name, customer.company_code);
+      }
+    } catch (e) {
+      console.error("markRequestPaid error:", e);
+    }
+  };
+
   const fetchClientData = async (name) => {
     const { data } = await supabase
       .from('active_clients')
@@ -239,6 +315,7 @@ function ClientPortal() {
     setCustomer(loggedClient);
     await fetchClientData(loggedClient.client_name);
     await fetchSupportMessages(loggedClient.client_name);
+    await fetchPaymentRequests(loggedClient.client_name, loggedClient.company_code);
     setIsLoggedIn(true);
   };
 
@@ -523,6 +600,115 @@ function ClientPortal() {
           {/* Main Content: Progress & Tasks */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             
+            {/* Payment Requests Section */}
+            {paymentRequests && paymentRequests.length > 0 && (
+              <div className="glass" style={{
+                borderRadius: '24px',
+                padding: '28px',
+                background: 'linear-gradient(135deg, rgba(0, 229, 255, 0.05), rgba(138, 43, 226, 0.08))',
+                border: '1px solid rgba(0, 229, 255, 0.2)',
+                boxShadow: '0 15px 40px rgba(0, 0, 0, 0.3)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#ffffff' }}>
+                    <CreditCard size={24} color="#00e5ff" /> Ödeme Talepleriniz
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', padding: '4px 12px', borderRadius: '20px', fontWeight: '700' }}>
+                    {paymentRequests.filter(r => r.status === 'pending').length} Bekleyen Ödeme
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {paymentRequests.map((reqItem) => {
+                    const isPending = reqItem.status === 'pending';
+
+                    return (
+                      <div 
+                        key={reqItem.id}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: isPending ? '1px solid rgba(0, 229, 255, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)',
+                          borderRadius: '18px',
+                          padding: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '16px'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffffff' }}>
+                              {reqItem.title}
+                            </span>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              fontWeight: '800',
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              background: isPending ? 'rgba(234, 179, 8, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                              color: isPending ? '#facc15' : '#34d399',
+                              border: isPending ? '1px solid rgba(234, 179, 8, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)'
+                            }}>
+                              {isPending ? '🟡 ÖDEME BEKLİYOR' : '🟢 ÖDENDİ'}
+                            </span>
+                          </div>
+
+                          {reqItem.description && (
+                            <p style={{ margin: '0 0 8px 0', fontSize: '0.88rem', color: '#94a3b8' }}>
+                              {reqItem.description}
+                            </p>
+                          )}
+
+                          <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                            Tarih: {reqItem.created_at ? new Date(reqItem.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
+                            {reqItem.paid_at && ` • Ödenme Tarihi: ${new Date(reqItem.paid_at).toLocaleDateString('tr-TR')}`}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>TUTAR</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#00e5ff' }}>
+                              ₺ {Number(reqItem.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+
+                          {isPending ? (
+                            <button
+                              onClick={() => handlePayRequest(reqItem)}
+                              style={{
+                                background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '14px',
+                                padding: '12px 22px',
+                                fontSize: '0.9rem',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                boxShadow: '0 8px 20px rgba(0, 229, 255, 0.25)',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <CreditCard size={18} /> Ödeme Yap (3D Secure)
+                            </button>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#34d399', fontWeight: '700', fontSize: '0.88rem' }}>
+                              <CheckCircle2 size={20} /> Ödendi
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Project Progress */}
             <div className="glass" style={{ borderRadius: '24px', padding: '30px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'var(--primary)', filter: 'blur(100px)', opacity: '0.05' }}></div>
@@ -851,6 +1037,18 @@ function ClientPortal() {
           </div>
         </div>
       )}
+
+      {/* iyzico 3D Secure Payment Checkout Modal for Custom Invoices */}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => {
+          setIsCheckoutOpen(false);
+          if (checkoutPlan?.requestId) {
+            markRequestPaid(checkoutPlan.requestId);
+          }
+        }}
+        selectedPlan={checkoutPlan}
+      />
     </div>
   );
 }

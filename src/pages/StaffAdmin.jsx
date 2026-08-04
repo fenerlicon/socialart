@@ -720,12 +720,86 @@ function Admin() {
       const { data: reportsData } = await supabase.from('staff_reports').select('*').order('created_at', { ascending: false });
       if (reportsData) setStaffReports(reportsData);
 
+      // 9. Fetch payment requests
+      try {
+        let remoteRequests = [];
+        try {
+          const { data: reqData } = await supabase.from('client_payment_requests').select('*').order('created_at', { ascending: false });
+          if (reqData) remoteRequests = reqData;
+        } catch (e) {
+          console.warn("DB payment requests fetch fallback:", e);
+        }
+
+        const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
+        const localRequests = JSON.parse(localStr);
+
+        const mergedMap = new Map();
+        remoteRequests.forEach(r => mergedMap.set(r.id, r));
+        localRequests.forEach(r => { if (!mergedMap.has(r.id)) mergedMap.set(r.id, r); });
+
+        setPaymentRequests(Array.from(mergedMap.values()));
+      } catch (err) {
+        console.error("Payment requests load error:", err);
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setIsChecking(false);
     }
+  };
+
+  const handleCreatePaymentRequest = async (e) => {
+    e.preventDefault();
+    if (!paymentForm.client_name || !paymentForm.title || !paymentForm.amount) {
+      alert('Lütfen Müşteri Adı, Ödeme Başlığı ve Tutar alanlarını doldurunuz.');
+      return;
+    }
+
+    const numAmount = parseFloat(paymentForm.amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Lütfen geçerli bir tutar giriniz.');
+      return;
+    }
+
+    const companyCode = paymentForm.company_code.trim() || paymentForm.client_name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const newReq = {
+      id: `REQ-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+      client_name: paymentForm.client_name.trim(),
+      company_code: companyCode,
+      title: paymentForm.title.trim(),
+      description: paymentForm.description.trim(),
+      amount: numAmount,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    // Save to DB
+    try {
+      await supabase.from('client_payment_requests').insert([{
+        client_name: newReq.client_name,
+        company_code: newReq.company_code,
+        title: newReq.title,
+        description: newReq.description,
+        amount: newReq.amount,
+        status: newReq.status
+      }]);
+    } catch (err) {
+      console.warn("Supabase insert payment request fallback:", err);
+    }
+
+    // Save to localStorage
+    const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
+    const localRequests = JSON.parse(localStr);
+    localRequests.unshift(newReq);
+    localStorage.setItem('socialart_payment_requests', JSON.stringify(localRequests));
+
+    setPaymentRequests(prev => [newReq, ...prev]);
+    setIsCreatePaymentModalOpen(false);
+    setPaymentForm({ client_name: '', company_code: '', title: '', amount: '', description: '' });
+
+    alert(`✅ Ödeme talebi ("${newReq.title}" - ₺${newReq.amount}) başarıyla oluşturuldu ve "${newReq.client_name}" müşterisinin paneline iletildi!`);
   };
 
   const handleConfirmCompletion = async () => {
@@ -903,6 +977,17 @@ function Admin() {
   ]);
   const [isAddProposalOpen, setIsAddProposalOpen] = useState(false);
   const [proposalForm, setProposalForm] = useState({ title: '', value: '', details: '' });
+
+  // Custom Payment Requests States
+  const [paymentRequests, setPaymentRequests] = useState([]);
+  const [isCreatePaymentModalOpen, setIsCreatePaymentModalOpen] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    client_name: '',
+    company_code: '',
+    title: '',
+    amount: '',
+    description: ''
+  });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -2911,6 +2996,12 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <MessageSquare size={16} /> Müşteri Talepleri
             </button>
             <button
+              onClick={() => { setActiveTab('payments'); setIsSidebarOpen(false); }}
+              className={activeTab === 'payments' ? 'active' : ''}
+            >
+              <CreditCard size={16} /> Ödeme Talepleri
+            </button>
+            <button
               onClick={() => { window.location.href = '/email-marketing'; setIsSidebarOpen(false); }}
             >
               <Mail size={16} /> E-Mail Marketing
@@ -3503,6 +3594,317 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* Ödeme Talepleri Tabı */}
+      {activeTab === 'payments' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Header Bar */}
+          <div className="glass" style={{
+            borderRadius: '24px',
+            padding: '24px 30px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <div>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: '800', margin: '0 0 6px 0', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <CreditCard size={28} color="#00e5ff" /> Müşteri Ödeme Talepleri
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>
+                Müşterilerin panellerine doğrudan özel ödeme talebi oluşturun ve iyzico 3D Secure ile ödemelerini takip edin.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsCreatePaymentModalOpen(true)}
+              style={{
+                background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '16px',
+                padding: '14px 24px',
+                fontWeight: '800',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 8px 25px rgba(0, 229, 255, 0.25)'
+              }}
+            >
+              <Plus size={20} /> + Yeni Ödeme Talebi Gönder
+            </button>
+          </div>
+
+          {/* Payment Requests Table */}
+          <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>Oluşturulan Ödeme Talepleri ({paymentRequests.length})</h3>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255,255,255,0.03)', color: '#94a3b8' }}>
+                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>MÜŞTERİ / FİRMA KODU</th>
+                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>ÖDEME BAŞLIĞI</th>
+                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>AÇIKLAMA</th>
+                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>TUTAR (TL)</th>
+                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>DURUM</th>
+                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>TARİH</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                        Henüz oluşturulmuş bir ödeme talebi bulunmuyor. "+ Yeni Ödeme Talebi Gönder" butonunu kullanarak doğrudan müşterinize talep gönderebilirsiniz.
+                      </td>
+                    </tr>
+                  ) : (
+                    paymentRequests.map((reqItem) => {
+                      const isPending = reqItem.status === 'pending';
+
+                      return (
+                        <tr key={reqItem.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                          <td style={{ padding: '16px 20px', fontWeight: '700', color: '#ffffff' }}>
+                            {reqItem.client_name}
+                            {reqItem.company_code && (
+                              <div style={{ fontSize: '0.78rem', color: '#00e5ff', fontWeight: '600' }}>
+                                KOD: {reqItem.company_code}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: '16px 20px', fontWeight: '700', color: '#e2e8f0' }}>
+                            {reqItem.title}
+                          </td>
+                          <td style={{ padding: '16px 20px', color: '#94a3b8', maxWidth: '280px' }}>
+                            {reqItem.description || '-'}
+                          </td>
+                          <td style={{ padding: '16px 20px', fontWeight: '900', color: '#00e5ff', fontSize: '1.05rem' }}>
+                            ₺ {Number(reqItem.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              fontWeight: '800',
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              background: isPending ? 'rgba(234, 179, 8, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                              color: isPending ? '#facc15' : '#34d399',
+                              border: isPending ? '1px solid rgba(234, 179, 8, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)'
+                            }}>
+                              {isPending ? '🟡 BEKLİYOR' : '🟢 ÖDENDİ'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 20px', color: '#64748b', fontSize: '0.82rem' }}>
+                            {reqItem.created_at ? new Date(reqItem.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ödeme Talebi Oluşturma Modalı */}
+      {isCreatePaymentModalOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: 'rgba(5, 5, 8, 0.85)',
+          backdropFilter: 'blur(16px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div className="glass" style={{
+            width: '100%',
+            maxWidth: '540px',
+            borderRadius: '24px',
+            padding: '30px',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '800', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CreditCard size={22} color="#00e5ff" /> Yeni Ödeme Talebi Gönder
+              </h3>
+              <button
+                onClick={() => setIsCreatePaymentModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePaymentRequest} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
+                  Müşteri / Firma Adı *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Örn: Furkan Aslanbaş, Zen Estetik, Karaköy Kahvecisi..."
+                  value={paymentForm.client_name}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, client_name: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#ffffff',
+                    outline: 'none',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
+                    Müşteri Kodu (Opsiyonel)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Örn: furkan, ZEN, KARAKOY..."
+                    value={paymentForm.company_code}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, company_code: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#ffffff',
+                      outline: 'none',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
+                    Tutar (TL) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="Örn: 1.00 veya 15000"
+                    value={paymentForm.amount}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#ffffff',
+                      outline: 'none',
+                      fontSize: '0.9rem',
+                      fontWeight: '700'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
+                  Ödeme Başlığı *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Örn: Ağustos Ayı Sosyal Medya Hizmeti veya 1 TL Test Ödemesi"
+                  value={paymentForm.title}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, title: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#ffffff',
+                    outline: 'none',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
+                  Açıklama / Not (Opsiyonel)
+                </label>
+                <textarea
+                  rows="3"
+                  placeholder="Fatura ve hizmet detayları..."
+                  value={paymentForm.description}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, description: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#ffffff',
+                    outline: 'none',
+                    fontSize: '0.88rem',
+                    resize: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreatePaymentModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: '14px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 2,
+                    padding: '14px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 20px rgba(0, 229, 255, 0.25)'
+                  }}
+                >
+                  Müşteri Paneline İlet
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
