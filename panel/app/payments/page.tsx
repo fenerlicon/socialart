@@ -74,6 +74,28 @@ export default function PaymentsPage() {
       const localStr = typeof window !== 'undefined' ? localStorage.getItem('socialart_payment_requests') || '[]' : '[]'
       const localRequests: PaymentRequest[] = JSON.parse(localStr)
 
+      // Auto-migrate any un-synced local requests to Supabase database
+      const remoteIds = new Set(remoteRequests.map(r => r.id))
+      for (const localReq of localRequests) {
+        if (!remoteIds.has(localReq.id)) {
+          try {
+            await supabase.from('notifications').insert([{
+              id: localReq.id,
+              type: 'payment_request',
+              title: localReq.title,
+              message: JSON.stringify(localReq),
+              related_entity_type: 'payment',
+              related_entity_id: localReq.company_code || localReq.client_name,
+              is_read: false,
+              created_at: localReq.created_at || new Date().toISOString()
+            }])
+            remoteRequests.push(localReq)
+          } catch (e) {
+            console.warn('Auto-migrate payment request error:', e)
+          }
+        }
+      }
+
       const mergedMap = new Map<string, PaymentRequest>()
       remoteRequests.forEach(r => mergedMap.set(r.id, r))
       localRequests.forEach(r => { if (!mergedMap.has(r.id)) mergedMap.set(r.id, r) })
