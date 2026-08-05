@@ -774,11 +774,18 @@ export default function CRMPage({ embedded = false }) {
 
     showToast('Müşteri kaydı silindi');
 
-    // Supabase DB Delete
+    // Supabase Safe Soft-Delete (Hard SQL Delete engellendi, veri ARŞİV'e kaldırılıyor)
     try {
-      await supabase.from('leads').delete().eq('id', leadId);
+      await supabaseLeads
+        .from('leads')
+        .update({
+          status: 'ARŞİV',
+          stage: 'LOST',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', leadId);
     } catch (e) {
-      console.warn('Supabase delete error:', e);
+      console.warn('Supabase safe soft-delete error:', e);
     }
   };
 
