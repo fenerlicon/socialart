@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles, Menu } from 'lucide-react';
+import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles, Menu, CreditCard } from 'lucide-react';
 import Login from './Login';
 import { supabase } from '../lib/supabase';
 import TextareaAutosize from 'react-textarea-autosize';
