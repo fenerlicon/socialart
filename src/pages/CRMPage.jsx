@@ -9,7 +9,7 @@ import { AnalyticsView } from '../crm/components/AnalyticsView';
 import { LeadDetailModal } from '../crm/components/LeadDetailModal';
 import { NewLeadModal } from '../crm/components/NewLeadModal';
 import { PipelineConfirmModal } from '../crm/components/PipelineConfirmModal';
-import { STAGES } from '../crm/mock/initialData';
+import { STAGES, INITIAL_LEADS } from '../crm/mock/initialData';
 
 // ----------------------------------------------------------------
 // DB → Lead type mapping
@@ -431,16 +431,30 @@ export default function CRMPage({ embedded = false }) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase fetch error:', error.message);
-        setIsLoading(false);
-        return;
+      let loadedLeads = [];
+      if (error || !data || data.length === 0) {
+        console.warn('Supabase fetch error or empty, using INITIAL_LEADS fallback:', error?.message);
+        loadedLeads = [...INITIAL_LEADS];
+      } else {
+        loadedLeads = data.map(mapDbRowToLead);
       }
 
-      let loadedLeads = (data || []).map(mapDbRowToLead);
+      // Merge local manual leads (like Diffea or new leads created locally)
+      try {
+        const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+        if (storedManual) {
+          const manualArr = JSON.parse(storedManual);
+          if (Array.isArray(manualArr)) {
+            manualArr.forEach(m => {
+              if (!loadedLeads.some(l => l.id === m.id)) {
+                loadedLeads.unshift(m);
+              }
+            });
+          }
+        }
+      } catch (e) { /* ignore */ }
 
-      // Apply stage/notes overrides from localStorage ONLY for leads not yet in Supabase
-      // (kept for backward compatibility, will be phased out)
+      // Apply stage/notes overrides from localStorage
       try {
         const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
         if (storedOverrides) {
@@ -448,11 +462,10 @@ export default function CRMPage({ embedded = false }) {
           loadedLeads = loadedLeads.map(l => {
             const ov = overrides[l.id];
             if (!ov) return l;
-            // Only apply override if Supabase doesn't already have the data
             const merged = { ...l };
-            if (ov.stage && !l.stage) merged.stage = ov.stage;
-            if (ov.pipeline && !l.pipeline) merged.pipeline = ov.pipeline;
-            if (ov.notes && ov.notes.length > 0 && (!l.notes || l.notes.length === 0)) {
+            if (ov.stage) merged.stage = ov.stage;
+            if (ov.pipeline) merged.pipeline = ov.pipeline;
+            if (ov.notes && ov.notes.length > 0) {
               merged.notes = ov.notes;
             }
             return merged;
