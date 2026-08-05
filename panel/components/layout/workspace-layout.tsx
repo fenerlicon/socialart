@@ -36,48 +36,44 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         return
       }
 
-      const list = await getStoredEmployees()
-      setEmployees(list)
+      try {
+        const list = await getStoredEmployees()
+        setEmployees(list)
 
-      const savedId = getActiveEmployeeId()
-      if (savedId && list.some((e) => e.id === savedId)) {
-        setCurrentEmployeeId(savedId)
+        let savedId = getActiveEmployeeId()
+        if (savedId && list.some((e) => e.id === savedId)) {
+          setCurrentEmployeeId(savedId)
+        } else {
+          // Auto-default to Celal or first employee if active ID is missing or invalid
+          const defaultEmp = list.find((e) => e.id === 'emp-celal' || e.id === 'celal' || e.username === 'celal') || list[0]
+          if (defaultEmp) {
+            setActiveEmployeeId(defaultEmp.id)
+            setCurrentEmployeeId(defaultEmp.id)
+          } else {
+            router.push('/login')
+            return
+          }
+        }
+
+        // Her ayın 5'ine kadar oluşturulmayan dönemlerin otomatik marka şablonuyla başlatılması kontrolü
+        try {
+          const { autoApplyCycles } = await import('@/lib/operations/auto-apply-cycles')
+          await autoApplyCycles()
+        } catch (err) {
+          console.error('Failed to run auto-apply cycles:', err)
+        }
+
+        // Günlük raporu girmeyen çalışanları tespit edip "Eksik Rapor" olarak işleme kontrolü
+        try {
+          const { checkAndGenerateMissingReports } = await import('@/lib/operations/check-missing-reports')
+          await checkAndGenerateMissingReports()
+        } catch (err) {
+          console.error('Failed to check missing reports:', err)
+        }
+      } catch (err) {
+        console.error('WorkspaceLayout loadData error:', err)
+      } finally {
         setIsLoadingAuth(false)
-      } else {
-        router.push('/login')
-        return
-      }
-
-      // Her ayın 5'ine kadar oluşturulmayan dönemlerin otomatik marka şablonuyla başlatılması kontrolü
-      try {
-        const { autoApplyCycles } = await import('@/lib/operations/auto-apply-cycles')
-        const createdCount = await autoApplyCycles()
-        if (createdCount > 0) {
-          toast.info(`${createdCount} Marka İçin Yeni Dönem Otomatik Başlatıldı`, {
-            description: "Ayın 5'i geçtiği için şablon operasyon planları otomatik olarak devreye alındı.",
-            duration: 7000,
-          })
-          // Ekranı yenile
-          setTimeout(() => {
-            window.location.reload()
-          }, 2000)
-        }
-      } catch (err) {
-        console.error('Failed to run auto-apply cycles:', err)
-      }
-
-      // Günlük raporu girmeyen çalışanları tespit edip "Eksik Rapor" olarak işleme kontrolü
-      try {
-        const { checkAndGenerateMissingReports } = await import('@/lib/operations/check-missing-reports')
-        const missingCount = await checkAndGenerateMissingReports()
-        if (missingCount > 0) {
-          toast.warning(`${missingCount} Adet Eksik Rapor Kaydı Sisteme İşlendi`, {
-            description: "Geçmiş günlerde yazılmayan günlük raporlar otomatik olarak eksik işaretlendi.",
-            duration: 5000,
-          })
-        }
-      } catch (err) {
-        console.error('Failed to check missing reports:', err)
       }
     }
     loadData()
