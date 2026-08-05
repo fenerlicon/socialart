@@ -426,49 +426,6 @@ export default function CRMPage({ embedded = false }) {
         loadedLeads = data.map(mapDbRowToLead);
       }
 
-      // Merge local manual leads (like Diffea or new leads created locally)
-      try {
-        const storedManual = localStorage.getItem('socialart_crm_manual_leads');
-        if (storedManual) {
-          const manualArr = JSON.parse(storedManual);
-          if (Array.isArray(manualArr)) {
-            manualArr.forEach(m => {
-              if (!loadedLeads.some(l => l.id === m.id)) {
-                loadedLeads.unshift(m);
-              }
-            });
-          }
-        }
-      } catch (e) { /* ignore */ }
-
-      // Apply stage/notes overrides from localStorage
-      try {
-        const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
-        if (storedOverrides) {
-          const overrides = JSON.parse(storedOverrides);
-          loadedLeads = loadedLeads.map(l => {
-            const ov = overrides[l.id];
-            if (!ov) return l;
-            const merged = { ...l };
-            if (ov.stage) merged.stage = ov.stage;
-            if (ov.pipeline) merged.pipeline = ov.pipeline;
-            if (ov.notes && ov.notes.length > 0) {
-              merged.notes = ov.notes;
-            }
-            return merged;
-          });
-        }
-      } catch (e) { /* ignore */ }
-
-      // Filter out locally deleted leads
-      try {
-        const deletedIds = JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]');
-        if (Array.isArray(deletedIds) && deletedIds.length > 0) {
-          const deletedSet = new Set(deletedIds);
-          loadedLeads = loadedLeads.filter(l => !deletedSet.has(l.id));
-        }
-      } catch (e) { /* ignore */ }
-
       setLeads(loadedLeads);
     } catch (err) {
       console.error('Error fetching leads:', err);
