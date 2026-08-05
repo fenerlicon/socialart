@@ -404,7 +404,7 @@ export default function CRMPage({ embedded = false }) {
           const numericId = Number(leadId);
           const targetQueryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
 
-          await supabase.from('leads').update(updateObj).eq('id', targetQueryId).catch(() => {});
+          await supabaseLeads.from('leads').update(updateObj).eq('id', targetQueryId).catch(() => {});
         }
       }
     } catch (err) {
@@ -560,7 +560,7 @@ export default function CRMPage({ embedded = false }) {
     setPipelineConfirmState({ lead: null, targetPipeline: null });
     showToast(`"${targetLead.title}" ${newPipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya'} kanalına taşındı!`);
 
-    const { error } = await supabase
+    const { error } = await supabaseLeads
       .from('leads')
       .update({
         pipeline: newPipeline,
@@ -617,7 +617,7 @@ export default function CRMPage({ embedded = false }) {
       return lead;
     }));
 
-    await supabase
+    await supabaseLeads
       .from('leads')
       .update({ 
         status: newStatus,
@@ -649,7 +649,7 @@ export default function CRMPage({ embedded = false }) {
     }));
 
     // Save to Supabase (primary storage)
-    const { error } = await supabase
+    const { error } = await supabaseLeads
       .from('leads')
       .update({ notes: updatedNotes })
       .eq('id', leadId);
@@ -697,7 +697,7 @@ export default function CRMPage({ embedded = false }) {
 
     showToast('Not silindi!');
 
-    await supabase
+    await supabaseLeads
       .from('leads')
       .update({ notes: updatedNotes, updated_at: new Date().toISOString() })
       .eq('id', leadId);
@@ -757,7 +757,7 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
-    await supabase
+    await supabaseLeads
       .from('leads')
       .update({ assigned_to: newStaff, updated_at: new Date().toISOString() })
       .eq('id', leadId);
@@ -774,7 +774,7 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
-    await supabase
+    await supabaseLeads
       .from('leads')
       .update({
         title: updatedData.title,
@@ -797,7 +797,7 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
-    await supabase
+    await supabaseLeads
       .from('leads')
       .update({ status: 'Ertelendi', retargeting_date: date, retargeting_note: note, updated_at: new Date().toISOString() })
       .eq('id', leadId);
@@ -822,7 +822,7 @@ export default function CRMPage({ embedded = false }) {
     }));
 
     try {
-      await supabase
+      await supabaseLeads
         .from('leads')
         .update({ budget: newBudget, updated_at: new Date().toISOString() })
         .eq('id', leadId);
@@ -887,7 +887,7 @@ export default function CRMPage({ embedded = false }) {
 
     // 3. Sync to Supabase in background
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseLeads
         .from('leads')
         .insert({
           name: leadData.title || leadData.contactName || 'İsimsiz Müşteri',
