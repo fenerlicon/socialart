@@ -1016,10 +1016,16 @@ export default function CRMPage({ embedded = false }) {
 
   // Filter leads
   const filteredLeads = leads.filter(lead => {
+    if (!lead) return false;
+    const titleStr = String(lead.title || '');
+    const contactStr = String(lead.contactName || '');
+    const phoneStr = String(lead.phone || '');
+    const queryStr = String(searchQuery || '');
+
     const matchesSearch =
-      lead.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.phone.includes(searchQuery);
+      titleStr.toLowerCase().includes(queryStr.toLowerCase()) ||
+      contactStr.toLowerCase().includes(queryStr.toLowerCase()) ||
+      phoneStr.includes(queryStr);
 
     let matchesFilter = true;
     if (selectedSourceFilter === 'INACTIVE') {

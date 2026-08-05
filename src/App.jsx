@@ -63,6 +63,43 @@ const CaseStudies = lazy(() => import('./pages/CaseStudies'));
 const LockIcon = Lock;
 const CardIcon = CreditCard;
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fff', padding: '20px', fontFamily: 'sans-serif' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '30px', borderRadius: '16px', maxWidth: '500px', textAlign: 'center' }}>
+            <h2 style={{ color: '#ec4899', fontSize: '1.2rem', marginBottom: '10px' }}>Sayfa Yüklenirken Bir Arayüz Hatası Oluştu</h2>
+            <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: '20px' }}>
+              {this.state.error?.message || 'Bilinmeyen bir hata.'}
+            </p>
+            <button
+              onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+              style={{ background: 'var(--primary, #8b5cf6)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              Yeniden Yükle
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -274,48 +311,50 @@ function App() {
 
       {/* PAGE CONTENT */}
       <main className="main-content">
-        <Suspense fallback={
-          <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505', color: '#fff' }}>
-            <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-          </div>
-        }>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/home" element={<Navigate to="/" replace />} />
-            <Route path="/hakkimizda" element={<About />} />
-            <Route path="/hizmetlerimiz" element={<Services />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:id" element={<BlogDetail />} />
-            <Route path="/crm" element={<Admin />} />
-            <Route path="/crrm" element={<Navigate to="/crm" replace />} />
+        <ErrorBoundary>
+          <Suspense fallback={
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050505', color: '#fff' }}>
+              <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
+              <Route path="/hakkimizda" element={<About />} />
+              <Route path="/hizmetlerimiz" element={<Services />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:id" element={<BlogDetail />} />
+              <Route path="/crm" element={<Admin />} />
+              <Route path="/crrm" element={<Navigate to="/crm" replace />} />
 
-            <Route path="/fiyatlar" element={<Pricing />} />
-            <Route path="/musteri" element={<ClientPortal />} />
-            <Route path="/ugc-basvuru" element={<UGCApplication />} />
-            <Route path="/is-basvurusu" element={<JobApplication />} />
-            <Route path="/post-produksiyon" element={<PostProduction />} />
-            
-            {/* Service Detail Routes */}
-            <Route path="/meta-ads-yonetimi" element={<MetaAds />} />
-            <Route path="/creative-production" element={<CreativeProduction />} />
-            <Route path="/seo-geo-optimizasyonu" element={<SEOGEO />} />
-            <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
-            <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
-            <Route path="/dijital-pazarlama-danismanligi" element={<DijitalPazarlamaDanismanligi />} />
-            <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
-            <Route path="/event-etkinlik-cekimi" element={<EventCekimi />} />
-            <Route path="/basari-hikayeleri" element={<CaseStudies />} />
-            <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
-            <Route path="/spor-salonu-pazarlama" element={<GymMarketing />} />
-            <Route path="/tesekkurler" element={<ThankYou />} />
-            <Route path="/thank-you" element={<ThankYou />} />
-            <Route path="/iletisim" element={<Contact />} />
+              <Route path="/fiyatlar" element={<Pricing />} />
+              <Route path="/musteri" element={<ClientPortal />} />
+              <Route path="/ugc-basvuru" element={<UGCApplication />} />
+              <Route path="/is-basvurusu" element={<JobApplication />} />
+              <Route path="/post-produksiyon" element={<PostProduction />} />
+              
+              {/* Service Detail Routes */}
+              <Route path="/meta-ads-yonetimi" element={<MetaAds />} />
+              <Route path="/creative-production" element={<CreativeProduction />} />
+              <Route path="/seo-geo-optimizasyonu" element={<SEOGEO />} />
+              <Route path="/sosyal-medya-yonetimi" element={<SosyalMedya />} />
+              <Route path="/ugc-influencer-isbirligi" element={<UGCInfluencer />} />
+              <Route path="/dijital-pazarlama-danismanligi" element={<DijitalPazarlamaDanismanligi />} />
+              <Route path="/sunuculu-reklam-videolari" element={<SunuculuReklam />} />
+              <Route path="/event-etkinlik-cekimi" element={<EventCekimi />} />
+              <Route path="/basari-hikayeleri" element={<CaseStudies />} />
+              <Route path="/restoran-pazarlama" element={<RestaurantMarketing />} />
+              <Route path="/spor-salonu-pazarlama" element={<GymMarketing />} />
+              <Route path="/tesekkurler" element={<ThankYou />} />
+              <Route path="/thank-you" element={<ThankYou />} />
+              <Route path="/iletisim" element={<Contact />} />
 
-            <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
-            <Route path="/iptal-ve-iade-kosullari" element={<CancellationPolicy />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+              <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
+              <Route path="/iptal-ve-iade-kosullari" element={<CancellationPolicy />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       {/* FOOTER */}
