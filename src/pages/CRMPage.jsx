@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
 import '../crm-tailwind.css';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseLeads } from '../lib/supabase';
 import { Header } from '../crm/components/Header';
 import { KanbanBoard } from '../crm/components/KanbanBoard';
 import { ListView } from '../crm/components/ListView';
@@ -393,23 +393,13 @@ export default function CRMPage({ embedded = false }) {
           notes: m.notes,
           created_at: m.createdAt || new Date().toISOString()
         }));
-        await supabase.from('leads').upsert(rowsToInsert, { ignoreDuplicates: true }).catch(() => {});
+        await supabaseLeads.from('leads').upsert(rowsToInsert, { ignoreDuplicates: true }).catch(() => {});
       }
 
       // 2. Sync stage overrides to Supabase DB
       if (overrides && Object.keys(overrides).length > 0) {
-        for (const [leadId, partial] of Object.entries(overrides)) {
+        for (const [targetQueryId, ov] of Object.entries(overrides)) {
           const updateObj = {};
-          if (partial.stage) {
-            updateObj.stage = partial.stage;
-            updateObj.status = stageToStatus[partial.stage] || partial.stage;
-          }
-          if (partial.pipeline) updateObj.pipeline = partial.pipeline;
-          if (partial.notes) updateObj.notes = partial.notes;
-          if (partial.assignedTo) updateObj.assigned_to = partial.assignedTo;
-
-          if (Object.keys(updateObj).length === 0) continue;
-
           // Convert string ID to numeric ID if possible for Postgres compatibility
           const numericId = Number(leadId);
           const targetQueryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
@@ -426,7 +416,7 @@ export default function CRMPage({ embedded = false }) {
   const fetchLeads = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseLeads
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false });
@@ -492,7 +482,7 @@ export default function CRMPage({ embedded = false }) {
     fetchLeads();
 
     // ── Supabase Realtime: Yeni lead veya güncelleme anında gelsin ──
-    const channel = supabase
+    const channel = supabaseLeads
       .channel('crm-leads-realtime')
       .on(
         'postgres_changes',

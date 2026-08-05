@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles, Menu, CreditCard } from 'lucide-react';
 import Login from './Login';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseLeads } from '../lib/supabase';
 import TextareaAutosize from 'react-textarea-autosize';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -662,7 +662,7 @@ function Admin() {
     // Initial loading uses isChecking, subsequent refreshes don't block UI
     try {
       // 1. Fetch leads (potansiyel)
-      const { data: leadsData } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
+      const { data: leadsData } = await supabaseLeads.from('leads').select('*').order('created_at', { ascending: false });
       if (leadsData) setPotansiyel(leadsData);
 
       // 2. Fetch active clients & real agency brands
