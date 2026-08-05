@@ -432,10 +432,7 @@ export default function CRMPage({ embedded = false }) {
         .order('created_at', { ascending: false });
 
       let loadedLeads = [];
-      if (error || !data || data.length === 0) {
-        console.warn('Supabase fetch error or empty, using INITIAL_LEADS fallback:', error?.message);
-        loadedLeads = [...INITIAL_LEADS];
-      } else {
+      if (data && data.length > 0) {
         loadedLeads = data.map(mapDbRowToLead);
       }
 
