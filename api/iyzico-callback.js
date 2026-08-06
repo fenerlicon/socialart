@@ -21,8 +21,8 @@ export default async function handler(req, res) {
   const baseUrl = process.env.IYZICO_BASE_URL || 'https://api.iyzipay.com';
 
   const iyzipay = new Iyzipay({
-    apiKey: rawApiKey || 'eOLhjL2rON1eu4aq3DUgtYFjBi8QKZOm',
-    secretKey: rawSecretKey || '4yyU1eNElT4KzNv7TCOBHl0mRt2jSVIF',
+    apiKey: rawApiKey,
+    secretKey: rawSecretKey,
     uri: baseUrl
   });
 
