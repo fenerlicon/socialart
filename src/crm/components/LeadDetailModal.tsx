@@ -115,16 +115,16 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex justify-end bg-slate-950/95 backdrop-blur-md animate-fade-in p-0 sm:p-2 cursor-pointer"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in cursor-pointer"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-slate-900 border-l border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden cursor-default"
+        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden cursor-default my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Header (Zero cutoff on mobile, z-10 sticky top) */}
-        <div className="p-3.5 sm:p-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 shrink-0">
+        {/* Header (Generous top padding, zero cutoff, centered card format) */}
+        <div className="pt-5 pb-3.5 px-4 sm:px-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 shrink-0">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">

@@ -51,63 +51,32 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="bg-slate-900/95 border-b border-slate-800/90 md:sticky top-0 z-30 backdrop-blur-md transition-all">
-      {/* Upper Top Bar */}
-      <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
-        
-        {/* Top Row on Mobile: Pipeline Switcher & Admin Button */}
-        <div className="flex items-center justify-between gap-2 w-full md:w-auto">
-          {/* Pipeline Switcher Tabs */}
-          <div className="bg-slate-950/90 p-1 rounded-xl border border-slate-800 flex items-center gap-1 shadow-inner shrink-0">
-            <button
-              onClick={() => onPipelineChange('PRODUCTION')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
-                currentPipeline === 'PRODUCTION'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <Film className="w-3.5 h-3.5" />
-              <span>Prodüksiyon</span>
-            </button>
-            
-            <button
-              onClick={() => onPipelineChange('SOCIAL_MEDIA')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
-                currentPipeline === 'SOCIAL_MEDIA'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Sosyal Medya</span>
-            </button>
-          </div>
+        {/* Top Header Controls (Stacked cleanly on mobile, inline on desktop) */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 w-full">
+          
+          {/* Mobile Row 1: Admin Navigation & New Lead Button */}
+          <div className="flex items-center justify-between gap-2 w-full md:w-auto">
+            <div className="flex items-center gap-1.5 flex-1 md:flex-none">
+              <button
+                onClick={() => {
+                  if (onGoToAdmin) onGoToAdmin();
+                  else window.location.href = '/admin';
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-900/90 to-slate-800 hover:from-indigo-800 hover:to-slate-700 text-indigo-200 border border-indigo-500/40 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
+                title="İş Takip & Admin Paneline Dön"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-indigo-400" />
+                <span>← Admin</span>
+              </button>
 
-          {/* New Lead & Admin Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Prominent Back to Admin Button */}
-            <button
-              onClick={() => {
-                if (onGoToAdmin) onGoToAdmin();
-                else window.location.href = '/admin';
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-900/90 to-slate-800 hover:from-indigo-800 hover:to-slate-700 text-indigo-200 border border-indigo-500/40 transition-all shadow-md shadow-indigo-950/50 active:scale-95 cursor-pointer"
-              title="İş Takip & Admin Paneline Dön"
-            >
-              <ArrowLeft className="w-4 h-4 text-indigo-400" />
-              <span>← Admin Paneli</span>
-            </button>
-
-            {/* Quick Panel Navigation Menu Dropdown */}
-            <div className="relative group">
               <select
                 onChange={(e) => {
                   if (e.target.value) window.location.href = e.target.value;
                 }}
                 defaultValue=""
-                className="bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394A3B8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:9px_9px] bg-[right_8px_center] bg-no-repeat"
+                className="bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold rounded-xl px-2 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer flex-1 md:w-auto"
               >
-                <option value="" disabled>🏠 Git...</option>
+                <option value="" disabled>🏠 Menü...</option>
                 <option value="/admin/dashboard">🏠 Ana Panel</option>
                 <option value="/admin/my-work">📝 Benim İşlerim</option>
                 <option value="/admin/todo">📌 Yapılacaklar</option>
@@ -119,58 +88,84 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={onOpenNewLeadModal}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-600/30 transition-all active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-600/30 transition-all active:scale-95 whitespace-nowrap shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Müşteri</span>
             </button>
           </div>
-        </div>
 
-        {/* Quick Stats Banner (Visible on Desktop, Scrollable Compact Bar on Mobile) */}
-        <div className="w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          <div className="flex items-center gap-2 bg-slate-950/70 border border-slate-800/80 px-3 py-1.5 rounded-xl text-[11px] sm:text-xs min-w-max">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-slate-400">Toplam:</span>
-              <span className="font-extrabold text-slate-200">{stats.totalLeads}</span>
-            </div>
-            
-            <div className="h-3 w-px bg-slate-800/80" />
-            
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">Yeni:</span>
-              <span className="font-extrabold text-blue-400">{stats.newCount}</span>
-            </div>
-            
-            <div className="h-3 w-px bg-slate-800/80" />
-            
+          {/* Mobile Row 2: Pipeline Switcher Segmented Tabs */}
+          <div className="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 w-full md:w-auto shrink-0">
             <button
-              onClick={() => onSourceFilterChange(selectedSourceFilter === 'INACTIVE' ? 'ALL' : 'INACTIVE')}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
-                selectedSourceFilter === 'INACTIVE' 
-                  ? 'bg-amber-500/30 border border-amber-400 text-amber-200 font-bold' 
-                  : 'hover:bg-slate-800/80 text-amber-400'
+              onClick={() => onPipelineChange('PRODUCTION')}
+              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                currentPipeline === 'PRODUCTION'
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <span className="font-bold">⚠️ Takipsiz:</span>
-              <span className="font-extrabold px-1.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                {stats.inactiveCount || 0}
-              </span>
+              <Film className="w-3.5 h-3.5" />
+              <span>Prodüksiyon</span>
             </button>
             
-            <div className="h-3 w-px bg-slate-800/80" />
-            
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">Hacim:</span>
-              <span className="font-extrabold text-emerald-400">
-                ₺{stats.totalPipelineValue.toLocaleString('tr-TR')}
-              </span>
+            <button
+              onClick={() => onPipelineChange('SOCIAL_MEDIA')}
+              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                currentPipeline === 'SOCIAL_MEDIA'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Sosyal Medya</span>
+            </button>
+          </div>
+
+          {/* Quick Stats Banner */}
+          <div className="w-full md:w-auto overflow-x-auto pb-0.5 md:pb-0 scrollbar-none">
+            <div className="flex items-center justify-between md:justify-start gap-2 bg-slate-950/70 border border-slate-800/80 px-3 py-1.5 rounded-xl text-[11px] sm:text-xs min-w-max">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-slate-400">Toplam:</span>
+                <span className="font-extrabold text-slate-200">{stats.totalLeads}</span>
+              </div>
+              
+              <div className="h-3 w-px bg-slate-800/80" />
+              
+              <div className="flex items-center gap-1">
+                <span className="text-slate-400">Yeni:</span>
+                <span className="font-extrabold text-blue-400">{stats.newCount}</span>
+              </div>
+              
+              <div className="h-3 w-px bg-slate-800/80" />
+              
+              <button
+                onClick={() => onSourceFilterChange(selectedSourceFilter === 'INACTIVE' ? 'ALL' : 'INACTIVE')}
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg transition-all cursor-pointer ${
+                  selectedSourceFilter === 'INACTIVE' 
+                    ? 'bg-amber-500/30 border border-amber-400 text-amber-200 font-bold' 
+                    : 'hover:bg-slate-800/80 text-amber-400'
+                }`}
+              >
+                <span className="font-bold">⚠️ Takipsiz:</span>
+                <span className="font-extrabold px-1 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  {stats.inactiveCount || 0}
+                </span>
+              </button>
+              
+              <div className="h-3 w-px bg-slate-800/80" />
+              
+              <div className="flex items-center gap-1">
+                <span className="text-slate-400">Hacim:</span>
+                <span className="font-extrabold text-emerald-400">
+                  ₺{stats.totalPipelineValue.toLocaleString('tr-TR')}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-      </div>
+        </div>
 
       {/* Sub Header Controls: Views & Search */}
       <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-2 bg-slate-950/60 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-2.5">
