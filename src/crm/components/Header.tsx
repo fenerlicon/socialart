@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   stats
 }) => {
   return (
-    <header className="bg-slate-900/95 border-b border-slate-800/90 sticky top-0 z-30 backdrop-blur-md transition-all">
+    <header className="bg-slate-900/95 border-b border-slate-800/90 md:sticky top-0 z-30 backdrop-blur-md transition-all">
       {/* Upper Top Bar */}
       <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
         

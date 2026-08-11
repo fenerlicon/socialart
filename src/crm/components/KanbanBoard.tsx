@@ -91,7 +91,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             return (
               <div
                 key={stage.id}
-                className="w-full md:w-[310px] shrink-0 flex flex-col bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 shadow-md md:min-h-[calc(100vh-210px)] md:max-h-[calc(100vh-210px)] overflow-hidden transition-all"
+                className="w-full md:w-[310px] shrink-0 flex flex-col bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 shadow-md md:min-h-[calc(100vh-210px)] md:max-h-[calc(100vh-210px)] overflow-visible md:overflow-hidden transition-all"
               >
                 {/* Column Header */}
                 <div className="pb-2.5 border-b border-slate-800/80 mb-2.5 flex items-center justify-between">
@@ -123,8 +123,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </span>
                 </div>
 
-                {/* Lead Cards List */}
-                <div className="flex-1 overflow-y-auto space-y-3 pr-0.5 md:scrollbar-thin md:scrollbar-thumb-slate-800 max-h-[600px] md:max-h-none">
+                {/* Lead Cards List (Natural height on mobile, inner scroll ONLY on desktop) */}
+                <div className="flex-1 space-y-3 pr-0.5 md:overflow-y-auto md:scrollbar-thin md:scrollbar-thumb-slate-800">
                   {stageLeads.length === 0 ? (
                     <div className="h-28 border border-dashed border-slate-800/80 rounded-xl flex flex-col items-center justify-center text-slate-600 text-xs gap-1.5 p-4 text-center">
                       <Layers className="w-5 h-5 text-slate-700" />

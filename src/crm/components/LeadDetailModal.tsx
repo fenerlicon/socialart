@@ -114,8 +114,15 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm animate-fade-in p-0 sm:p-2">
-      <div className="w-full max-w-2xl bg-slate-900 border-l border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden">
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm animate-fade-in p-0 sm:p-2 cursor-pointer"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl bg-slate-900 border-l border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden cursor-default"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-slate-800 bg-slate-950/80 flex items-start justify-between gap-3">
@@ -137,7 +144,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               )}
             </div>
 
-            <h2 className="text-xl font-extrabold text-slate-100 flex items-center gap-2">
+            <h2 className="text-xl font-extrabold text-slate-100 flex items-center gap-2 flex-wrap">
               <span>{lead.title}</span>
               <button 
                 onClick={() => setIsEditingInfo(!isEditingInfo)}
@@ -169,7 +176,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {onDeleteLead && (
               <button
                 type="button"
@@ -178,14 +185,16 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                 title="Müşteriyi Sil"
               >
                 <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Müşteriyi Sil</span>
+                <span className="hidden sm:inline">Sil</span>
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+              className="p-2 sm:p-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition-all shadow-md active:scale-95 flex items-center gap-1 shrink-0"
+              title="Pencereyi Kapat"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-slate-300" />
+              <span className="text-xs font-extrabold pr-0.5">Kapat</span>
             </button>
           </div>
         </div>
@@ -512,6 +521,21 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             </div>
           </div>
 
+        </div>
+
+        {/* Sticky Modal Footer for Easy Mobile Exit */}
+        <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
+          <div className="text-xs text-slate-400 font-semibold truncate">
+            Müşteri: <span className="text-slate-200 font-extrabold">{lead.title}</span>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-slate-800 to-indigo-950 hover:from-slate-700 hover:to-indigo-900 border border-indigo-500/30 text-white font-extrabold text-xs shadow-lg active:scale-95 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
+          >
+            <X className="w-4 h-4 text-indigo-400" />
+            <span>✕ Pencereyi Kapat</span>
+          </button>
         </div>
       </div>
 
