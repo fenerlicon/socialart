@@ -246,7 +246,7 @@ export function TodoPage() {
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              Kişisel Not & İş Takip Defteri
+              Kişisel To-Do List & Not Defteri
             </div>
 
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">

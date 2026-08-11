@@ -124,8 +124,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     // Benim İşlerim
     menuItems.push({ label: 'Benim İşlerim', icon: '📝', href: '/my-work' })
 
-    // Yapılacaklar (Kişisel To-Do)
-    menuItems.push({ label: 'Yapılacaklar', icon: '📌', href: '/todo' })
+    // Kişisel To-Do List
+    menuItems.push({ label: 'To-Do List', icon: '📌', href: '/todo' })
 
     // Brands (Markalar)
     if (hasPermission('brand.manage')) {
@@ -227,7 +227,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     } else if (pathname === '/my-work') {
       segments.push({ label: 'Benim İşlerim', href: '/my-work' })
     } else if (pathname === '/todo') {
-      segments.push({ label: 'Yapılacaklar Listem', href: '/todo' })
+      segments.push({ label: 'To-Do List', href: '/todo' })
     } else if (pathname === '/approvals') {
       segments.push({ label: 'Onay Merkezi', href: '/approvals' })
     } else if (pathname === '/notifications') {
