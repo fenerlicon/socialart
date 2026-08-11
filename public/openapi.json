@@ -1,0 +1,137 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Socialart Medya Ajans GPT Entegrasyonu",
+    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme ve ekibe otomatik görev atama servisi.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://socialartmedya.com",
+      "description": "Canlı Socialart Ajans Sunucusu"
+    }
+  ],
+  "paths": {
+    "/api/gpt/leads": {
+      "get": {
+        "summary": "CRM Potansiyel Müşterilerini (Leads) Getir ve Analiz Et",
+        "description": "CRM veritabanındaki tüm aktif potansiyel müşterileri, aşamalarını (stage), atanan temsilcileri ve güncel durumlarını getirir. ChatGPT bu veriyi analiz ederek özet çıkarabilir.",
+        "operationId": "getAgencyLeads",
+        "responses": {
+          "200": {
+            "description": "Müşteri potansiyelleri ve aşama istatistikleri başarıyla döndü.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "total_active_leads": { "type": "integer" },
+                        "new_hot_leads": { "type": "integer" },
+                        "won_deals": { "type": "integer" },
+                        "lost_deals": { "type": "integer" },
+                        "contacted": { "type": "integer" },
+                        "proposal_sent": { "type": "integer" }
+                      }
+                    },
+                    "recent_leads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "name": { "type": "string" },
+                          "company": { "type": "string" },
+                          "service": { "type": "string" },
+                          "rep": { "type": "string" },
+                          "stage": { "type": "string" },
+                          "status": { "type": "string" },
+                          "budget": { "type": "number" },
+                          "reaction": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gpt/tasks": {
+      "post": {
+        "summary": "Ajans Personeline Yeni Görev Ata",
+        "description": "Celal abi veya ajans yöneticisi ChatGPT üzerinden emir verdiğinde (Örn: Furkan'a görev ata: sunumları hallet, deadline: 12.08.2026), belirlenen personele otomatik görev oluşturur ve bildirim gönderir.",
+        "operationId": "assignAgencyTask",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["assignee", "title"],
+                "properties": {
+                  "assignee": {
+                    "type": "string",
+                    "description": "Görevin atanacağı personel (Furkan, Celal, Ercan, Simge, Tuğba)",
+                    "example": "Furkan"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Görevin kısa başlığı veya özeti",
+                    "example": "Sunumları hallet"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Görevin detaylı açıklaması veya yönergeler",
+                    "example": "Ağustos ayı müşteri sunum dosyaları hazırlanacak."
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "Son teslim tarihi / deadline",
+                    "example": "12.08.2026"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "Öncelik derecesi (Yüksek, Normal, Düşük)",
+                    "example": "Yüksek"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Görev başarıyla eklendi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "task": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Aktif Görev Listesini Getir",
+        "description": "Ajans personelinin üzerindeki tüm görevleri ve son durumlarını listeler.",
+        "operationId": "getAgencyTasks",
+        "responses": {
+          "200": {
+            "description": "Görevler başarıyla getirildi."
+          }
+        }
+      }
+    }
+  }
+}
