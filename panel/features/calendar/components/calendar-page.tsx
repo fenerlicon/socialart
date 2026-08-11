@@ -57,9 +57,12 @@ export function CalendarPage() {
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Calendar View State
-  const [viewDate, setViewDate] = useState<Date>(new Date(2026, 6, 9)) // July 9, 2026
+  // Calendar View State (Defaults to current real date and month!)
+  const [viewDate, setViewDate] = useState<Date>(() => new Date())
   const [selectedView, setSelectedView] = useState<'month' | 'week' | 'day'>('month')
+
+  // Helper for today ISO date YYYY-MM-DD
+  const getTodayStr = () => new Date().toISOString().split('T')[0]
 
   // Filters State
   const [filterBrand, setFilterBrand] = useState('all')
@@ -72,12 +75,13 @@ export function CalendarPage() {
   const [type, setType] = useState<CalendarEventType>('meeting')
   const [brandId, setBrandId] = useState('')
   const [employeeId, setEmployeeId] = useState('')
-  const [dateStr, setDateStr] = useState('2026-07-09')
+  const [dateStr, setDateStr] = useState<string>(() => new Date().toISOString().split('T')[0])
   const [timeStr, setTimeStr] = useState('12:00')
   const [location, setLocation] = useState('')
 
-  // Event Detail Modal & Edit State
+  // Event Detail Modal, Delete Modal & Edit State
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
 
@@ -217,7 +221,7 @@ export function CalendarPage() {
     setType(evt.type)
     setBrandId(evt.brandId || '')
     setEmployeeId(evt.employeeId || '')
-    setDateStr(evt.date || '2026-07-09')
+    setDateStr(evt.date || getTodayStr())
     setTimeStr(evt.time || '12:00')
     setLocation(evt.location || '')
     setIsEditing(true)
@@ -248,15 +252,24 @@ export function CalendarPage() {
     toast.success('Etkinlik güncellendi!')
   }
 
-  // Delete Event
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Bu etkinlik kaydını silmek istediğinize emin misiniz?')) return
+  // Open Delete Confirmation Modal
+  const handleDeleteEvent = (eventId: string) => {
+    const targetEvt = events.find(e => e.id === eventId) || selectedEvent
+    if (targetEvt) {
+      setEventToDelete(targetEvt)
+    }
+  }
 
-    await deleteCalendarEvent(eventId)
+  // Perform Actual Event Delete
+  const confirmDelete = async () => {
+    if (!eventToDelete) return
+
+    await deleteCalendarEvent(eventToDelete.id)
     const storedEvents = await getStoredCalendarEvents()
     setEvents(storedEvents)
     setSelectedEvent(null)
-    toast.success('Etkinlik silindi!')
+    setEventToDelete(null)
+    toast.success('Etkinlik takvimden silindi!')
   }
 
   // Add Event submit
@@ -305,7 +318,7 @@ export function CalendarPage() {
             setType('meeting')
             setBrandId(brands[0]?.id || '')
             setEmployeeId(employees[0]?.id || '')
-            setDateStr('2026-07-09')
+            setDateStr(getTodayStr())
             setTimeStr('12:00')
             setLocation('')
             setIsModalOpen(true)
@@ -813,6 +826,52 @@ export function CalendarPage() {
                 </Button>
               </div>
             </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Sleek Custom Delete Confirmation Modal */}
+      {eventToDelete && (
+        <div className="fixed inset-0 bg-neutral-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <Card className="w-full max-w-md rounded-2xl border border-rose-500/30 bg-neutral-900 shadow-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-red-600" />
+            
+            <button
+              onClick={() => setEventToDelete(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-neutral-800 text-neutral-400"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex items-start gap-4 pt-1">
+              <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <div className="space-y-1.5 flex-1">
+                <h3 className="text-base font-bold text-white">Etkinliği Sil</h3>
+                <p className="text-xs text-neutral-300 leading-relaxed">
+                  <strong className="text-rose-300">{eventToDelete.title}</strong> kaydını takvimden silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-6 mt-4 border-t border-neutral-800">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEventToDelete(null)}
+                className="h-9 text-xs rounded-xl font-semibold border-neutral-800 text-neutral-300 hover:bg-neutral-800"
+              >
+                Vazgeç
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmDelete}
+                className="h-9 text-xs rounded-xl font-bold bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-lg shadow-rose-950/50"
+              >
+                Evet, Etkinliği Sil
+              </Button>
+            </div>
           </Card>
         </div>
       )}
