@@ -311,7 +311,7 @@ export default function Page() {
 
       {/* Main Content View */}
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-4 overflow-x-auto pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4 md:overflow-x-auto overflow-visible pb-4 touch-pan-y">
           {STAGES.map(stage => {
             // Filter out stages if a specific mobile stage tab is selected on mobile
             if (selectedMobileStage !== 'ALL' && selectedMobileStage !== stage.id) {
@@ -332,7 +332,7 @@ export default function Page() {
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-3 flex-1 min-h-[300px]">
+                <div className="flex flex-col gap-3 flex-1">
                   {stageLeads.length === 0 ? (
                     <div className="text-[11px] text-neutral-600 italic text-center py-10">Müşteri yok</div>
                   ) : (
@@ -384,57 +384,117 @@ export default function Page() {
           })}
         </div>
       ) : (
-        <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl overflow-hidden backdrop-blur-xl">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-neutral-950/60 text-neutral-400 font-bold border-b border-neutral-800">
-                <th className="p-4">MÜŞTERİ / FİRMA ADI</th>
-                <th className="p-4">İLETİŞİM</th>
-                <th className="p-4">HİZMET</th>
-                <th className="p-4">BÜTÇE</th>
-                <th className="p-4">AŞAMA</th>
-                <th className="p-4">TARİH</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-800/40">
-              {filteredLeads.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-neutral-500">Müşteri kaydı bulunamadı.</td>
-                </tr>
-              ) : (
-                filteredLeads.map(lead => (
-                  <tr key={lead.id} className="hover:bg-neutral-800/30 transition-colors">
-                    <td className="p-4 font-bold text-white">
-                      {lead.name}
-                      {lead.company && <div className="text-[10px] text-neutral-400 font-normal">{lead.company}</div>}
-                    </td>
-                    <td className="p-4 text-neutral-300">
-                      <div>{lead.phone || '-'}</div>
-                      <div className="text-[10px] text-neutral-500">{lead.email}</div>
-                    </td>
-                    <td className="p-4 text-neutral-300">{lead.service || '-'}</td>
-                    <td className="p-4 font-black text-cyan-400">
-                      {lead.budget ? `₺ ${Number(lead.budget).toLocaleString('tr-TR')}` : '-'}
-                    </td>
-                    <td className="p-4">
+        <div className="space-y-3 touch-pan-y">
+          {/* Mobile Card Feed (Visible on screens < md) */}
+          <div className="md:hidden space-y-3">
+            {filteredLeads.length === 0 ? (
+              <div className="p-8 text-center bg-neutral-900 border border-neutral-800 rounded-2xl text-neutral-500 text-xs">
+                Müşteri kaydı bulunamadı.
+              </div>
+            ) : (
+              filteredLeads.map((lead) => {
+                const cleanPhone = lead.phone ? lead.phone.replace(/[^0-9]/g, '') : '';
+                return (
+                  <div
+                    key={lead.id}
+                    className="bg-neutral-900/90 border border-neutral-800 p-4 rounded-2xl space-y-3 shadow-lg"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-extrabold text-sm text-white">{lead.name}</h3>
+                        {lead.company && <p className="text-xs text-neutral-400 font-medium">{lead.company}</p>}
+                      </div>
+                      {lead.budget && (
+                        <span className="font-black text-cyan-400 text-sm">
+                          ₺{Number(lead.budget).toLocaleString('tr-TR')}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800/80 flex items-center justify-between text-xs">
+                      <span className="text-neutral-400 font-semibold">{lead.service || 'Hizmet Belirtilmedi'}</span>
+                      <span className="text-[11px] text-neutral-500">{lead.created_at ? new Date(lead.created_at).toLocaleDateString('tr-TR') : 'Bugün'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/60">
+                      {cleanPhone ? (
+                        <a
+                          href={`tel:${cleanPhone}`}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                        >
+                          📞 Ara
+                        </a>
+                      ) : null}
+
                       <select
                         value={lead.stage || 'NEW'}
                         onChange={(e) => handleStageChange(lead.id, e.target.value)}
-                        className="bg-neutral-950 text-neutral-300 border border-neutral-800 rounded px-2.5 py-1 text-xs font-semibold outline-none"
+                        className="bg-neutral-950 text-neutral-300 border border-neutral-800 rounded-xl px-2.5 py-1.5 text-xs font-semibold outline-none flex-1"
                       >
                         {STAGES.map(s => (
                           <option key={s.id} value={s.id}>{s.title}</option>
                         ))}
                       </select>
-                    </td>
-                    <td className="p-4 text-neutral-500 text-[11px]">
-                      {lead.created_at ? new Date(lead.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
-                    </td>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table (Visible on screens >= md) */}
+          <div className="hidden md:block bg-neutral-900/40 border border-neutral-800 rounded-2xl overflow-hidden backdrop-blur-xl">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-neutral-950/60 text-neutral-400 font-bold border-b border-neutral-800">
+                  <th className="p-4">MÜŞTERİ / FİRMA ADI</th>
+                  <th className="p-4">İLETİŞİM</th>
+                  <th className="p-4">HİZMET</th>
+                  <th className="p-4">BÜTÇE</th>
+                  <th className="p-4">AŞAMA</th>
+                  <th className="p-4">TARİH</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-800/40">
+                {filteredLeads.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-neutral-500">Müşteri kaydı bulunamadı.</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredLeads.map(lead => (
+                    <tr key={lead.id} className="hover:bg-neutral-800/30 transition-colors">
+                      <td className="p-4 font-bold text-white">
+                        {lead.name}
+                        {lead.company && <div className="text-[10px] text-neutral-400 font-normal">{lead.company}</div>}
+                      </td>
+                      <td className="p-4 text-neutral-300">
+                        <div>{lead.phone || '-'}</div>
+                        <div className="text-[10px] text-neutral-500">{lead.email}</div>
+                      </td>
+                      <td className="p-4 text-neutral-300">{lead.service || '-'}</td>
+                      <td className="p-4 font-black text-cyan-400">
+                        {lead.budget ? `₺ ${Number(lead.budget).toLocaleString('tr-TR')}` : '-'}
+                      </td>
+                      <td className="p-4">
+                        <select
+                          value={lead.stage || 'NEW'}
+                          onChange={(e) => handleStageChange(lead.id, e.target.value)}
+                          className="bg-neutral-950 text-neutral-300 border border-neutral-800 rounded px-2.5 py-1 text-xs font-semibold outline-none"
+                        >
+                          {STAGES.map(s => (
+                            <option key={s.id} value={s.id}>{s.title}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-4 text-neutral-500 text-[11px]">
+                        {lead.created_at ? new Date(lead.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -1033,7 +1033,7 @@ export default function CRMPage({ embedded = false }) {
   };
 
   return (
-    <div className={embedded ? "bg-slate-950 text-slate-100 flex flex-col font-sans rounded-2xl overflow-hidden border border-slate-800" : "min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans"}>
+    <div className={embedded ? "bg-slate-950 text-slate-100 flex flex-col font-sans rounded-2xl overflow-hidden border border-slate-800 touch-pan-y" : "min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans touch-pan-y"}>
       
       {/* Loading bar */}
       {isLoading && (

@@ -69,7 +69,7 @@ export const ListView: React.FC<ListViewProps> = ({
   };
 
   return (
-    <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+    <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4 touch-pan-y">
       
       {/* Quick Stage Filter Badges Bar */}
       <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-3">

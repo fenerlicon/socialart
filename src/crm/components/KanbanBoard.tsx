@@ -77,7 +77,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       </div>
 
       {/* Board Columns Container */}
-      <div className="w-full overflow-x-auto pb-8 pt-3 px-3 sm:px-6">
+      <div className="w-full md:overflow-x-auto overflow-visible pb-8 pt-3 px-3 sm:px-6 touch-pan-y">
         <div className="flex flex-col md:flex-row gap-4 min-w-full md:min-w-max">
           {STAGES.map((stage) => {
             // If on mobile and a specific stage tab is selected, filter out other stages
