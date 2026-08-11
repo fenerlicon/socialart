@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Socialart Medya Ajans GPT Entegrasyonu",
-    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme, not/güncelleme ekleme, takvime çekim/etkinlik planlama ve ekibe otomatik görev atama servisi.",
-    "version": "1.1.0"
+    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme, not/güncelleme ekleme, takvime çekim/etkinlik planlama, iyzico 3D Secure ödeme talebi oluşturma, tek tıkla WhatsApp mesaj linki hazırlama ve ajans icra raporu alma servisi.",
+    "version": "1.2.0"
   },
   "servers": [
     {
@@ -18,9 +18,7 @@
         "description": "CRM veritabanındaki tüm aktif potansiyel müşterileri, aşamalarını (stage), atanan temsilcileri ve güncel durumlarını getirir. ChatGPT bu veriyi analiz ederek özet çıkarabilir.",
         "operationId": "getAgencyLeads",
         "responses": {
-          "200": {
-            "description": "Müşteri potansiyelleri ve aşama istatistikleri başarıyla döndü."
-          }
+          "200": { "description": "Müşteri potansiyelleri ve aşama istatistikleri başarıyla döndü." }
         }
       }
     },
@@ -39,12 +37,12 @@
                 "properties": {
                   "lead_name": {
                     "type": "string",
-                    "description": "Not eklenecek müşterinin adı veya firma adı. (Örn: 'Murat', 'Durnas PDR'). Eğer zorunlu alan verilmediyse ChatGPT kullanıcıya hangi müşteri olduğunu sorar.",
+                    "description": "Not eklenecek müşterinin adı veya firma adı. (Örn: 'Murat', 'Durnas PDR').",
                     "example": "Murat"
                   },
                   "lead_id": {
                     "type": "string",
-                    "description": "Opsiyonel. Doğrudan müşteri ID'si (Örn: '203')."
+                    "description": "Opsiyonel. Doğrudan müşteri ID'si."
                   },
                   "note": {
                     "type": "string",
@@ -67,9 +65,103 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Not eklendi veya birden fazla müşteri eşleştiğinde liste döndü."
+          "200": { "description": "Not eklendi veya birden fazla müşteri eşleştiğinde liste döndü." }
+        }
+      }
+    },
+    "/api/gpt/payment-request": {
+      "post": {
+        "summary": "Müşteriye Tek Tıkla 3D Secure Ödeme Talebi Oluştur",
+        "description": "Celal abi veya ajans yöneticisi talimat verdiğinde (Örn: MioCasa markasına 25.000 TL hizmet ödeme talebi oluştur), Müşteri Portalında ve iyzico altyapısında +%20 KDV dahil ödeme talebini anında oluşturur ve ödeme linkini döner.",
+        "operationId": "createPaymentRequest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["client_name", "title", "amount"],
+                "properties": {
+                  "client_name": {
+                    "type": "string",
+                    "description": "Müşteri / Marka adı (ZORUNLU). Örn: 'MioCasa', 'Mall Of Gurme'",
+                    "example": "MioCasa"
+                  },
+                  "company_code": {
+                    "type": "string",
+                    "description": "Müşterinin panel giriş kodu. Boşsa client_name üzerinden türetilir.",
+                    "example": "miocasa"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Ödeme başlığı (ZORUNLU). Örn: 'Ağustos Ayı Sosyal Medya Hizmeti'",
+                    "example": "Ağustos Ayı Sosyal Medya Hizmeti"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Ham ödeme tutarı TL (ZORUNLU). Sisteme eklenirken +%20 KDV otomatik hesaplanır.",
+                    "example": 25000
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Ödeme açıklaması veya hizmet detayları",
+                    "example": "Ağustos ayı prodüksiyon ve sosyal medya içerik yönetimi kalemi."
+                  }
+                }
+              }
+            }
           }
+        },
+        "responses": {
+          "200": { "description": "Ödeme talebi oluşturuldu ve checkout bağlantısı döndü." }
+        }
+      }
+    },
+    "/api/gpt/whatsapp-link": {
+      "post": {
+        "summary": "Müşteriye Tek Tıkla Gönderilebilir WhatsApp Mesaj Linki Oluştur",
+        "description": "Müşteri adı ve gönderilecek mesaj yazıldığında sistem rehberden telefon numarasını bulur ve tek tıkla wa.me mesaj linkini oluşturur.",
+        "operationId": "generateWhatsAppLink",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message_text"],
+                "properties": {
+                  "lead_name": {
+                    "type": "string",
+                    "description": "Müşteri adı (Rehberden telefon çekilmesi için). Örn: 'Murat'",
+                    "example": "Murat"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Opsiyonel. Telefon numarası verildiyse doğrudan kullanılır.",
+                    "example": "05321234567"
+                  },
+                  "message_text": {
+                    "type": "string",
+                    "description": "Müşteriye gönderilecek sıcak, dönüşüm odaklı mesaj metni (ZORUNLU).",
+                    "example": "Merhabalar Murat Bey, görüşmemize istinaden 150.000 TL tutarındaki prodüksiyon teklifimiz hazırlanmıştır. İyi çalışmalar dileriz!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "WhatsApp wa.me linki oluşturuldu." }
+        }
+      }
+    },
+    "/api/gpt/reports": {
+      "get": {
+        "summary": "Haftalık / Aylık Ajans İcra Raporunu Getir",
+        "description": "Ajansın tüm aktif markalarını, müşterilerini, CRM lead dönüşüm sayılarını, teklif bütçelerini, bekleyen ödemeleri ve satış temsilcilerinin iş yükünü raporlar.",
+        "operationId": "getExecutiveReport",
+        "responses": {
+          "200": { "description": "İcra raporu ve istatistikleri başarıyla döndü." }
         }
       }
     },
@@ -86,50 +178,20 @@
                 "type": "object",
                 "required": ["title", "brand_name", "date", "time"],
                 "properties": {
-                  "title": {
-                    "type": "string",
-                    "description": "Çekim veya etkinliğin kısa başlığı (ZORUNLU). Örn: 'Reel Çekimi'",
-                    "example": "Reel Çekimi"
-                  },
-                  "brand_name": {
-                    "type": "string",
-                    "description": "Hangi marka/firma için yapılacağı (ZORUNLU). Örn: 'MioCasa', 'Mall Of Gurme'",
-                    "example": "MioCasa"
-                  },
-                  "date": {
-                    "type": "string",
-                    "description": "Çekim tarihi (ZORUNLU). Örn: '12.08.2026' veya '2026-08-12'",
-                    "example": "12.08.2026"
-                  },
-                  "time": {
-                    "type": "string",
-                    "description": "Çekim saati (ZORUNLU). Örn: '14:30'",
-                    "example": "14:30"
-                  },
-                  "location": {
-                    "type": "string",
-                    "description": "Çekim adresi / stüdyo konumu",
-                    "example": "MioCasa Bahçeşehir Mağazası"
-                  },
-                  "event_type": {
-                    "type": "string",
-                    "description": "Etkinlik türü (Video Çekimi, Fotoğraf Çekimi, Müşteri Toplantısı, Lansman)",
-                    "example": "Video Çekimi"
-                  },
-                  "notes": {
-                    "type": "string",
-                    "description": "Ekip için çekim notları veya ekipman gereksinimleri",
-                    "example": "Işık ve 2 kameraman hazır bulunacak."
-                  }
+                  "title": { "type": "string", "example": "Reel Çekimi" },
+                  "brand_name": { "type": "string", "example": "MioCasa" },
+                  "date": { "type": "string", "example": "12.08.2026" },
+                  "time": { "type": "string", "example": "14:30" },
+                  "location": { "type": "string", "example": "MioCasa Bahçeşehir Mağazası" },
+                  "event_type": { "type": "string", "example": "Video Çekimi" },
+                  "notes": { "type": "string", "example": "Işık ve 2 kameraman hazır bulunacak." }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Takvime etkinlik eklendi."
-          }
+          "200": { "description": "Takvime etkinlik eklendi." }
         }
       },
       "get": {
@@ -137,9 +199,7 @@
         "description": "Ajansın yaklaşan çekimlerini ve toplantılarını listeler.",
         "operationId": "getCalendarEvents",
         "responses": {
-          "200": {
-            "description": "Etkinlikler getirildi."
-          }
+          "200": { "description": "Etkinlikler getirildi." }
         }
       }
     },
@@ -156,40 +216,18 @@
                 "type": "object",
                 "required": ["assignee", "title"],
                 "properties": {
-                  "assignee": {
-                    "type": "string",
-                    "description": "Görevin atanacağı personel (Furkan, Celal, Ercan, Simge, Tuğba)",
-                    "example": "Furkan"
-                  },
-                  "title": {
-                    "type": "string",
-                    "description": "Görevin kısa başlığı veya özeti",
-                    "example": "Sunumları hallet"
-                  },
-                  "description": {
-                    "type": "string",
-                    "description": "Görevin detaylı açıklaması veya yönergeler",
-                    "example": "Ağustos ayı müşteri sunum dosyaları hazırlanacak."
-                  },
-                  "due_date": {
-                    "type": "string",
-                    "description": "Son teslim tarihi / deadline",
-                    "example": "12.08.2026"
-                  },
-                  "priority": {
-                    "type": "string",
-                    "description": "Öncelik derecesi (Yüksek, Normal, Düşük)",
-                    "example": "Yüksek"
-                  }
+                  "assignee": { "type": "string", "example": "Furkan" },
+                  "title": { "type": "string", "example": "Sunumları hallet" },
+                  "description": { "type": "string", "example": "Ağustos ayı müşteri sunum dosyaları hazırlanacak." },
+                  "due_date": { "type": "string", "example": "12.08.2026" },
+                  "priority": { "type": "string", "example": "Yüksek" }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Görev başarıyla eklendi."
-          }
+          "200": { "description": "Görev başarıyla eklendi." }
         }
       },
       "get": {
@@ -197,9 +235,7 @@
         "description": "Ajans personelinin üzerindeki tüm görevleri ve son durumlarını listeler.",
         "operationId": "getAgencyTasks",
         "responses": {
-          "200": {
-            "description": "Görevler başarıyla getirildi."
-          }
+          "200": { "description": "Görevler başarıyla getirildi." }
         }
       }
     }
