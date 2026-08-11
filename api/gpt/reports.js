@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const LEADS_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
+const LEADS_SUPABASE_URL = 'https://piffaggeshfrubyjkhej.supabase.co';
 const LEADS_SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
 
-const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
+const PRIMARY_SUPABASE_URL = 'https://osuwytugjscwhcxxkhfa.supabase.co';
 const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
 
 const supabaseLeads = createClient(LEADS_SUPABASE_URL, LEADS_SUPABASE_KEY);
@@ -45,14 +45,14 @@ export default async function handler(req, res) {
     const wonLeads = activeLeads.filter(l => l.stage === 'WON' || l.status === 'Anlaşıldı' || (l.status && l.status.includes('Anlaş'))).length;
     const proposalLeads = activeLeads.filter(l => l.stage === 'PROPOSAL_SENT' || (l.status && l.status.includes('Teklif'))).length;
     
-    // Hot leads calculation: include Turkish statuses 'Sıcak', 'Yeni', 'Görüşme' or stage NEW/CONTACTED
+    // Hot leads calculation
     const hotLeads = activeLeads.filter(l => {
       const st = (l.status || '').toLocaleLowerCase('tr-TR');
       const sg = (l.stage || '').toUpperCase();
       return st.includes('sıcak') || st.includes('yeni') || st.includes('görüş') || sg === 'NEW' || sg === 'CONTACTED';
     }).length;
 
-    // Budget sum (from budget column or regex parse from reaction/notes)
+    // Budget sum
     let totalPipelineVolume = 0;
     activeLeads.forEach(l => {
       let b = parseFloat(l.budget) || 0;
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
         else if (lower.includes('tuğba') || lower.includes('tugba')) repNormalized = 'Tuğba';
         else if (lower.includes('meta')) repNormalized = 'Meta Ads Formu';
         else if (lower.includes('hizmet') || lower.includes('sistem')) repNormalized = 'Web Sitesi Formu';
-        else repNormalized = repRaw; // Keep exact name for other team members
+        else repNormalized = repRaw;
       }
 
       repDistribution[repNormalized] = (repDistribution[repNormalized] || 0) + 1;
