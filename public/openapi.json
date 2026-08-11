@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Socialart Medya Ajans GPT Entegrasyonu",
-    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme ve ekibe otomatik görev atama servisi.",
-    "version": "1.0.0"
+    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme, not/güncelleme ekleme, takvime çekim/etkinlik planlama ve ekibe otomatik görev atama servisi.",
+    "version": "1.1.0"
   },
   "servers": [
     {
@@ -19,44 +19,126 @@
         "operationId": "getAgencyLeads",
         "responses": {
           "200": {
-            "description": "Müşteri potansiyelleri ve aşama istatistikleri başarıyla döndü.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "summary": {
-                      "type": "object",
-                      "properties": {
-                        "total_active_leads": { "type": "integer" },
-                        "new_hot_leads": { "type": "integer" },
-                        "won_deals": { "type": "integer" },
-                        "lost_deals": { "type": "integer" },
-                        "contacted": { "type": "integer" },
-                        "proposal_sent": { "type": "integer" }
-                      }
-                    },
-                    "recent_leads": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string" },
-                          "name": { "type": "string" },
-                          "company": { "type": "string" },
-                          "service": { "type": "string" },
-                          "rep": { "type": "string" },
-                          "stage": { "type": "string" },
-                          "status": { "type": "string" },
-                          "budget": { "type": "number" },
-                          "reaction": { "type": "string" }
-                        }
-                      }
-                    }
+            "description": "Müşteri potansiyelleri ve aşama istatistikleri başarıyla döndü."
+          }
+        }
+      }
+    },
+    "/api/gpt/lead-note": {
+      "post": {
+        "summary": "Müşteriye Not / Aşaması / Güncelleme Ekle",
+        "description": "Müşterinin telefon görüşmesi, teklif durumu veya süreci hakkında not/güncelleme ekler. EĞER MÜŞTERİ ADI BELİRTİLMEDİYSE VEYA BİRDEN FAZLA EŞLEŞEN MÜŞTERİ VARSA CHATGPT KULLANICIYA HANGİ MÜŞTERİ OLDUĞUNU SORMAK ZORUNDADIR.",
+        "operationId": "addLeadNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["note"],
+                "properties": {
+                  "lead_name": {
+                    "type": "string",
+                    "description": "Not eklenecek müşterinin adı veya firma adı. (Örn: 'Murat', 'Durnas PDR'). Eğer zorunlu alan verilmediyse ChatGPT kullanıcıya hangi müşteri olduğunu sorar.",
+                    "example": "Murat"
+                  },
+                  "lead_id": {
+                    "type": "string",
+                    "description": "Opsiyonel. Doğrudan müşteri ID'si (Örn: '203')."
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "Müşteri hakkındaki not, telefon görüşmesi özeti veya güncelleme metni. (ZORUNLU)",
+                    "example": "Telefonu açmadı, yarın saat 14:00'da tekrar aranacak."
+                  },
+                  "stage": {
+                    "type": "string",
+                    "description": "Güncellenecek aşama (NEW, CONTACTED, WAITING, PROPOSAL_SENT, RETARGETING, WON, LOST)",
+                    "example": "CONTACTED"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Güncellenecek durum metni (Örn: 'Sıcak', 'Görüşme Yapıldı', 'Teklif İletildi')",
+                    "example": "Görüşme Yapıldı"
                   }
                 }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Not eklendi veya birden fazla müşteri eşleştiğinde liste döndü."
+          }
+        }
+      }
+    },
+    "/api/gpt/calendar": {
+      "post": {
+        "summary": "Takvime Çekim / Etkinlik / Toplantı Ekle",
+        "description": "Ajans takvimine yeni bir video çekimi, müşteri toplantısı veya lansman etkinliği ekler. EĞER MARKA ADI, TARİH VEYA SAAT EKSİKSE CHATGPT İŞLEMİ YAPMADAN KULLANICIYA EKSİK BİLGİLERİ SORMAK ZORUNDADIR.",
+        "operationId": "addCalendarEvent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "brand_name", "date", "time"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Çekim veya etkinliğin kısa başlığı (ZORUNLU). Örn: 'Reel Çekimi'",
+                    "example": "Reel Çekimi"
+                  },
+                  "brand_name": {
+                    "type": "string",
+                    "description": "Hangi marka/firma için yapılacağı (ZORUNLU). Örn: 'MioCasa', 'Mall Of Gurme'",
+                    "example": "MioCasa"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Çekim tarihi (ZORUNLU). Örn: '12.08.2026' veya '2026-08-12'",
+                    "example": "12.08.2026"
+                  },
+                  "time": {
+                    "type": "string",
+                    "description": "Çekim saati (ZORUNLU). Örn: '14:30'",
+                    "example": "14:30"
+                  },
+                  "location": {
+                    "type": "string",
+                    "description": "Çekim adresi / stüdyo konumu",
+                    "example": "MioCasa Bahçeşehir Mağazası"
+                  },
+                  "event_type": {
+                    "type": "string",
+                    "description": "Etkinlik türü (Video Çekimi, Fotoğraf Çekimi, Müşteri Toplantısı, Lansman)",
+                    "example": "Video Çekimi"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Ekip için çekim notları veya ekipman gereksinimleri",
+                    "example": "Işık ve 2 kameraman hazır bulunacak."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Takvime etkinlik eklendi."
+          }
+        }
+      },
+      "get": {
+        "summary": "Takvim Etkinliklerini Getir",
+        "description": "Ajansın yaklaşan çekimlerini ve toplantılarını listeler.",
+        "operationId": "getCalendarEvents",
+        "responses": {
+          "200": {
+            "description": "Etkinlikler getirildi."
           }
         }
       }
@@ -64,7 +146,7 @@
     "/api/gpt/tasks": {
       "post": {
         "summary": "Ajans Personeline Yeni Görev Ata",
-        "description": "Celal abi veya ajans yöneticisi ChatGPT üzerinden emir verdiğinde (Örn: Furkan'a görev ata: sunumları hallet, deadline: 12.08.2026), belirlenen personele otomatik görev oluşturur ve bildirim gönderir.",
+        "description": "Celal abi veya ajans yöneticisi ChatGPT üzerinden emir verdiğinde (Örn: Furkan'a görev ata: sunumları hallet, deadline: 12.08.2026), belirlenen personele otomatik görev oluşturur.",
         "operationId": "assignAgencyTask",
         "requestBody": {
           "required": true,
@@ -106,19 +188,7 @@
         },
         "responses": {
           "200": {
-            "description": "Görev başarıyla eklendi.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" },
-                    "task": { "type": "object" }
-                  }
-                }
-              }
-            }
+            "description": "Görev başarıyla eklendi."
           }
         }
       },
