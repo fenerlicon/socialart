@@ -454,7 +454,8 @@ export const ListView: React.FC<ListViewProps> = ({
                       </td>
 
                       {/* Date */}
-                        {new Date(lead.createdAt).toLocaleDateString('tr-TR')}
+                      <td className="py-4 px-4 whitespace-nowrap text-slate-500 text-[11px]">
+                        {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('tr-TR') : '-'}
                       </td>
 
                       {/* Actions */}
