@@ -76,6 +76,10 @@
       "destination": "/admin/:path*"
     },
     {
+      "source": "/api/gpt/:path*",
+      "destination": "/api/gpt-router"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
