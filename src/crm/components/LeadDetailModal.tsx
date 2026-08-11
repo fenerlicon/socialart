@@ -114,7 +114,6 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   };
 
   return (
-  return (
     <div
       className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm animate-fade-in p-0 sm:p-2 cursor-pointer"
       onClick={onClose}
