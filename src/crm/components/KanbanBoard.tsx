@@ -147,6 +147,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           })}
         </div>
       </div>
+
+      {/* Floating Mobile Scroll-To-Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed bottom-5 right-5 z-40 bg-indigo-600/90 hover:bg-indigo-500 text-white p-3 rounded-full shadow-2xl shadow-indigo-600/50 backdrop-blur-md border border-indigo-400/40 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold md:hidden"
+        title="Sayfa Başına Dön"
+      >
+        <span className="text-sm">↑</span>
+        <span className="text-[11px]">Üste Çık</span>
+      </button>
     </div>
   );
 };

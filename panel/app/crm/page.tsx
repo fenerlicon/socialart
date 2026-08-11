@@ -5,23 +5,12 @@ import { supabase } from '@/lib/supabase/client'
 import {
   Users,
   Search,
-  Filter,
   Plus,
   LayoutGrid,
   List,
-  BarChart2,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  PhoneCall,
-  Mail,
-  Building2,
   Sparkles,
-  ArrowRight,
-  TrendingUp,
-  X,
-  FileText,
-  DollarSign
+  ArrowLeft,
+  X
 } from 'lucide-react'
 
 interface Lead {
@@ -51,10 +40,11 @@ const STAGES = [
   { id: 'LOST', title: 'Reddedildi (Lost)', color: '#f43f5e' }
 ]
 
-export default function CrmPage() {
+export default function Page() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
+  const [selectedMobileStage, setSelectedMobileStage] = useState<string>('ALL')
   const [search, setSearch] = useState('')
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false)
   const [newLeadForm, setNewLeadForm] = useState({
@@ -160,9 +150,38 @@ export default function CrmPage() {
   const totalPipelineValue = leads.reduce((sum, l) => sum + (Number(l.budget) || 0), 0)
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       {/* Top Header Bar */}
-      <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4 backdrop-blur-xl">
+      <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-4 md:p-6 flex flex-wrap items-center justify-between gap-4 backdrop-blur-xl">
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between">
+          {/* Prominent Back to Admin Button */}
+          <button
+            onClick={() => { window.location.href = '/dashboard' }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-purple-900/80 to-slate-900 hover:from-purple-800 hover:to-slate-800 text-purple-200 border border-purple-500/40 transition-all shadow-md shadow-purple-950/50 active:scale-95 cursor-pointer shrink-0"
+            title="Admin Paneline Dön"
+          >
+            <ArrowLeft className="w-4 h-4 text-purple-400" />
+            <span>← Admin Paneli</span>
+          </button>
+
+          {/* Quick Panel Navigation Menu Dropdown */}
+          <div className="relative shrink-0">
+            <select
+              onChange={(e) => { if (e.target.value) window.location.href = e.target.value }}
+              defaultValue=""
+              className="bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-purple-500 cursor-pointer"
+            >
+              <option value="" disabled>🏠 Git...</option>
+              <option value="/dashboard">🏠 Ana Panel</option>
+              <option value="/my-work">📝 Benim İşlerim</option>
+              <option value="/todo">📌 Yapılacaklar</option>
+              <option value="/calendar">📅 Takvim</option>
+              <option value="/operations">⚡ Operasyonlar</option>
+              <option value="/employees">👥 Ekip Üyeleri</option>
+            </select>
+          </div>
+        </div>
+
         <div>
           <div className="flex items-center gap-2 text-[10px] font-black text-cyan-400 uppercase tracking-widest mb-1">
             <Sparkles className="w-3.5 h-3.5" /> SocialArt CRM Engine
@@ -237,17 +256,56 @@ export default function CrmPage() {
         </div>
       </div>
 
-      {/* Filter / Search Bar */}
-      <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-4 flex items-center justify-between gap-4 backdrop-blur-xl">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Müşteri adı, firma veya telefon ara..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-purple-500"
-          />
+      {/* Filter / Search Bar & Mobile Stage Chips */}
+      <div className="space-y-3">
+        <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-4 flex items-center justify-between gap-4 backdrop-blur-xl">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Müşteri adı, firma veya telefon ara..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-purple-500"
+            />
+          </div>
+        </div>
+
+        {/* Mobile Stage Selector Tabs (Visible on screens < md) */}
+        <div className="md:hidden w-full overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 min-w-max">
+            <button
+              onClick={() => setSelectedMobileStage('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border ${
+                selectedMobileStage === 'ALL'
+                  ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-500/20'
+                  : 'bg-neutral-900 text-neutral-400 border-neutral-800'
+              }`}
+            >
+              Tüm Pano ({filteredLeads.length})
+            </button>
+            {STAGES.map((st) => {
+              const count = filteredLeads.filter(l => (l.stage || 'NEW') === st.id).length
+              const isSelected = selectedMobileStage === st.id
+              return (
+                <button
+                  key={st.id}
+                  onClick={() => setSelectedMobileStage(st.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    isSelected
+                      ? 'bg-neutral-800 text-white border-purple-500 shadow-md'
+                      : 'bg-neutral-900 text-neutral-400 border-neutral-800'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ background: st.color }} />
+                  <span>{st.title}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isSelected ? 'bg-purple-500 text-white' : 'bg-neutral-800 text-neutral-400'}`}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
@@ -255,6 +313,11 @@ export default function CrmPage() {
       {viewMode === 'kanban' ? (
         <div className="grid grid-cols-1 md:grid-cols-7 gap-4 overflow-x-auto pb-4">
           {STAGES.map(stage => {
+            // Filter out stages if a specific mobile stage tab is selected on mobile
+            if (selectedMobileStage !== 'ALL' && selectedMobileStage !== stage.id) {
+              return null
+            }
+
             const stageLeads = filteredLeads.filter(l => (l.stage || 'NEW') === stage.id)
 
             return (
@@ -304,7 +367,7 @@ export default function CrmPage() {
                           <select
                             value={lead.stage || 'NEW'}
                             onChange={(e) => handleStageChange(lead.id, e.target.value)}
-                            className="bg-neutral-900 text-neutral-300 border border-neutral-800 rounded px-1.5 py-0.5 text-[9px] font-semibold outline-none"
+                            className="bg-neutral-900 text-neutral-300 border border-neutral-800 rounded px-1.5 py-0.5 text-[9px] font-semibold outline-none cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {STAGES.map(s => (
@@ -377,11 +440,11 @@ export default function CrmPage() {
 
       {/* New Lead Modal */}
       {isNewLeadOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-400" /> Yeni Müşteri Potansiyeli Ekle
+              <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400" /> Yeni Müşteri Potansiyeli Ekle
               </h3>
               <button onClick={() => setIsNewLeadOpen(false)} className="text-neutral-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -469,6 +532,16 @@ export default function CrmPage() {
           </div>
         </div>
       )}
+
+      {/* Floating Mobile Scroll-To-Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed bottom-5 right-5 z-40 bg-purple-600/90 hover:bg-purple-500 text-white p-3 rounded-full shadow-2xl shadow-purple-600/50 backdrop-blur-md border border-purple-400/40 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold md:hidden"
+        title="Sayfa Başına Dön"
+      >
+        <span className="text-sm">↑</span>
+        <span className="text-[11px]">Üste Çık</span>
+      </button>
     </div>
   )
 }
