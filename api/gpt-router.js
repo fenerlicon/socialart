@@ -629,7 +629,11 @@ async function handleCalendar(req, res) {
 
 async function handleTasks(req, res) {
   if (req.method === 'GET') {
-    const { data: steps } = await supabasePrimary.from('workflow_step_instances').select('*').order('assigned_at', { ascending: false }).limit(30);
+    const { data: steps } = await supabasePrimary
+      .from('workflow_step_instances')
+      .select('*')
+      .order('assigned_at', { ascending: false, nullsFirst: false })
+      .limit(30);
     return res.status(200).json({ tasks: steps || [] });
   }
 
@@ -656,8 +660,9 @@ async function handleTasks(req, res) {
       is_final_step: false,
       assignee_employee_id: matchedEmployee.id,
       assigned_employee_id: matchedEmployee.id,
+      responsibility_role: 'strategy', // Set role so tasks-page team filter includes it
       assigned_at: nowIso,
-      due_date: due_date || null
+      due_date: due_date || nowIso
     };
 
     const { error: taskErr } = await supabasePrimary.from('workflow_step_instances').insert([taskStepRecord]);
@@ -685,7 +690,7 @@ async function handleTasks(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `✅ Görev başarıyla ${matchedEmployee.name} kişisine atandı!`,
+      message: `✅ Görev başarıyla ${matchedEmployee.name} kişisine atandı! (ID: ${taskId})`,
       task: { id: taskId, assigned_to: matchedEmployee.name, title: title, due_date: due_date || 'Belirtilmedi' }
     });
   }
