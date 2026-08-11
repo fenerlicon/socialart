@@ -10,7 +10,8 @@ import {
   List,
   Sparkles,
   ArrowLeft,
-  X
+  X,
+  Menu
 } from 'lucide-react'
 
 interface Lead {
@@ -47,6 +48,7 @@ export default function Page() {
   const [selectedMobileStage, setSelectedMobileStage] = useState<string>('ALL')
   const [search, setSearch] = useState('')
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
     company: '',
@@ -150,11 +152,79 @@ export default function Page() {
   const totalPipelineValue = leads.reduce((sum, l) => sum + (Number(l.budget) || 0), 0)
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Top Header Bar */}
-      <div className="bg-neutral-900/60 border border-neutral-800 rounded-2xl p-4 md:p-6 flex flex-wrap items-center justify-between gap-4 backdrop-blur-xl">
+    <div className="p-3 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
+      {/* Sleek Mobile Top Bar (< md) */}
+      <div className="md:hidden bg-neutral-900/90 border border-neutral-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2 backdrop-blur-xl">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { window.location.href = '/dashboard' }}
+            className="p-1.5 rounded-lg bg-neutral-800 text-purple-400 hover:text-purple-300 active:scale-95 transition-all"
+            title="Admin Paneline Dön"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <span className="text-xs font-black text-white tracking-tight">SocialArt CRM</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setIsNewLeadOpen(true)}
+            className="bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-[11px] px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Ekle</span>
+          </button>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-1.5 rounded-lg bg-neutral-800 text-neutral-300 hover:text-white active:scale-95 transition-all"
+            title="Menüyü Aç/Kapat"
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4 text-rose-400" /> : <Menu className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Expandable Mobile Navigation & Switcher Drawer (< md) */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-neutral-900 border border-neutral-800 rounded-xl p-3 space-y-3 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between border-b border-neutral-800 pb-2">
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Hızlı Görünüm & Sayfalar</span>
+            <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-0.5 flex items-center gap-1">
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold ${viewMode === 'kanban' ? 'bg-purple-600 text-white' : 'text-neutral-400'}`}
+              >
+                Pano
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-neutral-400'}`}
+              >
+                Liste
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => { window.location.href = '/dashboard' }} className="p-2 bg-neutral-950 border border-neutral-800 rounded-lg text-left text-xs font-bold text-neutral-300">
+              🏠 Ana Panel
+            </button>
+            <button onClick={() => { window.location.href = '/my-work' }} className="p-2 bg-neutral-950 border border-neutral-800 rounded-lg text-left text-xs font-bold text-neutral-300">
+              📝 Benim İşlerim
+            </button>
+            <button onClick={() => { window.location.href = '/todo' }} className="p-2 bg-neutral-950 border border-neutral-800 rounded-lg text-left text-xs font-bold text-neutral-300">
+              📌 Yapılacaklar
+            </button>
+            <button onClick={() => { window.location.href = '/calendar' }} className="p-2 bg-neutral-950 border border-neutral-800 rounded-lg text-left text-xs font-bold text-neutral-300">
+              📅 Takvim
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Top Header Bar (>= md) */}
+      <div className="hidden md:flex bg-neutral-900/60 border border-neutral-800 rounded-2xl p-6 flex-wrap items-center justify-between gap-4 backdrop-blur-xl">
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between">
-          {/* Prominent Back to Admin Button */}
           <button
             onClick={() => { window.location.href = '/dashboard' }}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-purple-900/80 to-slate-900 hover:from-purple-800 hover:to-slate-800 text-purple-200 border border-purple-500/40 transition-all shadow-md shadow-purple-950/50 active:scale-95 cursor-pointer shrink-0"
@@ -164,7 +234,6 @@ export default function Page() {
             <span>← Admin Paneli</span>
           </button>
 
-          {/* Quick Panel Navigation Menu Dropdown */}
           <div className="relative shrink-0">
             <select
               onChange={(e) => { if (e.target.value) window.location.href = e.target.value }}

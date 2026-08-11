@@ -150,7 +150,7 @@ export const ListView: React.FC<ListViewProps> = ({
       </div>
 
       {/* Mobile Lead Card Feed (Visible on screens < md) */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-3 pb-32">
         {sortedLeads.length === 0 ? (
           <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-500 text-xs">
             Seçilen filtrelere uygun müşteri bulunamadı.

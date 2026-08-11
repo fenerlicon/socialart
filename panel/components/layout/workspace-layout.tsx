@@ -206,8 +206,13 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       handleLogout()
     } else if (item.href === '/crm') {
       if (typeof window !== 'undefined') {
-        const isDev = window.location.hostname === 'localhost'
-        window.location.href = isDev ? 'http://localhost:5173/crm' : '/crm'
+        const host = window.location.hostname
+        const port = window.location.port
+        if (port === '3000' || port === '5173') {
+          window.location.href = `${window.location.protocol}//${host}:5173/crm`
+        } else {
+          window.location.href = '/crm'
+        }
       }
     } else if (item.isPlaceholder) {
       toast.info('Geliştirme Aşamasında', {

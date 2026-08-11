@@ -3430,7 +3430,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
 
         {/* Tab 1: CRM PANEL — agency-crm */}
         {activeTab === 'potansiyel' && (
-          <div style={{ margin: '-40px', minHeight: '100vh' }}>
+          <div className="pt-14 md:pt-0" style={{ margin: '-40px', minHeight: '100vh' }}>
             <CRMPage embedded={true} />
           </div>
         )}
