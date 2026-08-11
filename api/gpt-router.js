@@ -11,12 +11,13 @@ const supabaseLeads = createClient(LEADS_SUPABASE_URL, LEADS_SUPABASE_KEY);
 const supabasePrimary = createClient(PRIMARY_SUPABASE_URL, PRIMARY_SUPABASE_KEY);
 
 const EMPLOYEE_MAP = {
-  furkan: { id: '406a078d-0aea-45e0-87e1-d4d0b5f20415', name: 'Furkan' },
-  celal: { id: '26fff081-5502-4624-a71a-b6e4772467c3', name: 'Celal' },
-  ercan: { id: '4721de06-0bd6-4681-a2c8-0c0d53da8eaf', name: 'Ercan' },
-  simge: { id: '6f2efa88-0600-4d5f-8515-143937b6890f', name: 'Simge' },
-  tugba: { id: 'b5e391db-dc21-45a8-baad-19f4073d3b14', name: 'Tuğba' },
-  tuğba: { id: 'b5e391db-dc21-45a8-baad-19f4073d3b14', name: 'Tuğba' }
+  furkan: { id: '26fff081-5502-4624-a71a-b6e4772467c3', name: 'Arda Furkan Aslanbaş' },
+  celal: { id: 'b5e391db-dc21-45a8-baad-19f4073d3b14', name: 'Celal Ünlü' },
+  ercan: { id: '406a078d-0aea-45e0-87e1-d4d0b5f20415', name: 'Ercan Özdemir' },
+  tugba: { id: '6f2efa88-0600-4d5f-8515-143937b6890f', name: 'Tuğba Özdemir' },
+  tuğba: { id: '6f2efa88-0600-4d5f-8515-143937b6890f', name: 'Tuğba Özdemir' },
+  betul: { id: '4721de06-0bd6-4681-a2c8-0c0d53da8eaf', name: 'Betül Ünlü' },
+  betül: { id: '4721de06-0bd6-4681-a2c8-0c0d53da8eaf', name: 'Betül Ünlü' }
 };
 
 function parseCalendarDateTime(dateStr, timeStr) {
@@ -110,6 +111,9 @@ export default async function handler(req, res) {
         return await handleCalendar(req, res);
       case 'tasks':
         return await handleTasks(req, res);
+      case 'todo':
+      case 'create-todo':
+        return await handleCreateTodo(req, res);
       default:
         return res.status(404).json({ error: 'UNKNOWN_ACTION', message: `Eylem '${action}' tanımlı değil.` });
     }
@@ -426,7 +430,7 @@ async function handlePaymentRequest(req, res) {
 
   const notifRecord = {
     id: requestId,
-    recipient_employee_id: '26fff081-5502-4624-a71a-b6e4772467c3',
+    recipient_employee_id: 'b5e391db-dc21-45a8-baad-19f4073d3b14', // Celal
     type: 'payment_request',
     title: `💳 Ödeme Talebi: ${client_name} - ₺${numAmount.toLocaleString('tr-TR')}`,
     message: JSON.stringify(requestPayload),
@@ -589,7 +593,7 @@ async function handleCalendar(req, res) {
       id: eventId,
       title: `${brand_name.trim()} - ${title.trim()}`,
       type: (event_type && event_type.toLowerCase().includes('toplantı')) || title.toLowerCase().includes('toplantı') ? 'meeting' : 'shoot',
-      employee_id: '406a078d-0aea-45e0-87e1-d4d0b5f20415', // Furkan
+      employee_id: '26fff081-5502-4624-a71a-b6e4772467c3', // Furkan
       starts_at: startsAt,
       ends_at: endsAt,
       location: location || 'Ajans Stüdyosu',
@@ -601,7 +605,7 @@ async function handleCalendar(req, res) {
     // 2. Also Insert into notifications for employee popups
     const notifRecord = {
       id: eventId,
-      recipient_employee_id: '406a078d-0aea-45e0-87e1-d4d0b5f20415',
+      recipient_employee_id: '26fff081-5502-4624-a71a-b6e4772467c3', // Furkan
       type: 'calendar_event',
       title: `📅 Takvim Etkinliği: ${calEventRecord.title}`,
       message: JSON.stringify({ ...calEventRecord, brand_name: brand_name.trim(), date: date.trim(), time: time.trim(), notes: notes || '' }),
@@ -660,7 +664,7 @@ async function handleTasks(req, res) {
       is_final_step: false,
       assignee_employee_id: matchedEmployee.id,
       assigned_employee_id: matchedEmployee.id,
-      responsibility_role: 'strategy', // Set role so tasks-page team filter includes it
+      responsibility_role: 'strategy',
       assigned_at: nowIso,
       due_date: due_date || nowIso
     };
@@ -694,4 +698,60 @@ async function handleTasks(req, res) {
       task: { id: taskId, assigned_to: matchedEmployee.name, title: title, due_date: due_date || 'Belirtilmedi' }
     });
   }
+}
+
+async function handleCreateTodo(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Sadece POST desteklenir.' });
+  const { employee, title, notes, due_date, priority, category } = req.body || {};
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'MISSING_TITLE', message: 'Kişisel görev / not başlığı (title) zorunludur.' });
+  }
+
+  const employeeKey = (employee || 'celal').toLowerCase().trim();
+  const matchedEmployee = EMPLOYEE_MAP[employeeKey] || EMPLOYEE_MAP.celal;
+
+  const nowIso = new Date().toISOString();
+  const todoId = `TODO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+  const todoRecord = {
+    id: todoId,
+    employee_id: matchedEmployee.id,
+    title: title.trim(),
+    notes: notes ? notes.trim() : null,
+    due_date: due_date || null,
+    priority: priority || 'medium',
+    category: category || 'general',
+    is_completed: false,
+    created_at: nowIso
+  };
+
+  const { error } = await supabasePrimary.from('personal_todos').insert([todoRecord]);
+
+  if (error) {
+    return res.status(500).json({ error: 'Kişisel To-Do veritabanına eklenirken hata oluştu', details: error.message });
+  }
+
+  // Popup Notification
+  const notifRecord = {
+    id: todoId,
+    recipient_employee_id: matchedEmployee.id,
+    type: 'personal_todo',
+    title: `📌 To-Do Listene Eklendi: ${title.trim()}`,
+    message: JSON.stringify(todoRecord),
+    related_entity_type: 'todo',
+    related_entity_id: todoId,
+    is_read: false,
+    created_at: nowIso
+  };
+
+  try {
+    await supabasePrimary.from('notifications').insert([notifRecord]);
+  } catch (e) {}
+
+  return res.status(200).json({
+    success: true,
+    message: `✅ "${title.trim()}" görevi ${matchedEmployee.name} kullanıcısının kişisel Yapılacaklar (To-Do List) sayfasına başarıyla eklendi!`,
+    todo: todoRecord
+  });
 }

@@ -244,6 +244,35 @@
           "200": { "description": "Görevler başarıyla getirildi." }
         }
       }
+    },
+    "/api/gpt/todo": {
+      "post": {
+        "summary": "Çalışanın Kişisel Yapılacaklar (To-Do List) Sayfasına Not/Görev Ekle",
+        "description": "Celal, Furkan veya herhangi bir çalışan ChatGPT'ye 'Bugün to do listime X kişisi aranacak ekle' dediklerinde doğrudan o çalışanın kişisel Yapılacaklar sayfasına not/görev ekler.",
+        "operationId": "addPersonalTodo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "employee": { "type": "string", "description": "Hangi çalışanın to-do listesine eklenecek (celal, furkan, ercan, tugba vb.). Varsayılan: celal", "example": "celal" },
+                  "title": { "type": "string", "description": "Yapılacak iş / not başlığı (ZORUNLU)", "example": "Ahmet Bey aranacak" },
+                  "notes": { "type": "string", "description": "İsteğe bağlı detay notları veya hatırlatmalar", "example": "Saat 15:00'te teklif detayları konuşulacak." },
+                  "due_date": { "type": "string", "description": "Hedef zaman / son tarih", "example": "Bugün 15:00" },
+                  "priority": { "type": "string", "description": "Öncelik (high, medium, low)", "example": "high" },
+                  "category": { "type": "string", "description": "Kategori (meeting, ad_campaign, presentation, personal_note, general)", "example": "meeting" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Not/Görev çalışanın kişisel Yapılacaklar (To-Do List) sayfasına eklendi." }
+        }
+      }
     }
   }
 }
