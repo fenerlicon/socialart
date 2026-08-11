@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { getActiveEmployeeId, getStoredEmployees } from '@/lib/repositories/EmployeeRepository'
-import { Employee } from '@/features/employees/types/employee-types'
+import { getActiveEmployeeId, getStoredEmployees } from '@/lib/storage/local-employee-store'
+import { Employee } from '@/types/domain'
 import { PersonalTodo, TodoPriority, TodoCategory } from '../types/todo-types'
 import { TodoRepository } from '@/lib/repositories/TodoRepository'
 import { toast } from 'sonner'
@@ -261,7 +261,7 @@ export function TodoPage() {
             <div className="inline-flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
               <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span>
-                <strong>Gizlilik Güvencesi:</strong> Bu liste sadece <u>{activeEmployee?.name || 'Size'}</u> özeldir. Diğer ekip üyeleri göremez.
+                <strong>Gizlilik Güvencesi:</strong> Bu liste sadece <u>{activeEmployee?.fullName || 'Size'}</u> özeldir. Diğer ekip üyeleri göremez.
               </span>
             </div>
           </div>
