@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Phone, 
@@ -49,6 +49,24 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateAssignedTo,
   onUpdateLeadInfo
 }) => {
+  // Body scroll lock & ESC key cleanup
+  useEffect(() => {
+    if (!lead) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow || '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lead, onClose]);
+
   if (!lead) return null;
 
   const [newNoteText, setNewNoteText] = useState('');
@@ -115,16 +133,16 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in cursor-pointer"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in cursor-pointer"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden cursor-default my-auto"
+        className="w-full max-w-2xl bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl h-[100dvh] sm:h-auto sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Header (Generous top padding, zero cutoff, centered card format) */}
-        <div className="pt-5 pb-3.5 px-4 sm:px-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 shrink-0">
+        {/* Header (Generous top padding with safe area support, zero cutoff) */}
+        <div className="pt-8 sm:pt-6 pb-4 px-4 sm:px-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 shrink-0">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
