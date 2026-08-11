@@ -124,6 +124,9 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     // Benim İşlerim
     menuItems.push({ label: 'Benim İşlerim', icon: '📝', href: '/my-work' })
 
+    // Yapılacaklar (Kişisel To-Do)
+    menuItems.push({ label: 'Yapılacaklar', icon: '📌', href: '/todo' })
+
     // Brands (Markalar)
     if (hasPermission('brand.manage')) {
       menuItems.push({ label: 'Markalar', icon: '🏢', href: '/brands' })
@@ -223,6 +226,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       segments.push({ label: 'Çalışma Alanı', href: '/dashboard' })
     } else if (pathname === '/my-work') {
       segments.push({ label: 'Benim İşlerim', href: '/my-work' })
+    } else if (pathname === '/todo') {
+      segments.push({ label: 'Yapılacaklar Listem', href: '/todo' })
     } else if (pathname === '/approvals') {
       segments.push({ label: 'Onay Merkezi', href: '/approvals' })
     } else if (pathname === '/notifications') {
