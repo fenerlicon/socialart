@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Databases
-const LEADS_SUPABASE_URL = process.env.LEADS_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
+const LEADS_SUPABASE_URL = 'https://piffaggeshfrubyjkhej.supabase.co';
 const LEADS_SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
 
 const PRIMARY_SUPABASE_URL = 'https://osuwytugjscwhcxxkhfa.supabase.co';
-const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
+const PRIMARY_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
 
 const supabaseLeads = createClient(LEADS_SUPABASE_URL, LEADS_SUPABASE_KEY);
 const supabasePrimary = createClient(PRIMARY_SUPABASE_URL, PRIMARY_SUPABASE_KEY);
@@ -562,7 +562,12 @@ async function handleCalendar(req, res) {
       created_at: nowIso
     };
 
-    await supabasePrimary.from('notifications').insert([notifRecord]).catch(() => {});
+    try {
+      await supabasePrimary.from('notifications').insert([notifRecord]);
+    } catch (e) {
+      console.warn('Notifications insert notice:', e.message);
+    }
+
     return res.status(200).json({
       success: true,
       message: `✅ Takvime etkinlik eklendi: "${eventPayload.title}" (${date} - Saat: ${time})`,
@@ -597,7 +602,7 @@ async function handleTasks(req, res) {
       created_at: nowIso
     });
 
-    const { error } = await supabasePrimary.from('notifications').insert([{
+    const notifRecord = {
       id: taskId,
       recipient_employee_id: matchedEmployee.id,
       type: 'gpt_assigned_task',
@@ -607,7 +612,9 @@ async function handleTasks(req, res) {
       related_entity_id: taskId,
       is_read: false,
       created_at: nowIso
-    }]);
+    };
+
+    const { error } = await supabasePrimary.from('notifications').insert([notifRecord]);
 
     if (error) return res.status(500).json({ error: 'Görev eklenirken hata oluştu', details: error.message });
 
