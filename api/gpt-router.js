@@ -19,6 +19,50 @@ const EMPLOYEE_MAP = {
   tuğba: { id: 'b5e391db-dc21-45a8-baad-19f4073d3b14', name: 'Tuğba' }
 };
 
+function parseCalendarDateTime(dateStr, timeStr) {
+  try {
+    let year = 2026, month = 8, day = 11;
+    let hour = 21, minute = 0;
+
+    if (timeStr && timeStr.includes(':')) {
+      const parts = timeStr.split(':');
+      hour = parseInt(parts[0], 10) || 21;
+      minute = parseInt(parts[1], 10) || 0;
+    }
+
+    if (dateStr) {
+      if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts[0].length === 4) {
+          year = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10);
+          day = parseInt(parts[2], 10);
+        } else {
+          day = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10);
+          year = parseInt(parts[2], 10);
+        }
+      } else if (dateStr.includes('.')) {
+        const parts = dateStr.split('.');
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        year = parseInt(parts[2], 10);
+        if (year < 100) year += 2000;
+      }
+    }
+
+    const d = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+    const startsAt = d.toISOString();
+    const dEnd = new Date(d.getTime() + 3600000);
+    const endsAt = dEnd.toISOString();
+
+    return { startsAt, endsAt };
+  } catch (e) {
+    const now = new Date();
+    return { startsAt: now.toISOString(), endsAt: new Date(now.getTime() + 3600000).toISOString() };
+  }
+}
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -520,7 +564,7 @@ async function handleReports(req, res) {
 
 async function handleCalendar(req, res) {
   if (req.method === 'GET') {
-    const { data: events } = await supabasePrimary.from('notifications').select('*').eq('type', 'calendar_event').order('created_at', { ascending: false }).limit(50);
+    const { data: events } = await supabasePrimary.from('calendar_events').select('*').order('starts_at', { ascending: true }).limit(50);
     return res.status(200).json({ events: events || [] });
   }
 
@@ -538,24 +582,29 @@ async function handleCalendar(req, res) {
 
     const nowIso = new Date().toISOString();
     const eventId = `CAL-${Date.now()}`;
-    const eventPayload = {
+    const { startsAt, endsAt } = parseCalendarDateTime(date.trim(), time.trim());
+
+    // 1. Insert into REAL calendar_events table
+    const calEventRecord = {
       id: eventId,
       title: `${brand_name.trim()} - ${title.trim()}`,
-      brand_name: brand_name.trim(),
-      event_type: event_type || 'Video Çekimi',
-      date: date.trim(),
-      time: time.trim(),
+      type: (event_type && event_type.toLowerCase().includes('toplantı')) || title.toLowerCase().includes('toplantı') ? 'meeting' : 'shoot',
+      employee_id: '406a078d-0aea-45e0-87e1-d4d0b5f20415', // Furkan
+      starts_at: startsAt,
+      ends_at: endsAt,
       location: location || 'Ajans Stüdyosu',
-      notes: notes || '',
-      created_at: nowIso
+      status: 'pending'
     };
 
+    const { error: calErr } = await supabasePrimary.from('calendar_events').insert([calEventRecord]);
+
+    // 2. Also Insert into notifications for employee popups
     const notifRecord = {
       id: eventId,
       recipient_employee_id: '406a078d-0aea-45e0-87e1-d4d0b5f20415',
       type: 'calendar_event',
-      title: `📅 Takvim Etkinliği: ${eventPayload.title}`,
-      message: JSON.stringify(eventPayload),
+      title: `📅 Takvim Etkinliği: ${calEventRecord.title}`,
+      message: JSON.stringify({ ...calEventRecord, brand_name: brand_name.trim(), date: date.trim(), time: time.trim(), notes: notes || '' }),
       related_entity_type: 'calendar',
       related_entity_id: eventId,
       is_read: false,
@@ -564,22 +613,24 @@ async function handleCalendar(req, res) {
 
     try {
       await supabasePrimary.from('notifications').insert([notifRecord]);
-    } catch (e) {
-      console.warn('Notifications insert notice:', e.message);
+    } catch (e) {}
+
+    if (calErr) {
+      return res.status(500).json({ error: 'Takvime kayıt atılamadı', details: calErr.message });
     }
 
     return res.status(200).json({
       success: true,
-      message: `✅ Takvime etkinlik eklendi: "${eventPayload.title}" (${date} - Saat: ${time})`,
-      event: eventPayload
+      message: `✅ Takvime etkinlik eklendi: "${calEventRecord.title}" (${date} - Saat: ${time})`,
+      event: calEventRecord
     });
   }
 }
 
 async function handleTasks(req, res) {
   if (req.method === 'GET') {
-    const { data: notifications } = await supabasePrimary.from('notifications').select('*').order('created_at', { ascending: false }).limit(30);
-    return res.status(200).json({ tasks: notifications || [] });
+    const { data: steps } = await supabasePrimary.from('workflow_step_instances').select('*').order('assigned_at', { ascending: false }).limit(30);
+    return res.status(200).json({ tasks: steps || [] });
   }
 
   if (req.method === 'POST') {
@@ -592,31 +643,45 @@ async function handleTasks(req, res) {
     const nowIso = new Date().toISOString();
     const taskId = `GPT-TASK-${Date.now()}`;
 
-    const taskMessage = JSON.stringify({
+    // 1. Insert into REAL workflow_step_instances table (Admin Panel Tasks view)
+    const taskStepRecord = {
       id: taskId,
-      assignee_name: matchedEmployee.name,
-      title: title,
-      description: description || '',
-      due_date: due_date || 'Belirtilmedi',
-      priority: priority || 'Normal',
-      created_at: nowIso
-    });
+      workflow_instance_id: null,
+      workflow_step_template_id: 'gpt-assigned-task',
+      title: title.trim(),
+      description: description ? description.trim() : 'ChatGPT AI üzerinden atanan görev.',
+      order: 1,
+      status: 'active',
+      requires_approval: false,
+      is_final_step: false,
+      assignee_employee_id: matchedEmployee.id,
+      assigned_employee_id: matchedEmployee.id,
+      assigned_at: nowIso,
+      due_date: due_date || null
+    };
 
+    const { error: taskErr } = await supabasePrimary.from('workflow_step_instances').insert([taskStepRecord]);
+
+    // 2. Also Insert into notifications for employee popups
     const notifRecord = {
       id: taskId,
       recipient_employee_id: matchedEmployee.id,
       type: 'gpt_assigned_task',
       title: `🤖 ChatGPT Görevi: ${title}`,
-      message: taskMessage,
+      message: JSON.stringify({ id: taskId, assignee_name: matchedEmployee.name, title: title, description: description || '', due_date: due_date || 'Belirtilmedi', priority: priority || 'Normal', created_at: nowIso }),
       related_entity_type: 'task',
       related_entity_id: taskId,
       is_read: false,
       created_at: nowIso
     };
 
-    const { error } = await supabasePrimary.from('notifications').insert([notifRecord]);
+    try {
+      await supabasePrimary.from('notifications').insert([notifRecord]);
+    } catch (e) {}
 
-    if (error) return res.status(500).json({ error: 'Görev eklenirken hata oluştu', details: error.message });
+    if (taskErr) {
+      return res.status(500).json({ error: 'Görev eklenirken veritabanı hatası oluştu', details: taskErr.message });
+    }
 
     return res.status(200).json({
       success: true,
