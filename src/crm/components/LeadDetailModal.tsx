@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Phone, 
@@ -49,6 +50,29 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateAssignedTo,
   onUpdateLeadInfo
 }) => {
+  const [newNoteText, setNewNoteText] = useState('');
+  const [retargetingDate, setRetargetingDate] = useState('');
+  const [retargetingNote, setRetargetingNote] = useState('');
+  const [isSavedRetargeting, setIsSavedRetargeting] = useState(false);
+
+  // Custom Delete Confirm States
+  const [showDeleteLeadConfirm, setShowDeleteLeadConfirm] = useState(false);
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<string | null>(null);
+
+  // Edit Lead Info Form State
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({
+    title: '',
+    contactName: '',
+    phone: '',
+    email: '',
+    city: ''
+  });
+  const [isInfoSaved, setIsInfoSaved] = useState(false);
+
+  const [editableBudget, setEditableBudget] = useState<string>('');
+  const [isBudgetSaved, setIsBudgetSaved] = useState(false);
+
   // Body scroll lock & ESC key cleanup
   useEffect(() => {
     if (!lead) return;
@@ -67,32 +91,28 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     };
   }, [lead, onClose]);
 
+  // Sync form state when lead changes
+  useEffect(() => {
+    if (lead) {
+      setRetargetingDate(lead.retargetingDate || '');
+      setRetargetingNote(lead.retargetingNote || '');
+      setInfoForm({
+        title: lead.title || '',
+        contactName: lead.contactName || '',
+        phone: lead.phone || '',
+        email: lead.email || '',
+        city: lead.city || ''
+      });
+      const isProduction = lead.pipeline === 'PRODUCTION';
+      const currentBudget = isProduction ? lead.productionDetails?.budget : lead.socialMediaDetails?.monthlyBudget;
+      setEditableBudget(currentBudget ? String(currentBudget) : '');
+    }
+  }, [lead]);
+
   if (!lead) return null;
-
-  const [newNoteText, setNewNoteText] = useState('');
-  const [retargetingDate, setRetargetingDate] = useState(lead.retargetingDate || '');
-  const [retargetingNote, setRetargetingNote] = useState(lead.retargetingNote || '');
-  const [isSavedRetargeting, setIsSavedRetargeting] = useState(false);
-
-  // Custom Delete Confirm States
-  const [showDeleteLeadConfirm, setShowDeleteLeadConfirm] = useState(false);
-  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<string | null>(null);
-
-  // Edit Lead Info Form State
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [infoForm, setInfoForm] = useState({
-    title: lead.title || '',
-    contactName: lead.contactName || '',
-    phone: lead.phone || '',
-    email: lead.email || '',
-    city: lead.city || ''
-  });
-  const [isInfoSaved, setIsInfoSaved] = useState(false);
 
   const isProduction = lead.pipeline === 'PRODUCTION';
   const currentBudget = isProduction ? lead.productionDetails?.budget : lead.socialMediaDetails?.monthlyBudget;
-  const [editableBudget, setEditableBudget] = useState<string>(currentBudget ? String(currentBudget) : '');
-  const [isBudgetSaved, setIsBudgetSaved] = useState(false);
 
   const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
   const currentStageObj = STAGES.find(s => s.id === lead.stage);
@@ -131,18 +151,19 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in cursor-pointer"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999 }}
+      className="w-full h-full bg-slate-950 flex flex-col sm:items-center sm:justify-center sm:p-4 sm:bg-slate-950/85 sm:backdrop-blur-sm animate-fade-in cursor-pointer"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl h-[100dvh] sm:h-auto sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden cursor-default"
+        className="w-full h-full max-w-2xl bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl sm:h-auto sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Header (Generous top padding with safe area support, zero cutoff) */}
-        <div className="pt-8 sm:pt-6 pb-4 px-4 sm:px-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 shrink-0">
+        {/* Header (Clean solid header with safe area padding) */}
+        <div className="pt-3 sm:pt-4 pb-3.5 px-4 sm:px-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 shrink-0">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -602,6 +623,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
