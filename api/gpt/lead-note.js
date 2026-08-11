@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       if (fetchErr || !existingLead) {
-        return res.status(444).json({ error: 'LEAD_NOT_FOUND', message: `ID: ${lead_id} olan müşteri bulunamadı.` });
+        return res.status(404).json({ error: 'LEAD_NOT_FOUND', message: `ID: ${lead_id} olan müşteri bulunamadı.` });
       }
 
       return await applyLeadUpdate(res, existingLead, note, stage, status);
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const searchStr = lead_name.trim().toLowerCase();
+    const searchStr = lead_name.trim().toLocaleLowerCase('tr-TR');
 
     const { data: allLeads, error: searchErr } = await supabaseLeads
       .from('leads')
@@ -76,16 +76,16 @@ export default async function handler(req, res) {
     }
 
     const matches = (allLeads || []).filter(l => {
-      const name = (l.name || '').toLowerCase();
-      const company = (l.company || '').toLowerCase();
-      const rep = (l.rep || '').toLowerCase();
+      const name = (l.name || '').toLocaleLowerCase('tr-TR');
+      const company = (l.company || '').toLocaleLowerCase('tr-TR');
+      const rep = (l.rep || '').toLocaleLowerCase('tr-TR');
       return name.includes(searchStr) || company.includes(searchStr) || rep.includes(searchStr);
     });
 
     if (matches.length === 0) {
       return res.status(404).json({
         error: 'LEAD_NOT_FOUND',
-        message: `System'de "${lead_name}" ismiyle eşleşen müşteri bulunamadı. Kullanıcıya doğru müşteri ismini veya yeni lead eklemek isteyip istemediğini sorun.`
+        message: `Sistemde "${lead_name}" ismiyle eşleşen müşteri bulunamadı. Kullanıcıya doğru müşteri ismini veya yeni lead eklemek isteyip istemediğini sorun.`
       });
     }
 
@@ -137,12 +137,25 @@ async function applyLeadUpdate(res, targetLead, noteText, newStage, newStatus) {
   if (newStage) updatePayload.stage = newStage;
   if (newStatus) updatePayload.status = newStatus;
 
-  const { data: updatedData, error: updateErr } = await supabaseLeads
+  // Try updating with updated_at, fallback without updated_at if column missing
+  let { data: updatedData, error: updateErr } = await supabaseLeads
     .from('leads')
     .update(updatePayload)
     .eq('id', targetLead.id)
     .select()
     .single();
+
+  if (updateErr && updateErr.message?.includes('updated_at')) {
+    delete updatePayload.updated_at;
+    const retry = await supabaseLeads
+      .from('leads')
+      .update(updatePayload)
+      .eq('id', targetLead.id)
+      .select()
+      .single();
+    updatedData = retry.data;
+    updateErr = retry.error;
+  }
 
   if (updateErr) {
     return res.status(500).json({ error: 'Müşteri notu güncellenirken hata oluştu', details: updateErr.message });

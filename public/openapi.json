@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Socialart Medya Ajans GPT Entegrasyonu",
-    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme, not/güncelleme ekleme, takvime çekim/etkinlik planlama, iyzico 3D Secure ödeme talebi oluşturma, tek tıkla WhatsApp mesaj linki hazırlama ve ajans icra raporu alma servisi.",
-    "version": "1.2.0"
+    "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme, yeni lead oluşturma, müşteri geçmiş notlarını sorgulama, not/güncelleme ekleme, takvime çekim/etkinlik planlama, iyzico 3D Secure ödeme talebi oluşturma, tek tıkla WhatsApp mesaj linki hazırlama ve ajans icra raporu alma servisi.",
+    "version": "1.3.0"
   },
   "servers": [
     {
@@ -22,6 +22,63 @@
         }
       }
     },
+    "/api/gpt/create-lead": {
+      "post": {
+        "summary": "CRM'e Yeni Potansiyel Müşteri (Lead) Ekle",
+        "description": "ChatGPT üzerinden yeni bir müşteri adayı oluşturur. Müşteri adı (name), telefon (phone) ve ilgili hizmet (service) zorunludur. Eksik bilgi varsa ChatGPT kullanıcıya sormalıdır.",
+        "operationId": "createNewLead",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "phone", "service"],
+                "properties": {
+                  "name": { "type": "string", "description": "Müşteri Ad Soyad (ZORUNLU)", "example": "Ahmet Yılmaz" },
+                  "phone": { "type": "string", "description": "Telefon Numarası (ZORUNLU)", "example": "05321234567" },
+                  "company": { "type": "string", "description": "Firma Adı", "example": "Yılmaz Lojistik" },
+                  "service": { "type": "string", "description": "İlgilendiği Hizmet (ZORUNLU)", "example": "Sosyal Medya Yönetimi" },
+                  "budget": { "type": "number", "description": "Bütçe (TL)", "example": 45000 },
+                  "rep": { "type": "string", "description": "Atanacak Temsilci (Furkan, Celal, Ercan, Simge, Tuğba)", "example": "Furkan" },
+                  "city": { "type": "string", "description": "Şehir", "example": "İstanbul" },
+                  "notes": { "type": "string", "description": "Müşteri görüşme notu veya detaylar", "example": "Ağustos ayı prodüksiyonu için aradı." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Yeni müşteri CRM'e eklendi." }
+        }
+      }
+    },
+    "/api/gpt/lead-history": {
+      "get": {
+        "summary": "Müşterinin Geçmiş Notlarını ve İletişim Geçmişini Getir",
+        "description": "Müşteri adı veya ID'si ile sorgulama yaparak müşterinin tüm geçmiş notlarını, telefon/e-posta ve temsilci geçmişini listeler.",
+        "operationId": "getLeadHistory",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "description": "Müşteri Adı (Örn: 'Emre Mirasyedi')",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "Opsiyonel. Müşteri ID'si",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Müşteri geçmiş notları döndü." }
+        }
+      }
+    },
     "/api/gpt/lead-note": {
       "post": {
         "summary": "Müşteriye Not / Aşaması / Güncelleme Ekle",
@@ -35,30 +92,11 @@
                 "type": "object",
                 "required": ["note"],
                 "properties": {
-                  "lead_name": {
-                    "type": "string",
-                    "description": "Not eklenecek müşterinin adı veya firma adı. (Örn: 'Murat', 'Durnas PDR').",
-                    "example": "Murat"
-                  },
-                  "lead_id": {
-                    "type": "string",
-                    "description": "Opsiyonel. Doğrudan müşteri ID'si."
-                  },
-                  "note": {
-                    "type": "string",
-                    "description": "Müşteri hakkındaki not, telefon görüşmesi özeti veya güncelleme metni. (ZORUNLU)",
-                    "example": "Telefonu açmadı, yarın saat 14:00'da tekrar aranacak."
-                  },
-                  "stage": {
-                    "type": "string",
-                    "description": "Güncellenecek aşama (NEW, CONTACTED, WAITING, PROPOSAL_SENT, RETARGETING, WON, LOST)",
-                    "example": "CONTACTED"
-                  },
-                  "status": {
-                    "type": "string",
-                    "description": "Güncellenecek durum metni (Örn: 'Sıcak', 'Görüşme Yapıldı', 'Teklif İletildi')",
-                    "example": "Görüşme Yapıldı"
-                  }
+                  "lead_name": { "type": "string", "description": "Not eklenecek müşterinin adı veya firma adı. (Örn: 'Murat', 'Emre Mirasyedi').", "example": "Emre Mirasyedi" },
+                  "lead_id": { "type": "string", "description": "Opsiyonel. Doğrudan müşteri ID'si." },
+                  "note": { "type": "string", "description": "Müşteri hakkındaki not, telefon görüşmesi özeti veya güncelleme metni. (ZORUNLU)", "example": "Olmadı" },
+                  "stage": { "type": "string", "description": "Güncellenecek aşama (NEW, CONTACTED, WAITING, PROPOSAL_SENT, RETARGETING, WON, LOST)", "example": "LOST" },
+                  "status": { "type": "string", "description": "Güncellenecek durum metni (Örn: 'Sıcak', 'Görüşme Yapıldı', 'Reddedildi')", "example": "Olmadı" }
                 }
               }
             }
@@ -82,31 +120,11 @@
                 "type": "object",
                 "required": ["client_name", "title", "amount"],
                 "properties": {
-                  "client_name": {
-                    "type": "string",
-                    "description": "Müşteri / Marka adı (ZORUNLU). Örn: 'MioCasa', 'Mall Of Gurme'",
-                    "example": "MioCasa"
-                  },
-                  "company_code": {
-                    "type": "string",
-                    "description": "Müşterinin panel giriş kodu. Boşsa client_name üzerinden türetilir.",
-                    "example": "miocasa"
-                  },
-                  "title": {
-                    "type": "string",
-                    "description": "Ödeme başlığı (ZORUNLU). Örn: 'Ağustos Ayı Sosyal Medya Hizmeti'",
-                    "example": "Ağustos Ayı Sosyal Medya Hizmeti"
-                  },
-                  "amount": {
-                    "type": "number",
-                    "description": "Ham ödeme tutarı TL (ZORUNLU). Sisteme eklenirken +%20 KDV otomatik hesaplanır.",
-                    "example": 25000
-                  },
-                  "description": {
-                    "type": "string",
-                    "description": "Ödeme açıklaması veya hizmet detayları",
-                    "example": "Ağustos ayı prodüksiyon ve sosyal medya içerik yönetimi kalemi."
-                  }
+                  "client_name": { "type": "string", "example": "MioCasa" },
+                  "company_code": { "type": "string", "example": "miocasa" },
+                  "title": { "type": "string", "example": "Ağustos Ayı Sosyal Medya Hizmeti" },
+                  "amount": { "type": "number", "example": 25000 },
+                  "description": { "type": "string", "example": "Ağustos ayı prodüksiyon ve sosyal medya içerik yönetimi kalemi." }
                 }
               }
             }
@@ -130,21 +148,9 @@
                 "type": "object",
                 "required": ["message_text"],
                 "properties": {
-                  "lead_name": {
-                    "type": "string",
-                    "description": "Müşteri adı (Rehberden telefon çekilmesi için). Örn: 'Murat'",
-                    "example": "Murat"
-                  },
-                  "phone": {
-                    "type": "string",
-                    "description": "Opsiyonel. Telefon numarası verildiyse doğrudan kullanılır.",
-                    "example": "05321234567"
-                  },
-                  "message_text": {
-                    "type": "string",
-                    "description": "Müşteriye gönderilecek sıcak, dönüşüm odaklı mesaj metni (ZORUNLU).",
-                    "example": "Merhabalar Murat Bey, görüşmemize istinaden 150.000 TL tutarındaki prodüksiyon teklifimiz hazırlanmıştır. İyi çalışmalar dileriz!"
-                  }
+                  "lead_name": { "type": "string", "example": "Murat" },
+                  "phone": { "type": "string", "example": "05321234567" },
+                  "message_text": { "type": "string", "example": "Merhabalar Murat Bey, teklifimiz hazırlanmıştır." }
                 }
               }
             }

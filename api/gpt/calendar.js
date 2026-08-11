@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
-const PRIMARY_SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzU5MzM5NywiZXhwIjoyMDk5MTY5Mzk3fQ.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
+const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
 
 const supabase = createClient(PRIMARY_SUPABASE_URL, PRIMARY_SUPABASE_KEY);
 
@@ -31,16 +31,11 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const { data: events, error } = await supabase
-        .from('calendar_events')
+        .from('notifications')
         .select('*')
-        .order('start_date', { ascending: true })
+        .eq('type', 'calendar_event')
+        .order('created_at', { ascending: false })
         .limit(50);
-
-      if (error) {
-        // Fallback to notifications if calendar_events does not exist
-        const { data: notifs } = await supabase.from('notifications').select('*').eq('type', 'calendar_event');
-        return res.status(200).json({ events: notifs || [] });
-      }
 
       return res.status(200).json({ events: events || [] });
     } catch (err) {
@@ -63,7 +58,7 @@ export default async function handler(req, res) {
       if (missingFields.length > 0) {
         return res.status(400).json({
           error: 'MISSING_REQUIRED_FIELDS',
-          message: `Eksik alanlar var: ${missingFields.join(', ')}. Lütfen kullanıcıya bu eksik bilgileri sorun.`,
+          message: `Eksik zorunlu alanlar var: ${missingFields.join(', ')}. Lütfen kullanıcıya bu eksik bilgileri sorun.`,
           missing_fields: missingFields
         });
       }
@@ -84,7 +79,6 @@ export default async function handler(req, res) {
         created_at: nowIso
       };
 
-      // Store in notifications & blocked_slots for universal integration
       const notifRecord = {
         id: eventId,
         recipient_employee_id: '406a078d-0aea-45e0-87e1-d4d0b5f20415', // Default notification
@@ -97,7 +91,11 @@ export default async function handler(req, res) {
         created_at: nowIso
       };
 
-      await supabase.from('notifications').insert([notifRecord]).catch(() => {});
+      try {
+        await supabase.from('notifications').insert([notifRecord]);
+      } catch (e) {
+        console.warn('Notifications insert notice:', e.message);
+      }
 
       return res.status(200).json({
         success: true,

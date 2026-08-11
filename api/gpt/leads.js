@@ -41,11 +41,17 @@ export default async function handler(req, res) {
 
     // Compute metrics
     const totalLeads = activeLeads.length;
-    const hotLeads = activeLeads.filter(l => l.status === 'Sıcak' || l.stage === 'NEW').length;
-    const wonLeads = activeLeads.filter(l => l.stage === 'WON' || l.status === 'Anlaşıldı').length;
-    const lostLeads = activeLeads.filter(l => l.stage === 'LOST' || l.status === 'Reddedildi').length;
-    const contactedLeads = activeLeads.filter(l => l.stage === 'CONTACTED').length;
-    const proposalLeads = activeLeads.filter(l => l.stage === 'PROPOSAL_SENT').length;
+    
+    const hotLeads = activeLeads.filter(l => {
+      const st = (l.status || '').toLocaleLowerCase('tr-TR');
+      const sg = (l.stage || '').toUpperCase();
+      return st.includes('sıcak') || st.includes('yeni') || st.includes('görüş') || sg === 'NEW' || sg === 'CONTACTED';
+    }).length;
+
+    const wonLeads = activeLeads.filter(l => l.stage === 'WON' || (l.status && l.status.includes('Anlaş'))).length;
+    const lostLeads = activeLeads.filter(l => l.stage === 'LOST' || (l.status && l.status.includes('Red'))).length;
+    const contactedLeads = activeLeads.filter(l => l.stage === 'CONTACTED' || (l.status && l.status.includes('Görüş'))).length;
+    const proposalLeads = activeLeads.filter(l => l.stage === 'PROPOSAL_SENT' || (l.status && l.status.includes('Teklif'))).length;
 
     // Stage breakdown
     const stageCounts = {};
@@ -54,15 +60,31 @@ export default async function handler(req, res) {
       stageCounts[stage] = (stageCounts[stage] || 0) + 1;
     });
 
-    // Rep breakdown
+    // Rep breakdown with name normalization
     const repCounts = {};
     activeLeads.forEach(l => {
-      const rep = l.rep || 'Atanmamış';
-      repCounts[rep] = (repCounts[rep] || 0) + 1;
+      const repRaw = (l.rep || '').trim();
+      let repNormalized = 'Atanmamış (Boşta)';
+
+      if (!repRaw || repRaw === '-' || repRaw === 'null') {
+        repNormalized = 'Atanmamış (Boşta)';
+      } else {
+        const lower = repRaw.toLocaleLowerCase('tr-TR');
+        if (lower.includes('simge')) repNormalized = 'Simge';
+        else if (lower.includes('celal')) repNormalized = 'Celal';
+        else if (lower.includes('furkan')) repNormalized = 'Furkan';
+        else if (lower.includes('ercan')) repNormalized = 'Ercan';
+        else if (lower.includes('tuğba') || lower.includes('tugba')) repNormalized = 'Tuğba';
+        else if (lower.includes('meta')) repNormalized = 'Meta Ads Formu';
+        else if (lower.includes('hizmet') || lower.includes('sistem')) repNormalized = 'Web Sitesi Formu';
+        else repNormalized = repRaw;
+      }
+
+      repCounts[repNormalized] = (repCounts[repNormalized] || 0) + 1;
     });
 
-    // Format top 25 leads for ChatGPT context
-    const recentLeadsSummary = activeLeads.slice(0, 25).map(l => ({
+    // Format top 30 leads for ChatGPT context
+    const recentLeadsSummary = activeLeads.slice(0, 30).map(l => ({
       id: l.id,
       name: l.name,
       company: l.company || l.name,
@@ -75,6 +97,8 @@ export default async function handler(req, res) {
       city: l.city || '',
       budget: l.budget || 0,
       reaction: l.reaction || '',
+      notes_count: Array.isArray(l.notes) ? l.notes.length : 0,
+      latest_note: Array.isArray(l.notes) && l.notes.length > 0 ? l.notes[0].text : (l.reaction || ''),
       created_at: l.created_at
     }));
 

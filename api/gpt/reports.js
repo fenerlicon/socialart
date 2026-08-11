@@ -4,13 +4,13 @@ const LEADS_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://piffaggeshf
 const LEADS_SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
 
 const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
-const PRIMARY_SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzU5MzM5NywiZXhwIjoyMDk5MTY5Mzk3fQ.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
+const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
 
 const supabaseLeads = createClient(LEADS_SUPABASE_URL, LEADS_SUPABASE_KEY);
 const supabasePrimary = createClient(PRIMARY_SUPABASE_URL, PRIMARY_SUPABASE_KEY);
 
 export default async function handler(req, res) {
-  // CORS Headers for ChatGPT Actions
+  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -36,29 +36,39 @@ export default async function handler(req, res) {
     const { data: leads } = await supabaseLeads.from('leads').select('*');
     const activeLeads = (leads || []).filter(l => l.status !== 'ARŞİV');
 
-    // 2. Fetch Brands & Active Clients
+    // 2. Fetch Brands & Notifications from Primary Supabase
     const { data: brands } = await supabasePrimary.from('brands').select('id, name, status');
-    const { data: clients } = await supabasePrimary.from('active_clients').select('*');
-
-    // 3. Fetch Notifications / Payments
-    const { data: notifs } = await supabasePrimary.from('notifications').select('*').eq('type', 'payment_request');
+    const { data: notifs } = await supabasePrimary.from('notifications').select('*');
 
     // Compute Metrics
     const totalLeads = activeLeads.length;
-    const wonLeads = activeLeads.filter(l => l.stage === 'WON' || l.status === 'Anlaşıldı').length;
-    const hotLeads = activeLeads.filter(l => l.status === 'Sıcak' || l.stage === 'NEW').length;
-    const proposalLeads = activeLeads.filter(l => l.stage === 'PROPOSAL_SENT').length;
+    const wonLeads = activeLeads.filter(l => l.stage === 'WON' || l.status === 'Anlaşıldı' || (l.status && l.status.includes('Anlaş'))).length;
+    const proposalLeads = activeLeads.filter(l => l.stage === 'PROPOSAL_SENT' || (l.status && l.status.includes('Teklif'))).length;
+    
+    // Hot leads calculation: include Turkish statuses 'Sıcak', 'Yeni', 'Görüşme' or stage NEW/CONTACTED
+    const hotLeads = activeLeads.filter(l => {
+      const st = (l.status || '').toLocaleLowerCase('tr-TR');
+      const sg = (l.stage || '').toUpperCase();
+      return st.includes('sıcak') || st.includes('yeni') || st.includes('görüş') || sg === 'NEW' || sg === 'CONTACTED';
+    }).length;
 
-    // Budget sum
+    // Budget sum (from budget column or regex parse from reaction/notes)
     let totalPipelineVolume = 0;
     activeLeads.forEach(l => {
-      if (l.budget) totalPipelineVolume += parseFloat(l.budget) || 0;
+      let b = parseFloat(l.budget) || 0;
+      if (b === 0 && l.reaction) {
+        const match = l.reaction.match(/bütçe[:\s]*([0-9.,]+)/i);
+        if (match && match[1]) {
+          b = parseFloat(match[1].replace(/[^0-9.]/g, '')) || 0;
+        }
+      }
+      totalPipelineVolume += b;
     });
 
     // Payment stats
     let totalPendingPayments = 0;
     let totalPendingVolumeTL = 0;
-    (notifs || []).forEach(n => {
+    (notifs || []).filter(n => n.type === 'payment_request').forEach(n => {
       try {
         const parsed = typeof n.message === 'string' ? JSON.parse(n.message) : n.message;
         if (parsed && parsed.status === 'pending') {
@@ -68,18 +78,33 @@ export default async function handler(req, res) {
       } catch (e) {}
     });
 
-    // Rep Workload Breakdown
+    // Rep Workload Breakdown with Name Normalization
     const repDistribution = {};
     activeLeads.forEach(l => {
-      const rep = l.rep || 'Atanmamış';
-      repDistribution[rep] = (repDistribution[rep] || 0) + 1;
+      const repRaw = (l.rep || '').trim();
+      let repNormalized = 'Atanmamış (Boşta)';
+
+      if (!repRaw || repRaw === '-' || repRaw === 'null') {
+        repNormalized = 'Atanmamış (Boşta)';
+      } else {
+        const lower = repRaw.toLocaleLowerCase('tr-TR');
+        if (lower.includes('simge')) repNormalized = 'Simge';
+        else if (lower.includes('celal')) repNormalized = 'Celal';
+        else if (lower.includes('furkan')) repNormalized = 'Furkan';
+        else if (lower.includes('ercan')) repNormalized = 'Ercan';
+        else if (lower.includes('tuğba') || lower.includes('tugba')) repNormalized = 'Tuğba';
+        else if (lower.includes('meta')) repNormalized = 'Meta Ads Formu';
+        else if (lower.includes('hizmet') || lower.includes('sistem')) repNormalized = 'Web Sitesi Formu';
+        else repNormalized = repRaw; // Keep exact name for other team members
+      }
+
+      repDistribution[repNormalized] = (repDistribution[repNormalized] || 0) + 1;
     });
 
     return res.status(200).json({
       report_date: new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' }),
       executive_summary: {
         total_active_brands: (brands || []).length,
-        total_active_clients: (clients || []).length,
         crm_total_active_leads: totalLeads,
         crm_hot_leads: hotLeads,
         crm_proposal_sent: proposalLeads,
