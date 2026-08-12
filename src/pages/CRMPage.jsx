@@ -446,9 +446,23 @@ export default function CRMPage({ embedded = false }) {
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error('Error fetching leads:', error);
+        showToast('Müşteri listesi çekilirken hata oluştu: ' + error.message, 'error');
+        return;
+      }
+
       let loadedLeads = [];
       if (data && data.length > 0) {
-        loadedLeads = data.map(mapDbRowToLead);
+        const deletedIds = new Set(JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]').map(String));
+
+        loadedLeads = data
+          .filter(row => {
+            if (deletedIds.has(String(row.id))) return false;
+            if (row.status === 'ARŞİV' || row.status === 'SİLİNDİ') return false;
+            return true;
+          })
+          .map(mapDbRowToLead);
       }
 
       setLeads(loadedLeads);
@@ -510,6 +524,16 @@ export default function CRMPage({ embedded = false }) {
           setLeads(prev => prev.map(l => l.id === updatedLead.id ? { ...updatedLead } : l));
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'leads' },
+        (payload) => {
+          if (!payload.old || !payload.old.id) return;
+          const delId = String(payload.old.id);
+          setLeads(prev => prev.filter(l => String(l.id) !== delId));
+          if (selectedLead?.id === delId) setSelectedLead(null);
+        }
+      )
       .subscribe();
 
     // ── Sayfa arka plandan geri gelince otomatik yenile ──
@@ -521,7 +545,7 @@ export default function CRMPage({ embedded = false }) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseLeads.removeChannel(channel);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchLeads]);
@@ -728,17 +752,17 @@ export default function CRMPage({ embedded = false }) {
       .eq('id', leadId);
   };
 
-  // Delete Lead Completely
+  // Delete Lead Completely (Real SQL Delete from Supabase)
   const handleDeleteLead = async (leadId) => {
-    // Immediate UI Update
-    setLeads(prev => prev.filter(l => l.id !== leadId));
+    // 1. Optimistic UI Update
+    setLeads(prev => prev.filter(l => String(l.id) !== String(leadId)));
     if (selectedLead?.id === leadId) setSelectedLead(null);
 
-    // LocalStorage sync
+    // 2. LocalStorage sync
     try {
       const deletedIds = JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]');
-      if (!deletedIds.includes(leadId)) {
-        deletedIds.push(leadId);
+      if (!deletedIds.includes(String(leadId))) {
+        deletedIds.push(String(leadId));
         localStorage.setItem('socialart_crm_deleted_lead_ids', JSON.stringify(deletedIds));
       }
 
@@ -746,28 +770,44 @@ export default function CRMPage({ embedded = false }) {
       if (storedManual) {
         const manualLeadsList = JSON.parse(storedManual);
         if (Array.isArray(manualLeadsList)) {
-          const updated = manualLeadsList.filter(m => m.id !== leadId);
+          const updated = manualLeadsList.filter(m => String(m.id) !== String(leadId));
           localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updated));
         }
+      }
+
+      // Clear any stored override for this lead
+      const storedOverrides = localStorage.getItem('crm_lead_overrides_v1');
+      if (storedOverrides) {
+        const overrides = JSON.parse(storedOverrides);
+        delete overrides[leadId];
+        delete overrides[String(leadId)];
+        localStorage.setItem('crm_lead_overrides_v1', JSON.stringify(overrides));
       }
     } catch (e) {
       console.warn('Error syncing deleted lead to localStorage:', e);
     }
 
-    showToast('Müşteri kaydı silindi');
-
-    // Supabase Safe Soft-Delete (Hard SQL Delete engellendi, veri ARŞİV'e kaldırılıyor)
+    // 3. Real SQL DELETE Execution in Supabase Database
     try {
-      await supabaseLeads
+      const numericId = Number(leadId);
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+
+      const { error } = await supabaseLeads
         .from('leads')
-        .update({
-          status: 'ARŞİV',
-          stage: 'LOST',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leadId);
+        .delete()
+        .eq('id', queryId);
+
+      if (error) {
+        console.error('Supabase delete error:', error);
+        showToast('Müşteri silinirken veritabanı hatası oluştu: ' + error.message, 'error');
+        fetchLeads();
+      } else {
+        showToast('Müşteri kaydı veritabanından kalıcı olarak silindi.');
+      }
     } catch (e) {
-      console.warn('Supabase safe soft-delete error:', e);
+      console.error('Supabase delete exception:', e);
+      showToast('Silme işlemi başarısız: ' + (e.message || 'Bilinmeyen hata'), 'error');
+      fetchLeads();
     }
   };
 
