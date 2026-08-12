@@ -119,8 +119,11 @@ export default async function handler(req, res) {
 
   const expectedKey = process.env.GPT_API_KEY || 'socialart-gpt-secret-2026';
 
-  if (apiKey && apiKey !== expectedKey) {
-    console.warn(`[GPT Router] Optional API key provided but does not match expected: ${apiKey}`);
+  if (!apiKey || apiKey !== expectedKey) {
+    return res.status(401).json({
+      error: 'UNAUTHORIZED',
+      message: 'Yetkisiz erişim. Geçerli bir API anahtarı (x-api-key veya Bearer token) zorunludur.'
+    });
   }
 
   // Parse path action
