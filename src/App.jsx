@@ -187,7 +187,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
+      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].some(p => location.pathname.startsWith(p)) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -324,8 +324,10 @@ function App() {
               <Route path="/hizmetlerimiz" element={<Services />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:id" element={<BlogDetail />} />
-              <Route path="/crm" element={<Admin />} />
-              <Route path="/crrm" element={<Navigate to="/crm" replace />} />
+              <Route path="/admin/crm" element={<Admin />} />
+              <Route path="/admin/crm/*" element={<Admin />} />
+              <Route path="/crm" element={<Navigate to="/admin/crm" replace />} />
+              <Route path="/crrm" element={<Navigate to="/admin/crm" replace />} />
 
               <Route path="/fiyatlar" element={<Pricing />} />
               <Route path="/musteri" element={<ClientPortal />} />
@@ -358,7 +360,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].includes(location.pathname) && (
+      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].some(p => location.pathname.startsWith(p)) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>

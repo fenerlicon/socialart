@@ -605,7 +605,7 @@ function Admin() {
             vibrate: [200, 100, 200],
             badge: '/logo.png',
             tag: 'mi-notif-' + Date.now(),
-            data: { url: window.location.origin + '/crm' }
+            data: { url: window.location.origin + '/admin/crm' }
           });
         }).catch(() => {
           new Notification(title, { body, icon: '/app-icon.png' });

@@ -144,7 +144,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     // CRM
     if (hasPermission('crm.view')) {
-      menuItems.push({ label: 'CRM', icon: '📞', href: '/crm' })
+      menuItems.push({ label: 'CRM', icon: '📞', href: '/admin/crm' })
     }
 
     // KPI
@@ -204,14 +204,14 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setIsMobileMenuOpen(false)
     if (item.href === '#logout') {
       handleLogout()
-    } else if (item.href === '/crm') {
+    } else if (item.href === '/admin/crm' || item.href === '/crm') {
       if (typeof window !== 'undefined') {
         const host = window.location.hostname
         const port = window.location.port
         if (port === '3000' || port === '5173') {
-          window.location.href = `${window.location.protocol}//${host}:5173/crm`
+          window.location.href = `${window.location.protocol}//${host}:5173/admin/crm`
         } else {
-          window.location.href = '/crm'
+          window.location.href = '/admin/crm'
         }
       }
     } else if (item.isPlaceholder) {

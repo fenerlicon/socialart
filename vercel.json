@@ -44,15 +44,25 @@
       "source": "/home",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/crm",
+      "destination": "/admin/crm",
+      "permanent": true
+    },
+    {
+      "source": "/crm/:path*",
+      "destination": "/admin/crm/:path*",
+      "permanent": true
     }
   ],
   "rewrites": [
     {
-      "source": "/crm",
+      "source": "/admin/crm",
       "destination": "/"
     },
     {
-      "source": "/crm/:path*",
+      "source": "/admin/crm/:path*",
       "destination": "/"
     },
     {

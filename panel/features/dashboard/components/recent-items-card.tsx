@@ -163,7 +163,7 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
             </div>
           </div>
           <Link
-            href="/crm"
+            href="/admin/crm"
             className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all whitespace-nowrap"
           >
             Müşterileri İncele ({metrics.uncontacted})
