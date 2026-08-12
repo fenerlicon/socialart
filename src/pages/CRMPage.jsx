@@ -623,9 +623,37 @@ export default function CRMPage({ embedded = false }) {
     }
   };
 
+  // Helper to log actions into activity_log table for real-time activity stream
+  const logActivity = async (action, details, targetName = 'GENEL') => {
+    let userName = 'Furkan';
+    try {
+      const userStr = localStorage.getItem('ajans_user') || localStorage.getItem('social-art-base:credentials');
+      if (userStr) {
+        const parsed = JSON.parse(userStr);
+        userName = parsed.name || parsed.username || 'Furkan';
+      }
+    } catch {}
+
+    const newLogRecord = {
+      user_name: userName,
+      action,
+      target_name: targetName || 'GENEL',
+      details,
+      created_at: new Date().toISOString()
+    };
+    try {
+      await supabaseLeads.from('activity_log').insert([newLogRecord]);
+    } catch (e) {}
+    try {
+      await supabase.from('activity_log').insert([newLogRecord]);
+    } catch (e) {}
+  };
+
   // Stage change → sync to Supabase & LocalStorage
   const handleStageChange = async (leadId, newStage) => {
     const newStatus = stageToStatus[newStage];
+    const currentLead = leads.find(l => String(l.id) === String(leadId));
+    const leadDisplayName = currentLead?.title || currentLead?.contactName || 'Müşteri';
 
     // Save to LocalStorage immediately to guarantee persistence on refresh
     saveOverride(leadId, { stage: newStage });
@@ -666,6 +694,8 @@ export default function CRMPage({ embedded = false }) {
       return lead;
     }));
 
+    logActivity('Lead Aşaması Güncellendi', `"${leadDisplayName}" aşaması ${newStage} (${newStatus}) olarak güncellendi.`, leadDisplayName);
+
     await supabaseLeads
       .from('leads')
       .update({ 
@@ -678,6 +708,7 @@ export default function CRMPage({ embedded = false }) {
   // Add note → Supabase (primary) + LocalStorage (backup)
   const handleAddNote = async (leadId, noteText) => {
     const currentLead = leads.find(l => l.id === leadId);
+    const leadDisplayName = currentLead?.title || currentLead?.contactName || 'Müşteri';
     const repName = currentLead?.assignedTo || 'Celal';
     const newNote = {
       id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -696,6 +727,8 @@ export default function CRMPage({ embedded = false }) {
       }
       return lead;
     }));
+
+    logActivity('Lead Notu Eklendi', `"${leadDisplayName}" için yeni not eklendi: "${noteText.slice(0, 100)}"`, leadDisplayName);
 
     // Save to Supabase (primary storage)
     const { error } = await supabaseLeads
@@ -791,6 +824,8 @@ export default function CRMPage({ embedded = false }) {
     try {
       const numericId = Number(leadId);
       const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+      const targetLead = leads.find(l => String(l.id) === String(leadId));
+      const leadDisplayName = targetLead?.title || targetLead?.contactName || 'Müşteri';
 
       const { error } = await supabaseLeads
         .from('leads')
@@ -802,6 +837,7 @@ export default function CRMPage({ embedded = false }) {
         showToast('Müşteri silinirken veritabanı hatası oluştu: ' + error.message, 'error');
         fetchLeads();
       } else {
+        logActivity('Potansiyel Lead Silindi', `"${leadDisplayName}" potansiyel müşteri kaydı veritabanından silindi.`, leadDisplayName);
         showToast('Müşteri kaydı veritabanından kalıcı olarak silindi.');
       }
     } catch (e) {
@@ -813,6 +849,9 @@ export default function CRMPage({ embedded = false }) {
 
   // Update Assigned Staff
   const handleUpdateAssignedTo = async (leadId, newStaff) => {
+    const targetLead = leads.find(l => String(l.id) === String(leadId));
+    const leadDisplayName = targetLead?.title || targetLead?.contactName || 'Müşteri';
+
     saveOverride(leadId, { assignedTo: newStaff });
     setLeads(prev => prev.map(lead => {
       if (String(lead.id) === String(leadId)) {
@@ -836,6 +875,7 @@ export default function CRMPage({ embedded = false }) {
         console.error('Failed to update rep in Supabase:', error);
         showToast('Temsilci güncellenirken hata oluştu: ' + error.message, 'error');
       } else {
+        logActivity('Temsilci Atandı', `"${leadDisplayName}" müşterisine ${newStaff} temsilci olarak atandı.`, leadDisplayName);
         showToast(`Temsilci "${newStaff}" olarak güncellendi.`);
       }
     } catch (e) {
@@ -917,6 +957,7 @@ export default function CRMPage({ embedded = false }) {
     const newStatus = stageToStatus[leadData.stage] || 'Geldi (Yeni Lead)';
     const nowIso = new Date().toISOString();
     const generatedId = `lead-manual-${Date.now()}`;
+    const leadDisplayName = leadData.title || leadData.contactName || 'İsimsiz Müşteri';
 
     const newLeadObj = {
       id: generatedId,
@@ -955,6 +996,7 @@ export default function CRMPage({ embedded = false }) {
     // 1. Instant UI update
     setLeads(prev => [newLeadObj, ...prev]);
     setCurrentPipeline(leadData.pipeline);
+    logActivity('Yeni Potansiyel Lead', `Yeni müşteri adayı eklendi: ${leadDisplayName} (${leadData.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya'})`, leadDisplayName);
     showToast(`"${leadData.title}" başarıyla CRM'e eklendi!`);
 
     // 2. Save to LocalStorage

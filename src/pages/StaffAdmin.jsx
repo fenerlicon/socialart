@@ -681,19 +681,27 @@ function Admin() {
       const { data: jobData } = await supabase.from('job_applications').select('*').order('created_at', { ascending: false });
       if (jobData) setJobApps(jobData);
 
-      // 3. Fetch activity logs (only if admin)
-      if (user?.permissions === 'all') {
-        const { data: logData } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200);
-        if (logData) setActivityLogs(logData);
-
-        // 4. Fetch chat messages
-        await supabase.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(50);
-        // if (chatData) setChatMessages(chatData);
-
-        // 5. Fetch blocked slots
-        const { data: blockedData } = await supabase.from('blocked_slots').select('*').order('blocked_date', { ascending: true });
-        if (blockedData) setBlockedSlots(blockedData);
+      // 3. Fetch activity logs (Always fetch for all staff)
+      try {
+        let logs = [];
+        const { data: leadLogData } = await supabaseLeads.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200);
+        if (leadLogData && leadLogData.length > 0) {
+          logs = leadLogData;
+        } else {
+          const { data: primaryLogData } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200);
+          if (primaryLogData) logs = primaryLogData;
+        }
+        if (logs && logs.length > 0) setActivityLogs(logs);
+      } catch (err) {
+        console.warn('Fetch activity_log error:', err);
       }
+
+      // 4. Fetch chat messages
+      await supabase.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(50);
+
+      // 5. Fetch blocked slots
+      const { data: blockedData } = await supabase.from('blocked_slots').select('*').order('blocked_date', { ascending: true });
+      if (blockedData) setBlockedSlots(blockedData);
 
       // 6. Fetch support messages (Always fetch for all staff)
       const { data: supportData } = await supabase.from('client_support_messages').select('*').order('created_at', { ascending: false });
@@ -1358,17 +1366,20 @@ function Admin() {
   }, [openStatusId]);
 
   const logActivity = async (action, details, clientName = null) => {
+    const newLogRecord = {
+      user_name: currentUser?.name || 'SİSTEM',
+      action,
+      target_name: clientName || 'GENEL',
+      details,
+      created_at: new Date().toISOString()
+    };
     try {
-      await supabase.from('activity_log').insert([{
-        user_name: currentUser?.name || 'SİSTEM',
-        action,
-        target_name: clientName || 'GENEL',
-        details,
-        created_at: new Date().toISOString()
-      }]);
-    } catch (e) {
-      console.error('Logging error:', e);
-    }
+      await supabaseLeads.from('activity_log').insert([newLogRecord]);
+    } catch (e) {}
+    try {
+      await supabase.from('activity_log').insert([newLogRecord]);
+    } catch (e) {}
+    setActivityLogs(prev => [newLogRecord, ...prev].slice(0, 150));
   };
 
   const handleAddAktifMusteri = async (e) => {
@@ -3064,24 +3075,11 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <MessageSquare size={16} /> Müşteri Talepleri
             </button>
             <button
-              onClick={() => { setActiveTab('payments'); setIsSidebarOpen(false); }}
-              className={activeTab === 'payments' ? 'active' : ''}
+              onClick={() => { setActiveTab('log'); setIsSidebarOpen(false); }}
+              className={activeTab === 'log' ? 'active' : ''}
             >
-              <CreditCard size={16} /> Ödeme Talepleri
+              <Activity size={16} /> Aktivite Kayıtları
             </button>
-            <button
-              onClick={() => { window.location.href = '/email-marketing'; setIsSidebarOpen(false); }}
-            >
-              <Mail size={16} /> E-Mail Marketing
-            </button>
-            {currentUser.permissions === 'all' && (
-              <button
-                onClick={() => { setActiveTab('log'); setIsSidebarOpen(false); }}
-                className={activeTab === 'log' ? 'active' : ''}
-              >
-                <Activity size={16} /> Aktivite Kayıtları
-              </button>
-            )}
           </nav>
 
           <hr style={{ border: 'none', height: '1px', background: 'rgba(255,255,255,0.05)', margin: 0 }} />
@@ -3662,400 +3660,6 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             )}
           </div>
 
-        </div>
-      )}
-
-      {/* Ödeme Talepleri Tabı */}
-      {activeTab === 'payments' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Header Bar */}
-          <div className="glass" style={{
-            borderRadius: '24px',
-            padding: '24px 30px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
-            <div>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: '800', margin: '0 0 6px 0', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <CreditCard size={28} color="#00e5ff" /> Müşteri Ödeme Talepleri
-              </h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>
-                Müşterilerin panellerine doğrudan özel ödeme talebi oluşturun ve iyzico 3D Secure ile ödemelerini takip edin.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsCreatePaymentModalOpen(true)}
-              style={{
-                background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '16px',
-                padding: '14px 24px',
-                fontWeight: '800',
-                fontSize: '0.95rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 8px 25px rgba(0, 229, 255, 0.25)'
-              }}
-            >
-              <Plus size={20} /> + Yeni Ödeme Talebi Gönder
-            </button>
-          </div>
-
-          {/* Payment Requests Table */}
-          <div className="glass" style={{ borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0 }}>Oluşturulan Ödeme Talepleri ({paymentRequests.length})</h3>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.03)', color: '#94a3b8' }}>
-                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>MÜŞTERİ / FİRMA KODU</th>
-                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>ÖDEME BAŞLIĞI</th>
-                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>AÇIKLAMA</th>
-                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>TUTAR (TL)</th>
-                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>DURUM</th>
-                    <th style={{ padding: '16px 20px', fontWeight: '700' }}>TARİH</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentRequests.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                        Henüz oluşturulmuş bir ödeme talebi bulunmuyor. "+ Yeni Ödeme Talebi Gönder" butonunu kullanarak doğrudan müşterinize talep gönderebilirsiniz.
-                      </td>
-                    </tr>
-                  ) : (
-                    paymentRequests.map((reqItem) => {
-                      const isPending = reqItem.status === 'pending';
-
-                      return (
-                        <tr key={reqItem.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td style={{ padding: '16px 20px', fontWeight: '700', color: '#ffffff' }}>
-                            {reqItem.client_name}
-                            {reqItem.company_code && (
-                              <div style={{ fontSize: '0.78rem', color: '#00e5ff', fontWeight: '600' }}>
-                                KOD: {reqItem.company_code}
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ padding: '16px 20px', fontWeight: '700', color: '#e2e8f0' }}>
-                            {reqItem.title}
-                          </td>
-                          <td style={{ padding: '16px 20px', color: '#94a3b8', maxWidth: '280px' }}>
-                            {reqItem.description || '-'}
-                          </td>
-                          <td style={{ padding: '16px 20px', fontWeight: '900', color: '#00e5ff', fontSize: '1.05rem' }}>
-                            ₺ {Number(reqItem.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <span style={{
-                              fontSize: '0.75rem',
-                              fontWeight: '800',
-                              padding: '4px 12px',
-                              borderRadius: '12px',
-                              background: isPending ? 'rgba(234, 179, 8, 0.15)' : 'rgba(52, 211, 153, 0.15)',
-                              color: isPending ? '#facc15' : '#34d399',
-                              border: isPending ? '1px solid rgba(234, 179, 8, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)'
-                            }}>
-                              {isPending ? '🟡 BEKLİYOR' : '🟢 ÖDENDİ'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px 20px', color: '#64748b', fontSize: '0.82rem' }}>
-                            {reqItem.created_at ? new Date(reqItem.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ödeme Talebi Oluşturma Modalı */}
-      {isCreatePaymentModalOpen && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          background: 'rgba(5, 5, 8, 0.85)',
-          backdropFilter: 'blur(16px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <div className="glass" style={{
-            width: '100%',
-            maxWidth: '540px',
-            borderRadius: '24px',
-            padding: '30px',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '800', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <CreditCard size={22} color="#00e5ff" /> Yeni Ödeme Talebi Gönder
-              </h3>
-              <button
-                onClick={() => setIsCreatePaymentModalOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreatePaymentRequest} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
-                  🏢 Müşteri / Marka Seçin *
-                </label>
-                <select
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'custom') {
-                      setIsCustomBrand(true);
-                      setPaymentForm(prev => ({ ...prev, client_name: '', company_code: '' }));
-                    } else if (val) {
-                      setIsCustomBrand(false);
-                      const [name, code] = val.split('|');
-                      setPaymentForm(prev => ({ ...prev, client_name: name, company_code: code || name.toLowerCase().replace(/[^a-z0-9]/g, '') }));
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: '#0f172a',
-                    border: '1px solid rgba(0, 229, 255, 0.3)',
-                    color: '#ffffff',
-                    outline: 'none',
-                    fontSize: '0.9rem',
-                    fontWeight: '700',
-                    marginBottom: '10px'
-                  }}
-                >
-                  <option value="">-- Markalar Listesinden Seçin --</option>
-                  {Array.isArray(realBrands) && realBrands.map(b => {
-                    const name = b.name;
-                    if (!name) return null;
-                    const code = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    return (
-                      <option key={`brand-${b.id || Math.random()}`} value={`${name}|${code}`}>
-                        🏢 {name} (Kod: {code})
-                      </option>
-                    );
-                  })}
-                  {Array.isArray(aktifMusteriler) && aktifMusteriler.map(c => {
-                    const name = c.brand || c.name || c.company;
-                    if (!name) return null;
-                    const code = c.company_code || c.code || name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    return (
-                      <option key={`client-${c.id || Math.random()}`} value={`${name}|${code}`}>
-                        🏢 {name} (Aktif Müşteri - Kod: {code})
-                      </option>
-                    );
-                  })}
-                  {Array.isArray(potansiyel) && potansiyel.map(p => {
-                    const name = p.company || p.name || p.title;
-                    if (!name) return null;
-                    const code = p.company_code || name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    return (
-                      <option key={`lead-${p.id || Math.random()}`} value={`${name}|${code}`}>
-                        🏢 {name} (Lead - Kod: {code})
-                      </option>
-                    );
-                  })}
-                  <option value="custom">➕ Özel / Manuel Müşteri Adı Gir</option>
-                </select>
-              </div>
-
-              {!isCustomBrand && paymentForm.client_name && (
-                <div style={{ fontSize: '0.75rem', color: '#00e5ff', fontWeight: '700', marginBottom: '-6px' }}>
-                  🔒 Seçilen markanın bilgileri sabittir, düzenlenemez.
-                </div>
-              )}
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
-                  Müşteri / Firma Adı *
-                </label>
-                <input
-                  type="text"
-                  required
-                  readOnly={!isCustomBrand}
-                  placeholder="Örn: Ogena Yapı, Aryanvar..."
-                  value={paymentForm.client_name}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, client_name: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: !isCustomBrand ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: !isCustomBrand ? '#94a3b8' : '#ffffff',
-                    cursor: !isCustomBrand ? 'not-allowed' : 'text',
-                    outline: 'none',
-                    fontSize: '0.9rem',
-                    fontWeight: '700'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
-                    Müşteri Kodu (Opsiyonel)
-                  </label>
-                  <input
-                    type="text"
-                    readOnly={!isCustomBrand}
-                    placeholder="Örn: ogenayapi, aryanvar..."
-                    value={paymentForm.company_code}
-                    onChange={(e) => setPaymentForm(prev => ({ ...prev, company_code: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: !isCustomBrand ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: !isCustomBrand ? 'rgba(0, 229, 255, 0.6)' : '#00e5ff',
-                      cursor: !isCustomBrand ? 'not-allowed' : 'text',
-                      outline: 'none',
-                      fontSize: '0.9rem',
-                      fontWeight: '700'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
-                    Tutar (TL) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="Örn: 5000"
-                    value={paymentForm.amount}
-                    onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#ffffff',
-                      outline: 'none',
-                      fontSize: '0.9rem',
-                      fontWeight: '700'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
-                  Ödeme Başlığı *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Örn: Ağustos Ayı Sosyal Medya Hizmeti"
-                  value={paymentForm.title}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, title: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#ffffff',
-                    outline: 'none',
-                    fontSize: '0.9rem'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
-                  Açıklama / Not (Opsiyonel)
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Fatura ve hizmet detayları..."
-                  value={paymentForm.description}
-                  onChange={(e) => setPaymentForm(prev => ({ ...prev, description: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#ffffff',
-                    outline: 'none',
-                    fontSize: '0.88rem',
-                    resize: 'none'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsCreatePaymentModalOpen(false)}
-                  style={{
-                    width: '30%',
-                    padding: '14px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#ffffff',
-                    fontWeight: '700',
-                    fontSize: '0.88rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  İptal
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    width: '70%',
-                    padding: '14px 20px',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
-                    border: 'none',
-                    color: '#ffffff',
-                    fontSize: '0.92rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 8px 25px rgba(0, 229, 255, 0.3)',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  🚀 Ödeme Talebini İlet
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
 
