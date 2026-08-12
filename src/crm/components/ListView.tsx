@@ -32,18 +32,23 @@ export const ListView: React.FC<ListViewProps> = ({
     return matchesStage && matchesPriority;
   });
 
+  const getLeadNumericBudget = (lead: Lead) => {
+    const raw = currentPipeline === 'PRODUCTION' 
+      ? lead.productionDetails?.budget 
+      : lead.socialMediaDetails?.monthlyBudget;
+    return (typeof raw === 'number' && !isNaN(raw))
+      ? raw
+      : (parseFloat(String(raw || '').replace(/[^0-9.-]+/g, '')) || 0);
+  };
+
   // Sorting logic
   const sortedLeads = [...stageFilteredLeads].sort((a, b) => {
     let valA: any = a[sortField as keyof Lead];
     let valB: any = b[sortField as keyof Lead];
 
     if (sortField === 'budget') {
-      valA = currentPipeline === 'PRODUCTION' 
-        ? a.productionDetails?.budget || 0 
-        : a.socialMediaDetails?.monthlyBudget || 0;
-      valB = currentPipeline === 'PRODUCTION' 
-        ? b.productionDetails?.budget || 0 
-        : b.socialMediaDetails?.monthlyBudget || 0;
+      valA = getLeadNumericBudget(a);
+      valB = getLeadNumericBudget(b);
     }
 
     if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
@@ -52,12 +57,7 @@ export const ListView: React.FC<ListViewProps> = ({
   });
 
   // Calculate sum of filtered budget
-  const filteredBudgetSum = sortedLeads.reduce((sum, lead) => {
-    const val = currentPipeline === 'PRODUCTION'
-      ? lead.productionDetails?.budget || 0
-      : lead.socialMediaDetails?.monthlyBudget || 0;
-    return sum + val;
-  }, 0);
+  const filteredBudgetSum = sortedLeads.reduce((sum, lead) => Number(sum) + getLeadNumericBudget(lead), 0);
 
   const toggleSort = (field: 'createdAt' | 'budget' | 'title') => {
     if (sortField === field) {

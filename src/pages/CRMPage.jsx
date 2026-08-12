@@ -310,10 +310,14 @@ function mapDbRowToLead(row) {
       projectType: (row.service && (row.service.includes('Sunuculu') || row.service.includes('Sunucu'))) 
         ? 'Sunuculu Video' 
         : (row.service || 'Tanıtım Filmi'),
-      budget: row.budget || null,
+      budget: (row.budget !== null && row.budget !== undefined && row.budget !== '')
+        ? (typeof row.budget === 'number' && !isNaN(row.budget) ? row.budget : (parseFloat(String(row.budget).replace(/[^0-9.-]+/g, '')) || null))
+        : null,
     } : undefined,
     socialMediaDetails: pipeline === 'SOCIAL_MEDIA' ? {
-      monthlyBudget: row.budget || null,
+      monthlyBudget: (row.budget !== null && row.budget !== undefined && row.budget !== '')
+        ? (typeof row.budget === 'number' && !isNaN(row.budget) ? row.budget : (parseFloat(String(row.budget).replace(/[^0-9.-]+/g, '')) || null))
+        : null,
       platforms: ['Instagram'],
       monthlyReelsCount: 0,
       industry: service,
@@ -396,17 +400,18 @@ export default function CRMPage({ embedded = false }) {
       // 1. Sync manual leads (like Diffea) to Supabase DB
       if (Array.isArray(manualLeads) && manualLeads.length > 0) {
         const rowsToInsert = manualLeads.map(m => ({
+          title: m.title || m.contactName,
           name: m.title || m.contactName,
-          company: m.title,
-          rep: m.contactName,
+          rep: m.contactName || '',
           phone: m.phone || '',
           email: m.email || '',
           city: m.city || 'İstanbul',
           service: m.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya',
           pipeline: m.pipeline || 'PRODUCTION',
           stage: m.stage || 'NEW',
+          platform: m.source || 'MANUAL',
           status: stageToStatus[m.stage] || 'Sıcak',
-          notes: m.notes,
+          notes: m.notes || [],
           created_at: m.createdAt || new Date().toISOString()
         }));
         await supabaseLeads.from('leads').upsert(rowsToInsert, { ignoreDuplicates: true }).catch(() => {});
@@ -417,10 +422,10 @@ export default function CRMPage({ embedded = false }) {
         for (const [targetQueryId, ov] of Object.entries(overrides)) {
           const updateObj = {};
           // Convert string ID to numeric ID if possible for Postgres compatibility
-          const numericId = Number(leadId);
-          const targetQueryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+          const numericId = Number(targetQueryId);
+          const cleanQueryId = !isNaN(numericId) && numericId > 0 ? numericId : targetQueryId;
 
-          await supabaseLeads.from('leads').update(updateObj).eq('id', targetQueryId).catch(() => {});
+          await supabaseLeads.from('leads').update(updateObj).eq('id', cleanQueryId).catch(() => {});
         }
       }
     } catch (err) {
@@ -907,9 +912,11 @@ export default function CRMPage({ embedded = false }) {
 
     // 3. Sync to Supabase in background
     try {
+      const parsedBudget = Number(leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget) || null;
       const { data, error } = await supabaseLeads
         .from('leads')
         .insert({
+          title: leadData.title || leadData.contactName || 'İsimsiz Müşteri',
           name: leadData.title || leadData.contactName || 'İsimsiz Müşteri',
           rep: leadData.contactName || '',
           email: leadData.email || '',
@@ -919,8 +926,9 @@ export default function CRMPage({ embedded = false }) {
           status: newStatus,
           stage: leadData.stage || 'NEW',
           pipeline: leadData.pipeline || 'PRODUCTION',
-          source: leadData.source || 'MANUAL',
-          reaction: (leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget) ? `Bütçe: ${leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget}` : 'Manuel Lead Eklendi',
+          platform: leadData.source || 'MANUAL',
+          budget: parsedBudget,
+          reaction: parsedBudget ? `Bütçe: ₺${parsedBudget.toLocaleString('tr-TR')}` : 'Manuel Lead Eklendi',
           notes: newLeadObj.notes || [],
           created_at: nowIso,
         })
@@ -1030,10 +1038,13 @@ export default function CRMPage({ embedded = false }) {
   // Stats
   const pipelineLeads = leads.filter(l => l.pipeline === currentPipeline);
   const totalPipelineValue = pipelineLeads.reduce((acc, l) => {
-    const v = currentPipeline === 'PRODUCTION'
-      ? l.productionDetails?.budget || 0
-      : l.socialMediaDetails?.monthlyBudget || 0;
-    return acc + v;
+    const rawVal = currentPipeline === 'PRODUCTION'
+      ? l.productionDetails?.budget
+      : l.socialMediaDetails?.monthlyBudget;
+    const numVal = (typeof rawVal === 'number' && !isNaN(rawVal))
+      ? rawVal
+      : (parseFloat(String(rawVal || '').replace(/[^0-9.-]+/g, '')) || 0);
+    return Number(acc) + numVal;
   }, 0);
 
   const nowTime = new Date().getTime();

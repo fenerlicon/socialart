@@ -29,11 +29,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Calculate stage sum
   const getStageTotalValue = (stageLeads: Lead[]) => {
     return stageLeads.reduce((sum, lead) => {
-      if (currentPipeline === 'PRODUCTION') {
-        return sum + (lead.productionDetails?.budget || 0);
-      } else {
-        return sum + (lead.socialMediaDetails?.monthlyBudget || 0);
-      }
+      const rawVal = currentPipeline === 'PRODUCTION'
+        ? lead.productionDetails?.budget
+        : lead.socialMediaDetails?.monthlyBudget;
+      const numVal = (typeof rawVal === 'number' && !isNaN(rawVal))
+        ? rawVal
+        : (parseFloat(String(rawVal || '').replace(/[^0-9.-]+/g, '')) || 0);
+      return Number(sum) + numVal;
     }, 0);
   };
 

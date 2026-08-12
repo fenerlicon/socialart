@@ -27,28 +27,22 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const pipelineLeads = leads.filter(l => l.pipeline === currentPipeline);
 
   // Financial calculations
-  const totalValue = pipelineLeads.reduce((acc, l) => {
-    const val = currentPipeline === 'PRODUCTION' 
-      ? l.productionDetails?.budget || 0
-      : l.socialMediaDetails?.monthlyBudget || 0;
-    return acc + val;
-  }, 0);
+  const getLeadNumericBudget = (l: Lead) => {
+    const rawVal = currentPipeline === 'PRODUCTION' 
+      ? l.productionDetails?.budget 
+      : l.socialMediaDetails?.monthlyBudget;
+    return (typeof rawVal === 'number' && !isNaN(rawVal))
+      ? rawVal
+      : (parseFloat(String(rawVal || '').replace(/[^0-9.-]+/g, '')) || 0);
+  };
+
+  const totalValue = pipelineLeads.reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
 
   const wonLeads = pipelineLeads.filter(l => l.stage === 'WON');
-  const wonValue = wonLeads.reduce((acc, l) => {
-    const val = currentPipeline === 'PRODUCTION' 
-      ? l.productionDetails?.budget || 0
-      : l.socialMediaDetails?.monthlyBudget || 0;
-    return acc + val;
-  }, 0);
+  const wonValue = wonLeads.reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
 
   const retargetingLeads = pipelineLeads.filter(l => l.stage === 'RETARGETING');
-  const retargetingValue = retargetingLeads.reduce((acc, l) => {
-    const val = currentPipeline === 'PRODUCTION' 
-      ? l.productionDetails?.budget || 0
-      : l.socialMediaDetails?.monthlyBudget || 0;
-    return acc + val;
-  }, 0);
+  const retargetingValue = retargetingLeads.reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
 
   const conversionRate = pipelineLeads.length > 0
     ? Math.round((wonLeads.length / pipelineLeads.length) * 100)
