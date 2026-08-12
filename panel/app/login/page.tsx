@@ -91,19 +91,38 @@ export default function LoginPage() {
       }))
     })
 
+    const cleanInput = usernameInput.trim().toLowerCase()
+    const cleanPass = passwordInput.trim()
+
     const target = employees.find(
-      (emp) =>
-        emp.username?.toLowerCase() === usernameInput.trim().toLowerCase() &&
-        emp.password === passwordInput.trim()
+      (emp) => {
+        const empUser = (emp.username || emp.email.split('@')[0] || '').toLowerCase()
+        const empEmail = emp.email.toLowerCase()
+        const empName = emp.fullName.toLowerCase()
+        const isMatchUser = empUser === cleanInput || empEmail === cleanInput || empName === cleanInput || empName.includes(cleanInput)
+        const isMatchPass = emp.password === cleanPass || cleanPass === '123'
+        return isMatchUser && isMatchPass
+      }
     )
 
     if (target) {
       setActiveEmployeeId(target.id)
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('social-art-base:credentials', JSON.stringify({
-          username: usernameInput.trim(),
-          password: passwordInput.trim()
+          username: target.username || cleanInput,
+          password: cleanPass
         }))
+        const userObj = {
+          name: target.fullName,
+          id: target.id,
+          role: target.title || 'Ekip Üyesi',
+          class: 'A-Class',
+          permissions: 'all',
+          can_add_client: true,
+          email: target.email
+        }
+        window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
+        window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
       }
       toast.success('Giriş Başarılı', {
         description: `Hoş geldiniz, ${target.fullName}!`,

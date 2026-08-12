@@ -300,7 +300,7 @@ function mapDbRowToLead(row) {
     city: row.city || '',
     source: row.source || 'MANUAL',
     stage,
-    assignedTo: row.assigned_to || '',
+    assignedTo: row.rep || row.assigned_to || '',
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: latestActivityIso,
     notes: parsedNotes,
@@ -815,17 +815,33 @@ export default function CRMPage({ embedded = false }) {
   const handleUpdateAssignedTo = async (leadId, newStaff) => {
     saveOverride(leadId, { assignedTo: newStaff });
     setLeads(prev => prev.map(lead => {
-      if (lead.id === leadId) {
+      if (String(lead.id) === String(leadId)) {
         const updated = { ...lead, assignedTo: newStaff, updatedAt: new Date().toISOString() };
         if (selectedLead?.id === leadId) setSelectedLead(updated);
         return updated;
       }
       return lead;
     }));
-    await supabaseLeads
-      .from('leads')
-      .update({ assigned_to: newStaff, updated_at: new Date().toISOString() })
-      .eq('id', leadId);
+
+    try {
+      const numericId = Number(leadId);
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+
+      const { error } = await supabaseLeads
+        .from('leads')
+        .update({ rep: newStaff, updated_at: new Date().toISOString() })
+        .eq('id', queryId);
+
+      if (error) {
+        console.error('Failed to update rep in Supabase:', error);
+        showToast('Temsilci güncellenirken hata oluştu: ' + error.message, 'error');
+      } else {
+        showToast(`Temsilci "${newStaff}" olarak güncellendi.`);
+      }
+    } catch (e) {
+      console.error('Update assigned staff error:', e);
+      showToast('Temsilci güncellenemedi: ' + e.message, 'error');
+    }
   };
 
   // Update Lead Info (Title, Contact, Phone, Email, City)

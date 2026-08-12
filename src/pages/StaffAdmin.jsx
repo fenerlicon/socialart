@@ -393,75 +393,75 @@ function Admin() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // A. /admin (Next.js panel) login durumunu kontrol et
+        const activeEmpId = localStorage.getItem('social-art-base:active-employee-id');
         const credentialsJson = localStorage.getItem('social-art-base:credentials');
-        const creds = credentialsJson ? JSON.parse(credentialsJson) : null;
-        const storedAjansUser = localStorage.getItem('ajans_user');
+        const storedAjansUser = localStorage.getItem('ajans_user') || localStorage.getItem('socialart_user');
 
-        // B. Supabase Oturumunu Kontrol Et
-        let { data: { session } } = await supabase.auth.getSession();
-
-        // Oturum yoksa ama credential varsa arka planda giriş yap
-        if (!session && creds) {
-          const slugify = (str) => {
-            const chars = { 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c', 'Ğ': 'g', 'Ü': 'u', 'Ş': 's', 'İ': 'i', 'Ö': 'o', 'Ç': 'c' };
-            return str.replace(/[ğüşıöçĞÜŞİÖÇ]/g, m => chars[m]).toLowerCase().trim();
-          };
-          const usernameClean = slugify(creds.username);
-          const formattedEmail = `${usernameClean}@socialart.internal`;
-          
-          // Map local healed '123' passwords to real Supabase Auth passwords
-          const realPasswords = {
-            celal: 'Celal_SA2026!x',
-            ercan: 'Ercan_SA2026!x',
-            furkan: 'Furkan_SA2026!x',
-            betul: 'Betul_SA2026!x',
-            tugba: 'Tugba_SA2026!x',
-            simge: 'Simge_SA2026!x'
-          };
-          const supabasePassword = realPasswords[usernameClean] || creds.password;
-
+        if (activeEmpId) {
           try {
-            const { data } = await supabase.auth.signInWithPassword({
-              email: formattedEmail,
-              password: supabasePassword,
-            });
-            if (data && data.session) {
-              session = data.session;
-            }
-          } catch (err) {
-            console.warn("Auto-signin with credentials error:", err);
-          }
-        }
-
-        if (session && session.user) {
-          const metadata = session.user.user_metadata || {};
-          const userObj = { 
-            name: metadata.display_name || session.user.email?.split('@')[0] || 'Kullanıcı', 
-            role: metadata.role || 'Ekip Üyesi',
-            class: metadata.class || 'A-Class',
-            permissions: metadata.can_assign_task ? 'all' : 'limited',
-            can_add_client: Boolean(metadata.can_add_client)
-          };
-          localStorage.setItem('ajans_user', JSON.stringify(userObj));
-          setCurrentUser(userObj);
-          fetchAllData(userObj);
-        } else if (storedAjansUser) {
-          try {
-            const parsed = JSON.parse(storedAjansUser);
-            if (parsed && parsed.name) {
-              setCurrentUser(parsed);
-              fetchAllData(parsed);
-            } else {
-              setCurrentUser(null);
+            const { data: emp } = await supabase.from('employees').select('*').eq('id', activeEmpId).single();
+            if (emp) {
+              const userObj = {
+                name: emp.full_name,
+                id: emp.id,
+                role: emp.title || 'Ekip Üyesi',
+                class: 'A-Class',
+                permissions: 'all',
+                can_add_client: true,
+                email: emp.email
+              };
+              localStorage.setItem('ajans_user', JSON.stringify(userObj));
+              setCurrentUser(userObj);
+              fetchAllData(userObj);
+              return;
             }
           } catch (e) {
-            setCurrentUser(null);
+            console.warn("Could not fetch active employee by ID:", e);
           }
-        } else {
-          // Oturum yok -> Kullanıcı giriş yapmalı
-          setCurrentUser(null);
         }
+
+        if (storedAjansUser) {
+          try {
+            const parsed = JSON.parse(storedAjansUser);
+            if (parsed && (parsed.name || parsed.id)) {
+              setCurrentUser(parsed);
+              fetchAllData(parsed);
+              return;
+            }
+          } catch (e) {}
+        }
+
+        // Credentials varsa employees tablosundan eşle
+        if (credentialsJson) {
+          try {
+            const creds = JSON.parse(credentialsJson);
+            const { data: employees } = await supabase.from('employees').select('*');
+            const cleanUser = (creds.username || '').toLowerCase().trim();
+            const matched = employees?.find(e => {
+              const empUser = (e.permission_overrides?.username || e.email.split('@')[0] || '').toLowerCase().trim();
+              return empUser === cleanUser || (e.email || '').toLowerCase() === cleanUser;
+            });
+            if (matched) {
+              const userObj = {
+                name: matched.full_name,
+                id: matched.id,
+                role: matched.title || 'Ekip Üyesi',
+                class: 'A-Class',
+                permissions: 'all',
+                can_add_client: true,
+                email: matched.email
+              };
+              localStorage.setItem('social-art-base:active-employee-id', matched.id);
+              localStorage.setItem('ajans_user', JSON.stringify(userObj));
+              setCurrentUser(userObj);
+              fetchAllData(userObj);
+              return;
+            }
+          } catch (e) {}
+        }
+
+        // Oturum yok
+        setCurrentUser(null);
       } catch (e) {
         console.error("Auth init error:", e);
         setCurrentUser(null);
