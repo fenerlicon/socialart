@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.0",
   "info": {
     "title": "Socialart Medya Ajans GPT Entegrasyonu",
     "description": "ChatGPT Custom GPT üzerinden Socialart Ajans CRM potansiyel müşterilerini analiz etme, yeni lead oluşturma, müşteri geçmiş notlarını sorgulama, not/güncelleme ekleme, takvime çekim/etkinlik planlama, iyzico 3D Secure ödeme talebi oluşturma, tek tıkla WhatsApp mesaj linki hazırlama ve ajans icra raporu alma servisi.",
@@ -174,7 +174,7 @@
     "/api/gpt/calendar": {
       "post": {
         "summary": "Takvime Çekim / Etkinlik / Toplantı Ekle",
-        "description": "Ajans takvimine yeni bir video çekimi, müşteri toplantısı veya lansman etkinliği ekler. EĞER MARKA ADI, TARİH VEYA SAAT EKSİKSE CHATGPT İŞLEMİ YAPMADAN KULLANICIYA EKSİK BİLGİLERİ SORMAK ZORUNDADIR.",
+        "description": "Ajans takvimine yeni bir video çekimi, müşteri toplantısı veya lansman etkinliği ekler.",
         "operationId": "addCalendarEvent",
         "requestBody": {
           "required": true,
@@ -189,7 +189,7 @@
                   "date": { "type": "string", "example": "12.08.2026" },
                   "time": { "type": "string", "example": "14:30" },
                   "location": { "type": "string", "example": "MioCasa Bahçeşehir Mağazası" },
-                  "event_type": { "type": "string", "example": "Video Çekimi" },
+                  "event_type": { "type": "string", "example": "shoot" },
                   "notes": { "type": "string", "example": "Işık ve 2 kameraman hazır bulunacak." }
                 }
               }
@@ -276,22 +276,17 @@
     }
   },
   "components": {
+    "schemas": {},
     "securitySchemes": {
       "ApiKeyAuth": {
         "type": "apiKey",
         "in": "header",
         "name": "x-api-key",
-        "description": "SocialArt GPT API Key (socialart-gpt-secret-2026)"
-      },
-      "BearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "SocialArt GPT Bearer Token (socialart-gpt-secret-2026)"
+        "description": "SocialArt GPT API Key"
       }
     }
   },
   "security": [
-    { "ApiKeyAuth": [] },
-    { "BearerAuth": [] }
+    { "ApiKeyAuth": [] }
   ]
 }
