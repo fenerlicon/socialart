@@ -173,8 +173,8 @@
     },
     "/api/gpt/calendar": {
       "post": {
-        "summary": "Takvime Çekim / Etkinlik / Toplantı Ekle",
-        "description": "Ajans takvimine yeni bir video çekimi, müşteri toplantısı veya lansman etkinliği ekler.",
+        "summary": "Ajans Takvimine Etkinlik Ekle (Çekim, Toplantı, Yayın, Deadline, Kampanya, İzin, Tatil, Operasyon)",
+        "description": "Ajans takvimine 8 farklı kategoride etkinlik ekler. DİKKAT: Kullanıcı etkinlik türünü açıkça belirtmediyse ('shoot', 'meeting', 'publish', 'deadline', 'campaign', 'leave', 'holiday', 'operation_cycle'), ChatGPT API çağrısı yapmadan önce kullanıcıya şu seçenekleri sunup türü sormalıdır: 1-Çekim (shoot), 2-Toplantı (meeting), 3-Yayın/Paylaşım (publish), 4-Deadline (deadline), 5-Kampanya/Reklam (campaign), 6-Personel İzni (leave), 7-Resmi Tatil (holiday), 8-Operasyon Süreci (operation_cycle).",
         "operationId": "addCalendarEvent",
         "requestBody": {
           "required": true,
@@ -182,22 +182,28 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "date", "time"],
+                "required": ["title", "date", "time", "event_type"],
                 "properties": {
-                  "title": { "type": "string", "example": "Wellness Çekimi" },
-                  "brand_name": { "type": "string", "example": "Wellness" },
-                  "date": { "type": "string", "example": "12.08.2026" },
-                  "time": { "type": "string", "example": "14:30" },
-                  "location": { "type": "string", "example": "MioCasa Bahçeşehir Mağazası" },
-                  "event_type": { "type": "string", "example": "shoot" },
-                  "notes": { "type": "string", "example": "Işık ve 2 kameraman hazır bulunacak." }
+                  "title": { "type": "string", "description": "Etkinlik Başlığı", "example": "Wellness Reels Çekimi" },
+                  "brand_name": { "type": "string", "description": "İlgili Marka Adı (MioCasa, Zara, Jeep vb.)", "example": "Wellness" },
+                  "date": { "type": "string", "description": "Tarih ('bugün', 'yarın', '12.08.2026' veya 'YYYY-MM-DD')", "example": "12.08.2026" },
+                  "time": { "type": "string", "description": "Saat (Örn: '14:30', '16:00')", "example": "14:30" },
+                  "event_type": {
+                    "type": "string",
+                    "enum": ["shoot", "meeting", "publish", "deadline", "campaign", "leave", "holiday", "operation_cycle"],
+                    "description": "Etkinliğin türü (ZORUNLU - Belirtilmediyse kullanıcıya sorulmalıdır):\n• 'shoot': Video/Fotoğraf Çekimi\n• 'meeting': Müşteri/Ajans Toplantısı\n• 'publish': Sosyal Medya Yayını/Post/Reels/Story Paylaşımı\n• 'deadline': Tasarım/Montaj Teslim Tarihi\n• 'campaign': Reklam/Kampanya/Lansman Başlangıcı\n• 'leave': Personel İzni / Rapor\n• 'holiday': Resmi Tatil / Bayram\n• 'operation_cycle': Aylık Operasyon Dönemi",
+                    "example": "shoot"
+                  },
+                  "assignee": { "type": "string", "description": "Sorumlu personel (Furkan, Celal, Ercan, Tuğba, Betül)", "example": "Furkan" },
+                  "location": { "type": "string", "description": "Mekan / Konum / Stüdyo", "example": "Ajans Stüdyosu" },
+                  "notes": { "type": "string", "description": "Özel detaylar veya ekipman notları", "example": "2 kameraman ve ışık seti hazır bulunacak." }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Takvime etkinlik eklendi." }
+          "200": { "description": "Etkinlik başarıyla takvime eklendi." }
         }
       },
       "get": {

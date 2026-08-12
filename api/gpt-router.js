@@ -269,21 +269,25 @@ async function handleCreateLead(req, res) {
     author: 'ChatGPT AI'
   }] : [];
 
+  const leadName = company && company.trim() && company.trim().toLowerCase() !== name.trim().toLowerCase()
+    ? `${name.trim()} (${company.trim()})`
+    : name.trim();
+
   const newLeadRecord = {
-    name: name.trim(),
+    name: leadName,
     phone: phone.trim(),
-    company: (company || name).trim(),
+    title: company ? company.trim() : null,
     service: service.trim(),
     budget: budget ? parseFloat(budget) || 0 : 0,
     rep: rep ? rep.trim() : 'Atanmamış',
-    city: city ? city.trim() : '',
+    city: city ? city.trim() : null,
     status: 'Sıcak',
     stage: 'NEW',
     platform: 'ChatGPT AI Assistant',
     date: new Date().toLocaleDateString('tr-TR'),
     created_at: nowIso,
     updated_at: nowIso,
-    reaction: notes ? notes.trim() : 'ChatGPT üzerinden yeni lead eklendi.',
+    reaction: company ? `Firma: ${company.trim()} | ${notes ? notes.trim() : 'ChatGPT üzerinden yeni lead eklendi.'}` : (notes ? notes.trim() : 'ChatGPT üzerinden yeni lead eklendi.'),
     notes: initialNoteObj
   };
 
@@ -292,7 +296,7 @@ async function handleCreateLead(req, res) {
 
   return res.status(200).json({
     success: true,
-    message: `✅ "${name}" adında yeni müşteri başarıyla CRM'e eklendi!`,
+    message: `✅ "${leadName}" adında yeni müşteri başarıyla CRM'e eklendi!`,
     lead: data
   });
 }
@@ -615,17 +619,48 @@ async function handleCalendar(req, res) {
     const effectiveTitle = (title && title.trim()) || (brand_name && brand_name.trim()) || 'Etkinlik';
     const effectiveBrand = (brand_name && brand_name.trim()) || effectiveTitle;
 
+    function resolveEventType(rawType, textContext = '') {
+      const combined = `${rawType || ''} ${textContext || ''}`.toLowerCase();
+      if (combined.includes('shoot') || combined.includes('çekim') || combined.includes('cekim') || combined.includes('video') || combined.includes('fotoğraf') || combined.includes('fotograf') || combined.includes('set')) return 'shoot';
+      if (combined.includes('meeting') || combined.includes('toplantı') || combined.includes('toplanti') || combined.includes('görüşme') || combined.includes('gorusme') || combined.includes('brifing')) return 'meeting';
+      if (combined.includes('publish') || combined.includes('yayın') || combined.includes('yayin') || combined.includes('paylaşım') || combined.includes('paylasim') || combined.includes('post') || combined.includes('reels') || combined.includes('story') || combined.includes('içerik') || combined.includes('icerik')) return 'publish';
+      if (combined.includes('deadline') || combined.includes('teslim') || combined.includes('son gün') || combined.includes('son gun') || combined.includes('revizyon')) return 'deadline';
+      if (combined.includes('campaign') || combined.includes('kampanya') || combined.includes('reklam') || combined.includes('lansman') || combined.includes('ads') || combined.includes('indirim')) return 'campaign';
+      if (combined.includes('leave') || combined.includes('izin') || combined.includes('tatil') || combined.includes('rapor') || combined.includes('mazeret')) return 'leave';
+      if (combined.includes('holiday') || combined.includes('resmi tatil') || combined.includes('bayram') || combined.includes('kapalı') || combined.includes('kapali')) return 'holiday';
+      if (combined.includes('operation') || combined.includes('operasyon') || combined.includes('dönem') || combined.includes('donem') || combined.includes('cycle')) return 'operation_cycle';
+      return rawType ? rawType.toLowerCase().trim() : null;
+    }
+
+    const finalType = resolveEventType(event_type, `${effectiveTitle} ${notes || ''}`);
+
     const missingFields = [];
     if (!effectiveTitle) missingFields.push('Başlık (title)');
     if (!date || !String(date).trim()) missingFields.push('Tarih (date)');
     if (!time || !String(time).trim()) missingFields.push('Saat (time)');
+    if (!finalType) missingFields.push('Etkinlik Türü (event_type)');
 
     if (missingFields.length > 0) {
-      return res.status(400).json({ error: 'MISSING_REQUIRED_FIELDS', message: `Eksik zorunlu alanlar var: ${missingFields.join(', ')}.` });
+      return res.status(400).json({
+        error: 'MISSING_REQUIRED_FIELDS',
+        message: `Takvime eklemek için eksik alanlar var: ${missingFields.join(', ')}. Lütfen kullanıcıya şu 8 seçenekten hangisi olduğunu sorun:\n1. 🎬 Çekim (shoot) - Video/Fotoğraf Çekimi\n2. 👥 Toplantı (meeting) - Müşteri/Ajans Toplantısı\n3. 📱 Yayın (publish) - Post/Reels/Story Paylaşımı\n4. ⏳ Deadline (deadline) - Teslim/Onay Tarihi\n5. 🚀 Kampanya (campaign) - Reklam/Lansman Başlangıcı\n6. 🏖️ İzin (leave) - Personel İzni\n7. 🏛️ Resmi Tatil (holiday) - Bayram/Tatil\n8. ⚡ Operasyon (operation_cycle) - Aylık Operasyon Dönemi`,
+        missing_fields: missingFields,
+        allowed_types: ['shoot', 'meeting', 'publish', 'deadline', 'campaign', 'leave', 'holiday', 'operation_cycle']
+      });
     }
 
     const assigneeKey = (assignee || employee || 'furkan').toLowerCase().trim();
     const matchedEmployee = EMPLOYEE_MAP[assigneeKey] || EMPLOYEE_MAP.furkan;
+
+    // Try finding brand ID if brand_name is given
+    let brandId = null;
+    try {
+      const { data: brandList } = await supabasePrimary.from('brands').select('id, name');
+      if (brandList && brandList.length > 0) {
+        const found = brandList.find(b => b.name.toLowerCase().includes(effectiveBrand.toLowerCase()) || effectiveBrand.toLowerCase().includes(b.name.toLowerCase()));
+        if (found) brandId = found.id;
+      }
+    } catch (e) {}
 
     const nowIso = new Date().toISOString();
     const eventId = `CAL-${Date.now()}`;
@@ -633,12 +668,12 @@ async function handleCalendar(req, res) {
 
     // 1. Insert into REAL calendar_events table
     const eventTitle = effectiveBrand === effectiveTitle ? effectiveTitle : `${effectiveBrand} - ${effectiveTitle}`;
-    const isMeeting = (event_type && event_type.toLowerCase().includes('toplantı')) || effectiveTitle.toLowerCase().includes('toplantı');
 
     const calEventRecord = {
       id: eventId,
       title: eventTitle,
-      type: isMeeting ? 'meeting' : 'shoot',
+      type: finalType,
+      brand_id: brandId,
       employee_id: matchedEmployee.id,
       starts_at: startsAt,
       ends_at: endsAt,
@@ -649,12 +684,24 @@ async function handleCalendar(req, res) {
     const { error: calErr } = await supabasePrimary.from('calendar_events').insert([calEventRecord]);
 
     // 2. Also Insert into notifications for employee popups
+    const TYPE_LABELS = {
+      shoot: '🎬 Video/Fotoğraf Çekimi',
+      meeting: '👥 Müşteri/Ajans Toplantısı',
+      publish: '📱 Sosyal Medya Yayını',
+      deadline: '⏳ Deadline / Teslim',
+      campaign: '🚀 Kampanya / Reklam',
+      leave: '🏖️ Personel İzni',
+      holiday: '🏛️ Resmi Tatil',
+      operation_cycle: '⚡ Operasyon Dönemi'
+    };
+    const typeLabel = TYPE_LABELS[finalType] || finalType;
+
     const notifRecord = {
       id: eventId,
       recipient_employee_id: matchedEmployee.id,
       type: 'calendar_event',
-      title: `📅 Takvim Etkinliği: ${calEventRecord.title}`,
-      message: JSON.stringify({ ...calEventRecord, brand_name: effectiveBrand, date: String(date).trim(), time: String(time).trim(), notes: notes || '' }),
+      title: `📅 Takvim [${typeLabel}]: ${calEventRecord.title}`,
+      message: JSON.stringify({ ...calEventRecord, brand_name: effectiveBrand, event_type_label: typeLabel, date: String(date).trim(), time: String(time).trim(), notes: notes || '' }),
       related_entity_type: 'calendar',
       related_entity_id: eventId,
       is_read: false,
@@ -671,7 +718,7 @@ async function handleCalendar(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `✅ Takvime etkinlik eklendi: "${calEventRecord.title}" (${date} - Saat: ${time})`,
+      message: `✅ Takvime [${typeLabel}] etkinliği eklendi: "${calEventRecord.title}" (${date} - Saat: ${time})`,
       event: calEventRecord
     });
   }
