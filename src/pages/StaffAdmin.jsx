@@ -394,19 +394,11 @@ function Admin() {
     const initAuth = async () => {
       try {
         // A. /admin (Next.js panel) login durumunu kontrol et
-        let activeEmployeeId = localStorage.getItem('social-art-base:active-employee-id');
-        if (!activeEmployeeId) {
-          // Varsayılan yönetici oturumu atayarak siyah ekranda takılmasını engelle
-          localStorage.setItem('social-art-base:active-employee-id', 'celal');
-          localStorage.setItem('social-art-base:credentials', JSON.stringify({ username: 'celal', password: '123' }));
-          activeEmployeeId = 'celal';
-        }
-
-        // B. credentials oku
         const credentialsJson = localStorage.getItem('social-art-base:credentials');
         const creds = credentialsJson ? JSON.parse(credentialsJson) : null;
+        const storedAjansUser = localStorage.getItem('ajans_user');
 
-        // C. Supabase Oturumunu Kontrol Et
+        // B. Supabase Oturumunu Kontrol Et
         let { data: { session } } = await supabase.auth.getSession();
 
         // Oturum yoksa ama credential varsa arka planda giriş yap
@@ -429,42 +421,51 @@ function Admin() {
           };
           const supabasePassword = realPasswords[usernameClean] || creds.password;
 
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: formattedEmail,
-            password: supabasePassword,
-          });
-          if (data && data.session) {
-            session = data.session;
+          try {
+            const { data } = await supabase.auth.signInWithPassword({
+              email: formattedEmail,
+              password: supabasePassword,
+            });
+            if (data && data.session) {
+              session = data.session;
+            }
+          } catch (err) {
+            console.warn("Auto-signin with credentials error:", err);
           }
         }
 
         if (session && session.user) {
-          const metadata = session.user.user_metadata;
+          const metadata = session.user.user_metadata || {};
           const userObj = { 
-            name: metadata.display_name, 
-            role: metadata.role,
-            class: metadata.class,
+            name: metadata.display_name || session.user.email?.split('@')[0] || 'Kullanıcı', 
+            role: metadata.role || 'Ekip Üyesi',
+            class: metadata.class || 'A-Class',
             permissions: metadata.can_assign_task ? 'all' : 'limited',
-            can_add_client: metadata.can_add_client
+            can_add_client: Boolean(metadata.can_add_client)
           };
           localStorage.setItem('ajans_user', JSON.stringify(userObj));
           setCurrentUser(userObj);
           fetchAllData(userObj);
+        } else if (storedAjansUser) {
+          try {
+            const parsed = JSON.parse(storedAjansUser);
+            if (parsed && parsed.name) {
+              setCurrentUser(parsed);
+              fetchAllData(parsed);
+            } else {
+              setCurrentUser(null);
+            }
+          } catch (e) {
+            setCurrentUser(null);
+          }
         } else {
-          // Oturum kurulamadıysa varsayılan ajans hesabı oluşturup yükle
-          const fallbackUser = {
-            name: 'Celal',
-            role: 'Kurucu / Yöneticı',
-            class: 'S-Class',
-            permissions: 'all',
-            can_add_client: true
-          };
-          localStorage.setItem('ajans_user', JSON.stringify(fallbackUser));
-          setCurrentUser(fallbackUser);
-          fetchAllData(fallbackUser);
+          // Oturum yok -> Kullanıcı giriş yapmalı
+          setCurrentUser(null);
         }
       } catch (e) {
         console.error("Auth init error:", e);
+        setCurrentUser(null);
+      } finally {
         setIsChecking(false);
       }
     };

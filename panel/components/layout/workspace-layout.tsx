@@ -44,15 +44,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         if (savedId && list.some((e) => e.id === savedId)) {
           setCurrentEmployeeId(savedId)
         } else {
-          // Auto-default to Celal or first employee if active ID is missing or invalid
-          const defaultEmp = list.find((e) => e.id === 'emp-celal' || e.id === 'celal' || e.username === 'celal') || list[0]
-          if (defaultEmp) {
-            setActiveEmployeeId(defaultEmp.id)
-            setCurrentEmployeeId(defaultEmp.id)
-          } else {
-            router.push('/login')
-            return
-          }
+          router.push('/login')
+          return
         }
 
         // Her ayın 5'ine kadar oluşturulmayan dönemlerin otomatik marka şablonuyla başlatılması kontrolü
