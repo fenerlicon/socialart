@@ -10,6 +10,7 @@ import { requestApproval, requestDeadlineExtension } from '@/lib/workflows/appro
 import { HandoffModal } from './handoff-modal'
 import { TaskDetailDrawer } from './task-detail-drawer'
 import { TaskDeliveryModal } from '@/components/shared/task-delivery-modal'
+import { TaskFailureExplanationModal } from '@/components/shared/task-failure-explanation-modal'
 import { getWorkflowStepInstances, updateWorkflowStepInstance, incrementInstanceProgress } from '@/lib/storage/local-workflow-instance-store'
 import { supabase } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ import {
   TrendingUp,
   Loader2,
   Eye,
+  FileText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -40,6 +42,7 @@ interface CardProps {
   cycleLabel: string
   currentEmployeeId: string
   employees: Employee[]
+  hasUnexplainedOverdue?: boolean
   onActionSuccess: () => void
 }
 
@@ -50,13 +53,26 @@ export function MyWorkCard({
   cycleLabel,
   currentEmployeeId,
   employees,
+  hasUnexplainedOverdue = false,
   onActionSuccess,
 }: CardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [incrementBy, setIncrementBy] = useState(1)
+  const [showFailureModal, setShowFailureModal] = useState(false)
+
+  const isOverdue = !['completed', 'skipped', 'cancelled'].includes(step.status) && (
+    step.status === 'failed' || (step.dueDate ? new Date(step.dueDate).getTime() < Date.now() : false)
+  )
 
   const handleIncrement = async () => {
     if (isSubmitting || instance.status === 'completed') return
+    if (!isOverdue && hasUnexplainedOverdue) {
+      toast.error('⚠️ Yeni İş Tamamlanamaz!', {
+        description: 'Açıklaması yazılmamış tamamlanamayan işiniz bulunmaktadır. Lütfen önce geciken işinize açıklama yazınız.',
+        duration: 6000,
+      })
+      return
+    }
     setIsSubmitting(true)
     try {
       const result = await incrementInstanceProgress(instance.id, incrementBy)
@@ -84,7 +100,6 @@ export function MyWorkCard({
   const [briefInput, setBriefInput] = useState('')
   const [confirmWithoutBrief, setConfirmWithoutBrief] = useState(false)
   const [showDeliveryModal, setShowDeliveryModal] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showExtensionModal, setShowExtensionModal] = useState(false)
   const [showDetailDrawer, setShowDetailDrawer] = useState(false)
   const [requestedDate, setRequestedDate] = useState('')
@@ -172,6 +187,12 @@ export function MyWorkCard({
           badge: 'bg-rose-500/10 text-rose-400 border-rose-500/25',
           label: 'İptal Edildi',
           icon: <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />,
+        }
+      case 'failed':
+        return {
+          badge: 'bg-red-500/20 text-red-400 border-red-500/40',
+          label: 'Tamamlanamadı / Gecikti',
+          icon: <AlertTriangle className="h-3.5 w-3.5 text-red-500" />,
         }
       case 'pending':
       default:
@@ -267,19 +288,31 @@ export function MyWorkCard({
 
       onActionSuccess()
     } catch (err: any) {
-      toast.error('Görev tamamlanamadı', {
-        description: err.message,
-      })
+      toast.error('Görev tamamlanamadı', { description: err.message })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleCompleteClick = () => {
+    if (!isOverdue && hasUnexplainedOverdue) {
+      toast.error('⚠️ Yeni İş Tamamlanamaz!', {
+        description: 'Açıklaması yazılmamış tamamlanamayan işiniz bulunmaktadır. Lütfen önce geciken işinize açıklama yazınız.',
+        duration: 6000,
+      })
+      return
+    }
     setShowDeliveryModal(true)
   }
 
   const handleSendToApproval = async () => {
+    if (!isOverdue && hasUnexplainedOverdue) {
+      toast.error('⚠️ Yeni İş Tamamlanamaz!', {
+        description: 'Açıklaması yazılmamış tamamlanamayan işiniz bulunmaktadır. Lütfen önce geciken işinize açıklama yazınız.',
+        duration: 6000,
+      })
+      return
+    }
     setIsSubmitting(true)
     try {
       await requestApproval({
@@ -303,9 +336,17 @@ export function MyWorkCard({
     }
   }
 
+  const handlePasla = () => {
+    setShowHandoffModal(true)
+  }
+
   const handleRequestExtensionSubmit = async () => {
-    if (!requestedDate || !extensionReason) {
-      toast.error('Lütfen tüm alanları doldurun.')
+    if (!requestedDate) {
+      toast.error('Lütfen talep edilen yeni tarihi seçiniz.')
+      return
+    }
+    if (!extensionReason.trim()) {
+      toast.error('Lütfen süre uzatma gerekçenizi belirtiniz.')
       return
     }
 
@@ -315,20 +356,19 @@ export function MyWorkCard({
         workflowInstanceId: instance.id,
         stepInstanceId: step.id,
         requestedByEmployeeId: currentEmployeeId,
-        requestedDate,
-        reason: extensionReason,
+        requestedDate: requestedDate,
+        reason: extensionReason.trim(),
       })
 
-      toast.success('Süre uzatım talebi başarıyla gönderildi.', {
-        description: 'Talebiniz yöneticinin onayına sunulmuştur.',
+      toast.success('Süre uzatımı talebiniz yöneticinize iletildi.', {
+        description: `Talep edilen yeni tarih: ${formatDateTime(requestedDate)}`,
       })
-
       setShowExtensionModal(false)
       setRequestedDate('')
       setExtensionReason('')
       onActionSuccess()
     } catch (err: any) {
-      toast.error('Süre uzatım talebi gönderilemedi', {
+      toast.error('Süre uzatımı talebi iletilemedi', {
         description: err.message,
       })
     } finally {
@@ -336,40 +376,13 @@ export function MyWorkCard({
     }
   }
 
-  const handleDeleteTask = () => {
-    setShowDeleteConfirm(true)
-  }
-
-  const confirmDeleteTask = async () => {
-    setIsSubmitting(true)
-    try {
-      const { error } = await supabase
-        .from('workflow_step_instances')
-        .delete()
-        .eq('id', step.id)
-      if (error) throw error
-
-      toast.success('Görev başarıyla silindi!')
-      onActionSuccess()
-    } catch (err: any) {
-      toast.error('Görev silinirken hata oluştu: ' + err.message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  // 4. Paslama modalını tetikler
-  const handlePasla = () => {
-    setShowHandoffModal(true)
-  }
-
   const formatDateTime = (isoString?: string) => {
     if (!isoString) return ''
     try {
       const d = new Date(isoString)
-      return d.toLocaleString('tr-TR', {
+      return d.toLocaleDateString('tr-TR', {
         day: '2-digit',
-        month: '2-digit',
+        month: 'short',
         hour: '2-digit',
         minute: '2-digit',
       })
@@ -381,15 +394,22 @@ export function MyWorkCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border bg-card/25 p-5 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-neutral-700 space-y-4 relative overflow-hidden group',
-        step.status === 'active' && 'border-blue-500/20 bg-blue-500/[0.005]',
-        step.status === 'completed' && 'border-emerald-500/20 bg-emerald-500/[0.003]'
+        'rounded-2xl border p-5 shadow-sm backdrop-blur-md transition-all duration-300 space-y-4 relative overflow-hidden group',
+        isOverdue
+          ? 'border-red-500/50 bg-red-950/15 ring-1 ring-red-500/20 shadow-lg shadow-red-950/20'
+          : step.status === 'active'
+          ? 'border-blue-500/20 bg-blue-500/[0.005]'
+          : step.status === 'completed'
+          ? 'border-emerald-500/20 bg-emerald-500/[0.003]'
+          : 'border-neutral-900/80 bg-card/25 hover:border-neutral-700'
       )}
     >
-      {/* Background soft glow for active cards */}
-      {step.status === 'active' && (
+      {/* Background soft glow */}
+      {isOverdue ? (
+        <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+      ) : step.status === 'active' ? (
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-      )}
+      ) : null}
 
       {/* Üst Satır: Marka, Dönem ve İş Akışı */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-neutral-900">
@@ -412,20 +432,32 @@ export function MyWorkCard({
         </div>
 
         <div className="flex items-center gap-2">
-          {step.handoffStatus === 'pending' && (
+          {isOverdue ? (
             <Badge
               variant="outline"
-              className="bg-amber-500/10 text-amber-400 border-amber-500/25 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse"
+              className="bg-red-500/20 text-red-400 border-red-500/40 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider animate-pulse flex items-center gap-1"
             >
-              Paslama Bekliyor
+              <AlertTriangle className="h-3 w-3" />
+              VAKTİ GEÇTİ / TAMAMLANAMADI
             </Badge>
+          ) : (
+            <>
+              {step.handoffStatus === 'pending' && (
+                <Badge
+                  variant="outline"
+                  className="bg-amber-500/10 text-amber-400 border-amber-500/25 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse"
+                >
+                  Paslama Bekliyor
+                </Badge>
+              )}
+              <Badge
+                variant="outline"
+                className={cn('px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider', currentStatus.badge)}
+              >
+                {currentStatus.label}
+              </Badge>
+            </>
           )}
-          <Badge
-            variant="outline"
-            className={cn('px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider', currentStatus.badge)}
-          >
-            {currentStatus.label}
-          </Badge>
         </div>
       </div>
 
@@ -434,7 +466,7 @@ export function MyWorkCard({
         <div>
           <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-0.5">İş Adımı</span>
           <span className="font-bold text-foreground flex items-center gap-1.5">
-            {currentStatus.icon}
+            {isOverdue ? <AlertTriangle className="h-3.5 w-3.5 text-red-500" /> : currentStatus.icon}
             {step.title}
           </span>
           {step.description && (
@@ -452,8 +484,51 @@ export function MyWorkCard({
         </div>
       </div>
 
+      {/* Vaktinde Tamamlanamama / Gecikme Açıklama Alanı */}
+      {isOverdue && (
+        <div
+          className={cn(
+            "rounded-xl border p-3.5 text-xs space-y-2 animate-in fade-in duration-300",
+            step.failureReason
+              ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-300"
+              : "bg-red-950/30 border-red-500/40 text-red-300"
+          )}
+        >
+          <div className="flex items-center justify-between font-bold">
+            <span className="flex items-center gap-1.5">
+              {step.failureReason ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <span className="text-emerald-400">Gecikme Açıklaması İletildi</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4 text-red-400 animate-pulse" />
+                  <span className="text-red-400">Bu iş vaktinde tamamlanamadı (Açıklama Zorunludur)</span>
+                </>
+              )}
+            </span>
+            {step.failureExplanationAt && (
+              <span className="text-[10px] text-muted-foreground font-normal">
+                {formatDateTime(step.failureExplanationAt)}
+              </span>
+            )}
+          </div>
+
+          {step.failureReason ? (
+            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-xs bg-neutral-950/40 p-2.5 rounded-lg border border-neutral-850">
+              &ldquo;{step.failureReason}&rdquo;
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-[11px] leading-relaxed">
+              Bu iş adımı teslim süresi içinde tamamlanamamıştır. Sistem kuralları gereği yeni bir iş tamamlayabilmek için gecikme nedenini açıklamanız gerekmektedir.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Sayaç / Hedef Sayaç Gösterimi (Eğer Sayaç Modundaysa) */}
-      {instance.targetCount && instance.targetCount > 1 && (
+      {!isOverdue && instance.targetCount && instance.targetCount > 1 && (
         <div className="bg-purple-950/10 border border-purple-900/30 rounded-xl p-3.5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -514,7 +589,7 @@ export function MyWorkCard({
       )}
 
       {/* Onay Bekliyor Durum Uyarısı */}
-      {step.status === 'waiting_approval' && (
+      {!isOverdue && step.status === 'waiting_approval' && (
         <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.02] p-3 text-[11px] text-purple-400 flex items-start gap-2 animate-in fade-in duration-300">
           <AlertTriangle className="h-4 w-4 shrink-0 text-purple-400 mt-0.5 animate-pulse" />
           <div className="space-y-0.5">
@@ -541,7 +616,7 @@ export function MyWorkCard({
           </span>
         )}
         <span className="flex items-center gap-1">
-          <Calendar className={cn("h-3 w-3", step.dueDate ? "text-blue-500/80" : "text-red-450/80 animate-pulse")} />
+          <Calendar className={cn("h-3 w-3", isOverdue ? "text-red-400" : step.dueDate ? "text-blue-500/80" : "text-neutral-500")} />
           {step.dueDate ? `Teslim: ${formatDateTime(step.dueDate)}` : 'Teslim Tarihi Belirtilmedi'}
         </span>
       </div>
@@ -577,8 +652,35 @@ export function MyWorkCard({
         </button>
       </div>
 
-      {/* Aksiyon Butonları (Sadece active adımda gösterilir) */}
-      {step.status === 'active' && (
+      {/* Aksiyon Butonları */}
+      {isOverdue ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-900">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => setShowFailureModal(true)}
+              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs h-8 px-4 rounded-lg flex items-center gap-1.5 shadow-md shadow-red-500/20"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              {step.failureReason ? 'Açıklamayı Düzenle' : '✍️ Açıklama Yaz (Zorunlu)'}
+            </Button>
+            {isManager && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSubmitting}
+                onClick={() => handleAction('cancel')}
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-semibold text-xs h-8 px-3 rounded-lg"
+              >
+                İptal Et
+              </Button>
+            )}
+          </div>
+          <span className="text-[11px] font-bold text-red-400">
+            {step.failureReason ? '✅ Açıklama İletildi' : '❌ Açıklama Bekleniyor'}
+          </span>
+        </div>
+      ) : step.status === 'active' ? (
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-900">
           <div className="flex flex-wrap gap-2">
             {!(instance.targetCount && instance.targetCount > 1) && (
@@ -622,15 +724,6 @@ export function MyWorkCard({
                 >
                   İptal Et
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={isSubmitting || step.handoffStatus === 'pending'}
-                  onClick={handleDeleteTask}
-                  className="text-red-400 hover:text-red-350 hover:bg-red-500/10 font-semibold text-xs h-8 px-3 rounded-lg animate-in fade-in duration-100"
-                >
-                  Sil
-                </Button>
               </>
             )}
             <Button
@@ -655,7 +748,22 @@ export function MyWorkCard({
             Pasla
           </Button>
         </div>
+      ) : null}
+
+      {/* Vaktinde Tamamlanamama Açıklama Modalı */}
+      {mounted && showFailureModal && (
+        <TaskFailureExplanationModal
+          isOpen={showFailureModal}
+          onClose={() => setShowFailureModal(false)}
+          step={step}
+          brandName={brandName}
+          workflowTitle={instance.title}
+          currentEmployeeId={currentEmployeeId}
+          onSuccess={onActionSuccess}
+        />
       )}
+
+      {/* Paslama Modalı */}
       {mounted && showHandoffModal && createPortal(
         <HandoffModal
           step={step}
@@ -753,48 +861,6 @@ export function MyWorkCard({
           stepTitle={step.title}
           stepTemplateId={step.workflowStepTemplateId}
         />,
-        document.body
-      )}
-
-      {/* Görev Silme Onay Modalı */}
-      {showDeleteConfirm && mounted && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 text-left">
-            <div className="flex items-start gap-3">
-              <span className="p-2 rounded-xl bg-red-500/10 text-red-500 shrink-0">
-                <AlertTriangle className="h-6 w-6 animate-pulse" />
-              </span>
-              <div className="space-y-1">
-                <h3 className="text-base font-extrabold text-white">Görevi Sil?</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Bu görevi (iş adımını) kalıcı olarak silmek istediğinize emin misiniz?
-                  <br />
-                  <strong className="text-red-400 mt-1 block">Bu geçici test yetkisidir. Bu işlem geri alınamaz!</strong>
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 text-xs rounded-xl"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Vazgeç
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  setShowDeleteConfirm(false)
-                  confirmDeleteTask()
-                }}
-                className="h-9 text-xs bg-red-600 hover:bg-red-750 text-white rounded-xl font-bold"
-              >
-                Evet, Kalıcı Olarak Sil
-              </Button>
-            </div>
-          </div>
-        </div>,
         document.body
       )}
 

@@ -77,7 +77,7 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
       };
 
       const rawNum = parsePrice(selectedPlan.price);
-      const isExactPrice = selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
+      const isExactPrice = selectedPlan.isTest || selectedPlan.exactPrice || selectedPlan.isKdvExempt || selectedPlan.is_kdv_exempt || rawNum <= 10;
       const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
       const totalPriceWithKdv = totalNum.toFixed(2);
 
@@ -355,11 +355,12 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                 };
 
                 const rawNum = parsePrice(selectedPlan.price);
-                const isExactPrice = selectedPlan.isTest || selectedPlan.exactPrice || rawNum <= 10;
+                const isExactPrice = selectedPlan.isTest || selectedPlan.exactPrice || selectedPlan.isKdvExempt || selectedPlan.is_kdv_exempt || rawNum <= 10;
                 
                 const netNum = rawNum;
                 const kdvNum = isExactPrice ? 0 : rawNum * 0.20;
                 const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
+                const hasItems = Array.isArray(selectedPlan.items) && selectedPlan.items.length > 0;
 
                 const formatMoney = (val) => val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -373,14 +374,38 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                     flexDirection: 'column',
                     gap: '10px'
                   }}>
+                    {hasItems && (
+                      <div style={{
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Hizmet / Masraf Kalemleri:
+                        </div>
+                        {selectedPlan.items.map((it, idx) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#e2e8f0' }}>
+                            <span>• {it.title}</span>
+                            <span style={{ fontWeight: '700', color: '#00e5ff' }}>₺ {formatMoney(Number(it.amount))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
                       <span>Hizmet Bedeli (Net):</span>
                       <span style={{ color: '#e2e8f0', fontWeight: '600' }}>₺ {formatMoney(netNum)}</span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
-                      <span>KDV (%20 Eklenen):</span>
-                      <span style={{ color: '#00e5ff', fontWeight: '700' }}>+ ₺ {formatMoney(kdvNum)}</span>
+                      <span>{isExactPrice ? 'KDV (%0 Muaf):' : 'KDV (%20 Eklenen):'}</span>
+                      <span style={{ color: isExactPrice ? '#34d399' : '#00e5ff', fontWeight: '700' }}>
+                        {isExactPrice ? '₺ 0,00 (KDV Muaf)' : `+ ₺ ${formatMoney(kdvNum)}`}
+                      </span>
                     </div>
 
                     <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '2px 0' }} />
@@ -389,7 +414,9 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
                       <div>
                         <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: '600' }}>ÖDENECEK GENEL TOPLAM</div>
                         <div style={{ fontSize: '1.45rem', fontWeight: '900', color: 'var(--primary, #00e5ff)' }}>
-                          ₺ {formatMoney(totalNum)} <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>(KDV Dahil)</span>
+                          ₺ {formatMoney(totalNum)} <span style={{ fontSize: '0.85rem', color: isExactPrice ? '#34d399' : '#94a3b8', fontWeight: '500' }}>
+                            {isExactPrice ? '(KDV Muaf)' : '(KDV Dahil)'}
+                          </span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(52, 211, 153, 0.1)', padding: '6px 12px', borderRadius: '10px' }}>

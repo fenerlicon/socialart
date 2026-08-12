@@ -22,7 +22,8 @@ export async function checkAndGenerateMissingReports(): Promise<number> {
 
     const reports = await getStoredReports()
 
-    // Define rolling window: 30 days ago to yesterday
+    // Define rolling window: only check dates starting from SYSTEM_LAUNCH_DATE (2026-08-12)
+    const SYSTEM_LAUNCH_DATE = '2026-08-12'
     const now = new Date()
     
     // Yesterday (today - 1 day)
@@ -30,21 +31,29 @@ export async function checkAndGenerateMissingReports(): Promise<number> {
     yesterday.setDate(now.getDate() - 1)
     yesterday.setHours(0, 0, 0, 0)
 
-    // 30 days ago
+    // Launch date start
+    const launchStartDate = new Date(`${SYSTEM_LAUNCH_DATE}T00:00:00`)
+
+    // 30 days ago, but capped at launch date
     const thirtyDaysAgo = new Date(now)
     thirtyDaysAgo.setDate(now.getDate() - 30)
     thirtyDaysAgo.setHours(0, 0, 0, 0)
 
+    const startDate = thirtyDaysAgo < launchStartDate ? launchStartDate : thirtyDaysAgo
+
     // Generate weekday dates in YYYY-MM-DD format
     const datesToCheck: string[] = []
-    const tempDate = new Date(thirtyDaysAgo)
+    const tempDate = new Date(startDate)
     while (tempDate <= yesterday) {
       const dayOfWeek = tempDate.getDay() // 0 = Sunday, 6 = Saturday
       if (dayOfWeek !== 0 && dayOfWeek !== 6) {
         const yyyy = tempDate.getFullYear()
         const mm = String(tempDate.getMonth() + 1).padStart(2, '0')
         const dd = String(tempDate.getDate()).padStart(2, '0')
-        datesToCheck.push(`${yyyy}-${mm}-${dd}`)
+        const dateStr = `${yyyy}-${mm}-${dd}`
+        if (dateStr >= SYSTEM_LAUNCH_DATE) {
+          datesToCheck.push(dateStr)
+        }
       }
       tempDate.setDate(tempDate.getDate() + 1)
     }

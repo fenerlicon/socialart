@@ -69,7 +69,9 @@ export const ReportRepository = {
       throw error
     }
 
-    return (data || []).map(this.mapRowToReport)
+    return (data || [])
+      .map(this.mapRowToReport)
+      .filter((r) => !(r.status === 'missing' && r.date && r.date < '2026-08-12'))
   },
 
   async getById(id: string): Promise<Report | null> {

@@ -39,6 +39,7 @@ import {
   ExternalLink,
   Download,
   User,
+  Building,
 } from 'lucide-react'
 
 export function OperationsPage() {
@@ -56,7 +57,7 @@ export function OperationsPage() {
   const [handoffs, setHandoffs] = useState<WorkflowHandoff[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
 
-  const [activeTab, setActiveTab] = useState<'instances' | 'delayed' | 'approvals' | 'handoffs' | 'today'>('instances')
+  const [activeTab, setActiveTab] = useState<'instances' | 'delayed' | 'uncompleted' | 'approvals' | 'handoffs' | 'today'>('instances')
   const [selectedDetailInstanceId, setSelectedDetailInstanceId] = useState<string | null>(null)
 
   // Canlı iş akışı detay modalı için türetilmiş veriler ve parser
@@ -312,6 +313,29 @@ export function OperationsPage() {
     })
   }, [filteredSteps, instances, selectedBrandId, selectedEmployeeId, searchQuery])
 
+  const uncompletedSteps = useMemo(() => {
+    const now = new Date()
+    return filteredSteps.filter((s) => {
+      if (['completed', 'skipped', 'cancelled'].includes(s.status)) return false
+      const isOverdue = s.status === 'failed' || (s.dueDate && new Date(s.dueDate) < now)
+      if (!isOverdue) return false
+
+      const inst = instances.find((i) => i.id === s.workflowInstanceId)
+      if (!inst) return false
+
+      if (selectedBrandId !== 'all' && inst.brandId !== selectedBrandId) return false
+      if (selectedEmployeeId !== 'all' && s.assignedEmployeeId !== selectedEmployeeId) return false
+
+      if (searchQuery) {
+        const titleMatch = s.title.toLowerCase().includes(searchQuery.toLowerCase())
+        const brandMatch = getBrandName(inst.brandId).toLowerCase().includes(searchQuery.toLowerCase())
+        if (!titleMatch && !brandMatch) return false
+      }
+
+      return true
+    })
+  }, [filteredSteps, instances, selectedBrandId, selectedEmployeeId, searchQuery, brands])
+
   const pendingApprovals = useMemo(() => {
     return filteredApprovals.filter((a) => {
       if (a.status !== 'pending') return false
@@ -483,6 +507,23 @@ export function OperationsPage() {
     return `${days} gün gecikti`
   }
 
+  // Format Date and Time
+  const formatDateTime = (isoString?: string) => {
+    if (!isoString) return '-'
+    try {
+      const d = new Date(isoString)
+      return d.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } catch {
+      return '-'
+    }
+  }
+
   if (isLoadingAuth) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -513,7 +554,7 @@ export function OperationsPage() {
       </div>
 
       {/* KPI Kartları */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <Card
           onClick={() => setActiveTab('instances')}
           className={cn(
@@ -534,6 +575,25 @@ export function OperationsPage() {
         </Card>
 
         <Card
+          onClick={() => setActiveTab('uncompleted')}
+          className={cn(
+            "rounded-2xl border bg-card/45 shadow-sm backdrop-blur-md hover:border-neutral-850 transition-all cursor-pointer select-none",
+            activeTab === 'uncompleted'
+              ? "border-rose-500 bg-rose-500/[0.03] ring-1 ring-rose-500/20"
+              : "border-transparent border-rose-500/10"
+          )}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tamamlanmayan</span>
+            <AlertTriangle className="h-4 w-4 text-rose-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-rose-400">{uncompletedSteps.length}</div>
+            <p className="text-[9px] text-muted-foreground mt-1">Vaktinde teslim edilmeyen işler</p>
+          </CardContent>
+        </Card>
+
+        <Card
           onClick={() => setActiveTab('delayed')}
           className={cn(
             "rounded-2xl border bg-card/45 shadow-sm backdrop-blur-md hover:border-neutral-850 transition-all cursor-pointer select-none",
@@ -548,7 +608,7 @@ export function OperationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-400">{delayedSteps.length}</div>
-            <p className="text-[9px] text-muted-foreground mt-1">Süresi geçmiş aktif iş adımları</p>
+            <p className="text-[9px] text-muted-foreground mt-1">Süresi geçmiş aktif adımlar</p>
           </CardContent>
         </Card>
 
@@ -567,7 +627,7 @@ export function OperationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-400">{pendingApprovals.length}</div>
-            <p className="text-[9px] text-muted-foreground mt-1">Onay bekleyen içerik ve tasarımlar</p>
+            <p className="text-[9px] text-muted-foreground mt-1">Onay bekleyen içerik/tasarım</p>
           </CardContent>
         </Card>
 
@@ -586,7 +646,7 @@ export function OperationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-400">{pendingHandoffs.length}</div>
-            <p className="text-[9px] text-muted-foreground mt-1">Ekipler arası aktif devir istekleri</p>
+            <p className="text-[9px] text-muted-foreground mt-1">Ekipler arası aktif devirler</p>
           </CardContent>
         </Card>
 
@@ -605,7 +665,7 @@ export function OperationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-400">{todayDeliveries.length}</div>
-            <p className="text-[9px] text-muted-foreground mt-1">Bugün teslim edilecek iş adımları</p>
+            <p className="text-[9px] text-muted-foreground mt-1">Bugün teslim edilecek işler</p>
           </CardContent>
         </Card>
       </div>
@@ -740,6 +800,17 @@ export function OperationsPage() {
             >
               <Activity className="h-4 w-4" />
               Aktif İş Akışları ({activeInstances.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('uncompleted')}
+              className={`pb-2.5 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'uncompleted'
+                  ? 'border-rose-500 text-rose-400'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
+              Tamamlanmayan İşler ({uncompletedSteps.length})
             </button>
             <button
               onClick={() => setActiveTab('delayed')}
@@ -952,7 +1023,166 @@ export function OperationsPage() {
               </div>
             )}
 
-            {/* 2. GECİKEN İŞ ADIMLARI SEKMESİ */}
+            {/* 2. TAMAMLANMAYAN İŞLER SEKMESİ */}
+            {activeTab === 'uncompleted' && (
+              <div className="space-y-4">
+                {uncompletedSteps.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {uncompletedSteps.map((step) => {
+                      const inst = instances.find((i) => i.id === step.workflowInstanceId)
+                      if (!inst) return null
+                      const brandName = getBrandName(inst.brandId)
+                      const assignedEmp = employees.find((e) => e.id === step.assignedEmployeeId)
+
+                      const now = new Date()
+                      const due = step.dueDate ? new Date(step.dueDate) : now
+                      const diffMs = Math.max(0, now.getTime() - due.getTime())
+                      const diffDays = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
+
+                      return (
+                        <div
+                          key={step.id}
+                          className="rounded-2xl border border-rose-500/30 bg-rose-950/15 p-5 shadow-lg shadow-rose-950/20 backdrop-blur-md space-y-4 relative overflow-hidden"
+                        >
+                          {/* Glow effect */}
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                          {/* Top row */}
+                          <div className="flex items-start justify-between gap-3 pb-3 border-b border-neutral-850">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                                <Building className="h-3.5 w-3.5 text-neutral-400" />
+                                <span className="text-white font-bold">{brandName}</span>
+                              </div>
+                              <h4 className="text-sm font-extrabold text-neutral-100 flex items-center gap-2">
+                                <Sparkles className="h-4 w-4 text-purple-400 shrink-0" />
+                                {inst.title}
+                              </h4>
+                            </div>
+
+                            <Badge
+                              variant="outline"
+                              className="bg-rose-500/20 text-rose-400 border-rose-500/40 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider animate-pulse shrink-0"
+                            >
+                              🔴 {diffDays} Gündür Tamamlanmadı
+                            </Badge>
+                          </div>
+
+                          {/* Step & Employee details */}
+                          <div className="grid gap-3 sm:grid-cols-2 bg-neutral-950/60 rounded-xl p-3.5 border border-neutral-850 text-xs">
+                            <div className="space-y-1">
+                              <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Tamamlanmayan Adım</span>
+                              <span className="font-extrabold text-foreground flex items-center gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+                                {step.title}
+                              </span>
+                              {step.dueDate && (
+                                <span className="text-[10px] text-muted-foreground block">
+                                  Son Teslim: {formatDateTime(step.dueDate)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="space-y-1">
+                              <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Sorumlu Kişi</span>
+                              {assignedEmp ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[10px] font-bold text-white uppercase overflow-hidden">
+                                    {assignedEmp.avatarUrl ? (
+                                      <img src={assignedEmp.avatarUrl} alt={assignedEmp.fullName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      assignedEmp.fullName.slice(0, 2)
+                                    )}
+                                  </div>
+                                  <div>
+                                    <span className="font-bold text-white block text-xs">{assignedEmp.fullName}</span>
+                                    <span className="text-[10px] text-neutral-400 block">{assignedEmp.email}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-neutral-500 font-semibold">Atanmamış</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Explanation Status Box */}
+                          <div
+                            className={cn(
+                              "rounded-xl border p-3.5 text-xs space-y-2",
+                              step.failureReason
+                                ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-300"
+                                : "bg-red-950/40 border-red-500/50 text-red-300"
+                            )}
+                          >
+                            <div className="flex items-center justify-between font-bold">
+                              <span className="flex items-center gap-1.5">
+                                {step.failureReason ? (
+                                  <>
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                                    <span className="text-emerald-400">Çalışan Açıklaması Alındı</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="h-4 w-4 text-red-400" />
+                                    <span className="text-red-400">Açıklama Bekleniyor (Kullanıcı Kilitlendi)</span>
+                                  </>
+                                )}
+                              </span>
+                              {step.failureExplanationAt && (
+                                <span className="text-[10px] text-muted-foreground font-normal">
+                                  {formatDateTime(step.failureExplanationAt)}
+                                </span>
+                              )}
+                            </div>
+
+                            {step.failureReason ? (
+                              <p className="text-neutral-200 whitespace-pre-wrap leading-relaxed text-xs bg-neutral-950/50 p-2.5 rounded-lg border border-neutral-800">
+                                &ldquo;{step.failureReason}&rdquo;
+                              </p>
+                            ) : (
+                              <p className="text-muted-foreground text-[11px] leading-relaxed">
+                                Çalışan henüz bu gecikmeyle ilgili bir açıklama girmedi. Sistem, çalışan bu işe açıklama yazana kadar yeni bir iş tamamlamasını otomatik olarak engellemektedir.
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Footer Action */}
+                          <div className="flex items-center justify-between pt-1 border-t border-neutral-850">
+                            <span className="text-[10px] text-muted-foreground">
+                              {step.responsibilityRole ? `Rol: ${step.responsibilityRole}` : ''}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedDetailInstanceId(inst.id)}
+                              className="text-xs h-7 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 font-bold flex items-center gap-1"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Tüm Süreci İncele →
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-neutral-850 p-12 text-center bg-card/10 backdrop-blur-md max-w-xl mx-auto space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
+                      <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold text-foreground">Vaktinde tamamlanmayan iş bulunmuyor</h3>
+                      <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                        Tüm ekipler iş adımlarını belirlenen teslim tarihleri içerisinde başarıyla ilerletmektedir.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. GECİKEN İŞ ADIMLARI SEKMESİ */}
             {activeTab === 'delayed' && (
               <div className="grid gap-3">
                 {delayedSteps.length > 0 ? (

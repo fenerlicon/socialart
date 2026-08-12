@@ -209,8 +209,13 @@ function ClientPortal() {
             title: r.title,
             description: r.description || '',
             amount: Number(r.amount),
+            kdv_amount: r.kdv_amount !== undefined ? Number(r.kdv_amount) : (r.is_kdv_exempt ? 0 : Number(r.amount) * 0.20),
+            total_amount: r.total_amount !== undefined ? Number(r.total_amount) : (r.is_kdv_exempt ? Number(r.amount) : Number(r.amount) * 1.20),
+            is_kdv_exempt: Boolean(r.is_kdv_exempt),
+            items: Array.isArray(r.items) ? r.items : [],
             status: r.status,
-            created_at: r.created_at
+            created_at: r.created_at,
+            paid_at: r.paid_at
           })).filter(r => {
             if (!targetName && !targetCode) return true;
             const reqName = slugify(r.client_name);
@@ -236,8 +241,13 @@ function ClientPortal() {
             title: r.title,
             description: r.description || '',
             amount: Number(r.amount),
+            kdv_amount: r.kdv_amount !== undefined ? Number(r.kdv_amount) : (r.is_kdv_exempt ? 0 : Number(r.amount) * 0.20),
+            total_amount: r.total_amount !== undefined ? Number(r.total_amount) : (r.is_kdv_exempt ? Number(r.amount) : Number(r.amount) * 1.20),
+            is_kdv_exempt: Boolean(r.is_kdv_exempt),
+            items: Array.isArray(r.items) ? r.items : [],
             status: r.status,
-            created_at: r.created_at
+            created_at: r.created_at,
+            paid_at: r.paid_at
           }));
         }
       } catch (err) {
@@ -291,11 +301,17 @@ function ClientPortal() {
   };
 
   const handlePayRequest = (reqItem) => {
+    const isExempt = Boolean(reqItem.is_kdv_exempt);
+    const grandTotal = reqItem.total_amount || (isExempt ? reqItem.amount : reqItem.amount * 1.20);
     setCheckoutPlan({
       name: reqItem.title,
       price: String(reqItem.amount),
       isCustom: true,
       requestId: reqItem.id,
+      isKdvExempt: isExempt,
+      is_kdv_exempt: isExempt,
+      exactPrice: isExempt,
+      items: reqItem.items || [],
       description: reqItem.description || 'Müşteriye Özel Ödeme Talebi'
     });
     setIsCheckoutOpen(true);
@@ -774,6 +790,9 @@ function ClientPortal() {
                 ) : (
                   paymentRequests.map((reqItem) => {
                     const isPending = reqItem.status === 'pending';
+                    const isExempt = Boolean(reqItem.is_kdv_exempt);
+                    const grandTotal = reqItem.total_amount || (isExempt ? reqItem.amount : reqItem.amount * 1.20);
+                    const hasItems = Array.isArray(reqItem.items) && reqItem.items.length > 0;
 
                     return (
                       <div
@@ -786,7 +805,7 @@ function ClientPortal() {
                         }}
                       >
                       <div className="cp-pay-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-                        <div>
+                        <div style={{ flex: 1, minWidth: '260px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffffff' }}>
                               {reqItem.title}
@@ -802,12 +821,49 @@ function ClientPortal() {
                             }}>
                               {isPending ? '🟡 ÖDEME BEKLİYOR' : '🟢 ÖDENDİ'}
                             </span>
+                            {isExempt && (
+                              <span style={{
+                                fontSize: '0.75rem',
+                                fontWeight: '800',
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                background: 'rgba(16, 185, 129, 0.15)',
+                                color: '#34d399',
+                                border: '1px solid rgba(16, 185, 129, 0.3)'
+                              }}>
+                                🛡️ KDV MUAF
+                              </span>
+                            )}
                           </div>
 
                           {reqItem.description && (
                             <p style={{ margin: '0 0 8px 0', fontSize: '0.88rem', color: '#94a3b8' }}>
                               {reqItem.description}
                             </p>
+                          )}
+
+                          {/* Itemized Breakdown List */}
+                          {hasItems && (
+                            <div style={{
+                              background: 'rgba(0, 0, 0, 0.3)',
+                              borderRadius: '12px',
+                              padding: '10px 14px',
+                              margin: '10px 0',
+                              border: '1px solid rgba(255, 255, 255, 0.05)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}>
+                              <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Hizmet / Masraf Kalemleri ({reqItem.items.length} Kalem)
+                              </div>
+                              {reqItem.items.map((it, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#e2e8f0' }}>
+                                  <span>• {it.title}</span>
+                                  <span style={{ fontWeight: '700', color: '#00e5ff' }}>₺ {Number(it.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                              ))}
+                            </div>
                           )}
 
                           <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
@@ -818,12 +874,14 @@ function ClientPortal() {
 
                         <div className="cp-pay-row-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' }}>NET TUTAR</div>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' }}>
+                              {isExempt ? 'TOPLAM TUTAR' : 'NET TUTAR'}
+                            </div>
                             <div style={{ fontSize: '1.35rem', fontWeight: '900', color: '#00e5ff' }}>
                               ₺ {Number(reqItem.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#a7f3d0', fontWeight: '600' }}>
-                              + %20 KDV (Toplam ₺ {(Number(reqItem.amount) * 1.20).toLocaleString('tr-TR', { minimumFractionDigits: 2 })})
+                            <div style={{ fontSize: '0.72rem', color: isExempt ? '#34d399' : '#a7f3d0', fontWeight: '600' }}>
+                              {isExempt ? '🛡️ %0 KDV Muaf' : `+ %20 KDV (Toplam ₺ ${Number(grandTotal).toLocaleString('tr-TR', { minimumFractionDigits: 2 })})`}
                             </div>
                           </div>
 

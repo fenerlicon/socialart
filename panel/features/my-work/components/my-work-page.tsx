@@ -48,6 +48,7 @@ import {
   Users,
   ArrowRightLeft,
   Bell,
+  AlertTriangle,
 } from 'lucide-react'
 
 export function MyWorkPage() {
@@ -65,7 +66,7 @@ export function MyWorkPage() {
 
   // 2. Active Employee & Tab Selection
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'today' | 'active' | 'pending' | 'completed'>('today')
+  const [activeTab, setActiveTab] = useState<'today' | 'active' | 'uncompleted' | 'pending' | 'completed'>('today')
 
   // 3. Filter States
   const [searchQuery, setSearchQuery] = useState('')
@@ -152,9 +153,22 @@ export function MyWorkPage() {
     return Array.from(new Set(roles)) as string[]
   }, [steps])
 
+  // Helper to check if step is overdue/failed
+  const isStepOverdue = (s: WorkflowStepInstance) => {
+    if (['completed', 'skipped', 'cancelled'].includes(s.status)) return false
+    if (s.status === 'failed') return true
+    if (!s.dueDate) return false
+    return new Date(s.dueDate).getTime() < Date.now()
+  }
+
   // 6. Tab based filtration & metrics for the selected employee
   const employeeSteps = useMemo(() => {
-    if (!currentEmployeeId) return { today: [], active: [], pending: [], completed: [] }
+    if (!currentEmployeeId) return { today: [], active: [], uncompleted: [], pending: [], completed: [] }
+
+    // Tamamlanmayan / Geciken İşler: overdue or failed
+    const uncompleted = steps.filter(
+      (s) => s.assignedEmployeeId === currentEmployeeId && isStepOverdue(s)
+    )
 
     // Bugünkü İşler: active and assigned to employee (no due date or due today/past)
     const today = steps.filter((s) => {
@@ -184,8 +198,16 @@ export function MyWorkPage() {
     )
     const completed = steps.filter((s) => completedStepIds.has(s.id))
 
-    return { today, active, pending, completed }
+    return { today, active, uncompleted, pending, completed }
   }, [steps, history, currentEmployeeId])
+
+  const hasUnexplainedOverdue = useMemo(() => {
+    return employeeSteps.uncompleted.some((s) => !s.failureReason?.trim())
+  }, [employeeSteps.uncompleted])
+
+  const unexplainedCount = useMemo(() => {
+    return employeeSteps.uncompleted.filter((s) => !s.failureReason?.trim()).length
+  }, [employeeSteps.uncompleted])
 
   const pendingHandoffsForMe = useMemo(() => {
     if (!currentEmployeeId) return []
@@ -324,6 +346,7 @@ export function MyWorkPage() {
   const tabConfigs = [
     { id: 'today', label: 'Bugünkü İşler', count: employeeSteps.today.length, icon: <Calendar className="h-4 w-4" /> },
     { id: 'active', label: 'Aktif İşler', count: employeeSteps.active.length, icon: <Play className="h-4 w-4" /> },
+    { id: 'uncompleted', label: 'Tamamlanmayan İşler', count: employeeSteps.uncompleted.length, icon: <AlertTriangle className="h-4 w-4 text-red-400" /> },
     { id: 'pending', label: 'Bekleyenler', count: employeeSteps.pending.length, icon: <Clock className="h-4 w-4" /> },
     { id: 'completed', label: 'Tamamlananlar', count: employeeSteps.completed.length, icon: <CheckCircle2 className="h-4 w-4" /> },
   ] as const
@@ -342,6 +365,32 @@ export function MyWorkPage() {
           </p>
         </div>
       </div>
+
+      {/* Açıklaması Yazılmamış Geciken İş Uyarısı */}
+      {hasUnexplainedOverdue && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 px-5 rounded-2xl border border-red-500/40 bg-red-950/40 backdrop-blur-md shadow-lg shadow-red-950/30 gap-4 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">
+              <AlertTriangle className="h-5 w-5 animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-extrabold text-red-300 flex items-center gap-2">
+                ⚠️ Açıklaması Yazılmamış Geciken İşiniz Var ({unexplainedCount} Adet)
+              </h4>
+              <p className="text-xs text-neutral-300 leading-relaxed max-w-2xl">
+                Vaktinde teslim edilemeyen iş adımlarınız bulunmaktadır. Sistem kuralları gereği, yeni bir işi tamamlayabilmek için geciken işlerinize açıklama yazmanız zorunludur.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => setActiveTab('uncompleted')}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-9 px-4 rounded-xl shrink-0 shadow-md shadow-red-500/20"
+          >
+            Geciken İşlere Açıklama Yaz →
+          </Button>
+        </div>
+      )}
 
       {/* Okunmamış Bildirim Özeti */}
       {unreadNotificationsCount > 0 && (
@@ -368,13 +417,20 @@ export function MyWorkPage() {
       )}
 
       {/* İstatistik Kartları */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <MyWorkStatCard
           title="Aktif İşler"
           value={employeeSteps.active.length}
           icon={<Play className="h-4.5 w-4.5" />}
           description="Size atanmış yayındaki aktif adımlar"
           colorClass="text-blue-500 bg-blue-500/10 border-blue-500/20"
+        />
+        <MyWorkStatCard
+          title="Tamamlanmayanlar"
+          value={employeeSteps.uncompleted.length}
+          icon={<AlertTriangle className="h-4.5 w-4.5" />}
+          description="Vakti geçmiş veya geciken işler"
+          colorClass="text-red-500 bg-red-500/10 border-red-500/20"
         />
         <MyWorkStatCard
           title="Bugün Teslim"
@@ -422,6 +478,7 @@ export function MyWorkPage() {
         <div className="flex flex-wrap -mb-px gap-1">
           {tabConfigs.map((tab) => {
             const isActive = activeTab === tab.id
+            const isUncompletedTab = tab.id === 'uncompleted'
             return (
               <button
                 key={tab.id}
@@ -430,7 +487,9 @@ export function MyWorkPage() {
                 className={cn(
                   'inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all duration-200 focus:outline-none',
                   isActive
-                    ? 'border-blue-500 text-blue-400 bg-blue-500/[0.02]'
+                    ? isUncompletedTab
+                      ? 'border-red-500 text-red-400 bg-red-500/[0.02]'
+                      : 'border-blue-500 text-blue-400 bg-blue-500/[0.02]'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-neutral-800'
                 )}
               >
@@ -440,7 +499,13 @@ export function MyWorkPage() {
                   variant="outline"
                   className={cn(
                     'px-1.5 py-0 rounded-full text-[9px] font-extrabold ml-1 border',
-                    isActive ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' : 'bg-muted/30 text-muted-foreground border-neutral-800'
+                    isActive
+                      ? isUncompletedTab
+                        ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                        : 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                      : isUncompletedTab && tab.count > 0
+                      ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                      : 'bg-muted/30 text-muted-foreground border-neutral-800'
                   )}
                 >
                   {tab.count}
@@ -481,6 +546,7 @@ export function MyWorkPage() {
                 cycleLabel={cycleLabel}
                 currentEmployeeId={currentEmployeeId}
                 employees={employees}
+                hasUnexplainedOverdue={hasUnexplainedOverdue}
                 onActionSuccess={handleActionSuccess}
               />
             )
@@ -499,6 +565,8 @@ export function MyWorkPage() {
               ? 'Bugün teslim edilecek veya size atanmış yayında aktif bir iş bulunmuyor.'
               : activeTab === 'active'
               ? 'Size atanmış yayında aktif bir iş adımı bulunmuyor.'
+              : activeTab === 'uncompleted'
+              ? 'Harika! Şu anda vaktinde tamamlanmayan gecikmiş hiçbir işiniz bulunmuyor.'
               : activeTab === 'pending'
               ? 'Öncelikli adımların tamamlanmasını bekleyen bir işiniz bulunmuyor.'
               : 'Daha önce bizzat tamamladığınız veya aksiyon aldığınız bir iş adımı kaydı bulunmuyor.'

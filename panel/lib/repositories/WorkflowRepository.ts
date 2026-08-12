@@ -73,6 +73,8 @@ export const WorkflowRepository = {
       supportEmployeeIds: typeof row.support_employee_ids === 'string'
         ? JSON.parse(row.support_employee_ids)
         : (row.support_employee_ids || []),
+      failureReason: row.failure_reason || undefined,
+      failureExplanationAt: row.failure_explanation_at || undefined,
     }
   },
 
@@ -100,9 +102,8 @@ export const WorkflowRepository = {
     if (step.approvalId !== undefined) row.approval_id = step.approvalId
     if (step.approvalStatus !== undefined) row.approval_status = step.approvalStatus
     if (step.submittedForApprovalAt !== undefined) row.submitted_for_approval_at = step.submittedForApprovalAt
-    // Omit reviewer_employee_id and support_employee_ids as they are missing in the remote Supabase schema cache
-    // if (step.reviewerEmployeeId !== undefined) row.reviewer_employee_id = step.reviewerEmployeeId
-    // if (step.supportEmployeeIds !== undefined) row.support_employee_ids = JSON.stringify(step.supportEmployeeIds)
+    if (step.failureReason !== undefined) row.failure_reason = step.failureReason
+    if (step.failureExplanationAt !== undefined) row.failure_explanation_at = step.failureExplanationAt
     return row
   },
 

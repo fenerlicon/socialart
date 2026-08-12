@@ -70,7 +70,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       }
     }
     loadData()
-  }, [pathname])
+  }, [pathname, router])
 
   const activeEmployee = useMemo(() => {
     return employees.find((e) => e.id === currentEmployeeId)

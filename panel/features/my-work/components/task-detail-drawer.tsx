@@ -77,6 +77,8 @@ export function TaskDetailDrawer({
         return { label: 'Geçildi', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/25', icon: <Clock className="h-4 w-4 text-amber-500" /> }
       case 'cancelled':
         return { label: 'İptal Edildi', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/25', icon: <AlertTriangle className="h-4 w-4 text-rose-500" /> }
+      case 'failed':
+        return { label: 'Tamamlanamadı / Gecikti', color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/40', icon: <AlertTriangle className="h-4 w-4 text-red-500" /> }
       case 'pending':
       default:
         return { label: 'Bekleniyor', color: 'text-neutral-400', bg: 'bg-neutral-500/10 border-neutral-800', icon: <Clock className="h-4 w-4 text-neutral-500" /> }
@@ -289,6 +291,27 @@ export function TaskDetailDrawer({
               </div>
             </div>
           </section>
+
+          {/* --- Gecikme / Tamamlanamama Açıklaması --- */}
+          {step.failureReason && (
+            <section className="space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-400 flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Gecikme / Tamamlanamama Açıklaması
+              </h3>
+              <div className="bg-rose-950/20 border border-rose-500/30 rounded-xl p-4 space-y-2">
+                <p className="text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap font-medium">
+                  {step.failureReason}
+                </p>
+                {step.failureExplanationAt && (
+                  <div className="text-[10px] text-muted-foreground border-t border-rose-500/15 pt-2 flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 text-rose-400" />
+                    İletilme Tarihi: <span className="font-semibold text-rose-300">{formatDateTime(step.failureExplanationAt)}</span>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* --- İş Akışı Briefi --- */}
           {(briefFromSibling?.briefDetails || briefFromSibling?.deliveryNote || parsedDesc.briefDetails) && (

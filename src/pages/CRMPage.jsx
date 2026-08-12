@@ -544,6 +544,26 @@ export default function CRMPage({ embedded = false }) {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // URL Param Handler (pipeline, filter, leadId)
+    try {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pipelineParam = urlParams.get('pipeline');
+        const viewParam = urlParams.get('view');
+        const filterParam = urlParams.get('filter');
+        const stageParam = urlParams.get('stage');
+
+        if (pipelineParam && (pipelineParam === 'PRODUCTION' || pipelineParam === 'SOCIAL_MEDIA')) {
+          setCurrentPipeline(pipelineParam);
+        }
+        if (viewParam && ['KANBAN', 'LIST', 'ANALYTICS'].includes(viewParam.toUpperCase())) {
+          setCurrentView(viewParam.toUpperCase());
+        }
+      }
+    } catch (e) {
+      console.warn('URL param parse error:', e);
+    }
+
     return () => {
       supabaseLeads.removeChannel(channel);
       document.removeEventListener('visibilitychange', handleVisibilityChange);

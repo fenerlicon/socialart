@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { User, ArrowRight, BarChart3, Film, Share2, AlertCircle, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { supabase } from '@/lib/supabase/client'
+import { supabaseLeads } from '@/lib/supabase/client'
 
 interface RecentItemsCardProps {
   brands: Brand[]
@@ -16,27 +16,15 @@ interface RecentItemsCardProps {
 }
 
 interface LeadItem {
-  id: string
+  id: string | number
+  name?: string
   pipeline?: string
   service?: string
   stage?: string
   status?: string
   durum?: string
+  created_at?: string
 }
-
-// Default Fallback Initial Leads for Dashboard Metrics when DB is empty
-const DEFAULT_FALLBACK_LEADS: LeadItem[] = [
-  { id: '1', pipeline: 'PRODUCTION', service: 'Tanıtım Filmi', stage: 'NEW' },
-  { id: '2', pipeline: 'PRODUCTION', service: 'Reklam Çekimi', stage: 'CONTACTED' },
-  { id: '3', pipeline: 'PRODUCTION', service: 'Lansman Filmi', stage: 'PROPOSAL_SENT' },
-  { id: '4', pipeline: 'PRODUCTION', service: 'Ürün Çekimi', stage: 'WAITING' },
-  { id: '5', pipeline: 'PRODUCTION', service: 'Katalog Çekimi', stage: 'WON' },
-  { id: '6', pipeline: 'SOCIAL_MEDIA', service: 'Sosyal Medya Yönetimi', stage: 'NEW' },
-  { id: '7', pipeline: 'SOCIAL_MEDIA', service: 'Meta Ads Yönetimi', stage: 'WAITING' },
-  { id: '8', pipeline: 'SOCIAL_MEDIA', service: 'SEO & GEO Optimizasyonu', stage: 'PROPOSAL_SENT' },
-  { id: '9', pipeline: 'SOCIAL_MEDIA', service: 'UGC & Influencer Marketing', stage: 'WON' },
-  { id: '10', pipeline: 'SOCIAL_MEDIA', service: 'Performans Pazarlama', stage: 'NEW' },
-]
 
 export function RecentItemsCard({ employees }: RecentItemsCardProps) {
   const [leads, setLeads] = useState<LeadItem[]>([])
@@ -45,30 +33,26 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
   useEffect(() => {
     async function fetchLeads() {
       try {
-        const { data, error } = await supabase.from('leads').select('*')
+        const { data, error } = await supabaseLeads
+          .from('leads')
+          .select('*')
+          .order('created_at', { ascending: false })
+
         if (!error && data && data.length > 0) {
           setLeads(data)
         } else {
-          // Fallback to localStorage or DEFAULT_FALLBACK_LEADS
-          let localLeads: LeadItem[] = []
+          // Fallback to localStorage if offline
           try {
             const stored = localStorage.getItem('ajans_leads') || localStorage.getItem('socialart_crm_leads')
             if (stored) {
-              localLeads = JSON.parse(stored)
+              setLeads(JSON.parse(stored))
             }
           } catch (e) {
             console.warn('LocalStorage parse error for leads:', e)
           }
-
-          if (localLeads && localLeads.length > 0) {
-            setLeads(localLeads)
-          } else {
-            setLeads(DEFAULT_FALLBACK_LEADS)
-          }
         }
       } catch (err) {
         console.error('Failed to fetch CRM leads for dashboard metrics:', err)
-        setLeads(DEFAULT_FALLBACK_LEADS)
       } finally {
         setLoadingLeads(false)
       }
@@ -76,16 +60,18 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
     fetchLeads()
   }, [])
 
-  // Calculate CRM Lead Metrics
+  // Calculate CRM Lead Metrics from Real DB
   const metrics = useMemo(() => {
     let prodWaiting = 0
     let smWaiting = 0
     let uncontacted = 0
     let won = 0
 
-    leads.forEach((l) => {
-      const rawStage = String(l.stage || l.status || l.durum || '').trim()
-      const stageUpper = rawStage.toUpperCase()
+    const activeLeads = leads.filter(l => l.status !== 'ARŞİV' && l.stage !== 'ARCHIVED')
+
+    activeLeads.forEach((l) => {
+      const rawStage = String(l.stage || '').trim().toUpperCase()
+      const rawStatus = String(l.status || l.durum || '').trim()
       const pipelineUpper = String(l.pipeline || '').toUpperCase()
       const serviceLower = String(l.service || '').toLowerCase()
 
@@ -96,23 +82,24 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
         serviceLower.includes('çekim') ||
         serviceLower.includes('production')
 
-      // 1. Temassız Lead
+      // 1. Temassız Lead (Yeni gelenler)
       if (
-        stageUpper === 'NEW' ||
-        rawStage === 'Geldi (Yeni Lead)' ||
-        rawStage === 'Yeni' ||
-        rawStage === 'Sıcak'
+        rawStage === 'NEW' ||
+        rawStage === 'HOT' ||
+        rawStatus === 'Geldi (Yeni Lead)' ||
+        rawStatus === 'Yeni' ||
+        rawStatus === 'Sıcak'
       ) {
         uncontacted++
       }
 
       // 2. Teklif Bekleyenler / Teklif İletildi
       if (
-        stageUpper === 'WAITING' ||
-        stageUpper === 'PROPOSAL_SENT' ||
-        rawStage.includes('Teklif') ||
-        rawStage.includes('Katalog') ||
-        rawStage.includes('Bekliyor')
+        rawStage === 'WAITING' ||
+        rawStage === 'PROPOSAL_SENT' ||
+        rawStatus.includes('Teklif') ||
+        rawStatus.includes('Katalog') ||
+        rawStatus.includes('Bekliyor')
       ) {
         if (isProd) prodWaiting++
         else smWaiting++
@@ -120,16 +107,17 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
 
       // 3. Kazanılan Müşteriler
       if (
-        stageUpper === 'WON' ||
-        rawStage.includes('Kazanıldı') ||
-        rawStage.includes('Aktif')
+        rawStage === 'WON' ||
+        rawStatus.includes('Anlaş') ||
+        rawStatus.includes('Kazanıldı') ||
+        rawStatus.includes('Aktif')
       ) {
         won++
       }
     })
 
     return {
-      total: leads.length,
+      total: activeLeads.length,
       prodWaiting,
       smWaiting,
       uncontacted,
@@ -162,12 +150,12 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
               </p>
             </div>
           </div>
-          <Link
-            href="/admin/crm"
-            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all whitespace-nowrap"
+          <a
+            href="/admin/crm?tab=potansiyel&filter=new"
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
           >
-            Müşterileri İncele ({metrics.uncontacted})
-          </Link>
+            Müşterileri İncele ({metrics.uncontacted}) <ArrowRight className="w-3.5 h-3.5" />
+          </a>
         </div>
       )}
 
@@ -175,13 +163,23 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
         {/* CRM & Lead Metrikleri */}
         <Card className="rounded-2xl border bg-card/40 shadow-sm backdrop-blur-md overflow-hidden hover:border-neutral-800 transition-colors">
           <CardHeader className="border-b border-neutral-800/40 pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
-              <BarChart3 className="text-indigo-400 h-4 w-4" />
-              CRM & Lead Metrikleri
-            </CardTitle>
-            <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-extrabold">
-              Canlı CRM
-            </Badge>
+            <a
+              href="/admin/crm?tab=potansiyel"
+              className="flex items-center gap-2 group cursor-pointer"
+            >
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 group-hover:text-indigo-400 transition-colors">
+                <BarChart3 className="text-indigo-400 h-4 w-4" />
+                CRM & Lead Metrikleri
+              </CardTitle>
+            </a>
+            <a
+              href="/admin/crm?tab=potansiyel"
+              className="cursor-pointer"
+            >
+              <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-extrabold hover:bg-indigo-500/20 transition-colors">
+                Canlı CRM →
+              </Badge>
+            </a>
           </CardHeader>
           <CardContent className="p-4 space-y-3">
             {loadingLeads ? (
@@ -191,64 +189,93 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {/* Prodüksiyon Teklif Bekleyenler */}
-                <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/15 space-y-1">
+                <a
+                  href="/admin/crm?tab=potansiyel&pipeline=PRODUCTION&filter=proposal"
+                  className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/15 space-y-1 hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all cursor-pointer block group"
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
                       <Film className="w-3 h-3 text-indigo-400" />
                       Prodüksiyon
                     </span>
-                    <Badge className="bg-indigo-500/20 text-indigo-300 text-[10px] font-black border-none px-1.5 py-0">
+                    <Badge className="bg-indigo-500/20 text-indigo-300 text-[10px] font-black border-none px-1.5 py-0 group-hover:bg-indigo-500/30">
                       {metrics.prodWaiting}
                     </Badge>
                   </div>
-                  <p className="text-xs font-bold text-foreground mt-1">Teklif Bekleyenler</p>
+                  <p className="text-xs font-bold text-foreground mt-1 flex items-center justify-between">
+                    Teklif Bekleyenler
+                    <ArrowRight className="w-3 h-3 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </p>
                   <p className="text-[9px] text-muted-foreground">Karar veya onay aşamasında</p>
-                </div>
+                </a>
 
                 {/* Sosyal Medya Teklif Bekleyenler */}
-                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-1">
+                <a
+                  href="/admin/crm?tab=potansiyel&pipeline=SOCIAL_MEDIA&filter=proposal"
+                  className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-1 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all cursor-pointer block group"
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1">
                       <Share2 className="w-3 h-3 text-purple-400" />
                       Sosyal Medya
                     </span>
-                    <Badge className="bg-purple-500/20 text-purple-300 text-[10px] font-black border-none px-1.5 py-0">
+                    <Badge className="bg-purple-500/20 text-purple-300 text-[10px] font-black border-none px-1.5 py-0 group-hover:bg-purple-500/30">
                       {metrics.smWaiting}
                     </Badge>
                   </div>
-                  <p className="text-xs font-bold text-foreground mt-1">Teklif Bekleyenler</p>
+                  <p className="text-xs font-bold text-foreground mt-1 flex items-center justify-between">
+                    Teklif Bekleyenler
+                    <ArrowRight className="w-3 h-3 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </p>
                   <p className="text-[9px] text-muted-foreground">Paket / bütçe incelemede</p>
-                </div>
+                </a>
 
                 {/* Temasa Geçilmeyen Lead'ler */}
-                <div className={cn("p-3 rounded-xl border space-y-1 transition-all", metrics.uncontacted > 0 ? "bg-rose-500/10 border-rose-500/30 animate-pulse" : "bg-neutral-900/40 border-neutral-800")}>
+                <a
+                  href="/admin/crm?tab=potansiyel&filter=new"
+                  className={cn(
+                    "p-3 rounded-xl border space-y-1 transition-all cursor-pointer block group",
+                    metrics.uncontacted > 0
+                      ? "bg-rose-500/10 border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50"
+                      : "bg-neutral-900/40 border-neutral-800 hover:border-neutral-700"
+                  )}
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider flex items-center gap-1">
                       <AlertCircle className="w-3 h-3 text-rose-400" />
                       Temassız Lead
                     </span>
-                    <Badge className="bg-rose-500/30 text-rose-200 text-[10px] font-black border-none px-1.5 py-0">
+                    <Badge className="bg-rose-500/30 text-rose-200 text-[10px] font-black border-none px-1.5 py-0 group-hover:bg-rose-500/40">
                       {metrics.uncontacted}
                     </Badge>
                   </div>
-                  <p className="text-xs font-bold text-rose-300 mt-1">Görüşülmeyen Adaylar</p>
+                  <p className="text-xs font-bold text-rose-300 mt-1 flex items-center justify-between">
+                    Görüşülmeyen Adaylar
+                    <ArrowRight className="w-3 h-3 text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </p>
                   <p className="text-[9px] text-rose-300/80">Acil iletişim kurulmalı</p>
-                </div>
+                </a>
 
                 {/* Kazanılan Müşteriler & Toplam */}
-                <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-1">
+                <a
+                  href="/admin/crm?tab=potansiyel&filter=won"
+                  className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-1 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all cursor-pointer block group"
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
                       <Trophy className="w-3 h-3 text-emerald-400" />
                       Kazanılan
                     </span>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black border-none px-1.5 py-0">
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black border-none px-1.5 py-0 group-hover:bg-emerald-500/30">
                       {metrics.won}
                     </Badge>
                   </div>
-                  <p className="text-xs font-bold text-foreground mt-1">Sözleşmeli Müşteri</p>
-                  <p className="text-[9px] text-muted-foreground">Toplam Lead: {metrics.total}</p>
-                </div>
+                  <p className="text-xs font-bold text-foreground mt-1 flex items-center justify-between">
+                    Sözleşmeli Müşteri
+                    <ArrowRight className="w-3 h-3 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">Toplam Aktif Lead: {metrics.total}</p>
+                </a>
               </div>
             )}
           </CardContent>

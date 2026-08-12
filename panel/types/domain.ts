@@ -421,6 +421,7 @@ export type WorkflowStepInstanceStatus =
   | 'completed'
   | 'skipped'
   | 'cancelled'
+  | 'failed'
 
 export interface WorkflowStepInstance {
   id: string
@@ -447,6 +448,8 @@ export interface WorkflowStepInstance {
   submittedForApprovalAt?: string
   reviewerEmployeeId?: string
   supportEmployeeIds?: string[]
+  failureReason?: string
+  failureExplanationAt?: string
 }
 
 // ---------------------------------------------------------------------------
