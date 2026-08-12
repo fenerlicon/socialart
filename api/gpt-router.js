@@ -22,16 +22,21 @@ const EMPLOYEE_MAP = {
 
 function parseCalendarDateTime(dateStr, timeStr) {
   try {
-    let year = 2026, month = 8, day = 11;
-    let hour = 21, minute = 0;
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth() + 1;
+    let day = now.getDate();
+    let hour = 12, minute = 0;
 
-    if (timeStr && timeStr.includes(':')) {
-      const parts = timeStr.split(':');
-      hour = parseInt(parts[0], 10) || 21;
-      minute = parseInt(parts[1], 10) || 0;
-    }
-
-    if (dateStr) {
+    const lowerDate = (dateStr || '').toLowerCase().trim();
+    if (lowerDate === 'bugün' || lowerDate === 'bugun' || lowerDate === 'today') {
+      // today
+    } else if (lowerDate === 'yarın' || lowerDate === 'yarin' || lowerDate === 'tomorrow') {
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      year = tomorrow.getFullYear();
+      month = tomorrow.getMonth() + 1;
+      day = tomorrow.getDate();
+    } else if (dateStr) {
       if (dateStr.includes('-')) {
         const parts = dateStr.split('-');
         if (parts[0].length === 4) {
@@ -49,10 +54,29 @@ function parseCalendarDateTime(dateStr, timeStr) {
         month = parseInt(parts[1], 10);
         year = parseInt(parts[2], 10);
         if (year < 100) year += 2000;
+      } else if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        year = parseInt(parts[2], 10);
+        if (year < 100) year += 2000;
       }
     }
 
-    const d = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+    if (timeStr) {
+      const cleanTime = String(timeStr).replace('.', ':').trim();
+      if (cleanTime.includes(':')) {
+        const parts = cleanTime.split(':');
+        hour = parseInt(parts[0], 10) || 12;
+        minute = parseInt(parts[1], 10) || 0;
+      } else if (!isNaN(parseInt(cleanTime, 10))) {
+        hour = parseInt(cleanTime, 10);
+      }
+    }
+
+    // Istanbul is UTC+3. To convert local Istanbul time (year, month, day, hour, minute) to UTC:
+    const utcHour = hour - 3;
+    const d = new Date(Date.UTC(year, month - 1, day, utcHour, minute, 0));
     const startsAt = d.toISOString();
     const dEnd = new Date(d.getTime() + 3600000);
     const endsAt = dEnd.toISOString();
@@ -71,19 +95,36 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-api-key'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-api-key, api-key, apikey'
   );
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // API Key check
-  const apiKey = req.headers['x-api-key'] || req.query.api_key;
+  // API Key check (Support: x-api-key, Authorization: Bearer, api-key, apikey, query parameter, body)
+  const authHeader = req.headers['authorization'] || '';
+  const bearerToken = authHeader.toLowerCase().startsWith('bearer ')
+    ? authHeader.substring(7).trim()
+    : authHeader.trim();
+
+  const apiKey =
+    req.headers['x-api-key'] ||
+    req.headers['api-key'] ||
+    req.headers['apikey'] ||
+    bearerToken ||
+    req.query.api_key ||
+    req.query.apiKey ||
+    (req.body && (req.body.api_key || req.body.apiKey));
+
   const expectedKey = process.env.GPT_API_KEY || 'socialart-gpt-secret-2026';
 
-  if (apiKey !== expectedKey) {
-    return res.status(401).json({ error: 'Yetkisiz erişim. Lütfen geçerli x-api-key başlığını gönderin.' });
+  if (!apiKey || apiKey !== expectedKey) {
+    return res.status(401).json({
+      error: 'UNAUTHORIZED',
+      message: 'Yetkisiz erişim. Lütfen geçerli API anahtarı (x-api-key veya Bearer token) gönderin.',
+      hint: 'API anahtarı olarak socialart-gpt-secret-2026 kullanabilirsiniz.'
+    });
   }
 
   // Parse path action
@@ -573,27 +614,36 @@ async function handleCalendar(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { title, brand_name, date, time, location, event_type, notes } = req.body || {};
+    const { title, brand_name, date, time, location, event_type, notes, assignee, employee } = req.body || {};
+
+    const effectiveTitle = (title && title.trim()) || (brand_name && brand_name.trim()) || 'Etkinlik';
+    const effectiveBrand = (brand_name && brand_name.trim()) || effectiveTitle;
+
     const missingFields = [];
-    if (!title || !title.trim()) missingFields.push('Başlık (title)');
-    if (!brand_name || !brand_name.trim()) missingFields.push('Marka Adı (brand_name)');
-    if (!date || !date.trim()) missingFields.push('Tarih (date)');
-    if (!time || !time.trim()) missingFields.push('Saat (time)');
+    if (!effectiveTitle) missingFields.push('Başlık (title)');
+    if (!date || !String(date).trim()) missingFields.push('Tarih (date)');
+    if (!time || !String(time).trim()) missingFields.push('Saat (time)');
 
     if (missingFields.length > 0) {
       return res.status(400).json({ error: 'MISSING_REQUIRED_FIELDS', message: `Eksik zorunlu alanlar var: ${missingFields.join(', ')}.` });
     }
 
+    const assigneeKey = (assignee || employee || 'furkan').toLowerCase().trim();
+    const matchedEmployee = EMPLOYEE_MAP[assigneeKey] || EMPLOYEE_MAP.furkan;
+
     const nowIso = new Date().toISOString();
     const eventId = `CAL-${Date.now()}`;
-    const { startsAt, endsAt } = parseCalendarDateTime(date.trim(), time.trim());
+    const { startsAt, endsAt } = parseCalendarDateTime(String(date).trim(), String(time).trim());
 
     // 1. Insert into REAL calendar_events table
+    const eventTitle = effectiveBrand === effectiveTitle ? effectiveTitle : `${effectiveBrand} - ${effectiveTitle}`;
+    const isMeeting = (event_type && event_type.toLowerCase().includes('toplantı')) || effectiveTitle.toLowerCase().includes('toplantı');
+
     const calEventRecord = {
       id: eventId,
-      title: `${brand_name.trim()} - ${title.trim()}`,
-      type: (event_type && event_type.toLowerCase().includes('toplantı')) || title.toLowerCase().includes('toplantı') ? 'meeting' : 'shoot',
-      employee_id: '26fff081-5502-4624-a71a-b6e4772467c3', // Furkan
+      title: eventTitle,
+      type: isMeeting ? 'meeting' : 'shoot',
+      employee_id: matchedEmployee.id,
       starts_at: startsAt,
       ends_at: endsAt,
       location: location || 'Ajans Stüdyosu',
@@ -605,10 +655,10 @@ async function handleCalendar(req, res) {
     // 2. Also Insert into notifications for employee popups
     const notifRecord = {
       id: eventId,
-      recipient_employee_id: '26fff081-5502-4624-a71a-b6e4772467c3', // Furkan
+      recipient_employee_id: matchedEmployee.id,
       type: 'calendar_event',
       title: `📅 Takvim Etkinliği: ${calEventRecord.title}`,
-      message: JSON.stringify({ ...calEventRecord, brand_name: brand_name.trim(), date: date.trim(), time: time.trim(), notes: notes || '' }),
+      message: JSON.stringify({ ...calEventRecord, brand_name: effectiveBrand, date: String(date).trim(), time: String(time).trim(), notes: notes || '' }),
       related_entity_type: 'calendar',
       related_entity_id: eventId,
       is_read: false,

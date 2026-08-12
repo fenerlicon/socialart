@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AlertCircle, Lock, ShieldAlert } from 'lucide-react';
-import '../crm-tailwind.css';
+import { AlertCircle, Lock, ShieldAlert, Search } from 'lucide-react';
 import { supabase, supabaseLeads } from '../lib/supabase';
 import { Header } from '../crm/components/Header';
 import { KanbanBoard } from '../crm/components/KanbanBoard';
@@ -365,9 +364,12 @@ export default function CRMPage({ embedded = false }) {
 
   const [currentView, setCurrentView] = useState(() => {
     try {
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        return 'LIST';
+      }
       return localStorage.getItem('socialart_crm_active_view') || 'KANBAN';
     } catch {
-      return 'KANBAN';
+      return 'LIST';
     }
   });
 
@@ -1096,6 +1098,7 @@ export default function CRMPage({ embedded = false }) {
 
       {/* CRM Header */}
       <Header
+        embedded={embedded}
         currentPipeline={currentPipeline}
         onPipelineChange={handlePipelineTabChange}
         currentView={currentView}
@@ -1113,7 +1116,98 @@ export default function CRMPage({ embedded = false }) {
         stats={stats}
       />
 
- 
+      {/* Mobile Main CRM Controls Bar (< md) */}
+      <div className="md:hidden p-3 bg-slate-950 border-b border-slate-800/80 space-y-3">
+        {/* Row 1: Pipeline Switcher & + Lead Button */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold flex-1">
+            <button
+              onClick={() => handlePipelineTabChange('PRODUCTION')}
+              className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                currentPipeline === 'PRODUCTION'
+                  ? 'bg-purple-600 text-white font-black shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🎬 Prodüksiyon
+            </button>
+            <button
+              onClick={() => handlePipelineTabChange('SOCIAL_MEDIA')}
+              className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                currentPipeline === 'SOCIAL_MEDIA'
+                  ? 'bg-purple-600 text-white font-black shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              📱 Sosyal Medya
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsNewLeadModalOpen(true)}
+            className="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs rounded-xl shadow-lg active:scale-95 transition-all shrink-0"
+          >
+            + Ekle
+          </button>
+        </div>
+
+        {/* Row 2: 2x2 Compact Metric Cards */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Toplam Potansiyel</span>
+            <span className="text-sm font-black text-white mt-0.5 block">{stats.totalLeads} Lead</span>
+          </div>
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Yeni Gelenler</span>
+            <span className="text-sm font-black text-cyan-400 mt-0.5 block">{stats.newCount} Lead</span>
+          </div>
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kazanılan (Won)</span>
+            <span className="text-sm font-black text-emerald-400 mt-0.5 block">
+              {leads.filter(l => l.stage === 'WON' || l.stage === 'CLOSED').length} Marka
+            </span>
+          </div>
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Portföy Hacmi</span>
+            <span className="text-sm font-black text-purple-400 mt-0.5 block">
+              ₺{stats.totalPipelineValue.toLocaleString('tr-TR')}
+            </span>
+          </div>
+        </div>
+
+        {/* Row 3: Search Bar & View Mode Switcher (Pano / Liste) */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Müşteri veya tel ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 text-slate-100 text-xs rounded-xl pl-8 pr-3 py-2 outline-none focus:border-purple-500"
+            />
+          </div>
+
+          <div className="flex bg-slate-900 p-0.5 rounded-xl border border-slate-800 text-xs font-bold shrink-0">
+            <button
+              onClick={() => handleViewTabChange('KANBAN')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs transition-all ${
+                currentView === 'KANBAN' ? 'bg-purple-600 text-white font-black' : 'text-slate-400'
+              }`}
+            >
+              Pano
+            </button>
+            <button
+              onClick={() => handleViewTabChange('LIST')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs transition-all ${
+                currentView === 'LIST' ? 'bg-purple-600 text-white font-black' : 'text-slate-400'
+              }`}
+            >
+              Liste
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Body */}
       <main className="flex-1">

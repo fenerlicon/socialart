@@ -150,7 +150,7 @@ export const ListView: React.FC<ListViewProps> = ({
       </div>
 
       {/* Mobile Lead Card Feed (Visible on screens < md) */}
-      <div className="md:hidden space-y-3 pb-32">
+      <div className="md:hidden space-y-2 px-1 pb-[calc(120px+env(safe-area-inset-bottom))]">
         {sortedLeads.length === 0 ? (
           <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-500 text-xs">
             Seçilen filtrelere uygun müşteri bulunamadı.
@@ -162,107 +162,49 @@ export const ListView: React.FC<ListViewProps> = ({
             const budget = isProduction
               ? lead.productionDetails?.budget
               : lead.socialMediaDetails?.monthlyBudget;
-            const cleanPhone = lead.phone ? lead.phone.replace(/[^0-9]/g, '') : '';
+            const cleanPhone = lead.phone ? String(lead.phone).replace(/[^0-9]/g, '') : '';
 
             return (
               <div
                 key={lead.id}
                 onClick={() => onSelectLead(lead)}
-                className="bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 p-4 rounded-2xl space-y-3 transition-all shadow-lg active:scale-[0.99] cursor-pointer"
+                className="bg-slate-900/90 hover:bg-slate-900 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between gap-3 active:scale-[0.99] transition-all cursor-pointer shadow-md"
               >
-                {/* Header Row: Title & Priority */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 leading-snug break-words">
-                      <span>{lead.title}</span>
-                      {lead.priority === 'URGENT' && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 font-extrabold shrink-0">
-                          🔥 ACİL
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>👤 {lead.contactName}</span>
-                      {lead.city && <span>• 📍 {lead.city}</span>}
-                    </p>
-                  </div>
-
-                  {/* Source Badge */}
-                  <div className="shrink-0">
-                    {lead.source === 'META_ADS' && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        ⚡ Meta Ads
-                      </span>
-                    )}
-                    {lead.source === 'WEBSITE' && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                        🌐 Web Formu
-                      </span>
-                    )}
-                    {lead.source === 'MANUAL' && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                        👤 Manuel
-                      </span>
-                    )}
-                  </div>
+                {/* Avatar / Initial */}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-900/80 to-slate-900 border border-purple-500/30 flex items-center justify-center font-black text-sm text-purple-300 shrink-0 shadow-inner">
+                  {(String(lead.title || 'M')).charAt(0).toUpperCase()}
                 </div>
 
-                {/* Details & Budget Box */}
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 flex items-center justify-between gap-2 text-xs">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">HİZMET / DETAY</span>
-                    <span className="font-semibold text-slate-300">
-                      {isProduction
-                        ? lead.productionDetails?.projectType || 'Prodüksiyon'
-                        : lead.socialMediaDetails?.industry || 'Sosyal Medya'}
+                {/* Main Content */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  {/* Top Row: Title + Stage/Source Pill */}
+                  <div className="flex items-center justify-between gap-1.5">
+                    <h3 className="font-extrabold text-xs text-white truncate leading-tight">
+                      {lead.title}
+                    </h3>
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${stageObj?.badgeBg || 'bg-slate-800 text-slate-300'}`}>
+                      {stageObj?.label || lead.stage}
                     </span>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">BÜTÇE</span>
+                  {/* Subtitle Row: Contact / Category & Budget */}
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
+                    <span className="truncate">
+                      {lead.contactName || lead.company || 'Müşteri'} • {isProduction ? (lead.productionDetails?.projectType || 'Prodüksiyon') : (lead.socialMediaDetails?.industry || 'Sosyal Medya')}
+                    </span>
                     {budget && budget > 0 ? (
-                      <span className="font-black text-emerald-400 text-sm">
+                      <span className="font-black text-emerald-400 text-xs shrink-0">
                         ₺{budget.toLocaleString('tr-TR')}
-                        {!isProduction && <span className="text-[10px] text-slate-500 font-normal">/ay</span>}
                       </span>
                     ) : (
-                      <span className="text-[11px] text-slate-500 italic">Belirtilmedi</span>
+                      <span className="text-[10px] text-slate-500 italic shrink-0">Bütçe yok</span>
                     )}
                   </div>
                 </div>
 
-                {/* Quick Actions Row */}
-                <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
-                  {/* Phone direct call button */}
-                  {cleanPhone ? (
-                    <a
-                      href={`tel:${cleanPhone}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all shrink-0"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                      <span>Ara</span>
-                    </a>
-                  ) : null}
-
-                  {/* Quick Stage Dropdown */}
-                  <select
-                    value={lead.stage}
-                    onChange={(e) => onStageChange(lead.id, e.target.value as StageId)}
-                    className={`border text-xs rounded-xl px-2 py-1.5 font-bold cursor-pointer outline-none bg-slate-950 flex-1 min-w-0 ${stageObj?.badgeBg || 'bg-slate-800 text-slate-300 border-slate-700'}`}
-                  >
-                    {STAGES.map(s => (
-                      <option key={s.id} value={s.id}>{s.label}</option>
-                    ))}
-                  </select>
-
-                  {/* Detail Button */}
-                  <button
-                    onClick={() => onSelectLead(lead)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600/30 transition-all shrink-0"
-                  >
-                    <span>Detay</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                {/* Right Action Chevron */}
+                <div className="text-slate-500 shrink-0">
+                  <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
             );
@@ -317,7 +259,7 @@ export const ListView: React.FC<ListViewProps> = ({
                     ? lead.productionDetails?.budget
                     : lead.socialMediaDetails?.monthlyBudget;
 
-                  const cleanPhone = lead.phone ? lead.phone.replace(/[^0-9]/g, '') : '';
+                  const cleanPhone = lead.phone ? String(lead.phone).replace(/[^0-9]/g, '') : '';
 
                   return (
                     <tr
@@ -367,7 +309,9 @@ export const ListView: React.FC<ListViewProps> = ({
                           <div>
                             <div className="text-slate-300 font-medium">{lead.socialMediaDetails.industry}</div>
                             <div className="text-[10px] text-slate-500">
-                              {lead.socialMediaDetails.platforms.join(', ')}
+                              {Array.isArray(lead.socialMediaDetails.platforms)
+                                ? lead.socialMediaDetails.platforms.join(', ')
+                                : String(lead.socialMediaDetails.platforms || '')}
                             </div>
                           </div>
                         )}
@@ -404,9 +348,9 @@ export const ListView: React.FC<ListViewProps> = ({
                       <td className="py-4 px-4 max-w-[200px]">
                         {(() => {
                           let noteTxt = 'Form Doldurdu';
-                          if (lead.notes && lead.notes.length > 0) {
+                          if (Array.isArray(lead.notes) && lead.notes.length > 0) {
                             const validNotes = lead.notes.filter(n => {
-                              if (!n.text || typeof n.text !== 'string') return false;
+                              if (!n || !n.text || typeof n.text !== 'string') return false;
                               const txt = n.text.trim();
                               if (txt.length < 2) return false;
                               if (/^\d{4}-\d{2}-\d{2}/.test(txt)) return false;
@@ -414,7 +358,7 @@ export const ListView: React.FC<ListViewProps> = ({
                               return true;
                             });
                             if (validNotes.length > 0) {
-                              const repNote = validNotes.find(n => n.author && n.author.includes('Temsilci'));
+                              const repNote = validNotes.find(n => n.author && String(n.author).includes('Temsilci'));
                               noteTxt = repNote ? repNote.text : validNotes[0].text;
                             }
                           }

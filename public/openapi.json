@@ -182,10 +182,10 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "brand_name", "date", "time"],
+                "required": ["title", "date", "time"],
                 "properties": {
-                  "title": { "type": "string", "example": "Reel Çekimi" },
-                  "brand_name": { "type": "string", "example": "MioCasa" },
+                  "title": { "type": "string", "example": "Wellness Çekimi" },
+                  "brand_name": { "type": "string", "example": "Wellness" },
                   "date": { "type": "string", "example": "12.08.2026" },
                   "time": { "type": "string", "example": "14:30" },
                   "location": { "type": "string", "example": "MioCasa Bahçeşehir Mağazası" },
@@ -274,5 +274,24 @@
         }
       }
     }
-  }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "SocialArt GPT API Key (socialart-gpt-secret-2026)"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "SocialArt GPT Bearer Token (socialart-gpt-secret-2026)"
+      }
+    }
+  },
+  "security": [
+    { "ApiKeyAuth": [] },
+    { "BearerAuth": [] }
+  ]
 }
