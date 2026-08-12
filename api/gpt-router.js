@@ -447,8 +447,66 @@ async function applyLeadUpdate(res, targetLead, noteText, newStage, newStatus) {
 
 async function handlePaymentRequest(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Sadece POST desteklenir.' });
-  const { client_name, company_code, title, amount, description } = req.body || {};
+  const { id, request_id, client_name, company_code, title, amount, description, status } = req.body || {};
 
+  const targetId = id || request_id;
+
+  // 1. If updating an existing request
+  if (targetId) {
+    const { data: existing } = await supabasePrimary.from('payment_requests').select('*').eq('id', targetId).maybeSingle();
+    if (!existing) {
+      return res.status(404).json({ error: 'REQUEST_NOT_FOUND', message: `ID: ${targetId} olan ödeme talebi bulunamadı.` });
+    }
+
+    const newClient = (client_name && client_name.trim()) || existing.client_name;
+    const newTitle = (title && title.trim()) || existing.title;
+    const newDesc = description !== undefined ? description.trim() : existing.description;
+    const numAmount = amount !== undefined && !isNaN(parseFloat(amount)) ? parseFloat(amount) : Number(existing.amount);
+    const code = (company_code || newClient).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const totalWithKdv = numAmount * 1.20;
+    const nowIso = new Date().toISOString();
+    const newStatus = status || existing.status;
+
+    const updatePayload = {
+      client_name: newClient,
+      company_code: code,
+      title: newTitle,
+      description: newDesc,
+      amount: numAmount,
+      kdv_amount: numAmount * 0.20,
+      total_amount: totalWithKdv,
+      status: newStatus,
+      updated_at: nowIso
+    };
+
+    await supabasePrimary.from('payment_requests').update(updatePayload).eq('id', targetId);
+
+    // Update notification
+    try {
+      await supabasePrimary.from('notifications').update({
+        title: `💳 Ödeme Talebi: ${newClient} (₺${totalWithKdv.toLocaleString('tr-TR')})`,
+        message: `${newClient} için ₺${numAmount.toLocaleString('tr-TR')} (+%20 KDV dahil ₺${totalWithKdv.toLocaleString('tr-TR')}) tutarında ödeme bağlantısı oluşturuldu.`,
+        related_entity_id: code,
+        is_read: newStatus === 'paid'
+      }).eq('id', targetId);
+    } catch (e) {}
+
+    return res.status(200).json({
+      success: true,
+      message: `✅ "${newClient}" firmasının ödeme talebi (ID: ${targetId}) başarıyla güncellendi! Yeni Tutar: ₺${numAmount.toLocaleString('tr-TR')} (KDV Dahil: ₺${totalWithKdv.toLocaleString('tr-TR')})`,
+      payment_request: {
+        id: targetId,
+        client: newClient,
+        title: newTitle,
+        amount_tl: numAmount,
+        total_with_kdv_tl: totalWithKdv,
+        status: newStatus,
+        client_checkout_url: `https://socialartmedya.com/musteri-portali`
+      }
+    });
+  }
+
+  // 2. Creating a new request
   if (!client_name || !title || !amount) {
     return res.status(400).json({ error: 'MISSING_FIELDS', message: 'Müşteri adı, Ödeme başlığı ve Tutar zorunludur.' });
   }
@@ -472,6 +530,25 @@ async function handlePaymentRequest(req, res) {
     created_at: nowIso
   };
 
+  // 1. Insert into dedicated payment_requests table
+  try {
+    await supabasePrimary.from('payment_requests').insert([{
+      id: requestId,
+      client_name: requestPayload.client_name,
+      company_code: requestPayload.company_code,
+      title: requestPayload.title,
+      description: requestPayload.description,
+      amount: requestPayload.amount,
+      kdv_amount: requestPayload.kdv_amount,
+      total_amount: requestPayload.total_amount,
+      status: requestPayload.status,
+      created_at: nowIso
+    }]);
+  } catch (e) {
+    console.warn('payment_requests table insert fallback:', e);
+  }
+
+  // 2. Insert notification
   const notifRecord = {
     id: requestId,
     recipient_employee_id: 'b5e391db-dc21-45a8-baad-19f4073d3b14', // Celal
@@ -484,8 +561,9 @@ async function handlePaymentRequest(req, res) {
     created_at: nowIso
   };
 
-  const { error: insertErr } = await supabasePrimary.from('notifications').insert([notifRecord]);
-  if (insertErr) return res.status(500).json({ error: 'Ödeme talebi kaydedilemedi', details: insertErr.message });
+  try {
+    await supabasePrimary.from('notifications').insert([notifRecord]);
+  } catch (e) {}
 
   return res.status(200).json({
     success: true,

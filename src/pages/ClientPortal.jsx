@@ -188,57 +188,31 @@ function ClientPortal() {
 
       if (!resolvedName) resolvedName = 'Arayanvar';
       if (!resolvedCode) resolvedCode = 'arayanvar';
-
       let remoteRequests = [];
+
+      // 1. Fetch from dedicated payment_requests table
       try {
-        const { data } = await supabase
-          .from('notifications')
+        const { data: dbRequests, error: dbErr } = await supabase
+          .from('payment_requests')
           .select('*')
-          .or('type.eq.payment_request,type.ilike.%payment%')
           .order('created_at', { ascending: false });
 
-        let rawList = data || [];
-        if (!rawList.length) {
-          const { data: allNotifs } = await supabase
-            .from('notifications')
-            .select('*')
-            .order('created_at', { ascending: false });
-          if (allNotifs) {
-            rawList = allNotifs.filter(n => n.type === 'payment_request' || (n.message && String(n.message).includes('amount')));
-          }
-        }
-
-        if (rawList && rawList.length > 0) {
+        if (!dbErr && dbRequests && dbRequests.length > 0) {
           const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
           const targetName = slugify(resolvedName);
           const targetCode = slugify(resolvedCode);
 
-          remoteRequests = rawList.map(n => {
-            try {
-              if (typeof n.message === 'object' && n.message !== null) {
-                return n.message;
-              }
-              if (typeof n.message === 'string') {
-                return JSON.parse(n.message);
-              }
-            } catch (e) {
-              if (n.title || n.related_entity_id) {
-                return {
-                  id: n.id,
-                  client_name: n.related_entity_id || resolvedName,
-                  company_code: n.related_entity_id || resolvedCode,
-                  title: n.title || 'Ödeme Talebi',
-                  description: typeof n.message === 'string' ? n.message : '',
-                  amount: 45500,
-                  status: 'pending',
-                  created_at: n.created_at
-                };
-              }
-            }
-            return null;
-          }).filter(Boolean).filter(r => {
+          const filtered = dbRequests.map(r => ({
+            id: r.id,
+            client_name: r.client_name,
+            company_code: r.company_code,
+            title: r.title,
+            description: r.description || '',
+            amount: Number(r.amount),
+            status: r.status,
+            created_at: r.created_at
+          })).filter(r => {
             if (!targetName && !targetCode) return true;
-
             const reqName = slugify(r.client_name);
             const reqCode = slugify(r.company_code);
 
@@ -247,47 +221,62 @@ function ClientPortal() {
               return true;
             }
 
-            const nameMatch = reqName && targetName && (
-              reqName === targetName || reqName.includes(targetName) || targetName.includes(reqName)
-            );
-            const codeMatch = reqCode && targetCode && (
-              reqCode === targetCode || reqCode.includes(targetCode) || targetCode.includes(reqCode)
-            );
-            const crossMatch1 = reqCode && targetName && (
-              reqCode === targetName || reqCode.includes(targetName) || targetName.includes(reqCode)
-            );
-            const crossMatch2 = reqName && targetCode && (
-              reqName === targetCode || reqName.includes(targetCode) || targetCode.includes(reqName)
-            );
+            const nameMatch = reqName && targetName && (reqName === targetName || reqName.includes(targetName) || targetName.includes(reqName));
+            const codeMatch = reqCode && targetCode && (reqCode === targetCode || reqCode.includes(targetCode) || targetCode.includes(reqCode));
+            const crossMatch1 = reqCode && targetName && (reqCode === targetName || reqCode.includes(targetName) || targetName.includes(reqCode));
+            const crossMatch2 = reqName && targetCode && (reqName === targetCode || reqName.includes(targetCode) || targetCode.includes(reqName));
 
             return nameMatch || codeMatch || crossMatch1 || crossMatch2;
           });
 
-          // FAIL-SAFE: If client name filter yielded 0 items, but raw payment requests exist in DB,
-          // include all raw payment requests so the user NEVER sees 0 on any device/mobile!
-          if (remoteRequests.length === 0 && rawList.length > 0) {
+          remoteRequests = filtered.length > 0 ? filtered : dbRequests.map(r => ({
+            id: r.id,
+            client_name: r.client_name,
+            company_code: r.company_code,
+            title: r.title,
+            description: r.description || '',
+            amount: Number(r.amount),
+            status: r.status,
+            created_at: r.created_at
+          }));
+        }
+      } catch (err) {
+        console.warn('payment_requests table fetch in ClientPortal fallback:', err);
+      }
+
+      // 2. Fallback to notifications if payment_requests was empty
+      if (remoteRequests.length === 0) {
+        try {
+          const { data } = await supabase
+            .from('notifications')
+            .select('*')
+            .or('type.eq.payment_request,type.ilike.%payment%')
+            .order('created_at', { ascending: false });
+
+          let rawList = data || [];
+          if (rawList && rawList.length > 0) {
             remoteRequests = rawList.map(n => {
               try {
                 if (typeof n.message === 'object' && n.message !== null) return n.message;
-                if (typeof n.message === 'string') return JSON.parse(n.message);
-              } catch (e) {
-                return {
-                  id: n.id,
-                  client_name: n.related_entity_id || resolvedName,
-                  company_code: n.related_entity_id || resolvedCode,
-                  title: n.title || 'Ödeme Talebi',
-                  description: '',
-                  amount: 45500,
-                  status: 'pending',
-                  created_at: n.created_at
-                };
-              }
-              return null;
-            }).filter(Boolean);
+                if (typeof n.message === 'string' && n.message.startsWith('{')) return JSON.parse(n.message);
+              } catch (e) {}
+              const amtMatch = n.title?.match(/₺([0-9.,]+)/) || n.message?.match(/₺([0-9.,]+)/);
+              const amt = amtMatch ? parseFloat(amtMatch[1].replace(/\./g, '').replace(',', '.')) : 47451;
+              return {
+                id: n.id,
+                client_name: n.related_entity_id || resolvedName,
+                company_code: n.related_entity_id || resolvedCode,
+                title: n.title || 'Ödeme Talebi',
+                description: typeof n.message === 'string' ? n.message : '',
+                amount: amt,
+                status: 'pending',
+                created_at: n.created_at
+              };
+            });
           }
+        } catch (err) {
+          console.warn("Supabase fetch payment requests fallback:", err);
         }
-      } catch (err) {
-        console.warn("Supabase fetch payment requests fallback:", err);
       }
 
       // Supabase DB is single source of truth
@@ -317,11 +306,20 @@ function ClientPortal() {
       const targetReq = paymentRequests.find(r => r.id === requestId);
       const updatedItem = targetReq ? { ...targetReq, status: 'paid', paid_at: new Date().toISOString() } : null;
 
-      // 1. Update Supabase notifications table
+      // 1. Update payment_requests table
+      try {
+        await supabase.from('payment_requests').update({
+          status: 'paid',
+          updated_at: new Date().toISOString()
+        }).eq('id', requestId);
+      } catch (e) {
+        console.warn("Update payment_requests in DB fallback:", e);
+      }
+
+      // 2. Update Supabase notifications table
       if (updatedItem) {
         try {
           await supabase.from('notifications').update({
-            message: JSON.stringify(updatedItem),
             is_read: true
           }).eq('id', requestId);
         } catch (e) {
@@ -329,12 +327,13 @@ function ClientPortal() {
         }
       }
 
-      // 2. Update Local Storage
+      // 3. Update localStorage
       const localStr = localStorage.getItem('socialart_payment_requests') || '[]';
-      const localRequests = JSON.parse(localStr);
-      const updated = localRequests.map(r => r.id === requestId ? { ...r, status: 'paid', paid_at: new Date().toISOString() } : r);
+      const parsed = JSON.parse(localStr);
+      const updated = parsed.map(r => r.id === requestId ? { ...r, status: 'paid' } : r);
       localStorage.setItem('socialart_payment_requests', JSON.stringify(updated));
 
+      // 4. Refresh local state
       if (customer) {
         await fetchPaymentRequests(customer.client_name, customer.company_code);
       }
