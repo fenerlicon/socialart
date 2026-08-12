@@ -15,6 +15,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   Building,
+  Calendar,
+  CreditCard,
+  Bot,
+  ListTodo,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -29,7 +33,31 @@ export function NotificationCard({ notification, onMarkReadSuccess }: CardProps)
 
   // Durum/tip simgeleri
   const getTypeConfig = (type: Notification['type']) => {
-    switch (type) {
+    switch (type as string) {
+      case 'calendar_event':
+        return {
+          icon: <Calendar className="h-4 w-4 text-cyan-400" />,
+          colorClass: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+          label: 'Takvim',
+        }
+      case 'payment_request':
+        return {
+          icon: <CreditCard className="h-4 w-4 text-emerald-400" />,
+          colorClass: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+          label: 'Ödeme Talebi',
+        }
+      case 'gpt_assigned_task':
+        return {
+          icon: <Bot className="h-4 w-4 text-purple-400" />,
+          colorClass: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
+          label: 'ChatGPT Görevi',
+        }
+      case 'personal_todo':
+        return {
+          icon: <ListTodo className="h-4 w-4 text-indigo-400" />,
+          colorClass: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+          label: 'Yapılacaklar',
+        }
       case 'workflow_assigned':
       case 'step_activated':
         return {
@@ -98,6 +126,23 @@ export function NotificationCard({ notification, onMarkReadSuccess }: CardProps)
     // 2. Resolve link and navigate
     let path = '/dashboard'
     if (
+      notification.relatedEntityType === 'calendar' ||
+      (notification.type as string) === 'calendar_event'
+    ) {
+      path = '/calendar'
+    } else if (
+      notification.relatedEntityType === 'payment' ||
+      (notification.type as string) === 'payment_request'
+    ) {
+      path = '/payments'
+    } else if (
+      notification.relatedEntityType === 'todo' ||
+      (notification.type as string) === 'personal_todo'
+    ) {
+      path = '/todo'
+    } else if (
+      notification.relatedEntityType === 'task' ||
+      (notification.type as string) === 'gpt_assigned_task' ||
       notification.relatedEntityType === 'workflow_step_instance' ||
       notification.relatedEntityType === 'handoff' ||
       notification.relatedEntityType === 'operation_plan_item'

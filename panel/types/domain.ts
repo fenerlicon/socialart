@@ -502,6 +502,10 @@ export type NotificationType =
   | 'approval_approved'
   | 'approval_rejected'
   | 'approval_revision_requested'
+  | 'calendar_event'
+  | 'payment_request'
+  | 'gpt_assigned_task'
+  | 'personal_todo'
   | 'system'
 
 export type RelatedEntityType =
@@ -512,6 +516,10 @@ export type RelatedEntityType =
   | 'operation_cycle'
   | 'operation_plan_item'
   | 'approval'
+  | 'calendar'
+  | 'payment'
+  | 'task'
+  | 'todo'
   | 'system'
 
 export interface Notification {

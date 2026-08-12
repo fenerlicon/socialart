@@ -624,10 +624,20 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
                 {unreadNotifications.slice(0, 4).map((notif) => (
                   <div
                     key={notif.id}
-                    onClick={() => router.push('/notifications')}
-                    className="rounded-xl border border-neutral-900 bg-card/10 p-3 hover:border-neutral-800 transition-colors cursor-pointer space-y-0.5"
+                    onClick={() => {
+                      if (notif.type === 'calendar_event' || notif.relatedEntityType === 'calendar') {
+                        router.push('/calendar')
+                      } else if (notif.type === 'payment_request' || notif.relatedEntityType === 'payment') {
+                        router.push('/payments')
+                      } else if (notif.type === 'personal_todo' || notif.relatedEntityType === 'todo') {
+                        router.push('/todo')
+                      } else {
+                        router.push('/notifications')
+                      }
+                    }}
+                    className="rounded-xl border border-neutral-900 bg-card/10 p-3 hover:border-neutral-800 transition-colors cursor-pointer space-y-0.5 group"
                   >
-                    <span className="font-bold text-[10px] text-foreground block truncate">
+                    <span className="font-bold text-[10px] text-foreground block truncate group-hover:text-purple-300 transition-colors">
                       {notif.title}
                     </span>
                     <span className="text-[9px] text-muted-foreground block line-clamp-2 leading-relaxed">
