@@ -245,26 +245,38 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           rowId = l.campaignId || '-';
           isActive = ACTIVE_META_CAMPAIGNS.has(rowName) || (l.campaignId ? ACTIVE_META_CAMPAIGNS.has(l.campaignId) : false);
           spend = metaSpend.campaignSpends[rowName] || (l.campaignId ? (metaSpend.campaignSpends[l.campaignId] || 0) : 0);
-        } else {
-          rowName = l.source === 'WEBSITE'
-            ? 'Web Sitesi Doğrudan Form Başvurusu'
-            : (l.source === 'META_ADS' ? 'Meta Formu (Aktif Kampanyalar Öncesi)' : 'Manuel / Panel Girişi');
+        } else if (l.source === 'WEBSITE') {
+          rowName = '🌐 Web Sitesi Doğrudan Form Başvuruları (Organik)';
           rowId = '-';
-          isActive = l.source === 'WEBSITE';
+          isActive = false;
+        } else if (l.source === 'MANUAL') {
+          rowName = '👤 Panelden Manuel Eklenen Kayıtlar';
+          rowId = '-';
+          isActive = false;
+        } else {
+          rowName = '⚡ Eski Meta Formları (Token Öncesi Kampanyasız Kayıtlar)';
+          rowId = '-';
+          isActive = false;
         }
         key = `CAMP_${l.source}_${rowName}_${rowId}`;
       } else if (breakdownLevel === 'ADSET') {
         if (l.adsetName || l.adsetId) {
-          rowName = l.adsetName || `Set #${l.adsetId}`;
+          rowName = l.adsetName || `Hedef Seti #${l.adsetId}`;
           rowId = l.adsetId || '-';
           isActive = ACTIVE_META_ADSETS.has(rowName) || (l.adsetId ? ACTIVE_META_ADSETS.has(l.adsetId) : false);
           spend = metaSpend.adsetSpends[rowName] || (l.adsetId ? (metaSpend.adsetSpends[l.adsetId] || 0) : 0);
-        } else {
-          rowName = l.source === 'META_ADS'
-            ? 'Meta Formu (Hedef Seti Belirtilmemiş)'
-            : 'Genel Hedef Kitle';
+        } else if (l.source === 'WEBSITE') {
+          rowName = '🌐 Web Sitesi (Reklamsız / Doğrudan Ziyaretçi)';
           rowId = '-';
-          isActive = l.source === 'WEBSITE';
+          isActive = false;
+        } else if (l.source === 'MANUAL') {
+          rowName = '👤 Manuel Eklenenler (Hedef Seti Yok)';
+          rowId = '-';
+          isActive = false;
+        } else {
+          rowName = '⚡ Eski Meta Formları (Token Öncesi Hedef Seti Tanımsız)';
+          rowId = '-';
+          isActive = false;
         }
         key = `ADSET_${l.source}_${rowName}_${rowId}`;
       } else { // AD level
@@ -273,12 +285,18 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           rowId = l.adId || '-';
           isActive = ACTIVE_META_ADS.has(rowName) || (l.adId ? ACTIVE_META_ADS.has(l.adId) : false);
           spend = metaSpend.adSpends[rowName] || (l.adId ? (metaSpend.adSpends[l.adId] || 0) : 0);
-        } else {
-          rowName = l.source === 'META_ADS'
-            ? 'Meta Doğrudan Reklam Formu'
-            : (l.source === 'WEBSITE' ? 'Web Formu' : 'Manuel Kayıt');
+        } else if (l.source === 'WEBSITE') {
+          rowName = '🌐 Web Sitesi İletişim / Teklif Formu';
           rowId = '-';
-          isActive = l.source === 'WEBSITE';
+          isActive = false;
+        } else if (l.source === 'MANUAL') {
+          rowName = '👤 Panelden Manuel Oluşturulan Müşteriler';
+          rowId = '-';
+          isActive = false;
+        } else {
+          rowName = '⚡ Eski Meta Formları (Token Öncesi Kreatif Tanımsız)';
+          rowId = '-';
+          isActive = false;
         }
         key = `AD_${l.source}_${rowName}_${rowId}`;
       }
