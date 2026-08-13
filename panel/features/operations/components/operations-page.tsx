@@ -40,6 +40,7 @@ import {
   Download,
   User,
   Building,
+  Eye,
 } from 'lucide-react'
 
 export function OperationsPage() {

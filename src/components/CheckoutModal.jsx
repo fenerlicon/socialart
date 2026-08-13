@@ -20,6 +20,12 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
       setStep(1);
       setErrorMessage('');
       setIsLoading(false);
+      if (selectedPlan?.clientName) {
+        setFormData(prev => ({
+          ...prev,
+          name: prev.name || selectedPlan.clientName
+        }));
+      }
     }
   }, [isOpen, selectedPlan]);
 
@@ -81,13 +87,19 @@ export default function CheckoutModal({ isOpen, onClose, selectedPlan }) {
       const totalNum = isExactPrice ? rawNum : rawNum * 1.20;
       const totalPriceWithKdv = totalNum.toFixed(2);
 
+      const isCustomInvoice = Boolean(selectedPlan.isCustom || selectedPlan.requestId);
+      const paymentType = isCustomInvoice ? 'custom_invoice' : 'website_package';
+
       const response = await fetch('/api/iyzico-init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planName: selectedPlan.name,
           price: totalPriceWithKdv,
-          buyerInfo: formData
+          buyerInfo: formData,
+          paymentType: paymentType,
+          requestId: selectedPlan.requestId || null,
+          clientName: selectedPlan.clientName || formData.name
         })
       });
 

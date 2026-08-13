@@ -39,40 +39,87 @@ export default async function handler(req, res) {
     const buyerName = `${result.buyer?.name || ''} ${result.buyer?.surname || ''}`.trim();
     const buyerPhone = result.buyer?.gsmNumber || '';
     const basketItemName = result.basketItems?.[0]?.name || 'Hizmet Paketi';
+    const conversationId = result.conversationId || '';
 
-    // Log to Supabase DB
-    const LEADS_SUPABASE_URL = process.env.LEADS_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
-    const LEADS_SUPABASE_KEY = process.env.LEADS_SUPABASE_SERVICE_KEY || process.env.LEADS_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
+    // Check if this payment is for an existing customer's custom payment request/invoice
+    const isCustomInvoice = conversationId.startsWith('SOC_INV_');
+    const invoiceMatch = conversationId.match(/^SOC_INV_([^_]+)/);
+    const extractedRequestId = (invoiceMatch && invoiceMatch[1] !== 'custom') ? invoiceMatch[1] : null;
 
     const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
     const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
 
-    try {
-      const supabaseLeads = createClient(LEADS_SUPABASE_URL, LEADS_SUPABASE_KEY);
-      await supabaseLeads.from('leads').insert([{
-        name: buyerName,
-        email: buyerEmail,
-        phone: buyerPhone,
-        service: `[ÖDEME ALINDI] ${basketItemName}`,
-        status: 'Anlaşıldı',
-        stage: 'WON',
-        budget: Number(paidPrice) || 0,
-        reaction: `iyzico Online Ödeme Alındı! Tutar: ₺${paidPrice} (Ödeme ID: ${paymentId})`,
-        created_at: new Date().toISOString()
-      }]);
-    } catch (e) {
-      console.warn('Supabase iyzico lead log error:', e);
-    }
+    const LEADS_SUPABASE_URL = process.env.LEADS_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
+    const LEADS_SUPABASE_KEY = process.env.LEADS_SUPABASE_SERVICE_KEY || process.env.LEADS_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
 
-    try {
-      const supabasePrimary = createClient(PRIMARY_SUPABASE_URL, PRIMARY_SUPABASE_KEY);
-      // Mark any matching payment request as paid
-      await supabasePrimary.from('payment_requests').update({
-        status: 'paid',
-        updated_at: new Date().toISOString()
-      }).ilike('client_name', `%${buyerName}%`);
-    } catch (e) {
-      console.warn('Supabase payment_requests status update error:', e);
+    if (isCustomInvoice) {
+      // 1. EXISTING CLIENT INVOICE: Update payment status & notify agency team (DO NOT add as a new CRM lead)
+      try {
+        const supabasePrimary = createClient(PRIMARY_SUPABASE_URL, PRIMARY_SUPABASE_KEY);
+
+        // Update payment_requests table
+        if (extractedRequestId) {
+          await supabasePrimary.from('payment_requests').update({
+            status: 'paid',
+            updated_at: new Date().toISOString()
+          }).eq('id', extractedRequestId);
+
+          try {
+            await supabasePrimary.from('client_payment_requests').update({
+              status: 'paid'
+            }).eq('id', extractedRequestId);
+          } catch (e) {}
+        } else if (buyerName) {
+          await supabasePrimary.from('payment_requests').update({
+            status: 'paid',
+            updated_at: new Date().toISOString()
+          }).ilike('client_name', `%${buyerName}%`);
+        }
+
+        // Add Notification for Staff
+        await supabasePrimary.from('notifications').insert([{
+          id: `NOTIF-PAY-${Date.now()}`,
+          type: 'payment_received',
+          title: `💰 Ödeme Alındı: ${buyerName || 'Müşteri'} (₺${Number(paidPrice).toLocaleString('tr-TR', { minimumFractionDigits: 2 })})`,
+          message: `${buyerName || 'Müşteri'} müşterisinin "${basketItemName}" ödeme talebi iyzico ile tahsil edildi. (Ödeme ID: ${paymentId})`,
+          related_entity_type: 'payment',
+          related_entity_id: extractedRequestId || 'payment',
+          is_read: false,
+          created_at: new Date().toISOString()
+        }]);
+
+        // Log into Activity Log
+        await supabasePrimary.from('activity_log').insert([{
+          target_name: buyerName || 'Müşteri',
+          action: 'Ödeme Alındı',
+          details: `₺${Number(paidPrice).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} tutarındaki "${basketItemName}" ödemesi iyzico ile tamamlandı. (Ödeme ID: ${paymentId})`,
+          created_at: new Date().toISOString()
+        }]);
+      } catch (e) {
+        console.warn('Supabase custom payment update error:', e);
+      }
+    } else {
+      // 2. DIRECT WEBSITE PACKAGE PURCHASE: Create New Won Lead in CRM
+      try {
+        const supabaseLeads = createClient(LEADS_SUPABASE_URL, LEADS_SUPABASE_KEY);
+        const formattedDate = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        await supabaseLeads.from('leads').insert([{
+          name: buyerName || 'Web Sitesi Müşterisi',
+          email: buyerEmail,
+          phone: buyerPhone,
+          service: `[ONLİNE SATIŞ] ${basketItemName}`,
+          platform: 'Web Sitesi (Doğrudan Satış)',
+          status: 'Anlaşıldı',
+          stage: 'WON',
+          budget: Number(paidPrice) || 0,
+          reaction: `Web sitesi üzerinden doğrudan paket satın alındı! Tutar: ₺${paidPrice} (iyzico ID: ${paymentId})`,
+          date: formattedDate,
+          created_at: new Date().toISOString()
+        }]);
+      } catch (e) {
+        console.warn('Supabase website lead log error:', e);
+      }
     }
 
     // Redirect user to ThankYou page with payment success state

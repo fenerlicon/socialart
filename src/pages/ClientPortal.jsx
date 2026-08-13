@@ -308,6 +308,8 @@ function ClientPortal() {
       price: String(reqItem.amount),
       isCustom: true,
       requestId: reqItem.id,
+      clientName: reqItem.client_name,
+      companyCode: reqItem.company_code,
       isKdvExempt: isExempt,
       is_kdv_exempt: isExempt,
       exactPrice: isExempt,

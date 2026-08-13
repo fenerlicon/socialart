@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { planName, price, buyerInfo } = req.body || {};
+    const { planName, price, buyerInfo, paymentType, requestId, clientName } = req.body || {};
 
     if (!price || !buyerInfo?.name) {
       return res.status(400).json({ error: 'Lütfen ad soyad ve gerekli bilgileri doldurun.' });
@@ -56,7 +56,13 @@ export default async function handler(req, res) {
     }
 
     const formattedPrice = numericPrice.toFixed(2);
-    const conversationId = `SOC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    // Distinguish between existing client invoice payments and new website package sales
+    const isCustom = paymentType === 'custom_invoice' || Boolean(requestId);
+    const cleanRequestId = requestId ? String(requestId).replace(/[^a-zA-Z0-9-]/g, '') : '';
+    const conversationId = isCustom
+      ? `SOC_INV_${cleanRequestId || 'custom'}_${Date.now()}`
+      : `SOC_PKG_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     const host = req.headers.host || 'www.socialartmedya.com';
     const protocol = req.headers['x-forwarded-proto'] || 'https';
