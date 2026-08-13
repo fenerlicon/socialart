@@ -827,6 +827,57 @@ export default function CRMPage({ embedded = false }) {
         stage: newStage
       })
       .eq('id', leadId);
+
+    // Automatic Finance Integration: When a Production Lead is moved to WON, sync to finance_client_payments & finance_production_projects
+    if (newStage === 'WON' && (currentLead?.pipeline === 'PRODUCTION' || currentPipeline === 'PRODUCTION')) {
+      try {
+        const rawAmount = currentLead?.productionDetails?.budget || currentLead?.budget;
+        const numAmount = (typeof rawAmount === 'number' && !isNaN(rawAmount))
+          ? rawAmount
+          : (parseFloat(String(rawAmount || '').replace(/[^0-9.-]+/g, '')) || 0);
+
+        const leadTitle = currentLead?.title || currentLead?.contactName || 'İsimsiz Proje';
+        const clientName = currentLead?.contactName || currentLead?.title || 'Müşteri';
+        const todayDate = new Date().toISOString().split('T')[0];
+        const periodStr = new Date().toISOString().slice(0, 7);
+
+        // 1. Insert into finance_client_payments (if amount > 0)
+        if (numAmount > 0) {
+          const { error: paymentError } = await supabase.from('finance_client_payments').insert([{
+            client_id: 99999, // Diğer / Harici Gelir
+            amount: numAmount, // CRM'deki Gelir Tutarı
+            payment_date: todayDate,
+            payment_type: 'Havale',
+            period: periodStr, // Örn: '2026-08'
+            notes: `[CRM Prodüksiyon Kazanıldı] ${leadTitle} (${clientName})`,
+            kdv_rate: 20
+          }]);
+          if (paymentError) {
+            console.error('Supabase finance_client_payments insert error:', paymentError);
+          }
+        }
+
+        // 2. Insert into finance_production_projects
+        const { error: projectError } = await supabase.from('finance_production_projects').insert([{
+          title: leadTitle,
+          client_name: clientName,
+          budget: numAmount,
+          status: 'ongoing',
+          date: todayDate
+        }]);
+        if (projectError) {
+          console.error('Supabase finance_production_projects insert error:', projectError);
+        }
+
+        showToast(
+          numAmount > 0
+            ? `🎉 "${leadTitle}" Kazanıldı! ₺${numAmount.toLocaleString('tr-TR')} gelir tutarı Finans Paneline ve Prodüksiyon Projelerine otomatik aktarıldı.`
+            : `🎉 "${leadTitle}" Kazanıldı! Proje Finans Prodüksiyon listesine aktarıldı.`
+        );
+      } catch (finErr) {
+        console.error('Error syncing to finance on WON:', finErr);
+      }
+    }
   };
 
   // Add note → Supabase (primary) + LocalStorage (backup)
