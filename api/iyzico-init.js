@@ -50,9 +50,38 @@ export default async function handler(req, res) {
       normalizedPriceStr = rawPriceStr.replace(/\./g, '');
     }
 
-    const numericPrice = parseFloat(normalizedPriceStr);
+    let numericPrice = parseFloat(normalizedPriceStr);
     if (isNaN(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({ error: 'Geçersiz fiyat tutarı.' });
+    }
+
+    // Security Validation: If paying an existing invoice (requestId), verify real amount from database
+    if (requestId) {
+      try {
+        const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
+        const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
+        const checkRes = await fetch(`${PRIMARY_SUPABASE_URL}/rest/v1/payment_requests?id=eq.${encodeURIComponent(requestId)}&select=amount,status`, {
+          headers: {
+            'apikey': PRIMARY_SUPABASE_KEY,
+            'Authorization': `Bearer ${PRIMARY_SUPABASE_KEY}`
+          }
+        });
+        if (checkRes.ok) {
+          const rows = await checkRes.json();
+          if (rows && rows.length > 0) {
+            const dbAmount = parseFloat(rows[0].amount);
+            if (rows[0].status === 'paid') {
+              return res.status(400).json({ error: 'Bu ödeme talebi zaten daha önce tamamlanmıştır.' });
+            }
+            if (dbAmount > 0) {
+              // Enforce real DB amount to prevent client-side price tampering
+              numericPrice = dbAmount;
+            }
+          }
+        }
+      } catch (dbCheckErr) {
+        console.warn('Invoice amount check error:', dbCheckErr);
+      }
     }
 
     const formattedPrice = numericPrice.toFixed(2);

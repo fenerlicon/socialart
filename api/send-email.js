@@ -4,10 +4,14 @@
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(450).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { type, data } = req.body;
+  const { type, data } = req.body || {};
+
+  if (!data || !data.fullName || (!data.phone && !data.email)) {
+    return res.status(400).json({ error: 'Geçersiz form verisi. İsim ve iletişim bilgisi zorunludur.' });
+  }
 
   try {
     const message = `

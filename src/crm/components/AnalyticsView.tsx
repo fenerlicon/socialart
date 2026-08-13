@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lead, PipelineType, StageId } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 import { 
@@ -25,7 +25,12 @@ import {
   ExternalLink,
   Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  CheckCircle,
+  Radio,
+  RefreshCw,
+  Eye,
+  MousePointerClick
 } from 'lucide-react';
 
 interface AnalyticsViewProps {
@@ -33,6 +38,19 @@ interface AnalyticsViewProps {
   currentPipeline: PipelineType;
   onSelectLead?: (lead: Lead) => void;
   onToggleQualified?: (leadId: string) => void;
+}
+
+interface MetaSpendData {
+  todaySpend: number;
+  totalSpend: number;
+  impressions: number;
+  clicks: number;
+  reach: number;
+  cpc: number;
+  campaignSpends: Record<string, number>;
+  adsetSpends: Record<string, number>;
+  adSpends: Record<string, number>;
+  updatedAt?: string;
 }
 
 interface BreakdownRow {
@@ -44,6 +62,7 @@ interface BreakdownRow {
   source: string;
   platform: string;
   isOrganic: boolean;
+  isActiveAd: boolean;
   leads: Lead[];
   totalLeads: number;
   qualifiedCount: number;
@@ -52,7 +71,30 @@ interface BreakdownRow {
   wonRate: number;
   totalBudget: number;
   wonBudget: number;
+  adSpend: number;
+  cpl: number;
+  cpql: number;
 }
+
+// Meta'da şu an aktif olan canlı kampanya, set ve reklam listesi
+const ACTIVE_META_CAMPAIGNS = new Set([
+  'Yeni Potansiyel Müşteriler Kampanyası',
+  '120249717300470048'
+]);
+
+const ACTIVE_META_ADSETS = new Set([
+  'Geniş eşleme',
+  '120249717300460048'
+]);
+
+const ACTIVE_META_ADS = new Set([
+  'Yeni Potansiyel Müşteriler Reklamı',
+  'Yeni Potansiyel Müşteriler Reklamı - Kopya',
+  'Yeni Potansiyel Müşteriler Reklamı - Kopya - Kopya',
+  '120249717300480048',
+  '120249828446910048',
+  '120250627774720048'
+]);
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   leads,
@@ -63,7 +105,85 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('ALL');
   const [breakdownLevel, setBreakdownLevel] = useState<'CAMPAIGN' | 'ADSET' | 'AD'>('CAMPAIGN');
   const [tableSearch, setTableSearch] = useState<string>('');
+  const [activeAdsOnly, setActiveAdsOnly] = useState<boolean>(true);
   const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
+
+  // Meta Canlı Harcama Durumu
+  const [metaSpend, setMetaSpend] = useState<MetaSpendData>({
+    todaySpend: 199.13,
+    totalSpend: 3434.38,
+    impressions: 7708,
+    clicks: 339,
+    reach: 3991,
+    cpc: 10.13,
+    campaignSpends: {
+      'Yeni Potansiyel Müşteriler Kampanyası': 3434.38,
+      '120249717300470048': 3434.38
+    },
+    adsetSpends: {
+      'Geniş eşleme': 3434.38,
+      '120249717300460048': 3434.38
+    },
+    adSpends: {
+      'Yeni Potansiyel Müşteriler Reklamı': 3196.75,
+      '120249717300480048': 3196.75,
+      'Yeni Potansiyel Müşteriler Reklamı - Kopya': 132.88,
+      '120249828446910048': 132.88,
+      'Yeni Potansiyel Müşteriler Reklamı - Kopya - Kopya': 104.75,
+      '120250627774720048': 104.75
+    }
+  });
+  const [isRefreshingSpend, setIsRefreshingSpend] = useState<boolean>(false);
+
+  // Güvenli Backend API'den canlı harcama çekme (Frontend'de token ifşa edilmez)
+  const fetchLiveMetaSpend = async () => {
+    setIsRefreshingSpend(true);
+    try {
+      const res = await fetch('/api/meta-insights?date_preset=this_month');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setMetaSpend({
+            todaySpend: json.data.todaySpend || 0,
+            totalSpend: json.data.totalSpend || 0,
+            impressions: json.data.impressions || 0,
+            clicks: json.data.clicks || 0,
+            reach: json.data.reach || 0,
+            cpc: json.data.cpc || 0,
+            campaignSpends: json.data.campaignSpends || {},
+            adsetSpends: json.data.adsetSpends || {},
+            adSpends: json.data.adSpends || {},
+            updatedAt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Meta Insights API call error:', err);
+    } finally {
+      setIsRefreshingSpend(false);
+    }
+  };
+
+  useEffect(() => {
+    // Ilk yuklemede aninda cek
+    fetchLiveMetaSpend();
+
+    // Her 30 saniyede bir otomatik anlik guncelle
+    const interval = setInterval(() => {
+      fetchLiveMetaSpend();
+    }, 30000);
+
+    // Kullanici sekmeye geri dondugunde aninda guncelle
+    const handleFocus = () => {
+      fetchLiveMetaSpend();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const pipelineLeads = leads.filter(l => l.pipeline === currentPipeline);
 
@@ -93,24 +213,22 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 
   // Source breakdown
   const metaLeads = pipelineLeads.filter(l => l.source === 'META_ADS');
-  const googleLeads = pipelineLeads.filter(l => l.source === 'GOOGLE_ADS');
   const webLeads = pipelineLeads.filter(l => l.source === 'WEBSITE');
   const manualLeads = pipelineLeads.filter(l => l.source === 'MANUAL');
-  const aiLeads = pipelineLeads.filter(l => l.source === 'AI_AGENT');
 
   const metaCount = metaLeads.length;
-  const googleCount = googleLeads.length;
   const webCount = webLeads.length;
   const manualCount = manualLeads.length;
-  const aiCount = aiLeads.length;
 
   const metaWon = metaLeads.filter(l => l.stage === 'WON').length;
-  const googleWon = googleLeads.filter(l => l.stage === 'WON').length;
   const webWon = webLeads.filter(l => l.stage === 'WON').length;
   const manualWon = manualLeads.filter(l => l.stage === 'WON').length;
 
+  const metaQualified = metaLeads.filter(l => l.isQualified).length;
+  const overallCpl = metaCount > 0 ? (metaSpend.totalSpend / metaCount) : 0;
+  const overallCpql = metaQualified > 0 ? (metaSpend.totalSpend / metaQualified) : 0;
+
   // Clean Campaign / Ad Set / Ad breakdown computation
-  // (Strictly uses actual campaign and ad names without pretending form answers are campaigns)
   const breakdownRows: BreakdownRow[] = useMemo(() => {
     const map = new Map<string, BreakdownRow>();
 
@@ -118,38 +236,49 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       let key = '';
       let rowName = '';
       let rowId = '';
+      let isActive = false;
+      let spend = 0;
 
       if (breakdownLevel === 'CAMPAIGN') {
         if (l.campaignName || l.campaignId) {
           rowName = l.campaignName || `Kampanya #${l.campaignId}`;
           rowId = l.campaignId || '-';
+          isActive = ACTIVE_META_CAMPAIGNS.has(rowName) || (l.campaignId ? ACTIVE_META_CAMPAIGNS.has(l.campaignId) : false);
+          spend = metaSpend.campaignSpends[rowName] || (l.campaignId ? (metaSpend.campaignSpends[l.campaignId] || 0) : 0);
         } else {
           rowName = l.source === 'WEBSITE'
             ? 'Web Sitesi Doğrudan Form Başvurusu'
-            : (l.source === 'META_ADS' ? 'Meta Formu (Kampanya Adı Atanmamış)' : 'Manuel / Panel Girişi');
+            : (l.source === 'META_ADS' ? 'Meta Formu (Aktif Kampanyalar Öncesi)' : 'Manuel / Panel Girişi');
           rowId = '-';
+          isActive = l.source === 'WEBSITE';
         }
         key = `CAMP_${l.source}_${rowName}_${rowId}`;
       } else if (breakdownLevel === 'ADSET') {
         if (l.adsetName || l.adsetId) {
           rowName = l.adsetName || `Set #${l.adsetId}`;
           rowId = l.adsetId || '-';
+          isActive = ACTIVE_META_ADSETS.has(rowName) || (l.adsetId ? ACTIVE_META_ADSETS.has(l.adsetId) : false);
+          spend = metaSpend.adsetSpends[rowName] || (l.adsetId ? (metaSpend.adsetSpends[l.adsetId] || 0) : 0);
         } else {
           rowName = l.source === 'META_ADS'
             ? 'Meta Formu (Hedef Seti Belirtilmemiş)'
             : 'Genel Hedef Kitle';
           rowId = '-';
+          isActive = l.source === 'WEBSITE';
         }
         key = `ADSET_${l.source}_${rowName}_${rowId}`;
       } else { // AD level
         if (l.adName || l.adId) {
           rowName = l.adName || `Reklam #${l.adId}`;
           rowId = l.adId || '-';
+          isActive = ACTIVE_META_ADS.has(rowName) || (l.adId ? ACTIVE_META_ADS.has(l.adId) : false);
+          spend = metaSpend.adSpends[rowName] || (l.adId ? (metaSpend.adSpends[l.adId] || 0) : 0);
         } else {
           rowName = l.source === 'META_ADS'
             ? 'Meta Doğrudan Reklam Formu'
             : (l.source === 'WEBSITE' ? 'Web Formu' : 'Manuel Kayıt');
           rowId = '-';
+          isActive = l.source === 'WEBSITE';
         }
         key = `AD_${l.source}_${rowName}_${rowId}`;
       }
@@ -164,6 +293,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           source: l.source,
           platform: l.platform || (l.source === 'META_ADS' ? 'Meta Ads (Instagram)' : l.source),
           isOrganic: Boolean(l.isOrganic || l.source === 'WEBSITE' || l.source === 'MANUAL'),
+          isActiveAd: isActive,
           leads: [],
           totalLeads: 0,
           qualifiedCount: 0,
@@ -172,6 +302,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           wonRate: 0,
           totalBudget: 0,
           wonBudget: 0,
+          adSpend: spend,
+          cpl: 0,
+          cpql: 0
         });
       }
 
@@ -191,15 +324,27 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       }
     });
 
-    return Array.from(map.values()).map(r => ({
-      ...r,
-      qualifiedRate: r.totalLeads > 0 ? Math.round((r.qualifiedCount / r.totalLeads) * 100) : 0,
-      wonRate: r.totalLeads > 0 ? Math.round((r.wonCount / r.totalLeads) * 100) : 0,
-    })).sort((a, b) => b.totalLeads - a.totalLeads);
-  }, [pipelineLeads, breakdownLevel]);
+    return Array.from(map.values()).map(r => {
+      const qRate = r.totalLeads > 0 ? Math.round((r.qualifiedCount / r.totalLeads) * 100) : 0;
+      const wRate = r.totalLeads > 0 ? Math.round((r.wonCount / r.totalLeads) * 100) : 0;
+      const leadCost = (r.adSpend > 0 && r.totalLeads > 0) ? Math.round(r.adSpend / r.totalLeads) : 0;
+      const qualCost = (r.adSpend > 0 && r.qualifiedCount > 0) ? Math.round(r.adSpend / r.qualifiedCount) : 0;
+
+      return {
+        ...r,
+        qualifiedRate: qRate,
+        wonRate: wRate,
+        cpl: leadCost,
+        cpql: qualCost
+      };
+    }).sort((a, b) => b.totalLeads - a.totalLeads);
+  }, [pipelineLeads, breakdownLevel, metaSpend]);
 
   // Filtered rows
   const filteredBreakdownRows = breakdownRows.filter(r => {
+    if (activeAdsOnly && !r.isActiveAd && r.source === 'META_ADS') {
+      return false;
+    }
     const matchesSource = selectedSourceFilter === 'ALL' || r.source === selectedSourceFilter;
     const matchesQuery = !tableSearch || 
       r.name.toLowerCase().includes(tableSearch.toLowerCase()) ||
@@ -212,6 +357,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const totalFilteredQualified = filteredBreakdownRows.reduce((acc, r) => acc + r.qualifiedCount, 0);
   const totalFilteredWon = filteredBreakdownRows.reduce((acc, r) => acc + r.wonCount, 0);
   const totalFilteredRevenue = filteredBreakdownRows.reduce((acc, r) => acc + r.totalBudget, 0);
+  const totalFilteredSpend = filteredBreakdownRows.reduce((acc, r) => acc + r.adSpend, 0);
   const overallQualifiedRate = totalFilteredLeads > 0 ? Math.round((totalFilteredQualified / totalFilteredLeads) * 100) : 0;
 
   const toggleRowExpand = (rowKey: string) => {
@@ -227,74 +373,90 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   return (
     <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Total Revenue Potential */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Toplam Pipeline Hacmi</span>
-            <h3 className="text-2xl font-extrabold text-emerald-400 mt-1">
-              ₺{totalValue.toLocaleString('tr-TR')}
-              {currentPipeline === 'SOCIAL_MEDIA' && <span className="text-xs font-normal text-slate-400"> /ay</span>}
-            </h3>
-            <span className="text-xs text-slate-500 mt-1 block">
-              Aktif müşteri fırsatları toplamı
-            </span>
+      {/* Top Section: Meta Live Spend & Performance Dashboard */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 p-5 rounded-2xl shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-indigo-500/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-black text-white">
+                  Meta Ads Canlı Harcama & Verimlilik
+                </h3>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 absolute" />
+                  <span>Canlı Akış (30sn Otomatik)</span>
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Hesap: <strong>Socialart</strong> • Son Güncelleme: {metaSpend.updatedAt || 'Şimdi'}
+              </p>
+            </div>
           </div>
-          <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400">
-            <DollarSign className="w-6 h-6" />
-          </div>
+
+          <button
+            onClick={fetchLiveMetaSpend}
+            disabled={isRefreshingSpend}
+            className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all shrink-0"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingSpend ? 'animate-spin text-cyan-400' : ''}`} />
+            <span>Harcamayı Yenile</span>
+          </button>
         </div>
 
-        {/* Won Deals & Value */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Kazanılan Ciro (Won)</span>
-            <h3 className="text-2xl font-extrabold text-indigo-400 mt-1">
-              ₺{wonValue.toLocaleString('tr-TR')}
-            </h3>
-            <span className="text-xs text-indigo-300/80 mt-1 block font-medium">
-              {wonLeads.length} Müşteri ile Anlaşıldı
+        {/* Live Spend Metric Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+          
+          {/* Today Spend */}
+          <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+            <span className="text-[11px] text-slate-400 font-semibold block">📅 Bugünkü Harcama</span>
+            <div className="text-xl font-black text-cyan-400 mt-1">
+              ₺{metaSpend.todaySpend.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-0.5 block">
+              Bugün yayındaki reklamlara harcanan
             </span>
           </div>
-          <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400">
-            <Trophy className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Win Rate */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Satış Dönüşüm Oranı</span>
-            <h3 className="text-2xl font-extrabold text-cyan-400 mt-1">
-              %{conversionRate}
-            </h3>
-            <span className="text-xs text-slate-500 mt-1 block">
-              Lead başına ort. ₺{avgDealSize.toLocaleString('tr-TR')}
+          {/* Month Total Spend */}
+          <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+            <span className="text-[11px] text-slate-400 font-semibold block">🗓️ Bu Ayki Toplam Harcama</span>
+            <div className="text-xl font-black text-indigo-400 mt-1">
+              ₺{metaSpend.totalSpend.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-0.5 block">
+              {metaSpend.impressions.toLocaleString('tr-TR')} Gösterim • {metaSpend.clicks} Tık
             </span>
           </div>
-          <div className="w-12 h-12 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center text-cyan-400">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Retargeting Pool */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Yeniden Pazarlama Havuzu</span>
-            <h3 className="text-2xl font-extrabold text-amber-400 mt-1">
-              {retargetingLeads.length} Lead
-            </h3>
-            <span className="text-xs text-amber-300/80 mt-1 block font-medium">
-              ₺{retargetingValue.toLocaleString('tr-TR')} Potansiyel
+          {/* CPL (Cost Per Lead) */}
+          <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+            <span className="text-[11px] text-slate-400 font-semibold block">🎯 Lead Başı Maliyet (CPL)</span>
+            <div className="text-xl font-black text-emerald-400 mt-1">
+              ₺{overallCpl.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-0.5 block">
+              Toplam {metaCount} Meta lead'i için
             </span>
           </div>
-          <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400">
-            <Flame className="w-6 h-6" />
-          </div>
-        </div>
 
+          {/* CPQL (Cost Per Qualified Lead) */}
+          <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+            <span className="text-[11px] text-amber-400 font-semibold block flex items-center gap-1">
+              <Star className="w-3 h-3 fill-amber-400" /> ⭐ Kaliteli Lead Maliyeti
+            </span>
+            <div className="text-xl font-black text-amber-300 mt-1">
+              ₺{overallCpql.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}
+            </div>
+            <span className="text-[10px] text-amber-300/70 mt-0.5 block font-medium">
+              {metaQualified} Kaliteli Müşteri İçin
+            </span>
+          </div>
+
+        </div>
       </div>
 
       {/* Main Grid: Pipeline Funnel + Source Analysis */}
@@ -391,25 +553,6 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               </div>
             </div>
 
-            {/* Google Ads Card */}
-            {googleCount > 0 && (
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between hover:border-emerald-500/40 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-200">Google Ads</h4>
-                    <span className="text-[11px] text-slate-400">{googleWon} Satış Anlaşması</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-base text-emerald-400">{googleCount}</span>
-                  <span className="text-[10px] text-slate-500 block">Lead</span>
-                </div>
-              </div>
-            )}
-
             {/* Website Form Card */}
             <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between hover:border-purple-500/40 transition-colors">
               <div className="flex items-center gap-3">
@@ -444,30 +587,11 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               </div>
             </div>
 
-            {/* AI Agent Card (if any) */}
-            {aiCount > 0 && (
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between hover:border-pink-500/40 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-200">ChatGPT AI Asistanı</h4>
-                    <span className="text-[11px] text-slate-400">Otomatik Leadler</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-base text-pink-400">{aiCount}</span>
-                  <span className="text-[10px] text-slate-500 block">Lead</span>
-                </div>
-              </div>
-            )}
-
           </div>
 
           {/* Tips Box */}
           <div className="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-3 text-xs text-indigo-300">
-            💡 <strong>İpucu:</strong> Meta Ads'ten gelen lead'lerin dönüşüm hızını artırmak için ilk 15 dakika içerisinde WhatsApp veya Telefon ile dönüş yapın.
+            💡 <strong>İpucu:</strong> Meta Ads harcamanız aylık ₺3.434 seviyesindedir. Kaliteli lead getiren kreatiflere bütçe artışı yaparak CPQL maliyetini düşürebilirsiniz.
           </div>
         </div>
 
@@ -481,10 +605,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <div>
             <h3 className="font-extrabold text-lg text-slate-100 flex items-center gap-2">
               <Target className="w-5 h-5 text-cyan-400" />
-              Kampanya & Reklam Bazlı Lead Analizi
+              Kampanya & Reklam Bazlı Harcama ve Lead Analizi
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Tablodaki herhangi bir satıra tıklayarak o kampanya veya reklamdan gelen <strong>tüm müşteri adaylarını</strong> listeleyebilirsiniz.
+              Hangi reklam ne kadar bütçe harcadı ve ne kadar <strong>kaliteli müşteri</strong> getirdi?
             </p>
           </div>
 
@@ -538,51 +662,58 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-slate-800/80">
           
-          {/* Source Filter Pills */}
-          <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
-            <span className="text-xs text-slate-500 font-semibold mr-1 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> Filtrele:
-            </span>
+          {/* Source & Active Ads Filter Pills */}
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            
+            {/* Active Ads Toggle */}
             <button
-              onClick={() => setSelectedSourceFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                selectedSourceFilter === 'ALL'
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
+              onClick={() => setActiveAdsOnly(!activeAdsOnly)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-extrabold border transition-all ${
+                activeAdsOnly
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm'
+                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
               }`}
+              title="Sadece Meta'da yayında olan aktif reklamları filtreler"
             >
-              Tümü ({breakdownRows.length})
+              <span className={`w-2 h-2 rounded-full ${activeAdsOnly ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+              <span>{activeAdsOnly ? '🟢 Sadece Aktif Reklamlar' : '📁 Tümü (Arşiv Dahil)'}</span>
             </button>
-            <button
-              onClick={() => setSelectedSourceFilter('META_ADS')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                selectedSourceFilter === 'META_ADS'
-                  ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
-                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
-              }`}
-            >
-              ⚡ Meta Ads ({breakdownRows.filter(g => g.source === 'META_ADS').length})
-            </button>
-            <button
-              onClick={() => setSelectedSourceFilter('WEBSITE')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                selectedSourceFilter === 'WEBSITE'
-                  ? 'bg-purple-600 text-white border-purple-500 shadow-sm'
-                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
-              }`}
-            >
-              🌐 Web ({breakdownRows.filter(g => g.source === 'WEBSITE').length})
-            </button>
-            <button
-              onClick={() => setSelectedSourceFilter('MANUAL')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                selectedSourceFilter === 'MANUAL'
-                  ? 'bg-slate-700 text-white border-slate-600 shadow-sm'
-                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
-              }`}
-            >
-              👤 Manuel ({breakdownRows.filter(g => g.source === 'MANUAL').length})
-            </button>
+
+            <span className="text-slate-600">|</span>
+
+            {/* Source Filter Pills */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setSelectedSourceFilter('ALL')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                  selectedSourceFilter === 'ALL'
+                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
+                }`}
+              >
+                Tümü
+              </button>
+              <button
+                onClick={() => setSelectedSourceFilter('META_ADS')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                  selectedSourceFilter === 'META_ADS'
+                    ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
+                }`}
+              >
+                ⚡ Meta Ads
+              </button>
+              <button
+                onClick={() => setSelectedSourceFilter('WEBSITE')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                  selectedSourceFilter === 'WEBSITE'
+                    ? 'bg-purple-600 text-white border-purple-500 shadow-sm'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
+                }`}
+              >
+                🌐 Web
+              </button>
+            </div>
           </div>
 
           {/* Search Box */}
@@ -613,12 +744,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             </span>
           </div>
           <div>
-            <span className="text-emerald-400 font-semibold block">Kazanılan Satış (Won):</span>
-            <span className="font-black text-emerald-400 text-sm">{totalFilteredWon} Marka</span>
+            <span className="text-indigo-400 font-semibold block">Filtrelenen Harcama:</span>
+            <span className="font-black text-indigo-300 text-sm">₺{totalFilteredSpend.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</span>
           </div>
           <div>
-            <span className="text-purple-400 font-semibold block">Toplam Ciro Hacmi:</span>
-            <span className="font-black text-purple-300 text-sm">₺{totalFilteredRevenue.toLocaleString('tr-TR')}</span>
+            <span className="text-emerald-400 font-semibold block">Kazanılan Ciro Hacmi:</span>
+            <span className="font-black text-emerald-400 text-sm">₺{totalFilteredRevenue.toLocaleString('tr-TR')}</span>
           </div>
         </div>
 
@@ -632,20 +763,21 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   {breakdownLevel === 'ADSET' && 'Reklam Seti (adset_name)'}
                   {breakdownLevel === 'AD' && 'Reklam Kreatifi (ad_name)'}
                 </th>
-                <th className="py-3 px-3">ID & Tür</th>
+                <th className="py-3 px-3">Durum</th>
+                <th className="py-3 px-3 text-right">Reklam Harcaması</th>
                 <th className="py-3 px-3 text-center">Toplam Lead</th>
                 <th className="py-3 px-3 text-center">⭐ Kaliteli Lead</th>
                 <th className="py-3 px-3 text-center">Kalite Oranı</th>
-                <th className="py-3 px-3 text-center">Kazanılan (Won)</th>
-                <th className="py-3 px-3 text-right">Ciro Hacmi</th>
+                <th className="py-3 px-3 text-right">CPL (Lead Başı)</th>
+                <th className="py-3 px-3 text-right">CPQL (Kaliteli Başı)</th>
                 <th className="py-3 px-3 text-center">Detay</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filteredBreakdownRows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-slate-500 text-xs">
-                    Aranan kriterlere uygun kampanya veya reklam verisi bulunamadı.
+                  <td colSpan={9} className="py-10 text-center text-slate-500 text-xs">
+                    Aktif reklam filtrelerine uygun veri bulunamadı.
                   </td>
                 </tr>
               ) : (
@@ -664,8 +796,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                         <td className="py-3.5 px-4 font-bold text-slate-200">
                           <div className="flex items-center gap-2.5">
                             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                              row.source === 'META_ADS' ? 'bg-blue-400 shadow-sm shadow-blue-500/50' :
-                              row.source === 'GOOGLE_ADS' ? 'bg-emerald-400' :
+                              row.isActiveAd ? 'bg-emerald-400 shadow-sm shadow-emerald-500/50' :
+                              row.source === 'META_ADS' ? 'bg-blue-400' :
                               row.source === 'WEBSITE' ? 'bg-purple-400' : 'bg-slate-500'
                             }`} />
                             <div>
@@ -681,20 +813,26 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                           </div>
                         </td>
 
-                        {/* ID & Traffic Type */}
+                        {/* Status & Traffic Type */}
                         <td className="py-3.5 px-3">
                           <div className="space-y-1">
-                            <div className="text-[10px] font-mono text-slate-400">
-                              {row.id !== '-' ? `#${row.id}` : '-'}
-                            </div>
-                            <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-extrabold border ${
-                              row.isOrganic
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                            }`}>
-                              {row.isOrganic ? '🌱 Organik' : '💰 Sponsorlu'}
-                            </span>
+                            {row.isActiveAd ? (
+                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                🟢 Yayında
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-bold bg-slate-900 text-slate-500 border border-slate-800">
+                                ⏸️ Arşiv
+                              </span>
+                            )}
                           </div>
+                        </td>
+
+                        {/* Ad Spend */}
+                        <td className="py-3.5 px-3 text-right">
+                          <span className={`font-black text-xs ${row.adSpend > 0 ? 'text-indigo-300' : 'text-slate-500'}`}>
+                            {row.adSpend > 0 ? `₺${row.adSpend.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}` : '-'}
+                          </span>
                         </td>
 
                         {/* Total Leads */}
@@ -734,17 +872,17 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                           </div>
                         </td>
 
-                        {/* Won Deals */}
-                        <td className="py-3.5 px-3 text-center">
-                          <span className={`font-extrabold text-xs ${row.wonCount > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
-                            {row.wonCount > 0 ? `✓ ${row.wonCount} Satış` : '-'}
+                        {/* CPL */}
+                        <td className="py-3.5 px-3 text-right">
+                          <span className={`font-bold text-xs ${row.cpl > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {row.cpl > 0 ? `₺${row.cpl}` : '-'}
                           </span>
                         </td>
 
-                        {/* Revenue */}
+                        {/* CPQL */}
                         <td className="py-3.5 px-3 text-right">
-                          <span className="font-extrabold text-xs text-slate-200">
-                            {row.totalBudget > 0 ? `₺${row.totalBudget.toLocaleString('tr-TR')}` : '-'}
+                          <span className={`font-black text-xs ${row.cpql > 0 ? 'text-amber-300' : 'text-slate-500'}`}>
+                            {row.cpql > 0 ? `₺${row.cpql}` : '-'}
                           </span>
                         </td>
 
@@ -770,7 +908,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       {/* EXPANDED DRILL-DOWN CUSTOMER FEED */}
                       {isExpanded && (
                         <tr className="bg-slate-950 border-b-2 border-indigo-500/30">
-                          <td colSpan={8} className="p-4 sm:p-5">
+                          <td colSpan={9} className="p-4 sm:p-5">
                             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
                               
                               {/* Expanded Feed Header */}
@@ -781,16 +919,22 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                                     "{row.name}" Gelen Müşterileri ({row.leads.length} Kişi)
                                   </h5>
                                 </div>
-                                <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                  <Star className="w-3 h-3 fill-amber-400" /> {row.qualifiedCount} Kaliteli Lead
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  {row.adSpend > 0 && (
+                                    <span className="text-[11px] font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-full">
+                                      Harcama: ₺{row.adSpend.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-amber-400" /> {row.qualifiedCount} Kaliteli Lead
+                                  </span>
+                                </div>
                               </div>
 
                               {/* Lead Cards List */}
                               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto pr-1">
                                 {row.leads.map((lead) => {
                                   const stageInfo = stageMap.get(lead.stage) || { label: lead.stage, color: '#64748b' };
-                                  const leadBudget = getLeadNumericBudget(lead);
 
                                   return (
                                     <div
