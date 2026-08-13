@@ -50,9 +50,12 @@ export interface Lead {
   source: LeadSource;
   platform?: string;
   adName?: string;
+  adId?: string;
+  adsetName?: string;
+  adsetId?: string;
   campaignName?: string;
   campaignId?: string;
-  adId?: string;
+  isOrganic?: boolean;
   metaCampaignName?: string;
   stage: StageId;
   assignedTo?: string; // Temsilci
@@ -70,6 +73,8 @@ export interface Lead {
   retargetingDate?: string;
   retargetingNote?: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  isQualified?: boolean;
+  tags?: string[];
 }
 
 export interface StageConfig {

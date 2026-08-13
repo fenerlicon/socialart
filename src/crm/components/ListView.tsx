@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lead, StageId, PipelineType } from '../types/crm';
 import { STAGES } from '../mock/initialData';
-import { Zap, Globe, MessageSquare, Phone, ChevronRight, ArrowUpDown, Filter, Layers, DollarSign } from 'lucide-react';
+import { Zap, Globe, MessageSquare, Phone, ChevronRight, ArrowUpDown, Filter, Layers, DollarSign, Star, Target } from 'lucide-react';
 
 interface ListViewProps {
   leads: Lead[];
@@ -9,6 +9,7 @@ interface ListViewProps {
   onSelectLead: (lead: Lead) => void;
   onStageChange: (leadId: string, newStage: StageId) => void;
   onPipelineChange?: (leadId: string, newPipeline: 'PRODUCTION' | 'SOCIAL_MEDIA') => void;
+  onToggleQualified?: (leadId: string) => void;
 }
 
 export const ListView: React.FC<ListViewProps> = ({
@@ -16,7 +17,8 @@ export const ListView: React.FC<ListViewProps> = ({
   currentPipeline,
   onSelectLead,
   onStageChange,
-  onPipelineChange
+  onPipelineChange,
+  onToggleQualified
 }) => {
   const [selectedStageFilter, setSelectedStageFilter] = useState<StageId | 'ALL'>('ALL');
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<string>('ALL');
@@ -269,8 +271,14 @@ export const ListView: React.FC<ListViewProps> = ({
                     >
                       {/* Title */}
                       <td className="py-4 px-4 font-bold text-slate-100 group-hover:text-indigo-400">
-                        <div className="line-clamp-1 flex items-center gap-1.5">
+                        <div className="line-clamp-1 flex items-center gap-1.5 flex-wrap">
                           <span>{lead.title}</span>
+                          {lead.isQualified && (
+                            <span className="text-[10px] px-2 py-0.2 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              Kaliteli
+                            </span>
+                          )}
                           {lead.priority === 'URGENT' && <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 font-extrabold">ACİL 🔥</span>}
                         </div>
                         <div className="text-[11px] font-normal text-slate-400 flex items-center gap-1 mt-0.5">
@@ -405,6 +413,19 @@ export const ListView: React.FC<ListViewProps> = ({
                       {/* Actions */}
                       <td className="py-4 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
+                          {onToggleQualified && (
+                            <button
+                              onClick={() => onToggleQualified(lead.id)}
+                              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                lead.isQualified
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm'
+                                  : 'bg-slate-800 text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 border-slate-700'
+                              }`}
+                              title={lead.isQualified ? "Kaliteli işaretini kaldır" : "Kaliteli Lead (Meta Hedef Kitle için) olarak işaretle"}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${lead.isQualified ? 'fill-amber-400 text-amber-400' : ''}`} />
+                            </button>
+                          )}
                           {onPipelineChange && (
                             <button
                               onClick={() => {

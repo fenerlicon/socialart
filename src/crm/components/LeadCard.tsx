@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Phone, 
   MessageSquare, 
@@ -11,23 +10,27 @@ import {
   ChevronRight,
   MoreVertical,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Star,
+  Target
 } from 'lucide-react';
 import { Lead, StageId } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 
 interface LeadCardProps {
   lead: Lead;
-  onSelect: (lead: Lead) => void;
+  onSelect: (lead) => void;
   onStageChange: (leadId: string, newStage: StageId) => void;
   onPipelineChange?: (leadId: string, newPipeline: 'PRODUCTION' | 'SOCIAL_MEDIA') => void;
+  onToggleQualified?: (leadId: string) => void;
 }
 
 export const LeadCard: React.FC<LeadCardProps> = ({
   lead,
   onSelect,
   onStageChange,
-  onPipelineChange
+  onPipelineChange,
+  onToggleQualified
 }) => {
   const isProduction = lead.pipeline === 'PRODUCTION';
 
@@ -147,7 +150,9 @@ export const LeadCard: React.FC<LeadCardProps> = ({
     <div 
       onClick={() => onSelect(lead)}
       className={`group relative bg-slate-900/90 hover:bg-slate-800/90 border rounded-2xl p-3.5 sm:p-4 transition-all duration-200 shadow-md hover:shadow-xl cursor-pointer flex flex-col justify-between ${
-        isInactiveAlert ? 'border-amber-500/50 shadow-amber-500/5' : 'border-slate-800/90 hover:border-slate-700'
+        lead.isQualified
+          ? 'border-amber-500/50 shadow-amber-500/10 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-amber-950/20'
+          : isInactiveAlert ? 'border-amber-500/50 shadow-amber-500/5' : 'border-slate-800/90 hover:border-slate-700'
       }`}
     >
       {/* Inactivity Warning Banner on Top */}
@@ -164,7 +169,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
       {/* Header Info */}
       <div>
         <div className="flex items-center justify-between gap-1.5 mb-2 flex-wrap">
-          {/* Source Badge */}
+          {/* Source & Quality Badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {lead.source === 'META_ADS' && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -194,6 +199,24 @@ export const LeadCard: React.FC<LeadCardProps> = ({
                 Manuel
               </span>
             )}
+
+            {/* Quality Star Toggle Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleQualified && onToggleQualified(lead.id);
+              }}
+              className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold border transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
+                lead.isQualified
+                  ? 'bg-amber-500/25 text-amber-300 border-amber-500/60 shadow-sm shadow-amber-500/30 font-black'
+                  : 'bg-slate-800/80 hover:bg-amber-500/10 text-slate-400 hover:text-amber-300 border-slate-700/60'
+              }`}
+              title={lead.isQualified ? "Kaliteli işaretini kaldır" : "Kaliteli Lead (Meta Hedef Kitle) olarak işaretle"}
+            >
+              <Star className={`w-3 h-3 ${lead.isQualified ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+              <span>{lead.isQualified ? '⭐ Kaliteli' : '+ Kaliteli'}</span>
+            </button>
 
             <span className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold border ${getPriorityColor()}`}>
               {lead.priority}

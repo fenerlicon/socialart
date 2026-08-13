@@ -16,7 +16,9 @@ import {
   Menu,
   X,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  Star,
+  Download
 } from 'lucide-react';
 import { PipelineType } from '../types/crm';
 
@@ -33,6 +35,10 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   selectedSourceFilter: string;
   onSourceFilterChange: (source: string) => void;
+  isQualityOnlyFilter: boolean;
+  onToggleQualityOnly: () => void;
+  qualifiedCount: number;
+  onExportQualityLeads: () => void;
   onGoToAdmin?: () => void;
   stats: {
     totalLeads: number;
@@ -54,6 +60,10 @@ export const Header: React.FC<HeaderProps> = ({
   onSearchChange,
   selectedSourceFilter,
   onSourceFilterChange,
+  isQualityOnlyFilter,
+  onToggleQualityOnly,
+  qualifiedCount,
+  onExportQualityLeads,
   onGoToAdmin,
   stats
 }) => {
@@ -157,6 +167,35 @@ export const Header: React.FC<HeaderProps> = ({
                 Liste
               </button>
             </div>
+          </div>
+
+          {/* Mobile Quality & Export Action Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                onToggleQualityOnly();
+                setIsMobileMenuOpen(false);
+              }}
+              className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-black transition-all border ${
+                isQualityOnlyFilter
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 border-yellow-400 font-black'
+                  : 'bg-slate-900 text-amber-300 border-amber-500/40'
+              }`}
+            >
+              <Star className={`w-3.5 h-3.5 ${isQualityOnlyFilter ? 'fill-slate-950 text-slate-950' : 'fill-amber-400 text-amber-400'}`} />
+              <span>{isQualityOnlyFilter ? '⭐ Kaliteliler Açık' : `⭐ Kaliteliler (${qualifiedCount})`}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                onExportQualityLeads();
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white border border-emerald-500/40 shadow-md"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Meta İndir ({qualifiedCount})</span>
+            </button>
           </div>
 
           {/* Search Box */}
@@ -291,76 +330,108 @@ export const Header: React.FC<HeaderProps> = ({
 
         </div>
 
-        {/* Sub Header Controls: Views & Search */}
-        <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-lg border border-slate-800/90">
+        {/* Sub Header Controls: Views, Quality Filter, Search & Export */}
+        <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* View Switchers */}
+            <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-lg border border-slate-800/90">
+              <button
+                onClick={() => onViewChange('KANBAN')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  currentView === 'KANBAN'
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Pano</span>
+              </button>
+              <button
+                onClick={() => onViewChange('LIST')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  currentView === 'LIST'
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <ListIcon className="w-3.5 h-3.5" />
+                <span>Liste</span>
+              </button>
+              <button
+                onClick={() => onViewChange('ANALYTICS')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  currentView === 'ANALYTICS'
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Rapor</span>
+              </button>
+            </div>
+
+            {/* Independent Quality Filter Button */}
             <button
-              onClick={() => onViewChange('KANBAN')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                currentView === 'KANBAN'
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+              onClick={onToggleQualityOnly}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all border shrink-0 cursor-pointer shadow-sm active:scale-95 ${
+                isQualityOnlyFilter
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 border-yellow-400 shadow-amber-500/20'
+                  : 'bg-slate-900/90 text-amber-300 border-amber-500/40 hover:bg-amber-500/10'
               }`}
+              title="Sadece Kaliteli Olarak İşaretlenmiş Leadleri Filtrele"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Pano</span>
+              <Star className={`w-3.5 h-3.5 ${isQualityOnlyFilter ? 'fill-slate-950 text-slate-950' : 'fill-amber-400 text-amber-400'}`} />
+              <span>{isQualityOnlyFilter ? '⭐ Kaliteliler Açık' : '⭐ Kaliteli Leadler'}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                isQualityOnlyFilter ? 'bg-slate-950 text-amber-300' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              }`}>
+                {qualifiedCount}
+              </span>
             </button>
+
+            {/* Meta Audience Export Button */}
             <button
-              onClick={() => onViewChange('LIST')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                currentView === 'LIST'
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={onExportQualityLeads}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-900/20 border border-emerald-500/40 transition-all active:scale-95 shrink-0 cursor-pointer"
+              title="Meta Ads Lookalike Audience (Müşteri Listesi) CSV İndir"
             >
-              <ListIcon className="w-3.5 h-3.5" />
-              <span>Liste</span>
-            </button>
-            <button
-              onClick={() => onViewChange('ANALYTICS')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                currentView === 'ANALYTICS'
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Rapor</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>📥 Meta İndir ({qualifiedCount})</span>
             </button>
           </div>
 
-        {/* Search & Source Filter Bar */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          {/* Source Filter */}
-          <div className="relative shrink-0">
-            <select
-              value={selectedSourceFilter}
-              onChange={(e) => onSourceFilterChange(e.target.value)}
-              className="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer font-medium"
-            >
-              <option value="ALL">Tüm Kaynaklar</option>
-              <option value="INACTIVE">⚠️ Takipsizler (3+ Gün)</option>
-              <option value="META_ADS">⚡ Meta Ads (FB/IG)</option>
-              <option value="WEBSITE">🌐 Web Formu</option>
-              <option value="MANUAL">👤 Manuel / Ref</option>
-            </select>
-          </div>
+          {/* Search & Source Filter Bar */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Source Filter */}
+            <div className="relative shrink-0">
+              <select
+                value={selectedSourceFilter}
+                onChange={(e) => onSourceFilterChange(e.target.value)}
+                className="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer font-medium"
+              >
+                <option value="ALL">Tüm Kaynaklar</option>
+                <option value="INACTIVE">⚠️ Takipsizler (3+ Gün)</option>
+                <option value="META_ADS">⚡ Meta Ads (FB/IG)</option>
+                <option value="WEBSITE">🌐 Web Formu</option>
+                <option value="MANUAL">👤 Manuel / Ref</option>
+              </select>
+            </div>
 
-          {/* Search Input */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Ara..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-indigo-500 placeholder-slate-500"
-            />
+            {/* Search Input */}
+            <div className="relative flex-1 sm:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Ara..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-indigo-500 placeholder-slate-500"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-    </div>
-  </header>
-);
+      </div>
+    </header>
+  );
 };

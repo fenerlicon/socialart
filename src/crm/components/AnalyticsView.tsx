@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Lead, PipelineType } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 import { 
@@ -12,11 +12,12 @@ import {
   Globe, 
   Trophy, 
   Target,
-  ArrowUpRight,
-  Layers,
-  Sparkles,
-  Bot,
-  Filter
+  Filter,
+  Star,
+  Search,
+  Clapperboard,
+  FolderGit2,
+  Bot
 } from 'lucide-react';
 
 interface AnalyticsViewProps {
@@ -24,11 +25,32 @@ interface AnalyticsViewProps {
   currentPipeline: PipelineType;
 }
 
+interface BreakdownRow {
+  id: string;
+  name: string;
+  campaignName?: string;
+  adsetName?: string;
+  source: string;
+  platform: string;
+  isOrganic: boolean;
+  leads: Lead[];
+  totalLeads: number;
+  qualifiedCount: number;
+  qualifiedRate: number;
+  wonCount: number;
+  wonRate: number;
+  totalBudget: number;
+  wonBudget: number;
+}
+
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   leads,
   currentPipeline
 }) => {
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('ALL');
+  const [breakdownLevel, setBreakdownLevel] = useState<'CAMPAIGN' | 'ADSET' | 'AD'>('CAMPAIGN');
+  const [tableSearch, setTableSearch] = useState<string>('');
+
   const pipelineLeads = leads.filter(l => l.pipeline === currentPipeline);
 
   // Financial calculations
@@ -42,10 +64,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   };
 
   const totalValue = pipelineLeads.reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
-
   const wonLeads = pipelineLeads.filter(l => l.stage === 'WON');
   const wonValue = wonLeads.reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
-
   const retargetingLeads = pipelineLeads.filter(l => l.stage === 'RETARGETING');
   const retargetingValue = retargetingLeads.reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
 
@@ -75,49 +95,87 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const webWon = webLeads.filter(l => l.stage === 'WON').length;
   const manualWon = manualLeads.filter(l => l.stage === 'WON').length;
 
-  // Group by specific Ad / Campaign / Service
-  const adGroupsMap = new Map<string, {
-    name: string;
-    source: string;
-    platform: string;
-    leads: Lead[];
-    totalBudget: number;
-    wonCount: number;
-    wonBudget: number;
-  }>();
+  // Campaign / Ad Set / Ad breakdown computation
+  const breakdownRows: BreakdownRow[] = useMemo(() => {
+    const map = new Map<string, BreakdownRow>();
 
-  pipelineLeads.forEach(l => {
-    const rawAdName = (l.adName || l.campaignName || (l.productionDetails?.projectType) || (l.socialMediaDetails?.industry) || 'Genel Reklam').trim();
-    const key = `${l.source}_${rawAdName}`;
+    pipelineLeads.forEach(l => {
+      let key = '';
+      let rowName = '';
+      let rowId = '';
 
-    if (!adGroupsMap.has(key)) {
-      adGroupsMap.set(key, {
-        name: rawAdName,
-        source: l.source,
-        platform: l.platform || (l.source === 'META_ADS' ? 'Meta Ads (Instagram)' : l.source),
-        leads: [],
-        totalBudget: 0,
-        wonCount: 0,
-        wonBudget: 0
-      });
-    }
+      if (breakdownLevel === 'CAMPAIGN') {
+        rowName = l.campaignName || l.service || 'Genel Kampanya';
+        rowId = l.campaignId || '-';
+        key = `${l.source}_${rowName}_${rowId}`;
+      } else if (breakdownLevel === 'ADSET') {
+        rowName = l.adsetName || (l.service ? `${l.service} Hedef Seti` : 'Genel Hedef Seti');
+        rowId = l.adsetId || '-';
+        key = `${l.source}_${rowName}_${rowId}`;
+      } else { // AD level
+        rowName = l.adName || l.service || 'Genel Reklam Kreatifi';
+        rowId = l.adId || '-';
+        key = `${l.source}_${rowName}_${rowId}`;
+      }
 
-    const group = adGroupsMap.get(key)!;
-    group.leads.push(l);
-    const b = getLeadNumericBudget(l);
-    group.totalBudget += b;
-    if (l.stage === 'WON') {
-      group.wonCount += 1;
-      group.wonBudget += b;
-    }
+      if (!map.has(key)) {
+        map.set(key, {
+          id: rowId,
+          name: rowName,
+          campaignName: l.campaignName,
+          adsetName: l.adsetName,
+          source: l.source,
+          platform: l.platform || (l.source === 'META_ADS' ? 'Meta Ads (Instagram)' : l.source),
+          isOrganic: Boolean(l.isOrganic || l.source === 'WEBSITE' || l.source === 'MANUAL'),
+          leads: [],
+          totalLeads: 0,
+          qualifiedCount: 0,
+          qualifiedRate: 0,
+          wonCount: 0,
+          wonRate: 0,
+          totalBudget: 0,
+          wonBudget: 0,
+        });
+      }
+
+      const row = map.get(key)!;
+      row.leads.push(l);
+      row.totalLeads += 1;
+      if (l.isQualified) {
+        row.qualifiedCount += 1;
+      }
+      if (l.stage === 'WON') {
+        row.wonCount += 1;
+      }
+      const b = getLeadNumericBudget(l);
+      row.totalBudget += b;
+      if (l.stage === 'WON') {
+        row.wonBudget += b;
+      }
+    });
+
+    return Array.from(map.values()).map(r => ({
+      ...r,
+      qualifiedRate: r.totalLeads > 0 ? Math.round((r.qualifiedCount / r.totalLeads) * 100) : 0,
+      wonRate: r.totalLeads > 0 ? Math.round((r.wonCount / r.totalLeads) * 100) : 0,
+    })).sort((a, b) => b.totalLeads - a.totalLeads);
+  }, [pipelineLeads, breakdownLevel]);
+
+  // Filtered rows
+  const filteredBreakdownRows = breakdownRows.filter(r => {
+    const matchesSource = selectedSourceFilter === 'ALL' || r.source === selectedSourceFilter;
+    const matchesQuery = !tableSearch || 
+      r.name.toLowerCase().includes(tableSearch.toLowerCase()) ||
+      r.id.toLowerCase().includes(tableSearch.toLowerCase()) ||
+      (r.campaignName && r.campaignName.toLowerCase().includes(tableSearch.toLowerCase()));
+    return matchesSource && matchesQuery;
   });
 
-  const adGroups = Array.from(adGroupsMap.values())
-    .sort((a, b) => b.leads.length - a.leads.length);
-
-  const filteredAdGroups = selectedSourceFilter === 'ALL'
-    ? adGroups
-    : adGroups.filter(g => g.source === selectedSourceFilter);
+  const totalFilteredLeads = filteredBreakdownRows.reduce((acc, r) => acc + r.totalLeads, 0);
+  const totalFilteredQualified = filteredBreakdownRows.reduce((acc, r) => acc + r.qualifiedCount, 0);
+  const totalFilteredWon = filteredBreakdownRows.reduce((acc, r) => acc + r.wonCount, 0);
+  const totalFilteredRevenue = filteredBreakdownRows.reduce((acc, r) => acc + r.totalBudget, 0);
+  const overallQualifiedRate = totalFilteredLeads > 0 ? Math.round((totalFilteredQualified / totalFilteredLeads) * 100) : 0;
 
   return (
     <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -133,102 +191,121 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               ₺{totalValue.toLocaleString('tr-TR')}
               {currentPipeline === 'SOCIAL_MEDIA' && <span className="text-xs font-normal text-slate-400"> /ay</span>}
             </h3>
-            <span className="text-[11px] text-slate-500 mt-1 block">Aktif {pipelineLeads.length} potansiyel müşteri</span>
+            <span className="text-xs text-slate-500 mt-1 block">
+              Aktif müşteri fırsatları toplamı
+            </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-            <TrendingUp className="w-6 h-6" />
+          <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400">
+            <DollarSign className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Won Sales Revenue */}
+        {/* Won Deals & Value */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
           <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Kazanılan Satış Ciro</span>
+            <span className="text-xs text-slate-400 font-semibold uppercase">Kazanılan Ciro (Won)</span>
             <h3 className="text-2xl font-extrabold text-indigo-400 mt-1">
               ₺{wonValue.toLocaleString('tr-TR')}
             </h3>
-            <span className="text-[11px] text-emerald-400 mt-1 font-bold flex items-center gap-1">
-              <Trophy className="w-3 h-3" /> {wonLeads.length} Anlaşma İmzalandı
+            <span className="text-xs text-indigo-300/80 mt-1 block font-medium">
+              {wonLeads.length} Müşteri ile Anlaşıldı
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+          <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400">
             <Trophy className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Win Rate */}
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-400 font-semibold uppercase">Satış Dönüşüm Oranı</span>
+            <h3 className="text-2xl font-extrabold text-cyan-400 mt-1">
+              %{conversionRate}
+            </h3>
+            <span className="text-xs text-slate-500 mt-1 block">
+              Lead başına ort. ₺{avgDealSize.toLocaleString('tr-TR')}
+            </span>
+          </div>
+          <div className="w-12 h-12 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center text-cyan-400">
+            <TrendingUp className="w-6 h-6" />
           </div>
         </div>
 
         {/* Retargeting Pool */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
           <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Retargeting Havuzu</span>
-            <h3 className="text-2xl font-extrabold text-pink-400 mt-1">
-              ₺{retargetingValue.toLocaleString('tr-TR')}
+            <span className="text-xs text-slate-400 font-semibold uppercase">Yeniden Pazarlama Havuzu</span>
+            <h3 className="text-2xl font-extrabold text-amber-400 mt-1">
+              {retargetingLeads.length} Lead
             </h3>
-            <span className="text-[11px] text-pink-300 mt-1 block">{retargetingLeads.length} İleride Görüşülecek Lead</span>
+            <span className="text-xs text-amber-300/80 mt-1 block font-medium">
+              ₺{retargetingValue.toLocaleString('tr-TR')} Potansiyel
+            </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center justify-center">
+          <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400">
             <Flame className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Conversion Rate */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-400 font-semibold uppercase">Kazanma Dönüşüm Oranı</span>
-            <h3 className="text-2xl font-extrabold text-blue-400 mt-1">
-              %{conversionRate}
-            </h3>
-            <span className="text-[11px] text-slate-500 mt-1 block">Ort. İş Büyüklüğü: ₺{avgDealSize.toLocaleString('tr-TR')}</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
-            <Target className="w-6 h-6" />
           </div>
         </div>
 
       </div>
 
-      {/* Main Grid: Funnel + Lead Source Breakdown */}
+      {/* Main Grid: Pipeline Funnel + Source Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Stage Conversion Funnel (2 cols) */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        
+        {/* Left 2 Cols: Pipeline Funnel (Aşamalar) */}
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-extrabold text-base text-slate-100">Satış Aşaması Huni (Funnel) Dağılımı</h3>
-              <p className="text-xs text-slate-400">Her bir aşamada bekleyen bütçe ve lead adetleri</p>
+              <h3 className="font-extrabold text-lg text-slate-100 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-indigo-400" />
+                Pipeline Aşama & Dönüşüm Hunisi
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Müşterilerin satış hunisindeki dağılımı ve hacimleri
+              </p>
             </div>
-            <BarChart3 className="w-5 h-5 text-indigo-400" />
+            <span className="text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-xl">
+              Toplam: {pipelineLeads.length} Lead
+            </span>
           </div>
 
-          <div className="space-y-3 pt-2">
-            {STAGES.map((st) => {
-              const stageLeads = pipelineLeads.filter(l => l.stage === st.id);
-              const stageVal = stageLeads.reduce((acc, l) => {
-                const v = currentPipeline === 'PRODUCTION' 
-                  ? l.productionDetails?.budget || 0
-                  : l.socialMediaDetails?.monthlyBudget || 0;
-                return acc + v;
-              }, 0);
-
-              const percent = totalValue > 0 ? Math.round((stageVal / totalValue) * 100) : 0;
+          <div className="space-y-3.5">
+            {STAGES.map((stage) => {
+              const count = pipelineLeads.filter(l => l.stage === stage.id).length;
+              const val = pipelineLeads
+                .filter(l => l.stage === stage.id)
+                .reduce((acc, l) => Number(acc) + getLeadNumericBudget(l), 0);
+              
+              const percent = pipelineLeads.length > 0
+                ? Math.round((count / pipelineLeads.length) * 100)
+                : 0;
 
               return (
-                <div key={st.id} className="space-y-1.5">
+                <div key={stage.id} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 font-bold text-slate-200">
-                      <span className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${st.color}`} />
-                      <span>{st.label}</span>
-                      <span className="text-slate-500 font-normal">({stageLeads.length} Lead)</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: stage.color }} />
+                      <span className="font-bold text-slate-200">{stage.label}</span>
+                      <span className="text-slate-500 font-semibold">({count} lead)</span>
                     </div>
-                    <span className="font-extrabold text-slate-300">
-                      ₺{stageVal.toLocaleString('tr-TR')} ({percent}%)
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-extrabold text-slate-300">
+                        {val > 0 ? `₺${val.toLocaleString('tr-TR')}` : '-'}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-400 w-8 text-right">
+                        %{percent}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${st.color} transition-all duration-500`}
-                      style={{ width: `${Math.max(percent, stageLeads.length > 0 ? 5 : 0)}%` }}
+                  <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                    <div 
+                      className="h-full rounded-full transition-all duration-500" 
+                      style={{ 
+                        width: `${Math.max(percent, 2)}%`, 
+                        backgroundColor: stage.color 
+                      }} 
                     />
                   </div>
                 </div>
@@ -237,15 +314,19 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           </div>
         </div>
 
-        {/* Lead Source Breakdown */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        {/* Right 1 Col: Lead Kaynakları */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6 flex flex-col justify-between">
           <div>
-            <h3 className="font-extrabold text-base text-slate-100">Lead Kaynakları Analizi</h3>
-            <p className="text-xs text-slate-400">Müşteriler nereden geliyor?</p>
+            <h3 className="font-extrabold text-lg text-slate-100 flex items-center gap-2">
+              <PieChart className="w-5 h-5 text-purple-400" />
+              Lead Kaynakları Analizi
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Müşteriler hangi kanallardan geliyor?
+            </p>
           </div>
 
-          <div className="space-y-2.5 pt-1">
-            
+          <div className="space-y-3">
             {/* Meta Ads Card */}
             <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between hover:border-blue-500/40 transition-colors">
               <div className="flex items-center gap-3">
@@ -345,158 +426,270 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 
       </div>
 
-      {/* Comprehensive Campaign & Specific Ad Performance Section */}
+      {/* Clean & Comprehensive Campaign & Ad Performance Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        
+        {/* Header & Level Switchers */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h3 className="font-extrabold text-lg text-slate-100 flex items-center gap-2">
               <Target className="w-5 h-5 text-cyan-400" />
               Kampanya & Reklam Bazlı Lead Analizi
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Hangi reklam setinden veya formdan kaç adet müşteri geldi, ciro ve dönüşüm oranları
+              Hangi kampanya, hedef set ve reklam kreatifinden kaç müşteri geldi, kaçı ⭐ Kaliteli ve satışa dönüştü
             </p>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          {/* 3 Clean Level Switchers (Kampanya, Reklam Seti, Reklam) */}
+          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+            <button
+              onClick={() => setBreakdownLevel('CAMPAIGN')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                breakdownLevel === 'CAMPAIGN'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <FolderGit2 className="w-3.5 h-3.5" />
+              <span>🎯 Kampanyalar</span>
+            </button>
+            <button
+              onClick={() => setBreakdownLevel('ADSET')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                breakdownLevel === 'ADSET'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>👥 Reklam Setleri</span>
+            </button>
+            <button
+              onClick={() => setBreakdownLevel('AD')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                breakdownLevel === 'AD'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Clapperboard className="w-3.5 h-3.5" />
+              <span>🎬 Reklam Kreatifleri</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-slate-800/80">
+          
+          {/* Source Filter Pills */}
+          <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
             <span className="text-xs text-slate-500 font-semibold mr-1 flex items-center gap-1">
               <Filter className="w-3.5 h-3.5" /> Filtrele:
             </span>
             <button
               onClick={() => setSelectedSourceFilter('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
                 selectedSourceFilter === 'ALL'
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
                   : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
               }`}
             >
-              Tümü ({adGroups.length})
+              Tümü ({breakdownRows.length})
             </button>
             <button
               onClick={() => setSelectedSourceFilter('META_ADS')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
                 selectedSourceFilter === 'META_ADS'
-                  ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20'
+                  ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
                   : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
               }`}
             >
-              ⚡ Meta Ads ({adGroups.filter(g => g.source === 'META_ADS').length})
+              ⚡ Meta Ads ({breakdownRows.filter(g => g.source === 'META_ADS').length})
             </button>
             <button
               onClick={() => setSelectedSourceFilter('WEBSITE')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
                 selectedSourceFilter === 'WEBSITE'
-                  ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-600/20'
+                  ? 'bg-purple-600 text-white border-purple-500 shadow-sm'
                   : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
               }`}
             >
-              🌐 Web Formları ({adGroups.filter(g => g.source === 'WEBSITE').length})
+              🌐 Web ({breakdownRows.filter(g => g.source === 'WEBSITE').length})
             </button>
             <button
               onClick={() => setSelectedSourceFilter('MANUAL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
                 selectedSourceFilter === 'MANUAL'
-                  ? 'bg-slate-700 text-white border-slate-600 shadow-md'
+                  ? 'bg-slate-700 text-white border-slate-600 shadow-sm'
                   : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
               }`}
             >
-              👤 Manuel Eklenenler ({adGroups.filter(g => g.source === 'MANUAL').length})
+              👤 Manuel ({breakdownRows.filter(g => g.source === 'MANUAL').length})
             </button>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Kampanya, reklam veya ID ara..."
+              value={tableSearch}
+              onChange={(e) => setTableSearch(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-1.5 outline-none focus:border-indigo-500 placeholder-slate-500"
+            />
           </div>
         </div>
 
-        {/* Ad Breakdown Grid / Table */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pt-1">
-          {filteredAdGroups.length === 0 ? (
-            <div className="col-span-full py-12 text-center text-slate-500 text-xs">
-              Bu filtreye ait herhangi bir reklam veya kampanya kaydı bulunamadı.
-            </div>
-          ) : (
-            filteredAdGroups.map((group, idx) => {
-              const groupConv = group.leads.length > 0
-                ? Math.round((group.wonCount / group.leads.length) * 100)
-                : 0;
-
-              return (
-                <div
-                  key={idx}
-                  className="bg-slate-950 border border-slate-800/90 rounded-2xl p-4.5 hover:border-slate-700 transition-all shadow-lg flex flex-col justify-between space-y-3.5 group"
-                >
-                  <div>
-                    {/* Header: Platform & Source Tag */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg border ${
-                        group.source === 'META_ADS'
-                          ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
-                          : group.source === 'GOOGLE_ADS'
-                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                          : group.source === 'WEBSITE'
-                          ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
-                          : group.source === 'AI_AGENT'
-                          ? 'bg-pink-500/15 text-pink-300 border-pink-500/30'
-                          : 'bg-slate-800 text-slate-300 border-slate-700'
-                      }`}>
-                        {group.source === 'META_ADS' && '⚡ Meta Ads'}
-                        {group.source === 'GOOGLE_ADS' && '🎯 Google Ads'}
-                        {group.source === 'WEBSITE' && '🌐 Web Sitesi'}
-                        {group.source === 'AI_AGENT' && '🤖 ChatGPT AI'}
-                        {group.source === 'MANUAL' && '👤 Manuel / Panel'}
-                      </span>
-
-                      <span className="text-[11px] font-bold text-slate-400">
-                        {group.platform}
-                      </span>
-                    </div>
-
-                    {/* Ad / Campaign Title */}
-                    <h4 className="font-extrabold text-sm text-slate-100 group-hover:text-cyan-300 transition-colors line-clamp-2">
-                      🎯 {group.name}
-                    </h4>
-
-                    {/* Sample Leads list preview */}
-                    <div className="mt-2.5 space-y-1">
-                      <div className="text-[11px] text-slate-500 font-semibold">Gelen Son Müşteriler:</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {group.leads.slice(0, 3).map((l, lIdx) => (
-                          <span key={lIdx} className="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded-md border border-slate-800 truncate max-w-[140px]">
-                            • {l.title}
-                          </span>
-                        ))}
-                        {group.leads.length > 3 && (
-                          <span className="text-[10px] text-indigo-400 font-bold self-center">
-                            +{group.leads.length - 3} diğer
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metrics Bottom Row */}
-                  <div className="pt-3 border-t border-slate-900 grid grid-cols-3 gap-2 text-center bg-slate-900/50 rounded-xl p-2.5">
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-medium block">Lead Sayısı</span>
-                      <span className="text-sm font-black text-slate-100">{group.leads.length}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-medium block">Kazanılan</span>
-                      <span className="text-sm font-black text-emerald-400">{group.wonCount}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 font-medium block">Dönüşüm</span>
-                      <span className={`text-sm font-black ${groupConv > 0 ? 'text-indigo-400' : 'text-slate-500'}`}>
-                        %{groupConv}
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-              );
-            })
-          )}
+        {/* High-level Summary Ribbon */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 text-xs">
+          <div>
+            <span className="text-slate-500 font-semibold block">Toplam Lead:</span>
+            <span className="font-black text-white text-sm">{totalFilteredLeads}</span>
+          </div>
+          <div>
+            <span className="text-amber-400 font-semibold block flex items-center gap-1">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> ⭐ Kaliteli Lead:
+            </span>
+            <span className="font-black text-amber-300 text-sm">
+              {totalFilteredQualified} <span className="text-[11px] font-normal text-slate-400">(%{overallQualifiedRate})</span>
+            </span>
+          </div>
+          <div>
+            <span className="text-emerald-400 font-semibold block">Kazanılan Satış (Won):</span>
+            <span className="font-black text-emerald-400 text-sm">{totalFilteredWon} Marka</span>
+          </div>
+          <div>
+            <span className="text-purple-400 font-semibold block">Toplam Ciro Hacmi:</span>
+            <span className="font-black text-purple-300 text-sm">₺{totalFilteredRevenue.toLocaleString('tr-TR')}</span>
+          </div>
         </div>
+
+        {/* Clean Structured Table */}
+        <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-extrabold uppercase text-[10px] tracking-wider">
+                <th className="py-3 px-4">
+                  {breakdownLevel === 'CAMPAIGN' && 'Kampanya Adı (campaign_name)'}
+                  {breakdownLevel === 'ADSET' && 'Reklam Seti (adset_name)'}
+                  {breakdownLevel === 'AD' && 'Reklam Kreatifi (ad_name)'}
+                </th>
+                <th className="py-3 px-3">ID & Tür</th>
+                <th className="py-3 px-3 text-center">Toplam Lead</th>
+                <th className="py-3 px-3 text-center">⭐ Kaliteli Lead</th>
+                <th className="py-3 px-3 text-center">Kalite Oranı</th>
+                <th className="py-3 px-3 text-center">Kazanılan (Won)</th>
+                <th className="py-3 px-4 text-right">Ciro Hacmi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {filteredBreakdownRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-10 text-center text-slate-500 text-xs">
+                    Aranan kriterlere uygun kampanya veya reklam verisi bulunamadı.
+                  </td>
+                </tr>
+              ) : (
+                filteredBreakdownRows.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-900/50 transition-colors group">
+                    
+                    {/* Name & Hierarchy */}
+                    <td className="py-3.5 px-4 font-bold text-slate-200">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${
+                          row.source === 'META_ADS' ? 'bg-blue-400' :
+                          row.source === 'GOOGLE_ADS' ? 'bg-emerald-400' :
+                          row.source === 'WEBSITE' ? 'bg-purple-400' : 'bg-slate-500'
+                        }`} />
+                        <div>
+                          <div className="text-slate-100 group-hover:text-cyan-300 transition-colors font-black">
+                            {row.name}
+                          </div>
+                          {breakdownLevel !== 'CAMPAIGN' && row.campaignName && (
+                            <span className="text-[10px] text-slate-500 font-normal block">
+                              Kampanya: {row.campaignName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* ID & Traffic Type */}
+                    <td className="py-3.5 px-3">
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-slate-400">
+                          {row.id !== '-' ? `#${row.id}` : '-'}
+                        </div>
+                        <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-extrabold border ${
+                          row.isOrganic
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                        }`}>
+                          {row.isOrganic ? '🌱 Organik' : '💰 Sponsorlu'}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Total Leads */}
+                    <td className="py-3.5 px-3 text-center">
+                      <span className="font-extrabold text-sm text-slate-100">
+                        {row.totalLeads}
+                      </span>
+                    </td>
+
+                    {/* Quality Leads Count */}
+                    <td className="py-3.5 px-3 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-black border ${
+                        row.qualifiedCount > 0
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-slate-900 text-slate-500 border-slate-800'
+                      }`}>
+                        <Star className={`w-3 h-3 ${row.qualifiedCount > 0 ? 'fill-amber-400 text-amber-400' : 'text-slate-600'}`} />
+                        {row.qualifiedCount}
+                      </span>
+                    </td>
+
+                    {/* Quality Rate Bar */}
+                    <td className="py-3.5 px-3 text-center">
+                      <div className="flex flex-col items-center gap-1 min-w-[70px]">
+                        <span className={`font-extrabold text-xs ${
+                          row.qualifiedRate >= 50 ? 'text-amber-300' :
+                          row.qualifiedRate > 0 ? 'text-slate-300' : 'text-slate-500'
+                        }`}>
+                          %{row.qualifiedRate}
+                        </span>
+                        <div className="w-16 bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
+                          <div
+                            className="bg-amber-400 h-full rounded-full transition-all"
+                            style={{ width: `${row.qualifiedRate}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Won Deals */}
+                    <td className="py-3.5 px-3 text-center">
+                      <span className={`font-extrabold text-xs ${row.wonCount > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {row.wonCount > 0 ? `✓ ${row.wonCount} Satış` : '-'}
+                      </span>
+                    </td>
+
+                    {/* Revenue */}
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="font-extrabold text-xs text-slate-200">
+                        {row.totalBudget > 0 ? `₺${row.totalBudget.toLocaleString('tr-TR')}` : '-'}
+                      </span>
+                    </td>
+
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
     </div>

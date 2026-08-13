@@ -36,11 +36,21 @@ export default async function handler(req, res) {
       // A: LEAD FORM GELINCE
       if (change?.value?.leadgen_id) {
         newLead = {
-          name: `[FORM] Yeni Reklam Lead'i`,
-          service: 'Meta Reklam Formu',
+          name: change.value.full_name || change.value.name || `[FORM] Yeni Reklam Lead'i`,
+          phone: change.value.phone_number || change.value.phone || '',
+          email: change.value.email || '',
+          service: change.value.ad_name || change.value.campaign_name || 'Meta Reklam Formu',
           status: 'Yeni',
-          reaction: `Lead ID: ${change.value.leadgen_id} | Form ID: ${change.value.form_id}`,
-          platform: 'Meta'
+          stage: 'NEW',
+          campaign_id: change.value.campaign_id ? String(change.value.campaign_id) : null,
+          campaign_name: change.value.campaign_name || null,
+          adset_id: change.value.adset_id || change.value.adgroup_id ? String(change.value.adset_id || change.value.adgroup_id) : null,
+          adset_name: change.value.adset_name || null,
+          ad_id: change.value.ad_id ? String(change.value.ad_id) : null,
+          ad_name: change.value.ad_name || null,
+          is_organic: Boolean(change.value.is_organic),
+          reaction: `Lead ID: ${change.value.leadgen_id} | Form ID: ${change.value.form_id || '-'}`,
+          platform: 'Meta Ads (Instagram)'
         };
       } 
       
@@ -51,6 +61,8 @@ export default async function handler(req, res) {
           name: `[DM] Potansiyel Müşteri`,
           service: 'Instagram Mesajı',
           status: 'Yeni',
+          stage: 'NEW',
+          is_organic: true,
           reaction: `Mesaj: ${msgText}`,
           platform: 'Instagram'
         };

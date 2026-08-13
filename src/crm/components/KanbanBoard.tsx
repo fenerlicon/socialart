@@ -11,6 +11,7 @@ interface KanbanBoardProps {
   onStageChange: (leadId: string, newStage: StageId) => void;
   onPipelineChange?: (leadId: string, newPipeline: 'PRODUCTION' | 'SOCIAL_MEDIA') => void;
   onOpenNewLeadModal: () => void;
+  onToggleQualified?: (leadId: string) => void;
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -19,7 +20,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onSelectLead,
   onStageChange,
   onPipelineChange,
-  onOpenNewLeadModal
+  onOpenNewLeadModal,
+  onToggleQualified
 }) => {
   const [activeMobileStage, setActiveMobileStage] = React.useState<string>('ALL');
 
@@ -140,6 +142,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         onSelect={onSelectLead}
                         onStageChange={onStageChange}
                         onPipelineChange={onPipelineChange}
+                        onToggleQualified={onToggleQualified}
                       />
                     ))
                   )}

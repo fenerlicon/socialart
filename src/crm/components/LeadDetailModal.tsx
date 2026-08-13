@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { 
   X, 
   Phone, 
@@ -18,7 +16,10 @@ import {
   CheckCircle2, 
   FileText,
   AlertCircle,
-  Trash2
+  Trash2,
+  Star,
+  Target,
+  Download
 } from 'lucide-react';
 import { Lead, StageId } from '../types/crm';
 import { STAGES } from '../mock/initialData';
@@ -34,6 +35,7 @@ interface LeadDetailModalProps {
   onUpdateBudget: (leadId: string, newBudget: number | null) => void;
   onUpdateAssignedTo?: (leadId: string, newStaff: string) => void;
   onUpdateLeadInfo?: (leadId: string, updatedData: any) => void;
+  onToggleQualified?: (leadId: string) => void;
 }
 
 const STAFF_LIST = ['Celal', 'Ercan', 'Furkan', 'Betül', 'Tuğba', 'Simge', 'Atanmadı'];
@@ -48,7 +50,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onUpdateRetargeting,
   onUpdateBudget,
   onUpdateAssignedTo,
-  onUpdateLeadInfo
+  onUpdateLeadInfo,
+  onToggleQualified
 }) => {
   const [newNoteText, setNewNoteText] = useState('');
   const [retargetingDate, setRetargetingDate] = useState('');
@@ -201,6 +204,13 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   🎯 Reklam: {lead.adName}
                 </span>
               )}
+
+              {lead.isQualified && (
+                <span className="text-[10px] font-black px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-sm">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  ⭐ Meta Kaliteli Lead
+                </span>
+              )}
             </div>
 
             <h2 className="text-base sm:text-xl font-black text-white flex items-center gap-2 flex-wrap leading-snug">
@@ -236,6 +246,22 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {onToggleQualified && (
+              <button
+                type="button"
+                onClick={() => onToggleQualified(lead.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer ${
+                  lead.isQualified
+                    ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/60 shadow-amber-500/20 font-black'
+                    : 'bg-slate-800 hover:bg-amber-500/15 text-slate-300 hover:text-amber-300 border-slate-700'
+                }`}
+                title={lead.isQualified ? "Kaliteli işaretini kaldır" : "Kaliteli Lead (Meta Hedef Kitle için) olarak işaretle"}
+              >
+                <Star className={`w-3.5 h-3.5 ${lead.isQualified ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+                <span>{lead.isQualified ? '⭐ Kaliteli (Kaldır)' : '+ Kaliteli Yap'}</span>
+              </button>
+            )}
+
             {onDeleteLead && (
               <button
                 type="button"
@@ -376,7 +402,51 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           {/* Contact Details Card (High Readability) */}
           <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800/90 space-y-3 shadow-md">
-            <h3 className="font-black text-indigo-400 text-xs uppercase tracking-wider">İLETİŞİM & KAYNAK DETAYLARI</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-black text-indigo-400 text-xs uppercase tracking-wider">İLETİŞİM & KAYNAK DETAYLARI</h3>
+              {lead.isQualified && (
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  ⭐ Kaliteli Lead
+                </span>
+              )}
+            </div>
+
+            {/* Meta Ads Lookalike / Quality Box */}
+            <div className={`p-3 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+              lead.isQualified
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                : 'bg-slate-900/50 border-slate-800 text-slate-300'
+            }`}>
+              <div className="flex items-start gap-2.5">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+                  lead.isQualified ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}>
+                  <Star className={`w-3.5 h-3.5 ${lead.isQualified ? 'fill-amber-400 text-amber-400' : ''}`} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-white">Meta Ads Kaliteli Lead Durumu</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {lead.isQualified
+                      ? 'Bu müşteri kaliteli işaretlendi. Meta Benzer Hedef Kitle (Lookalike) dışa aktarımına dahildir.'
+                      : 'Müşteriyi kaliteli işaretleyip Meta reklamlarında benzer kitle oluşturmak için indirebilirsiniz.'}
+                  </p>
+                </div>
+              </div>
+
+              {onToggleQualified && (
+                <button
+                  type="button"
+                  onClick={() => onToggleQualified(lead.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0 transition-all cursor-pointer active:scale-95 ${
+                    lead.isQualified
+                      ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/50'
+                      : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500 shadow-md'
+                  }`}
+                >
+                  {lead.isQualified ? 'Kaldır' : '⭐ Kaliteli Yap'}
+                </button>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">

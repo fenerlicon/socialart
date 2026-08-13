@@ -337,14 +337,41 @@ function mapDbRowToLead(row) {
   }
 
   // Extract ad & campaign display names
+  // Derived Campaign Name
+  let derivedCampaignName = row.campaign_name || '';
+  if (!derivedCampaignName) {
+    if (row.campaign_id) {
+      derivedCampaignName = `Kampanya #${row.campaign_id}`;
+    } else if (resolvedSource === 'META_ADS') {
+      derivedCampaignName = row.service || 'Meta Reklam Kampanyası';
+    } else if (resolvedSource === 'GOOGLE_ADS') {
+      derivedCampaignName = row.service || 'Google Ads Kampanyası';
+    } else if (resolvedSource === 'WEBSITE') {
+      derivedCampaignName = 'Web Sitesi Organik / Form';
+    } else {
+      derivedCampaignName = 'Manuel Giriş / Panel';
+    }
+  }
+
+  // Derived Ad Set Name
+  let derivedAdsetName = row.adset_name || '';
+  if (!derivedAdsetName) {
+    if (row.adset_id) {
+      derivedAdsetName = `Set #${row.adset_id}`;
+    } else if (resolvedSource === 'META_ADS') {
+      derivedAdsetName = row.service ? `${row.service} Hedef Seti` : 'Meta Hedef Kitle Seti';
+    } else {
+      derivedAdsetName = 'Genel Hedef Seti';
+    }
+  }
+
+  // Derived Ad / Creative Name
   let derivedAdName = row.ad_name || '';
   if (!derivedAdName) {
     if (row.service && row.service !== 'Genel' && row.service !== 'Prodüksiyon' && row.service !== 'Sosyal Medya') {
       derivedAdName = row.service;
     } else if (row.ad_id) {
       derivedAdName = `Reklam #${row.ad_id}`;
-    } else if (row.campaign_id) {
-      derivedAdName = `Kampanya #${row.campaign_id}`;
     } else if (resolvedSource === 'META_ADS') {
       derivedAdName = row.service || 'Meta Instagram Reklamı';
     } else if (resolvedSource === 'GOOGLE_ADS') {
@@ -367,9 +394,12 @@ function mapDbRowToLead(row) {
     source: resolvedSource,
     platform: rawPlatform || (resolvedSource === 'META_ADS' ? 'Meta Ads (Instagram)' : resolvedSource),
     adName: derivedAdName,
-    campaignName: row.campaign_name || (row.campaign_id ? `Kampanya #${row.campaign_id}` : undefined),
-    campaignId: row.campaign_id || undefined,
     adId: row.ad_id || undefined,
+    adsetName: derivedAdsetName,
+    adsetId: row.adset_id || undefined,
+    campaignName: derivedCampaignName,
+    campaignId: row.campaign_id || undefined,
+    isOrganic: Boolean(row.is_organic),
     stage,
     assignedTo: row.rep || row.assigned_to || '',
     createdAt: row.created_at || new Date().toISOString(),
@@ -395,6 +425,8 @@ function mapDbRowToLead(row) {
     } : undefined,
     retargetingDate: row.retargeting_date || undefined,
     retargetingNote: row.retargeting_note || undefined,
+    isQualified: Boolean(row.is_qualified || (Array.isArray(row.tags) && row.tags.includes('kaliteli'))),
+    tags: Array.isArray(row.tags) ? row.tags : [],
   };
 }
 
@@ -460,6 +492,7 @@ export default function CRMPage({ embedded = false }) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourceFilter, setSelectedSourceFilter] = useState('ALL');
+  const [isQualityOnlyFilter, setIsQualityOnlyFilter] = useState(false);
 
   const [selectedLead, setSelectedLead] = useState(null);
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
@@ -1135,6 +1168,120 @@ export default function CRMPage({ embedded = false }) {
     }
   };
 
+  // Toggle Lead Quality (for Meta Custom / Lookalike Audience export)
+  const handleToggleQualified = async (leadId) => {
+    const targetLead = leads.find(l => String(l.id) === String(leadId));
+    if (!targetLead) return;
+    const nextVal = !targetLead.isQualified;
+
+    // 1. Instant UI update
+    setLeads(prev => prev.map(l => String(l.id) === String(leadId) ? { ...l, isQualified: nextVal } : l));
+
+    if (selectedLead && String(selectedLead.id) === String(leadId)) {
+      setSelectedLead(prev => prev ? { ...prev, isQualified: nextVal } : null);
+    }
+
+    logActivity(
+      nextVal ? 'Kaliteli Lead İşaretlendi' : 'Kaliteli Lead İşareti Kaldırıldı',
+      `"${targetLead.title}" adlı müşteri ${nextVal ? '⭐ Kaliteli (Meta Audience)' : 'Normal'} olarak güncellendi.`,
+      targetLead.title
+    );
+
+    showToast(
+      nextVal
+        ? `⭐ "${targetLead.title}" Kaliteli Lead olarak işaretlendi (Meta Audience için hazır)!`
+        : `"${targetLead.title}" Kaliteli işareti kaldırıldı.`
+    );
+
+    // 2. Supabase DB update
+    try {
+      const numericId = parseInt(leadId, 10);
+      if (!isNaN(numericId) && numericId > 0) {
+        const { error } = await supabaseLeads
+          .from('leads')
+          .update({
+            is_qualified: nextVal,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', numericId);
+
+        if (error) {
+          console.error('Supabase update is_qualified error:', error);
+        }
+      }
+    } catch (err) {
+      console.error('Error in handleToggleQualified:', err);
+    }
+  };
+
+  // Export Meta Ads Manager Customer List CSV
+  const handleExportQualityLeads = (onlyQualified = true) => {
+    const exportSource = leads.filter(l => l.pipeline === currentPipeline && (onlyQualified ? l.isQualified : true));
+
+    if (exportSource.length === 0) {
+      showToast('Henüz kaliteli olarak işaretlenmiş lead bulunmuyor. Leadlerin üzerindeki ⭐ butonuna basarak işaretleyebilirsiniz.', 'warning');
+      return;
+    }
+
+    // Standard Meta Ads Manager Headers for Customer List / Lookalike Audience
+    const csvHeaders = ['fn', 'ln', 'phone', 'email', 'ct', 'value', 'service', 'platform', 'lead_id', 'created_at'];
+
+    const csvRows = exportSource.map(lead => {
+      // Name normalization
+      const rawName = String(lead.contactName || lead.title || '').trim();
+      const nameParts = rawName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Phone normalization for Meta (E.164 without +, standard: 905xxxxxxxxx)
+      let rawPhone = String(lead.phone || '').replace(/[^0-9]/g, '');
+      if (rawPhone.startsWith('05')) {
+        rawPhone = '9' + rawPhone;
+      } else if (rawPhone.startsWith('5') && rawPhone.length === 10) {
+        rawPhone = '90' + rawPhone;
+      }
+
+      // Email normalization
+      const rawEmail = String(lead.email || '').trim().toLowerCase();
+
+      // City normalization
+      const rawCity = String(lead.city || 'istanbul').trim().toLowerCase();
+
+      // Value / Budget for value-based Lookalike
+      const rawBudget = lead.pipeline === 'PRODUCTION'
+        ? lead.productionDetails?.budget
+        : lead.socialMediaDetails?.monthlyBudget;
+      const numBudget = (typeof rawBudget === 'number' && !isNaN(rawBudget)) ? rawBudget : '';
+
+      return [
+        `"${firstName.replace(/"/g, '""')}"`,
+        `"${lastName.replace(/"/g, '""')}"`,
+        `"${rawPhone}"`,
+        `"${rawEmail.replace(/"/g, '""')}"`,
+        `"${rawCity.replace(/"/g, '""')}"`,
+        `"${numBudget}"`,
+        `"${(lead.adName || lead.productionDetails?.projectType || lead.socialMediaDetails?.industry || '').replace(/"/g, '""')}"`,
+        `"${(lead.platform || lead.source || '').replace(/"/g, '""')}"`,
+        `"${lead.id}"`,
+        `"${lead.createdAt ? new Date(lead.createdAt).toISOString().slice(0, 10) : ''}"`
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [csvHeaders.join(','), ...csvRows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `meta_kaliteli_leadler_${currentPipeline.toLowerCase()}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`📥 ${exportSource.length} Kaliteli Lead Meta Lookalike CSV formatında indirildi!`);
+  };
+
   const showToast = (msg) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 4000);
@@ -1195,7 +1342,7 @@ export default function CRMPage({ embedded = false }) {
     return latestTime > 0 ? latestTime : new Date().getTime();
   };
 
-  // Filter leads
+  // Filter leads (search, source, inactivity, quality)
   const filteredLeads = leads.filter(lead => {
     if (!lead) return false;
     const titleStr = String(lead.title || '');
@@ -1221,7 +1368,9 @@ export default function CRMPage({ embedded = false }) {
       matchesFilter = lead.source === selectedSourceFilter;
     }
 
-    return matchesSearch && matchesFilter;
+    const matchesQuality = !isQualityOnlyFilter || Boolean(lead.isQualified);
+
+    return matchesSearch && matchesFilter && matchesQuality;
   });
 
   // Stats
@@ -1308,6 +1457,10 @@ export default function CRMPage({ embedded = false }) {
         onSearchChange={setSearchQuery}
         selectedSourceFilter={selectedSourceFilter}
         onSourceFilterChange={setSelectedSourceFilter}
+        isQualityOnlyFilter={isQualityOnlyFilter}
+        onToggleQualityOnly={() => setIsQualityOnlyFilter(prev => !prev)}
+        qualifiedCount={pipelineLeads.filter(l => l.isQualified).length}
+        onExportQualityLeads={handleExportQualityLeads}
         onGoToAdmin={() => {
           if (typeof window !== 'undefined') {
             window.location.href = '/admin';
@@ -1375,7 +1528,27 @@ export default function CRMPage({ embedded = false }) {
           </div>
         </div>
 
-        {/* Row 3: Search Bar & View Mode Switcher (Pano / Liste) */}
+        {/* Row 3: Quality Filter & Export Quick Buttons (Mobile) */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setIsQualityOnlyFilter(prev => !prev)}
+            className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
+              isQualityOnlyFilter
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 border-yellow-400'
+                : 'bg-slate-900 text-amber-300 border-amber-500/40'
+            }`}
+          >
+            <span>{isQualityOnlyFilter ? '⭐ Kaliteliler Açık' : `⭐ Kaliteliler (${pipelineLeads.filter(l => l.isQualified).length})`}</span>
+          </button>
+          <button
+            onClick={handleExportQualityLeads}
+            className="py-2 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white border border-emerald-500/40 flex items-center justify-center gap-1.5 shadow-md"
+          >
+            <span>📥 Meta İndir</span>
+          </button>
+        </div>
+
+        {/* Row 4: Search Bar & View Mode Switcher (Pano / Liste) */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
@@ -1426,6 +1599,7 @@ export default function CRMPage({ embedded = false }) {
                 onStageChange={handleStageChange}
                 onPipelineChange={handleRequestPipelineChange}
                 onOpenNewLeadModal={() => setIsNewLeadModalOpen(true)}
+                onToggleQualified={handleToggleQualified}
               />
             )}
             {currentView === 'LIST' && (
@@ -1435,6 +1609,7 @@ export default function CRMPage({ embedded = false }) {
                 onSelectLead={setSelectedLead}
                 onStageChange={handleStageChange}
                 onPipelineChange={handleRequestPipelineChange}
+                onToggleQualified={handleToggleQualified}
               />
             )}
             {currentView === 'ANALYTICS' && (
@@ -1459,6 +1634,7 @@ export default function CRMPage({ embedded = false }) {
         onUpdateBudget={handleUpdateBudget}
         onUpdateAssignedTo={handleUpdateAssignedTo}
         onUpdateLeadInfo={handleUpdateLeadInfo}
+        onToggleQualified={handleToggleQualified}
       />
       <NewLeadModal
         isOpen={isNewLeadModalOpen}
