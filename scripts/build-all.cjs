@@ -14,7 +14,7 @@ const npxCmd = isWindows ? 'npx.cmd' : 'npx';
 try {
   // 0. Install panel dependencies
   console.log('--- Installing panel dependencies... ---');
-  execSync(`${npmCmd} install`, { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
+  execSync(`${npmCmd} install --legacy-peer-deps`, { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
 
   // 0.5. Generate panel/.env.local for client-side bundling
   console.log('--- Generating panel/.env.local for static export... ---');
