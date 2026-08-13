@@ -18,10 +18,10 @@ export const PortalHeader = ({
   clientDetails
 }) => {
   const tabs = [
-    { id: 'overview_ads', label: 'Marka & Reklamlar', icon: BarChart3, badge: 'Canlı Meta' },
-    { id: 'production_studio', label: 'Prodüksiyon & Onay', icon: Clapperboard, badge: 'Frame.io' },
-    { id: 'assets_drive', label: 'Dosyalar & Drive', icon: FolderDown, badge: '4K Export' },
-    { id: 'billing_support', label: 'Finans & İletişim', icon: CreditCard, badge: null },
+    { id: 'billing_support', label: 'Finans & İletişim', icon: CreditCard, badge: '🟢 Aktif' },
+    { id: 'overview_ads', label: 'Marka & Reklamlar', icon: BarChart3, badge: '⏳ Güncelleniyor' },
+    { id: 'production_studio', label: 'Prodüksiyon & Onay', icon: Clapperboard, badge: '⏳ Güncelleniyor' },
+    { id: 'assets_drive', label: 'Dosyalar & Drive', icon: FolderDown, badge: '⏳ Güncelleniyor' },
   ];
 
   return (

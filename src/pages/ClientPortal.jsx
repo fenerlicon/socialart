@@ -26,7 +26,7 @@ function ClientPortal() {
   
   const [customer, setCustomer] = useState(null);
   const [clientDetails, setClientDetails] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview_ads'); // 'overview_ads', 'production_studio', 'assets_drive', 'billing_support'
+  const [activeTab, setActiveTab] = useState('billing_support'); // Default to billing_support for live customer safety
 
   const [supportMessages, setSupportMessages] = useState([]);
   const [supportInput, setSupportInput] = useState('');
@@ -390,28 +390,8 @@ function ClientPortal() {
       />
 
       {/* 2. Active Tab Content */}
-      <main className="min-h-[600px]">
-        {activeTab === 'overview_ads' && (
-          <TabOverviewAds
-            customer={customer}
-            clientDetails={clientDetails}
-            metaSpend={metaSpend}
-          />
-        )}
-
-        {activeTab === 'production_studio' && (
-          <TabProductionStudio
-            customer={customer}
-          />
-        )}
-
-        {activeTab === 'assets_drive' && (
-          <TabAssetsArchive
-            customer={customer}
-          />
-        )}
-
-        {activeTab === 'billing_support' && (
+      <main className="min-h-[550px]">
+        {activeTab === 'billing_support' ? (
           <TabBillingSupport
             customer={customer}
             paymentRequests={paymentRequests}
@@ -421,6 +401,34 @@ function ClientPortal() {
             supportInput={supportInput}
             setSupportInput={setSupportInput}
           />
+        ) : (
+          /* SYSTEM MAINTENANCE / ENTEGRASYON GUNCELLEMESI VIEW */
+          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 sm:p-12 text-center backdrop-blur-xl shadow-2xl space-y-6 max-w-2xl mx-auto my-6 animate-fadeIn">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-cyan-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto text-cyan-400 shadow-xl shadow-indigo-500/10">
+              <Sparkles className="w-10 h-10 animate-pulse" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+                ⏳ Sistem & Veri Entegrasyonu Güncellemesi
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                Bu Modül Şu Anda Güncellenmektedir
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                Markanıza özel canlı veri akışı ve dijital varlıklarınız sistem mühendislerimiz tarafından yapılandırılmaktadır. Çok yakında bu alandan tüm süreçlerinizi takip edebileceksiniz.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setActiveTab('billing_support')}
+                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl shadow-cyan-500/20 transition-all inline-flex items-center gap-2"
+              >
+                <span>💳 Finans & Ödeme Sayfasına Dön</span>
+              </button>
+            </div>
+          </div>
         )}
       </main>
 
