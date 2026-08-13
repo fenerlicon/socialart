@@ -172,10 +172,21 @@ export const LeadCard: React.FC<LeadCardProps> = ({
                 Meta Ads
               </span>
             )}
+            {lead.source === 'GOOGLE_ADS' && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Target className="w-3 h-3 text-emerald-400" />
+                Google Ads
+              </span>
+            )}
             {lead.source === 'WEBSITE' && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
                 <Globe className="w-3 h-3 text-purple-400" />
                 Web
+              </span>
+            )}
+            {lead.source === 'AI_AGENT' && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                AI Asistan
               </span>
             )}
             {lead.source === 'MANUAL' && (

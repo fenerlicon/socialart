@@ -76,11 +76,11 @@ const AnalysisForm = ({ defaultService = "" }) => {
         phone: formData.phone,
         email: formData.email,
         date: dateStr,
-        platform: formData.url,
+        platform: 'Web Formu (Ücretsiz Analiz)',
         service: formData.services.join(', '),
         rep: 'Sistem (Hizmet Sayfası)',
         status: 'Beklemede',
-        reaction: `Hizmet sayfasından form dolduruldu. Randevu: ${selectedDateStr} ${selectedTimeStr}`
+        reaction: `Web sayfasından form dolduruldu. Web/IG: ${formData.url || '-'} | Randevu: ${selectedDateStr} ${selectedTimeStr}`
       }]);
       if (leadError) throw leadError;
 

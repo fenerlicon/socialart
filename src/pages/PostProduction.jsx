@@ -97,11 +97,11 @@ function PostProduction() {
         phone: formData.phone,
         email: formData.email,
         date: dateStr,
-        platform: formData.company || 'Bireysel Başvuru',
+        platform: 'Web Formu (Post-Prodüksiyon)',
         service: `Post-Prodüksiyon: ${formData.service}`,
         rep: 'Post-Prodüksiyon Sitesi',
         status: 'Beklemede',
-        reaction: `Video Süresi: ${formData.duration}. Proje Detayları: ${formData.details}`
+        reaction: `Şirket: ${formData.company || 'Bireysel'}. Video Süresi: ${formData.duration}. Proje Detayları: ${formData.details}`
       }]);
 
       if (error) throw error;

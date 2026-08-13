@@ -290,6 +290,72 @@ function mapDbRowToLead(row) {
     }
   }
 
+  // Accurate source detection (Meta Ads, Google Ads, Web, AI Agent, Manual)
+  let resolvedSource = 'MANUAL';
+  const rawPlatform = String(row.platform || '').trim();
+  const rawPlatformLower = rawPlatform.toLowerCase();
+  const rawReaction = String(row.reaction || '').toLowerCase();
+  const rawService = String(row.service || '').toLowerCase();
+
+  if (
+    rawPlatformLower.includes('meta') || 
+    rawPlatformLower.includes('instagram') || 
+    rawPlatformLower.includes('facebook') ||
+    rawReaction.includes('meta form') ||
+    rawReaction.includes('instagram')
+  ) {
+    resolvedSource = 'META_ADS';
+  } else if (
+    rawPlatformLower.includes('google') || 
+    rawPlatformLower.includes('ads') || 
+    rawService.includes('google_ads') ||
+    rawReaction.includes('google')
+  ) {
+    resolvedSource = 'GOOGLE_ADS';
+  } else if (
+    rawPlatformLower.includes('web') || 
+    rawPlatformLower.includes('site') || 
+    rawPlatformLower.includes('bireysel') ||
+    rawReaction.includes('form dolduruldu') ||
+    rawReaction.includes('web form') ||
+    rawReaction.includes('online')
+  ) {
+    resolvedSource = 'WEBSITE';
+  } else if (
+    rawPlatformLower.includes('chatgpt') || 
+    rawPlatformLower.includes('ai')
+  ) {
+    resolvedSource = 'AI_AGENT';
+  } else if (
+    rawPlatform.toUpperCase() === 'MANUAL' || 
+    rawPlatformLower.includes('manuel') || 
+    rawReaction.includes('manuel lead')
+  ) {
+    resolvedSource = 'MANUAL';
+  } else if (row.source) {
+    resolvedSource = row.source;
+  }
+
+  // Extract ad & campaign display names
+  let derivedAdName = row.ad_name || '';
+  if (!derivedAdName) {
+    if (row.service && row.service !== 'Genel' && row.service !== 'Prodüksiyon' && row.service !== 'Sosyal Medya') {
+      derivedAdName = row.service;
+    } else if (row.ad_id) {
+      derivedAdName = `Reklam #${row.ad_id}`;
+    } else if (row.campaign_id) {
+      derivedAdName = `Kampanya #${row.campaign_id}`;
+    } else if (resolvedSource === 'META_ADS') {
+      derivedAdName = row.service || 'Meta Instagram Reklamı';
+    } else if (resolvedSource === 'GOOGLE_ADS') {
+      derivedAdName = row.service || 'Google Arama / Display';
+    } else if (resolvedSource === 'WEBSITE') {
+      derivedAdName = 'Web Sitesi Formu';
+    } else {
+      derivedAdName = 'Manuel Giriş / Referans';
+    }
+  }
+
   return {
     id: String(row.id),
     pipeline,
@@ -298,7 +364,12 @@ function mapDbRowToLead(row) {
     email: row.email || '',
     phone: row.phone || '',
     city: row.city || '',
-    source: row.source || 'MANUAL',
+    source: resolvedSource,
+    platform: rawPlatform || (resolvedSource === 'META_ADS' ? 'Meta Ads (Instagram)' : resolvedSource),
+    adName: derivedAdName,
+    campaignName: row.campaign_name || (row.campaign_id ? `Kampanya #${row.campaign_id}` : undefined),
+    campaignId: row.campaign_id || undefined,
+    adId: row.ad_id || undefined,
     stage,
     assignedTo: row.rep || row.assigned_to || '',
     createdAt: row.created_at || new Date().toISOString(),

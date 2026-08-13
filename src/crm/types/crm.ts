@@ -9,7 +9,7 @@ export type StageId =
   | 'WON'             // Kazanıldı (Satış Yapıldı)
   | 'LOST';           // Kaybedildi
 
-export type LeadSource = 'META_ADS' | 'WEBSITE' | 'MANUAL';
+export type LeadSource = 'META_ADS' | 'GOOGLE_ADS' | 'WEBSITE' | 'MANUAL' | 'AI_AGENT';
 
 export interface LeadNote {
   id: string;
@@ -48,6 +48,11 @@ export interface Lead {
   phone: string;
   city?: string;
   source: LeadSource;
+  platform?: string;
+  adName?: string;
+  campaignName?: string;
+  campaignId?: string;
+  adId?: string;
   metaCampaignName?: string;
   stage: StageId;
   assignedTo?: string; // Temsilci
