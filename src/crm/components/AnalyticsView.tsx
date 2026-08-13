@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Lead, PipelineType } from '../types/crm';
+import { Lead, PipelineType, StageId } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 import { 
   BarChart3, 
@@ -17,15 +17,26 @@ import {
   Search,
   Clapperboard,
   FolderGit2,
-  Bot
+  Bot,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  MessageSquare,
+  ExternalLink,
+  Calendar,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 
 interface AnalyticsViewProps {
   leads: Lead[];
   currentPipeline: PipelineType;
+  onSelectLead?: (lead: Lead) => void;
+  onToggleQualified?: (leadId: string) => void;
 }
 
 interface BreakdownRow {
+  key: string;
   id: string;
   name: string;
   campaignName?: string;
@@ -45,11 +56,14 @@ interface BreakdownRow {
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   leads,
-  currentPipeline
+  currentPipeline,
+  onSelectLead,
+  onToggleQualified
 }) => {
   const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>('ALL');
   const [breakdownLevel, setBreakdownLevel] = useState<'CAMPAIGN' | 'ADSET' | 'AD'>('CAMPAIGN');
   const [tableSearch, setTableSearch] = useState<string>('');
+  const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
 
   const pipelineLeads = leads.filter(l => l.pipeline === currentPipeline);
 
@@ -95,7 +109,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const webWon = webLeads.filter(l => l.stage === 'WON').length;
   const manualWon = manualLeads.filter(l => l.stage === 'WON').length;
 
-  // Campaign / Ad Set / Ad breakdown computation
+  // Clean Campaign / Ad Set / Ad breakdown computation
+  // (Strictly uses actual campaign and ad names without pretending form answers are campaigns)
   const breakdownRows: BreakdownRow[] = useMemo(() => {
     const map = new Map<string, BreakdownRow>();
 
@@ -105,21 +120,43 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       let rowId = '';
 
       if (breakdownLevel === 'CAMPAIGN') {
-        rowName = l.campaignName || l.service || 'Genel Kampanya';
-        rowId = l.campaignId || '-';
-        key = `${l.source}_${rowName}_${rowId}`;
+        if (l.campaignName || l.campaignId) {
+          rowName = l.campaignName || `Kampanya #${l.campaignId}`;
+          rowId = l.campaignId || '-';
+        } else {
+          rowName = l.source === 'WEBSITE'
+            ? 'Web Sitesi Doğrudan Form Başvurusu'
+            : (l.source === 'META_ADS' ? 'Meta Formu (Kampanya Adı Atanmamış)' : 'Manuel / Panel Girişi');
+          rowId = '-';
+        }
+        key = `CAMP_${l.source}_${rowName}_${rowId}`;
       } else if (breakdownLevel === 'ADSET') {
-        rowName = l.adsetName || (l.service ? `${l.service} Hedef Seti` : 'Genel Hedef Seti');
-        rowId = l.adsetId || '-';
-        key = `${l.source}_${rowName}_${rowId}`;
+        if (l.adsetName || l.adsetId) {
+          rowName = l.adsetName || `Set #${l.adsetId}`;
+          rowId = l.adsetId || '-';
+        } else {
+          rowName = l.source === 'META_ADS'
+            ? 'Meta Formu (Hedef Seti Belirtilmemiş)'
+            : 'Genel Hedef Kitle';
+          rowId = '-';
+        }
+        key = `ADSET_${l.source}_${rowName}_${rowId}`;
       } else { // AD level
-        rowName = l.adName || l.service || 'Genel Reklam Kreatifi';
-        rowId = l.adId || '-';
-        key = `${l.source}_${rowName}_${rowId}`;
+        if (l.adName || l.adId) {
+          rowName = l.adName || `Reklam #${l.adId}`;
+          rowId = l.adId || '-';
+        } else {
+          rowName = l.source === 'META_ADS'
+            ? 'Meta Doğrudan Reklam Formu'
+            : (l.source === 'WEBSITE' ? 'Web Formu' : 'Manuel Kayıt');
+          rowId = '-';
+        }
+        key = `AD_${l.source}_${rowName}_${rowId}`;
       }
 
       if (!map.has(key)) {
         map.set(key, {
+          key,
           id: rowId,
           name: rowName,
           campaignName: l.campaignName,
@@ -176,6 +213,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const totalFilteredWon = filteredBreakdownRows.reduce((acc, r) => acc + r.wonCount, 0);
   const totalFilteredRevenue = filteredBreakdownRows.reduce((acc, r) => acc + r.totalBudget, 0);
   const overallQualifiedRate = totalFilteredLeads > 0 ? Math.round((totalFilteredQualified / totalFilteredLeads) * 100) : 0;
+
+  const toggleRowExpand = (rowKey: string) => {
+    setExpandedRowKey(prev => prev === rowKey ? null : rowKey);
+  };
+
+  const stageMap = useMemo(() => {
+    const map = new Map<StageId, { label: string; color: string }>();
+    STAGES.forEach(s => map.set(s.id, { label: s.label, color: s.color }));
+    return map;
+  }, []);
 
   return (
     <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -426,7 +473,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 
       </div>
 
-      {/* Clean & Comprehensive Campaign & Ad Performance Table */}
+      {/* Clean & Interactive Campaign & Ad Performance Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
         
         {/* Header & Level Switchers */}
@@ -437,14 +484,17 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Kampanya & Reklam Bazlı Lead Analizi
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Hangi kampanya, hedef set ve reklam kreatifinden kaç müşteri geldi, kaçı ⭐ Kaliteli ve satışa dönüştü
+              Tablodaki herhangi bir satıra tıklayarak o kampanya veya reklamdan gelen <strong>tüm müşteri adaylarını</strong> listeleyebilirsiniz.
             </p>
           </div>
 
           {/* 3 Clean Level Switchers (Kampanya, Reklam Seti, Reklam) */}
           <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
             <button
-              onClick={() => setBreakdownLevel('CAMPAIGN')}
+              onClick={() => {
+                setBreakdownLevel('CAMPAIGN');
+                setExpandedRowKey(null);
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 breakdownLevel === 'CAMPAIGN'
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
@@ -455,7 +505,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <span>🎯 Kampanyalar</span>
             </button>
             <button
-              onClick={() => setBreakdownLevel('ADSET')}
+              onClick={() => {
+                setBreakdownLevel('ADSET');
+                setExpandedRowKey(null);
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 breakdownLevel === 'ADSET'
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
@@ -466,7 +519,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <span>👥 Reklam Setleri</span>
             </button>
             <button
-              onClick={() => setBreakdownLevel('AD')}
+              onClick={() => {
+                setBreakdownLevel('AD');
+                setExpandedRowKey(null);
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 breakdownLevel === 'AD'
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
@@ -566,7 +622,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           </div>
         </div>
 
-        {/* Clean Structured Table */}
+        {/* Clean Structured Table with Row Click Expansion */}
         <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
@@ -581,110 +637,280 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 <th className="py-3 px-3 text-center">⭐ Kaliteli Lead</th>
                 <th className="py-3 px-3 text-center">Kalite Oranı</th>
                 <th className="py-3 px-3 text-center">Kazanılan (Won)</th>
-                <th className="py-3 px-4 text-right">Ciro Hacmi</th>
+                <th className="py-3 px-3 text-right">Ciro Hacmi</th>
+                <th className="py-3 px-3 text-center">Detay</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filteredBreakdownRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-500 text-xs">
+                  <td colSpan={8} className="py-10 text-center text-slate-500 text-xs">
                     Aranan kriterlere uygun kampanya veya reklam verisi bulunamadı.
                   </td>
                 </tr>
               ) : (
-                filteredBreakdownRows.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-900/50 transition-colors group">
-                    
-                    {/* Name & Hierarchy */}
-                    <td className="py-3.5 px-4 font-bold text-slate-200">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${
-                          row.source === 'META_ADS' ? 'bg-blue-400' :
-                          row.source === 'GOOGLE_ADS' ? 'bg-emerald-400' :
-                          row.source === 'WEBSITE' ? 'bg-purple-400' : 'bg-slate-500'
-                        }`} />
-                        <div>
-                          <div className="text-slate-100 group-hover:text-cyan-300 transition-colors font-black">
-                            {row.name}
+                filteredBreakdownRows.map((row) => {
+                  const isExpanded = expandedRowKey === row.key;
+
+                  return (
+                    <React.Fragment key={row.key}>
+                      <tr 
+                        onClick={() => toggleRowExpand(row.key)}
+                        className={`hover:bg-slate-900/70 transition-colors cursor-pointer group ${
+                          isExpanded ? 'bg-slate-900/80 border-b-0' : ''
+                        }`}
+                      >
+                        {/* Name & Hierarchy */}
+                        <td className="py-3.5 px-4 font-bold text-slate-200">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              row.source === 'META_ADS' ? 'bg-blue-400 shadow-sm shadow-blue-500/50' :
+                              row.source === 'GOOGLE_ADS' ? 'bg-emerald-400' :
+                              row.source === 'WEBSITE' ? 'bg-purple-400' : 'bg-slate-500'
+                            }`} />
+                            <div>
+                              <div className="text-slate-100 group-hover:text-cyan-300 transition-colors font-black text-sm">
+                                {row.name}
+                              </div>
+                              {breakdownLevel !== 'CAMPAIGN' && row.campaignName && (
+                                <span className="text-[10px] text-slate-500 font-normal block">
+                                  Kampanya: {row.campaignName}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          {breakdownLevel !== 'CAMPAIGN' && row.campaignName && (
-                            <span className="text-[10px] text-slate-500 font-normal block">
-                              Kampanya: {row.campaignName}
+                        </td>
+
+                        {/* ID & Traffic Type */}
+                        <td className="py-3.5 px-3">
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-mono text-slate-400">
+                              {row.id !== '-' ? `#${row.id}` : '-'}
+                            </div>
+                            <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-extrabold border ${
+                              row.isOrganic
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            }`}>
+                              {row.isOrganic ? '🌱 Organik' : '💰 Sponsorlu'}
                             </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
+                          </div>
+                        </td>
 
-                    {/* ID & Traffic Type */}
-                    <td className="py-3.5 px-3">
-                      <div className="space-y-1">
-                        <div className="text-[10px] font-mono text-slate-400">
-                          {row.id !== '-' ? `#${row.id}` : '-'}
-                        </div>
-                        <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-extrabold border ${
-                          row.isOrganic
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                        }`}>
-                          {row.isOrganic ? '🌱 Organik' : '💰 Sponsorlu'}
-                        </span>
-                      </div>
-                    </td>
+                        {/* Total Leads */}
+                        <td className="py-3.5 px-3 text-center">
+                          <span className="font-extrabold text-sm text-slate-100">
+                            {row.totalLeads}
+                          </span>
+                        </td>
 
-                    {/* Total Leads */}
-                    <td className="py-3.5 px-3 text-center">
-                      <span className="font-extrabold text-sm text-slate-100">
-                        {row.totalLeads}
-                      </span>
-                    </td>
+                        {/* Quality Leads Count */}
+                        <td className="py-3.5 px-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-black border ${
+                            row.qualifiedCount > 0
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                              : 'bg-slate-900 text-slate-500 border-slate-800'
+                          }`}>
+                            <Star className={`w-3 h-3 ${row.qualifiedCount > 0 ? 'fill-amber-400 text-amber-400' : 'text-slate-600'}`} />
+                            {row.qualifiedCount}
+                          </span>
+                        </td>
 
-                    {/* Quality Leads Count */}
-                    <td className="py-3.5 px-3 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-black border ${
-                        row.qualifiedCount > 0
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-slate-900 text-slate-500 border-slate-800'
-                      }`}>
-                        <Star className={`w-3 h-3 ${row.qualifiedCount > 0 ? 'fill-amber-400 text-amber-400' : 'text-slate-600'}`} />
-                        {row.qualifiedCount}
-                      </span>
-                    </td>
+                        {/* Quality Rate Bar */}
+                        <td className="py-3.5 px-3 text-center">
+                          <div className="flex flex-col items-center gap-1 min-w-[70px]">
+                            <span className={`font-extrabold text-xs ${
+                              row.qualifiedRate >= 50 ? 'text-amber-300' :
+                              row.qualifiedRate > 0 ? 'text-slate-300' : 'text-slate-500'
+                            }`}>
+                              %{row.qualifiedRate}
+                            </span>
+                            <div className="w-16 bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
+                              <div
+                                className="bg-amber-400 h-full rounded-full transition-all"
+                                style={{ width: `${row.qualifiedRate}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
 
-                    {/* Quality Rate Bar */}
-                    <td className="py-3.5 px-3 text-center">
-                      <div className="flex flex-col items-center gap-1 min-w-[70px]">
-                        <span className={`font-extrabold text-xs ${
-                          row.qualifiedRate >= 50 ? 'text-amber-300' :
-                          row.qualifiedRate > 0 ? 'text-slate-300' : 'text-slate-500'
-                        }`}>
-                          %{row.qualifiedRate}
-                        </span>
-                        <div className="w-16 bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
-                          <div
-                            className="bg-amber-400 h-full rounded-full transition-all"
-                            style={{ width: `${row.qualifiedRate}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
+                        {/* Won Deals */}
+                        <td className="py-3.5 px-3 text-center">
+                          <span className={`font-extrabold text-xs ${row.wonCount > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {row.wonCount > 0 ? `✓ ${row.wonCount} Satış` : '-'}
+                          </span>
+                        </td>
 
-                    {/* Won Deals */}
-                    <td className="py-3.5 px-3 text-center">
-                      <span className={`font-extrabold text-xs ${row.wonCount > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
-                        {row.wonCount > 0 ? `✓ ${row.wonCount} Satış` : '-'}
-                      </span>
-                    </td>
+                        {/* Revenue */}
+                        <td className="py-3.5 px-3 text-right">
+                          <span className="font-extrabold text-xs text-slate-200">
+                            {row.totalBudget > 0 ? `₺${row.totalBudget.toLocaleString('tr-TR')}` : '-'}
+                          </span>
+                        </td>
 
-                    {/* Revenue */}
-                    <td className="py-3.5 px-4 text-right">
-                      <span className="font-extrabold text-xs text-slate-200">
-                        {row.totalBudget > 0 ? `₺${row.totalBudget.toLocaleString('tr-TR')}` : '-'}
-                      </span>
-                    </td>
+                        {/* Toggle Arrow */}
+                        <td className="py-3.5 px-3 text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRowExpand(row.key);
+                            }}
+                            className={`p-1.5 rounded-lg border transition-all ${
+                              isExpanded
+                                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                            }`}
+                            title="Müşterileri Göster / Gizle"
+                          >
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                        </td>
+                      </tr>
 
-                  </tr>
-                ))
+                      {/* EXPANDED DRILL-DOWN CUSTOMER FEED */}
+                      {isExpanded && (
+                        <tr className="bg-slate-950 border-b-2 border-indigo-500/30">
+                          <td colSpan={8} className="p-4 sm:p-5">
+                            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-inner">
+                              
+                              {/* Expanded Feed Header */}
+                              <div className="flex items-center justify-between pb-2.5 border-b border-slate-800 flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Layers className="w-4 h-4 text-indigo-400" />
+                                  <h5 className="font-extrabold text-xs sm:text-sm text-slate-100">
+                                    "{row.name}" Gelen Müşterileri ({row.leads.length} Kişi)
+                                  </h5>
+                                </div>
+                                <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-amber-400" /> {row.qualifiedCount} Kaliteli Lead
+                                </span>
+                              </div>
+
+                              {/* Lead Cards List */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto pr-1">
+                                {row.leads.map((lead) => {
+                                  const stageInfo = stageMap.get(lead.stage) || { label: lead.stage, color: '#64748b' };
+                                  const leadBudget = getLeadNumericBudget(lead);
+
+                                  return (
+                                    <div
+                                      key={lead.id}
+                                      className={`p-3 rounded-xl border transition-all flex flex-col justify-between space-y-2.5 ${
+                                        lead.isQualified
+                                          ? 'bg-amber-950/15 border-amber-500/40 shadow-sm shadow-amber-500/10'
+                                          : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                                      }`}
+                                    >
+                                      <div>
+                                        {/* Top Row: Title & Stage */}
+                                        <div className="flex items-start justify-between gap-2">
+                                          <h6 className="font-bold text-xs text-white line-clamp-1">
+                                            {lead.title}
+                                          </h6>
+                                          <span 
+                                            className="text-[10px] font-extrabold px-2 py-0.5 rounded-md shrink-0 text-white"
+                                            style={{ backgroundColor: stageInfo.color }}
+                                          >
+                                            {stageInfo.label}
+                                          </span>
+                                        </div>
+
+                                        {/* Contact Person & Service Answer */}
+                                        <div className="text-[11px] text-slate-400 mt-1 space-y-0.5">
+                                          {lead.contactName && (
+                                            <div className="font-medium text-slate-300 truncate">
+                                              👤 {lead.contactName}
+                                            </div>
+                                          )}
+                                          {lead.service && (
+                                            <div className="text-[10px] text-slate-500 truncate">
+                                              📋 Seçilen Hizmet: <span className="text-slate-400 font-semibold">{lead.service}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Phone & Actions Row */}
+                                      <div className="pt-2 border-t border-slate-900 flex items-center justify-between gap-2 text-xs">
+                                        
+                                        {/* Phone Links */}
+                                        <div className="flex items-center gap-1.5">
+                                          {lead.phone ? (
+                                            <>
+                                              <a
+                                                href={`tel:${lead.phone}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="p-1 rounded-md bg-slate-900 text-cyan-400 border border-slate-800 hover:border-cyan-500/40"
+                                                title={`Ara: ${lead.phone}`}
+                                              >
+                                                <Phone className="w-3 h-3" />
+                                              </a>
+                                              <a
+                                                href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="p-1 rounded-md bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-900/60"
+                                                title="WhatsApp Mesaj Gönder"
+                                              >
+                                                <MessageSquare className="w-3 h-3" />
+                                              </a>
+                                              <span className="text-[10px] font-mono text-slate-400 truncate max-w-[90px]">
+                                                {lead.phone}
+                                              </span>
+                                            </>
+                                          ) : (
+                                            <span className="text-[10px] text-slate-600">Tel Yok</span>
+                                          )}
+                                        </div>
+
+                                        {/* Quality Toggle & Open Modal Button */}
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          {onToggleQualified && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onToggleQualified(lead.id);
+                                              }}
+                                              className={`p-1 rounded-md border text-[10px] font-bold flex items-center gap-1 ${
+                                                lead.isQualified
+                                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                                  : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-amber-300'
+                                              }`}
+                                              title="Kaliteli Olarak İşaretle / Kaldır"
+                                            >
+                                              <Star className={`w-3 h-3 ${lead.isQualified ? 'fill-amber-400 text-amber-400' : ''}`} />
+                                            </button>
+                                          )}
+
+                                          {onSelectLead && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onSelectLead(lead);
+                                              }}
+                                              className="px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded-md font-bold text-[10px] transition-all flex items-center gap-1"
+                                            >
+                                              <span>Detay</span>
+                                              <ArrowRight className="w-2.5 h-2.5" />
+                                            </button>
+                                          )}
+                                        </div>
+
+                                      </div>
+
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>

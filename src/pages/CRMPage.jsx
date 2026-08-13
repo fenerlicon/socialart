@@ -337,51 +337,10 @@ function mapDbRowToLead(row) {
   }
 
   // Extract ad & campaign display names
-  // Derived Campaign Name
-  let derivedCampaignName = row.campaign_name || '';
-  if (!derivedCampaignName) {
-    if (row.campaign_id) {
-      derivedCampaignName = `Kampanya #${row.campaign_id}`;
-    } else if (resolvedSource === 'META_ADS') {
-      derivedCampaignName = row.service || 'Meta Reklam Kampanyası';
-    } else if (resolvedSource === 'GOOGLE_ADS') {
-      derivedCampaignName = row.service || 'Google Ads Kampanyası';
-    } else if (resolvedSource === 'WEBSITE') {
-      derivedCampaignName = 'Web Sitesi Organik / Form';
-    } else {
-      derivedCampaignName = 'Manuel Giriş / Panel';
-    }
-  }
-
-  // Derived Ad Set Name
-  let derivedAdsetName = row.adset_name || '';
-  if (!derivedAdsetName) {
-    if (row.adset_id) {
-      derivedAdsetName = `Set #${row.adset_id}`;
-    } else if (resolvedSource === 'META_ADS') {
-      derivedAdsetName = row.service ? `${row.service} Hedef Seti` : 'Meta Hedef Kitle Seti';
-    } else {
-      derivedAdsetName = 'Genel Hedef Seti';
-    }
-  }
-
-  // Derived Ad / Creative Name
-  let derivedAdName = row.ad_name || '';
-  if (!derivedAdName) {
-    if (row.service && row.service !== 'Genel' && row.service !== 'Prodüksiyon' && row.service !== 'Sosyal Medya') {
-      derivedAdName = row.service;
-    } else if (row.ad_id) {
-      derivedAdName = `Reklam #${row.ad_id}`;
-    } else if (resolvedSource === 'META_ADS') {
-      derivedAdName = row.service || 'Meta Instagram Reklamı';
-    } else if (resolvedSource === 'GOOGLE_ADS') {
-      derivedAdName = row.service || 'Google Arama / Display';
-    } else if (resolvedSource === 'WEBSITE') {
-      derivedAdName = 'Web Sitesi Formu';
-    } else {
-      derivedAdName = 'Manuel Giriş / Referans';
-    }
-  }
+  // Campaign & Ad names: strictly use actual marketing campaign / ad data without pretending form answers are campaigns
+  const actualCampaignName = row.campaign_name || (row.campaign_id ? `Kampanya #${row.campaign_id}` : undefined);
+  const actualAdsetName = row.adset_name || (row.adset_id ? `Set #${row.adset_id}` : undefined);
+  const actualAdName = row.ad_name || (row.ad_id ? `Reklam #${row.ad_id}` : undefined);
 
   return {
     id: String(row.id),
@@ -391,13 +350,14 @@ function mapDbRowToLead(row) {
     email: row.email || '',
     phone: row.phone || '',
     city: row.city || '',
+    service: row.service || '',
     source: resolvedSource,
     platform: rawPlatform || (resolvedSource === 'META_ADS' ? 'Meta Ads (Instagram)' : resolvedSource),
-    adName: derivedAdName,
+    adName: actualAdName,
     adId: row.ad_id || undefined,
-    adsetName: derivedAdsetName,
+    adsetName: actualAdsetName,
     adsetId: row.adset_id || undefined,
-    campaignName: derivedCampaignName,
+    campaignName: actualCampaignName,
     campaignId: row.campaign_id || undefined,
     isOrganic: Boolean(row.is_organic),
     stage,
@@ -1667,6 +1627,8 @@ export default function CRMPage({ embedded = false }) {
               <AnalyticsView
                 leads={leads}
                 currentPipeline={currentPipeline}
+                onSelectLead={setSelectedLead}
+                onToggleQualified={handleToggleQualified}
               />
             )}
           </>
