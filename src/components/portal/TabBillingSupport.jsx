@@ -194,45 +194,54 @@ export const TabBillingSupport = ({
         </div>
       </div>
 
-      {/* 2. QUICK SERVICE & ADD-ON MARKETPLACE [H] */}
-      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5">
-        <div>
-          <h3 className="text-base font-black text-white flex items-center gap-2">
-            <Flame className="w-5 h-5 text-amber-400" />
-            Hızlı Hizmet & Ekstra Talep Pazarı
-          </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Ekstra çekim, acil reklam kampanyası veya banner ihtiyaçlarınızı tek tıkla ajans ekibinize bildirin
+      {/* 2. QUICK SERVICE & ADD-ON MARKETPLACE [H] - BLURRED & COMING SOON */}
+      <div className="relative bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl overflow-hidden">
+        {/* Blur Overlay */}
+        <div className="absolute inset-0 z-20 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+          <span className="text-xs font-black px-4 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-lg mb-2">
+            🚀 ÇOK YAKINDA AKTİF OLACAK
+          </span>
+          <p className="text-xs text-slate-300 font-semibold max-w-sm">
+            Tek tıkla ek çekim, kampanya ve tasarım talep modülü hazırlanıyor.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickServices.map((srv) => (
-            <div
-              key={srv.id}
-              className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between gap-3 hover:border-amber-500/40 transition-all shadow-md"
-            >
-              <div>
-                <h5 className="font-black text-xs text-white">{srv.title}</h5>
-                <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{srv.desc}</p>
-              </div>
+        {/* Content beneath blur */}
+        <div className="filter blur-[2px] pointer-events-none opacity-50 space-y-5">
+          <div>
+            <h3 className="text-base font-black text-white flex items-center gap-2">
+              <Flame className="w-5 h-5 text-amber-400" />
+              Hızlı Hizmet & Ekstra Talep Pazarı
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Ekstra çekim, acil reklam kampanyası veya banner ihtiyaçlarınızı tek tıkla ajans ekibinize bildirin
+            </p>
+          </div>
 
-              <button
-                onClick={() => handleQuickRequest(srv)}
-                className="w-full py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-slate-950 font-extrabold text-[11px] border border-amber-500/30 transition-all flex items-center justify-center gap-1.5"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {quickServices.map((srv) => (
+              <div
+                key={srv.id}
+                className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between gap-3 shadow-md"
               >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>{srv.actionText}</span>
-              </button>
-            </div>
-          ))}
+                <div>
+                  <h5 className="font-black text-xs text-white">{srv.title}</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{srv.desc}</p>
+                </div>
+
+                <div className="w-full py-2 px-3 rounded-xl bg-amber-500/15 text-amber-400 font-extrabold text-[11px] border border-amber-500/30 text-center">
+                  <span>{srv.actionText}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* 3. VIP DEDICATED ACCOUNT MANAGER & LIVE CHAT [3, Canlı Destek] */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Account Manager Card */}
+        {/* Account Manager Card - 100% ACTIVE WITH DIRECT WHATSAPP */}
         <div className="bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-900 border border-indigo-500/30 p-6 rounded-3xl backdrop-blur-xl shadow-xl flex flex-col justify-between gap-5">
           <div className="space-y-4">
             <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -266,74 +275,53 @@ export const TabBillingSupport = ({
             href="https://wa.me/905000000000"
             target="_blank"
             rel="noreferrer"
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all"
+            className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/30 transition-all"
           >
             <Phone className="w-4 h-4" />
             <span>Doğrudan WhatsApp'tan Yazın</span>
           </a>
         </div>
 
-        {/* Live Chat Inbox with Agency */}
-        <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl flex flex-col justify-between gap-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div>
-              <h4 className="font-black text-sm text-white flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-purple-400" />
-                Ajans İçi Canlı Mesajlaşma Hattı
-              </h4>
-              <p className="text-[11px] text-slate-400">Ekibimize anlık not veya soru iletin</p>
-            </div>
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
-              Anlık Bildirim Açık
+        {/* Live Chat Inbox - BLURRED & COMING SOON */}
+        <div className="relative lg:col-span-2 bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl flex flex-col justify-between gap-4 overflow-hidden">
+          {/* Blur Overlay */}
+          <div className="absolute inset-0 z-20 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+            <span className="text-xs font-black px-4 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-lg mb-2">
+              ⏳ ÇOK YAKINDA AKTİF OLACAK
             </span>
+            <p className="text-xs text-slate-300 font-semibold max-w-sm">
+              Panel içi canlı mesajlaşma altyapısı güncellenmektedir. Lütfen sol taraftaki buton üzerinden doğrudan WhatsApp ile iletişime geçiniz.
+            </p>
           </div>
 
-          {/* Messages scroll */}
-          <div className="h-48 overflow-y-auto space-y-2.5 p-2 bg-slate-950/70 rounded-2xl border border-slate-800/80">
-            {(!supportMessages || supportMessages.length === 0) ? (
-              <div className="text-center py-12 text-slate-500 text-xs">
-                Henüz bir mesaj geçmişiniz yok. Ekibimize hemen aşağıdan yazabilirsiniz.
+          {/* Content beneath blur */}
+          <div className="filter blur-[2px] pointer-events-none opacity-40 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h4 className="font-black text-sm text-white flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-purple-400" />
+                  Ajans İçi Canlı Mesajlaşma Hattı
+                </h4>
+                <p className="text-[11px] text-slate-400">Ekibimize anlık not veya soru iletin</p>
               </div>
-            ) : (
-              supportMessages.slice(0, 15).reverse().map((msg, i) => (
-                <div
-                  key={msg.id || i}
-                  className={`flex flex-col max-w-[85%] ${
-                    msg.sender_type === 'client' ? 'ml-auto items-end' : 'mr-auto items-start'
-                  }`}
-                >
-                  <div className={`p-3 rounded-2xl text-xs font-semibold ${
-                    msg.sender_type === 'client'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-none shadow-md'
-                      : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
-                  }`}>
-                    {msg.message}
-                  </div>
-                  <span className="text-[9px] text-slate-500 mt-1 px-1">
-                    {msg.sender_type === 'client' ? 'Siz' : (msg.admin_name || 'SocialArt Ekibi')} • {new Date(msg.created_at || Date.now()).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+            </div>
 
-          {/* Send Input */}
-          <form onSubmit={onSendSupportMessage} className="flex gap-2">
-            <input
-              type="text"
-              value={supportInput}
-              onChange={e => setSupportInput(e.target.value)}
-              placeholder="Ekibimize mesajınızı yazın..."
-              className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs outline-none focus:border-purple-500/50"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/25"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Gönder</span>
-            </button>
-          </form>
+            <div className="h-44 bg-slate-950/70 rounded-2xl border border-slate-800/80 p-4 text-center text-slate-500 text-xs flex items-center justify-center">
+              Mesajlaşma paneli
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                disabled
+                placeholder="Ekibimize mesajınızı yazın..."
+                className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs"
+              />
+              <button disabled className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs">
+                Gönder
+              </button>
+            </div>
+          </div>
         </div>
 
       </div>

@@ -250,10 +250,21 @@ function ClientPortal() {
 
   const handlePayRequest = (reqItem) => {
     const isExempt = Boolean(reqItem.is_kdv_exempt);
-    const grandTotal = reqItem.total_amount || (isExempt ? reqItem.amount : reqItem.amount * 1.20);
+    const rawNet = Number(reqItem.amount || 0);
+    const grandTotal = Number(reqItem.total_amount) || (isExempt ? rawNet : rawNet * 1.20);
+    const kdvAmount = reqItem.kdv_amount !== undefined ? Number(reqItem.kdv_amount) : (isExempt ? 0 : grandTotal - rawNet);
+
     setCheckoutPlan({
       title: reqItem.title,
-      price: grandTotal,
+      name: reqItem.title,
+      price: grandTotal, // Exact amount to be charged by iyzico (58.741,20)
+      exactPrice: true, // Prevents CheckoutModal from adding 20% KDV twice!
+      isKdvIncluded: true,
+      netAmount: rawNet,
+      kdvAmount: kdvAmount,
+      isKdvExempt: isExempt,
+      is_kdv_exempt: isExempt,
+      items: Array.isArray(reqItem.items) ? reqItem.items : [],
       currency: 'TL',
       interval: 'Tek Seferlik',
       paymentType: 'custom_invoice',
@@ -432,10 +443,7 @@ function ClientPortal() {
         )}
       </main>
 
-      {/* 3. Floating Mini AI Assistant [2, C] */}
-      <PortalFloatingAI customer={customer} />
-
-      {/* 4. iyzico 3D Secure Checkout Modal */}
+      {/* 3. iyzico 3D Secure Checkout Modal */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
