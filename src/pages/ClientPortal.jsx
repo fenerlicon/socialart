@@ -137,12 +137,51 @@ function ClientPortal() {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const saved = localStorage.getItem('socialart_client');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const clientName = parsed.client_name || parsed.name || parsed.company || parsed.brand || parsed.company_code || 'Arayanvar';
-          const companyCode = parsed.company_code || parsed.code || clientName;
-          const fullParsed = { ...parsed, client_name: clientName, company_code: companyCode };
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const brandParam = params?.get('brand') || params?.get('code');
+        const tabParam = params?.get('tab');
+
+        const BRAND_MAP = {
+          miocasa: { id: 'c-miocasa', company_code: 'miocasa', client_name: 'MioCasa', defaultTab: 'overview_ads' },
+          shineco: { id: 'c-shineco', company_code: 'shineco', client_name: 'Shineco', defaultTab: 'overview_ads' },
+          mallofgurme: { id: 'c-mallofgurme', company_code: 'mallofgurme', client_name: 'Mall Of Gurme', defaultTab: 'overview_ads' },
+          gurme: { id: 'c-gurme', company_code: 'gurme', client_name: 'Gurme Bahçeşehir', defaultTab: 'overview_ads' },
+          postprodart: { id: 'c-postprodart', company_code: 'postprodart', client_name: 'Postprodart', defaultTab: 'billing_support' },
+          arayanvar: { id: 'c-arayanvar', company_code: 'arayanvar', client_name: 'Arayanvar / Aryanvar', defaultTab: 'billing_support' },
+          aryanvar: { id: 'c-aryanvar', company_code: 'aryanvar', client_name: 'Arayanvar / Aryanvar', defaultTab: 'billing_support' },
+          ogena: { id: 'c-ogena', company_code: 'ogena', client_name: 'Ogena Yapı', defaultTab: 'billing_support' },
+          vipcatring: { id: 'c-vipcatring', company_code: 'vipcatring', client_name: 'VIP Catring', defaultTab: 'billing_support' }
+        };
+
+        let targetAccount = null;
+
+        if (brandParam) {
+          const cleanKey = brandParam.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (BRAND_MAP[cleanKey]) {
+            targetAccount = BRAND_MAP[cleanKey];
+            localStorage.setItem('socialart_client', JSON.stringify(targetAccount));
+          }
+        }
+
+        if (!targetAccount) {
+          const saved = localStorage.getItem('socialart_client');
+          if (saved) {
+            try {
+              targetAccount = JSON.parse(saved);
+            } catch (e) {}
+          }
+        }
+
+        if (targetAccount) {
+          const clientName = targetAccount.client_name || targetAccount.name || targetAccount.company || targetAccount.company_code || 'Müşteri';
+          const companyCode = targetAccount.company_code || targetAccount.code || clientName;
+          const fullParsed = { ...targetAccount, client_name: clientName, company_code: companyCode };
+
+          if (tabParam) {
+            setActiveTab(tabParam);
+          } else if (targetAccount.defaultTab) {
+            setActiveTab(targetAccount.defaultTab);
+          }
           
           await fetchClientData(clientName);
           await fetchSupportMessages(clientName);
@@ -258,6 +297,9 @@ function ClientPortal() {
     setCustomer(null);
     setClientDetails(null);
     setSupportMessages([]);
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   };
 
   const handlePayRequest = (reqItem) => {
