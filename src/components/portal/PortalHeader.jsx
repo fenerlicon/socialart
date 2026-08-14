@@ -10,18 +10,18 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-export const PortalHeader = ({
+export default function PortalHeader({
   customer,
   activeTab,
   setActiveTab,
   onLogout,
   clientDetails
-}) => {
+}) {
   const tabs = [
-    { id: 'billing_support', label: 'Finans & İletişim', icon: CreditCard, badge: '🟢 Aktif' },
-    { id: 'overview_ads', label: 'Marka & Reklamlar', icon: BarChart3, badge: '⏳ Güncelleniyor' },
-    { id: 'production_studio', label: 'Prodüksiyon & Onay', icon: Clapperboard, badge: '⏳ Güncelleniyor' },
-    { id: 'assets_drive', label: 'Dosyalar & Drive', icon: FolderDown, badge: '⏳ Güncelleniyor' },
+    { id: 'overview_ads', label: 'Marka & Reklamlar', icon: BarChart3, badge: '🟢 Canlı' },
+    { id: 'production_studio', label: 'Prodüksiyon & Onay', icon: Clapperboard, badge: '🎬 Frame.io' },
+    { id: 'assets_drive', label: 'Dosyalar & Drive', icon: FolderDown, badge: '📁 4K Master' },
+    { id: 'billing_support', label: 'Finans & İletişim', icon: CreditCard, badge: '💳 3D Secure' },
   ];
 
   return (

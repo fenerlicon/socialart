@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
+import metaInsightsHandler from './api/meta-insights.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -11,8 +12,41 @@ export default defineConfig({
   plugins: [
     react(),
     {
-      name: 'serve-admin-static',
+      name: 'serve-api-and-admin',
       configureServer(server) {
+        // 1. API Route Handler for local Vite dev server
+        server.middlewares.use(async (req, res, next) => {
+          if (req.url?.startsWith('/api/meta-insights')) {
+            try {
+              const urlObj = new URL(req.url, 'http://localhost');
+              req.query = Object.fromEntries(urlObj.searchParams.entries());
+
+              if (!res.status) {
+                res.status = (code) => {
+                  res.statusCode = code;
+                  return res;
+                };
+              }
+              if (!res.json) {
+                res.json = (data) => {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify(data));
+                };
+              }
+
+              return await metaInsightsHandler(req, res);
+            } catch (apiErr) {
+              console.error('Vite local API handler error:', apiErr);
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: apiErr.message }));
+              return;
+            }
+          }
+          next();
+        });
+
+        // 2. Admin static routes
         server.middlewares.use((req, res, next) => {
           if (!req.url?.startsWith('/admin')) return next()
 

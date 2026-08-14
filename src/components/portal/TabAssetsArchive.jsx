@@ -13,14 +13,16 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getBrandConfig } from './brandConfigs';
 
-export const TabAssetsArchive = ({ customer }) => {
+export default function TabAssetsArchive({ customer }) {
+  const brandConfig = getBrandConfig(customer?.company_code, customer?.client_name);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState('');
 
   // Agency Delivered 4K Master Export Packages
-  const deliveredDrivePackages = [
+  const deliveredDrivePackages = brandConfig.drivePackages || [
     {
       id: 'pkg-1',
       title: 'Ağustos 2026 - 4K Master Video & Reels Paketi (Google Drive)',
@@ -28,15 +30,6 @@ export const TabAssetsArchive = ({ customer }) => {
       size: '4.8 GB',
       date: '12 Ağustos 2026',
       itemsCount: '6 Dikey Video + 2 Yatay YouTube Master',
-      driveUrl: 'https://drive.google.com'
-    },
-    {
-      id: 'pkg-2',
-      title: 'Yüksek Çözünürlüklü Mekan & Ürün Fotoğraf Arşivi (RAW / JPEG)',
-      type: 'Fotoğraf Arşivi',
-      size: '2.1 GB',
-      date: '08 Ağustos 2026',
-      itemsCount: '45 Seçilmiş Retouched Kare',
       driveUrl: 'https://drive.google.com'
     }
   ];
@@ -97,9 +90,27 @@ export const TabAssetsArchive = ({ customer }) => {
       
       {/* Toast Alert */}
       {uploadSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold flex items-center gap-2 shadow-xl animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>{uploadSuccess}</span>
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-cyan-950/80 via-slate-900/90 to-slate-950 border border-cyan-500/40 backdrop-blur-2xl shadow-2xl shadow-cyan-950/60 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-l-full" />
+          <div className="flex items-center gap-3.5 pl-1.5">
+            <div className="relative w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-lg shadow-cyan-500/20">
+              <CheckCircle2 className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400">Bulut Arşivi Bildirimi</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              </div>
+              <p className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{uploadSuccess}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUploadSuccess('')}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all shrink-0 cursor-pointer"
+          >
+            <span className="text-xs font-black">✕</span>
+          </button>
         </div>
       )}
 
@@ -197,47 +208,113 @@ export const TabAssetsArchive = ({ customer }) => {
         </div>
       </div>
 
-      {/* 3. CLIENT UPLOAD ZONE (MÜŞTERİ DOSYA YÜKLEME ALANI) [3, E] */}
+      {/* 3. CLIENT DRIVE & ASSET TRANSMISSION POOL (LİNK İLETİM HAVUZU) [3, E] */}
       <div className="bg-gradient-to-r from-slate-900 via-purple-950/20 to-slate-900 border border-purple-500/30 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5">
         <div>
           <h3 className="text-base font-black text-white flex items-center gap-2">
             <UploadCloud className="w-5 h-5 text-purple-400" />
-            Ajansa Dosya & Materyal Yükleme Havuzu
+            Ajansa Dosya & Materyal İletim Havuzu (Google Drive / WeTransfer)
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Yeni logo, ürün fotoğrafları, kampanya metinleri veya ham videolarınızı doğrudan prodüksiyon ekibimize yükleyin.
+            Sunucu kotasını doldurmadan yüksek boyutlu 4K video, fotoğraf ve logo arşivlerinizi Google Drive veya WeTransfer linki olarak tek tıkla ajans ekibimize iletin.
           </p>
         </div>
 
-        {/* Drop Zone Box */}
-        <label className="border-2 border-dashed border-purple-500/40 hover:border-purple-400 rounded-3xl p-8 bg-slate-950/70 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-purple-950/20 group">
-          <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform mb-3 shadow-lg shadow-purple-500/10">
-            <UploadCloud className="w-7 h-7" />
-          </div>
-          <span className="text-sm font-extrabold text-white">
-            {uploading ? '⏳ Dosyalar Ajans Havuzuna Yükleniyor...' : 'Dosyaları Buraya Sürükleyin veya Tıklayın'}
-          </span>
-          <span className="text-xs text-slate-400 mt-1">
-            PNG, JPG, MP4, MOV, PDF, ZIP (Maks. 2 GB)
-          </span>
-          <input
-            type="file"
-            multiple
-            disabled={uploading}
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-        </label>
+        {/* Link Submission Form */}
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const driveUrl = form.driveUrl.value.trim();
+            const note = form.note.value.trim();
 
-        {/* Uploaded History List */}
+            if (!driveUrl) return;
+
+            setUploading(true);
+            try {
+              if (customer?.client_name) {
+                await supabase.from('client_support_messages').insert([{
+                  client_name: customer.client_name,
+                  sender_type: 'client',
+                  message: `🔗 MÜŞTERİ MATERYAL LİNKİ İLETTİ:\n📌 Başlık: ${note || 'Materyal Arşivi'}\n🌐 Link: ${driveUrl}`,
+                  is_read: false
+                }]);
+
+                await supabase.from('activity_log').insert([{
+                  target_name: customer.client_name,
+                  action: 'Drive / WeTransfer Linki İletildi',
+                  details: `Müşteri yeni materyal linki paylaştı: ${note || driveUrl}`
+                }]);
+              }
+
+              const newItem = {
+                title: note || 'Yeni Materyal Paketi',
+                url: driveUrl,
+                date: new Date().toLocaleDateString('tr-TR')
+              };
+
+              setUploadedFiles(prev => [newItem, ...prev]);
+              setUploadSuccess('Materyal linkiniz prodüksiyon ekibimize başarıyla iletildi!');
+              form.reset();
+              setTimeout(() => setUploadSuccess(''), 5000);
+            } catch (err) {
+              console.error(err);
+            } finally {
+              setUploading(false);
+            }
+          }}
+          className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-inner"
+        >
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+              <span>Google Drive, WeTransfer veya Dropbox Linkiniz *</span>
+              <span className="text-[10px] text-purple-400">Herkese Açık / Paylaşımlı Link</span>
+            </label>
+            <input
+              name="driveUrl"
+              type="url"
+              required
+              placeholder="https://drive.google.com/drive/folders/... veya https://we.tl/..."
+              className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300">
+              Paket Başlığı & Ekip Notunuz (İsteğe Bağlı)
+            </label>
+            <input
+              name="note"
+              type="text"
+              placeholder="Örn: Ağustos Ayı Yeni Menü Fotoğrafları ve Vektörel Logolarımız"
+              className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={uploading}
+            className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
+          >
+            <UploadCloud className="w-4 h-4" />
+            <span>{uploading ? 'İletiliyor...' : '🚀 Ajans Prodüksiyon Ekibine İlet'}</span>
+          </button>
+        </form>
+
+        {/* Submitted Links History */}
         {uploadedFiles.length > 0 && (
           <div className="space-y-2 pt-2">
-            <span className="text-xs font-bold text-slate-400 block">Son Yüklediğiniz Dosyalar:</span>
+            <span className="text-xs font-bold text-slate-400 block">İlettiğiniz Materyal Linkleri:</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {uploadedFiles.map((f, i) => (
-                <div key={i} className="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs">
-                  <span className="text-slate-200 font-semibold truncate">{f.name}</span>
-                  <span className="text-[10px] text-emerald-400 font-bold shrink-0">✓ İletildi ({f.size})</span>
+              {uploadedFiles.map((item, i) => (
+                <div key={i} className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs gap-2">
+                  <div className="truncate">
+                    <span className="text-white font-bold block truncate">{item.title}</span>
+                    <a href={item.url} target="_blank" rel="noreferrer" className="text-[11px] text-purple-400 hover:underline truncate block">
+                      {item.url}
+                    </a>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-bold shrink-0">✓ İletildi</span>
                 </div>
               ))}
             </div>
@@ -247,4 +324,4 @@ export const TabAssetsArchive = ({ customer }) => {
 
     </div>
   );
-};
+}

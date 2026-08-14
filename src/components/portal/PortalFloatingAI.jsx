@@ -10,14 +10,17 @@ import {
   ArrowUpRight,
   ShieldCheck
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { getBrandConfig } from './brandConfigs';
 
-export const PortalFloatingAI = ({ customer }) => {
+export default function PortalFloatingAI({ customer }) {
+  const brandConfig = getBrandConfig(customer?.company_code, customer?.client_name);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'ai',
-      text: `Merhaba ${customer?.client_name || 'Değerli'} ekibi! Ben SocialArt Marka Yapay Zeka Asistanınızım. Reklam harcamalarınız, sıradaki çekim tarihiniz veya ajans hizmetlerimizle ilgili sorularınızı anında yanıtlayabilirim.`
+      text: `Merhaba ${brandConfig.name} ekibi! Ben SocialArt Marka Yapay Zeka Danışmanınızım. Reklam bütçeniz, sıradaki çekim tarihiniz, video kurgularınız veya taleplerinizi ekibimize iletmekle ilgili her konuda yanınızdayım.`
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -37,7 +40,7 @@ export const PortalFloatingAI = ({ customer }) => {
     }
   }, [messages, isOpen]);
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = async (textToSend) => {
     const text = textToSend || inputText;
     if (!text.trim()) return;
 
@@ -47,24 +50,58 @@ export const PortalFloatingAI = ({ customer }) => {
     setInputText('');
     setIsTyping(true);
 
-    // 2. Simulated AI logic with domain intelligence
-    setTimeout(() => {
-      let aiReply = 'Sorunuzu aldım. Ekibimizle birlikte sürecinizi optimize ediyoruz.';
-      const lower = text.toLowerCase();
+    // 2. Multi-Intent Routing & Domain Analysis
+    const lower = text.toLowerCase();
+    const isVideoIntent = lower.includes('video') || lower.includes('kurgu') || lower.includes('müzik') || lower.includes('sahne') || lower.includes('montaj') || lower.includes('altyazı');
+    const isAdsIntent = lower.includes('reklam') || lower.includes('bütçe') || lower.includes('harcama') || lower.includes('cpl') || lower.includes('roas') || lower.includes('lead') || lower.includes('hedef kitle');
+    const isSocialIntent = lower.includes('post') || lower.includes('story') || lower.includes('caption') || lower.includes('metin') || lower.includes('açıklama') || lower.includes('grid') || lower.includes('saat');
 
-      if (lower.includes('harcama') || lower.includes('bütçe') || lower.includes('ne kadar')) {
-        aiReply = 'Bu ay Meta Ads üzerinde toplam ₺3.434,38 reklam harcaması yapıldı. Bugünün harcaması ise ₺199,13 seviyesinde ve CPL birim maliyetimiz ₺73,00 ile hedeflerimizin altında çok verimli seyrediyor.';
-      } else if (lower.includes('çekim') || lower.includes('tarih') || lower.includes('ne zaman')) {
-        aiReply = 'Sıradaki prodüksiyon çekim gününüz 18 Ağustos Pazartesi saat 11:00 olarak planlanmıştır. Çekim Call Sheet rehberini "Prodüksiyon & Onay" sekmesinde bulabilirsiniz.';
-      } else if (lower.includes('kurgu') || lower.includes('onay') || lower.includes('video')) {
-        aiReply = 'Yeni sezon tanıtım Reels videonuzun 2. revize kurgusu tamamlandı ve "Prodüksiyon & Onay" sekmesinde onayınızı bekliyor.';
-      } else if (lower.includes('temsilci') || lower.includes('not') || lower.includes('mesaj')) {
-        aiReply = 'Notunuz Müşteri Temsilciniz Selin Yılmaz\'a anlık bildirim olarak iletildi. En kısa sürede WhatsApp veya panel üzerinden size dönüş sağlayacaktır.';
+    let departmentsToNotify = [];
+    let aiReply = '';
+
+    if (isVideoIntent && isAdsIntent) {
+      departmentsToNotify.push('🎬 Video Kurgu Ekibi', '📈 Performans Pazarlama Ekibi');
+      aiReply = `Talebinizi analiz ettim! Video ile ilgili bölümü Kurgu Ekibimize, reklam & bütçe güncellemesini ise Performans Pazarlama Uzmanımıza ayrı görevler olarak anlık ilettim.`;
+    } else if (isVideoIntent) {
+      departmentsToNotify.push('🎬 Video Kurgu Ekibi');
+      aiReply = `Kurgu ve video notunuzu aldım. Kurgu ekibimize görev olarak ilettim; revize/güncelleme tamamlandığında "Prodüksiyon & Onay" sekmesinde görebilirsiniz.`;
+    } else if (isAdsIntent) {
+      departmentsToNotify.push('📈 Performans Pazarlama Ekibi');
+      aiReply = `Bu ay Meta Ads üzerinde toplam ₺3.434,38 reklam harcaması yapıldı. Talebiniz Performans Pazarlama Uzmanımıza anlık bildirim olarak iletildi.`;
+    } else if (isSocialIntent) {
+      departmentsToNotify.push('📱 Sosyal Medya Ekibi');
+      aiReply = `İçerik ve paylaşım notunuz Sosyal Medya Uzmanımızın içerik takvimine kaydedildi.`;
+    } else if (lower.includes('çekim') || lower.includes('tarih') || lower.includes('saat')) {
+      aiReply = `Sıradaki prodüksiyon çekim gününüz ${brandConfig.nextShooting.date} saat ${brandConfig.nextShooting.time} olarak planlanmıştır. Mekan: ${brandConfig.nextShooting.location}.`;
+    } else {
+      departmentsToNotify.push('💼 Marka Direktörü & Temsilci');
+      aiReply = `Mesajınızı aldım. Marka Yöneticiniz ${brandConfig.dedicatedManager.name}'e anlık bildirim olarak iletildi. En kısa sürede sizinle iletişime geçecektir.`;
+    }
+
+    // 3. Dispatch to Supabase
+    try {
+      if (departmentsToNotify.length > 0 && customer?.client_name) {
+        await supabase.from('client_support_messages').insert([{
+          client_name: customer.client_name,
+          sender_type: 'client',
+          message: `🤖 [AI Yönlendirmesi -> ${departmentsToNotify.join(', ')}]: "${text}"`,
+          is_read: false
+        }]);
+
+        await supabase.from('activity_log').insert([{
+          target_name: customer.client_name,
+          action: 'AI Müşteri Talebi',
+          details: `İstek: "${text}" (${departmentsToNotify.join(', ')})`
+        }]);
       }
+    } catch (e) {
+      console.warn('Supabase AI dispatch notice:', e);
+    }
 
+    setTimeout(() => {
       setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: aiReply }]);
       setIsTyping(false);
-    }, 900);
+    }, 600);
   };
 
   return (
@@ -98,84 +135,91 @@ export const PortalFloatingAI = ({ customer }) => {
                 </div>
               </div>
               <div>
-                <h4 className="font-black text-xs text-white">SocialArt Marka AI</h4>
-                <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Site Haritası & Marka Bilgisi Aktif</span>
-                </div>
+                <h4 className="text-xs font-black text-white flex items-center gap-1.5">
+                  <span>Marka AI Danışmanı</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-300 font-bold">
+                    SocialArt VIP
+                  </span>
+                </h4>
+                <p className="text-[10px] text-slate-400">7/24 Marka Asistanınız & Akıllı Yönlendirme</p>
               </div>
             </div>
 
             <button
               onClick={() => setIsOpen(false)}
-              className="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Messages Area */}
-          <div className="p-4 h-72 overflow-y-auto space-y-3 bg-slate-950/60">
+          {/* Chat Body */}
+          <div className="p-4 h-80 overflow-y-auto space-y-3 bg-slate-950/60">
             {messages.map((m) => (
               <div
                 key={m.id}
-                className={`flex flex-col max-w-[85%] ${
-                  m.sender === 'user' ? 'ml-auto items-end' : 'mr-auto items-start'
-                }`}
+                className={`flex gap-2.5 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed ${
-                  m.sender === 'user'
-                    ? 'bg-indigo-600 text-white rounded-br-none'
-                    : 'bg-slate-800/90 text-slate-200 rounded-bl-none border border-slate-700/80 shadow-md'
-                }`}>
+                {m.sender === 'ai' && (
+                  <div className="w-6 h-6 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center shrink-0 mt-1">
+                    <Bot className="w-3.5 h-3.5 text-indigo-300" />
+                  </div>
+                )}
+                <div
+                  className={`p-3 rounded-2xl text-xs max-w-[82%] leading-relaxed ${
+                    m.sender === 'user'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-none shadow-md'
+                      : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-sm'
+                  }`}
+                >
                   {m.text}
                 </div>
               </div>
             ))}
-
             {isTyping && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold p-2">
+              <div className="flex items-center gap-1.5 p-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 text-xs w-20">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                <span>AI yanıt hazırlıyor...</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse delay-100" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse delay-200" />
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Prompts */}
-          <div className="p-2.5 bg-slate-950 border-t border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {quickPrompts.map((prompt, i) => (
+          <div className="p-2.5 bg-slate-950/90 border-t border-slate-800/80 flex gap-1.5 overflow-x-auto no-scrollbar">
+            {quickPrompts.map((q, idx) => (
               <button
-                key={i}
-                onClick={() => handleSendMessage(prompt)}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-indigo-950/60 text-slate-300 hover:text-indigo-300 border border-slate-800 text-[10px] font-bold whitespace-nowrap transition-colors"
+                key={idx}
+                onClick={() => handleSendMessage(q)}
+                className="whitespace-nowrap px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all shadow-sm shrink-0"
               >
-                {prompt}
+                {q}
               </button>
             ))}
           </div>
 
-          {/* Input Bar */}
+          {/* Input Box */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2"
+            className="p-3 bg-slate-900 border-t border-slate-800 flex gap-2"
           >
             <input
               type="text"
               value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              placeholder="Asistana bir soru sorun..."
-              className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs outline-none focus:border-indigo-500/50"
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Sorunuzu veya ekibe notunuzu yazın..."
+              className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 focus:border-indigo-500/60 outline-none"
             />
             <button
               type="submit"
               disabled={!inputText.trim()}
-              className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition-all shrink-0"
+              className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90 disabled:opacity-40 transition-all"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </form>
 
@@ -183,4 +227,4 @@ export const PortalFloatingAI = ({ customer }) => {
       )}
     </>
   );
-};
+}

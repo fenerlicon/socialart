@@ -1,17 +1,40 @@
-// In-memory cache to prevent Meta API rate limits
-let cachedInsights = null;
-let lastCacheTime = 0;
-const CACHE_TTL_MS = 25000; // 25 seconds cache
+const MASTER_TOKEN = 'EAALZAYfbO0yQBSOOZAZCN6ZBQ9TVIrIM9ZAiG2TeQvMZAdh1zAnu4TaJMBeCD8guDqYjBtyL9nCAxhAWdsQWlOESfu9qKMkNQNizOgbmb7FWD8oUNrsOIZBIJ4IzkxSgXs4ZAn9nS9bI57RckTR3uTAzGxUdZBWJUQbZCiqVMIsKPWpxd3yDnzbkKeSMeFCnS1lsnAZAciTUMOZA82LSfQ2J9ZCuwqZBTSSJxB8aSR4JZAjj0m8ZBquxyLwb1sgRqjr5dkrX5KOdM7XVR8oda5zjGpvvGT4B3gZDZD';
+
+const BRAND_META_CONFIGS = {
+  mallofgurme: {
+    accountId: 'act_1623202645011162',
+    token: MASTER_TOKEN
+  },
+  gurme: {
+    accountId: 'act_289754769812729',
+    token: MASTER_TOKEN
+  },
+  shineco: {
+    accountId: 'act_1608208866017447',
+    token: MASTER_TOKEN
+  },
+  miocasa: {
+    accountId: 'act_521331138335695',
+    token: MASTER_TOKEN
+  },
+  postprodart: {
+    accountId: 'act_1341032947601781',
+    token: MASTER_TOKEN
+  }
+};
+
+const cache = {};
+const CACHE_TTL_MS = 30000; // 30 seconds
 
 export default async function handler(req, res) {
-  // CORS Headers - Limit or allow same-origin
+  // CORS Headers
   const origin = req.headers.origin || '';
-  const allowedOrigins = ['https://socialartajans.com', 'https://www.socialartajans.com', 'https://socialart.com.tr', 'https://www.socialart.com.tr', 'http://localhost:5173', 'http://localhost:3000'];
+  const allowedOrigins = ['https://socialartajans.com', 'https://www.socialartajans.com', 'https://socialartmedya.com', 'https://www.socialartmedya.com', 'https://socialart.com.tr', 'http://localhost:5173', 'http://localhost:3000'];
   
   if (allowedOrigins.some(o => origin.startsWith(o)) || !origin) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://socialart.com.tr');
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -26,91 +49,85 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const now = Date.now();
-  const datePreset = req.query.date_preset || 'this_month';
+  const companyCode = (req.query.company_code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const datePreset = req.query.date_preset || 'last_30d';
 
-  // Return cached result if fresh
-  if (cachedInsights && (now - lastCacheTime < CACHE_TTL_MS) && datePreset === 'this_month') {
+  // Check if this brand has a registered Meta Ad Account
+  const brandMeta = BRAND_META_CONFIGS[companyCode];
+  
+  const token = brandMeta?.token || process.env.META_PAGE_ACCESS_TOKEN || 'EAALZAYfbO0yQBSK0m1WCQm2lnkvCjwmYKnv6Cvjz0ipxlud6iuWHAhe8A2rkyaLXrZCRNNjiW5YVhUp0vMypZCmEifZCqckEv0YnYlJMZB7QvVw82WIjNugn6ygwpYq08LzlR5CzegmUVi62u6SiqxhuJyPr2YhUGwYD07D5EXlVTgXEHvcBmuOvAXC9gegZDZD';
+  const accountId = brandMeta?.accountId || process.env.META_AD_ACCOUNT_ID || 'act_1623202645011162';
+
+  const cacheKey = `${companyCode}_${accountId}_${datePreset}`;
+  const now = Date.now();
+
+  if (cache[cacheKey] && (now - cache[cacheKey].timestamp < CACHE_TTL_MS)) {
     return res.status(200).json({
       success: true,
-      data: cachedInsights,
+      data: cache[cacheKey].data,
       cached: true
     });
   }
 
   try {
-    const metaAccessToken = process.env.META_PAGE_ACCESS_TOKEN || 'EAALZAYfbO0yQBSIuujz8eZC4rOCFWpX20ZAkrV3HobY86LZCZAb9cPqw7EiPdaGTsVZA0bFxheXlPyL2tSbj2EgKmvG7JF4ZAAxx6UuLHZAvMGaX4VzxPZCCYADD5JjqZBp1yZCSp5UBSx9ed8UoPeflxHi2xUkQtXmKyX1m0ZAIilc8k19VdLaFTMLa07T5meU4egZDZD';
-    const accountId = process.env.META_AD_ACCOUNT_ID || 'act_1173496391102992';
+    // 1. Insights Fetch
+    const insRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?date_preset=${datePreset}&fields=spend,impressions,clicks,cpc,cpm,reach,actions&access_token=${token}`);
+    const insData = await insRes.json();
+    const row = insData.data?.[0] || {};
 
-    // 1. Today Spend
-    const todayRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?date_preset=today&fields=spend,impressions,clicks,cpc,cpm,reach&access_token=${metaAccessToken}`);
+    const spend = parseFloat(row.spend || '0');
+    const impressions = parseInt(row.impressions || '0', 10);
+    const clicks = parseInt(row.clicks || '0', 10);
+    const reach = parseInt(row.reach || '0', 10);
+    const cpc = parseFloat(row.cpc || '0');
+    const cpm = parseFloat(row.cpm || '0');
+
+    // 2. Today Spend Fetch
+    const todayRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?date_preset=today&fields=spend&access_token=${token}`);
     const todayData = await todayRes.json();
     const todaySpend = parseFloat(todayData.data?.[0]?.spend || '0');
 
-    // 2. Month / Selected Preset Total Spend
-    const totalRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?date_preset=${datePreset}&fields=spend,impressions,clicks,cpc,cpm,reach&access_token=${metaAccessToken}`);
-    const totalData = await totalRes.json();
-    const totalSpend = parseFloat(totalData.data?.[0]?.spend || '0');
-    const impressions = parseInt(totalData.data?.[0]?.impressions || '0', 10);
-    const clicks = parseInt(totalData.data?.[0]?.clicks || '0', 10);
-    const reach = parseInt(totalData.data?.[0]?.reach || '0', 10);
-    const cpc = parseFloat(totalData.data?.[0]?.cpc || '0');
-
-    // 3. Campaign Breakdown Spend
-    const campRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?level=campaign&date_preset=${datePreset}&fields=campaign_id,campaign_name,spend,impressions,clicks&limit=50&access_token=${metaAccessToken}`);
-    const campData = await campRes.json();
-    const campaignSpends = {};
-    (campData.data || []).forEach(c => {
-      campaignSpends[c.campaign_name] = parseFloat(c.spend || '0');
-      if (c.campaign_id) campaignSpends[c.campaign_id] = parseFloat(c.spend || '0');
-    });
-
-    // 4. Adset Breakdown Spend
-    const adsetRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?level=adset&date_preset=${datePreset}&fields=adset_id,adset_name,spend,impressions,clicks&limit=50&access_token=${metaAccessToken}`);
-    const adsetData = await adsetRes.json();
-    const adsetSpends = {};
-    (adsetData.data || []).forEach(s => {
-      adsetSpends[s.adset_name] = parseFloat(s.spend || '0');
-      if (s.adset_id) adsetSpends[s.adset_id] = parseFloat(s.spend || '0');
-    });
-
-    // 5. Ad Breakdown Spend
-    const adRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/insights?level=ad&date_preset=${datePreset}&fields=ad_id,ad_name,spend,impressions,clicks&limit=50&access_token=${metaAccessToken}`);
-    const adData = await adRes.json();
-    const adSpends = {};
-    (adData.data || []).forEach(a => {
-      adSpends[a.ad_name] = parseFloat(a.spend || '0');
-      if (a.ad_id) adSpends[a.ad_id] = parseFloat(a.spend || '0');
-    });
+    // 3. Active Ads Fetch
+    const adsRes = await fetch(`https://graph.facebook.com/v19.0/${accountId}/ads?fields=id,name,status,creative{name,thumbnail_url,title,body}&limit=10&access_token=${token}`);
+    const adsData = await adsRes.json();
+    const liveAds = (adsData.data || []).map(ad => ({
+      id: ad.id,
+      name: ad.name,
+      status: ad.status,
+      thumbnail: ad.creative?.thumbnail_url || null,
+      body: ad.creative?.body || ad.creative?.name || '',
+      title: ad.creative?.title || ad.name
+    }));
 
     const result = {
+      accountId,
+      spend,
       todaySpend,
-      totalSpend,
       impressions,
       clicks,
       reach,
       cpc,
-      campaignSpends,
-      adsetSpends,
-      adSpends,
+      cpm,
+      liveAds,
+      activeAdsCount: liveAds.filter(a => a.status === 'ACTIVE').length,
       updatedAt: new Date().toISOString()
     };
 
-    if (datePreset === 'this_month') {
-      cachedInsights = result;
-      lastCacheTime = now;
-    }
+    cache[cacheKey] = {
+      timestamp: now,
+      data: result
+    };
 
     return res.status(200).json({
       success: true,
       data: result,
       cached: false
     });
-  } catch (error) {
-    console.error('META_INSIGHTS_API_ERROR:', error);
+  } catch (err) {
+    console.error('Meta Insights API Error:', err);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: err.message
     });
   }
 }

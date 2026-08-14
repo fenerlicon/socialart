@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Phone, 
@@ -154,6 +155,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       }, 1500);
     }
   };
+
+  if (!lead || typeof document === 'undefined') return null;
 
   return createPortal(
     <div

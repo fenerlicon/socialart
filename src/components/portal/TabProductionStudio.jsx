@@ -20,10 +20,12 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getBrandConfig } from './brandConfigs';
 
-export const TabProductionStudio = ({ customer }) => {
+export default function TabProductionStudio({ customer }) {
+  const brandConfig = getBrandConfig(customer?.company_code, customer?.client_name);
   const [activeWorkflowLane, setActiveWorkflowLane] = useState('video');
-  const [approvalModalItem, setApprovalModalItem] = useState(null); // Item to revise or approve
+  const [approvalModalItem, setApprovalModalItem] = useState(null);
   const [revisionNote, setRevisionNote] = useState('');
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
   const [submittingAction, setSubmittingAction] = useState(false);
@@ -68,29 +70,28 @@ export const TabProductionStudio = ({ customer }) => {
     }
   ];
 
-  // Review & Approval Items (Frame.io Model)
-  const [reviewItems, setReviewItems] = useState([
+  // Dynamic review items from brandConfig
+  const [reviewItems, setReviewItems] = useState(brandConfig.reviewItems || [
     {
       id: 'rev-1',
       title: 'Ana Marka Tanıtım & Hizmet Reels Kurgusu (Rev.2)',
       type: 'Video / 4K Kurgu',
       duration: '0:42 sn',
-      status: 'PENDING_APPROVAL', // PENDING_APPROVAL, APPROVED, REVISED
+      status: 'PENDING_APPROVAL',
       videoUrl: 'https://cdn.coverr.co/videos/coverr-a-stylish-young-woman-working-at-a-cafe-9343/1080p.mp4',
       thumbnail: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80',
       description: 'Ses miksajı yapıldı, marka renkleri uygulandı ve dikey formatta optimize edildi.'
-    },
-    {
-      id: 'rev-2',
-      title: 'Haftalık Carousel & Bilgilendirici İpuçları Serisi',
-      type: 'Carousel Tasarımı (5 Sayfa)',
-      duration: '5 Slayt',
-      status: 'APPROVED',
-      videoUrl: null,
-      thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-      description: 'Tipografi ve kurumsal renk paleti ile yayına hazırlandı.'
     }
   ]);
+
+  // Next shooting call sheet from brandConfig
+  const nextShooting = brandConfig.nextShooting || {
+    date: '18 Ağustos 2026',
+    time: '11:00',
+    location: 'SocialArt Stüdyo & Ofis Çekimi',
+    dressCode: 'Logosuz, düz renkli kurumsal kombinler',
+    target: '4 Dikey Reels & 20 Profesyonel Hizmet Karesi'
+  };
 
   // Social Media Content Calendar Preview (Instagram Grid)
   const instagramFeedItems = [
@@ -189,9 +190,27 @@ export const TabProductionStudio = ({ customer }) => {
       
       {/* Toast Alert */}
       {actionSuccessMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold flex items-center gap-2 shadow-xl animate-fadeIn">
-          <Check className="w-5 h-5 text-emerald-400" />
-          <span>{actionSuccessMsg}</span>
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-950/80 via-slate-900/90 to-slate-950 border border-purple-500/40 backdrop-blur-2xl shadow-2xl shadow-purple-950/60 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-purple-400 to-indigo-500 rounded-l-full" />
+          <div className="flex items-center gap-3.5 pl-1.5">
+            <div className="relative w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-400 shrink-0 shadow-lg shadow-purple-500/20">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-400">Prodüksiyon Güncellemesi</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+              </div>
+              <p className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{actionSuccessMsg}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionSuccessMsg('')}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all shrink-0 cursor-pointer"
+          >
+            <span className="text-xs font-black">✕</span>
+          </button>
         </div>
       )}
 

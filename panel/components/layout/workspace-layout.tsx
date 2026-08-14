@@ -31,7 +31,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   useEffect(() => {
     async function loadData() {
-      if (pathname === '/login' || pathname === '/employees/new') {
+      const isAuthPage = !pathname || pathname === '/login' || pathname === '/employees/new' || pathname.endsWith('/login');
+      if (isAuthPage) {
         setIsLoadingAuth(false)
         return
       }
@@ -43,8 +44,18 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         let savedId = getActiveEmployeeId()
         if (savedId && list.some((e) => e.id === savedId)) {
           setCurrentEmployeeId(savedId)
+        } else if (list.length > 0) {
+          // If no active ID stored, default to the first employee if not on explicit login page or redirect
+          const defaultEmp = list.find(e => e.id === 'emp-celal') || list[0]
+          if (defaultEmp) {
+            setActiveEmployeeId(defaultEmp.id)
+            setCurrentEmployeeId(defaultEmp.id)
+          } else {
+            router.replace('/login')
+            return
+          }
         } else {
-          router.push('/login')
+          router.replace('/login')
           return
         }
 
@@ -53,7 +64,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           const { autoApplyCycles } = await import('@/lib/operations/auto-apply-cycles')
           await autoApplyCycles()
         } catch (err) {
-          console.error('Failed to run auto-apply cycles:', err)
+          console.warn('Auto-apply cycles notice:', err)
         }
 
         // Günlük raporu girmeyen çalışanları tespit edip "Eksik Rapor" olarak işleme kontrolü
@@ -61,7 +72,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           const { checkAndGenerateMissingReports } = await import('@/lib/operations/check-missing-reports')
           await checkAndGenerateMissingReports()
         } catch (err) {
-          console.error('Failed to check missing reports:', err)
+          console.warn('Check missing reports notice:', err)
         }
       } catch (err) {
         console.error('WorkspaceLayout loadData error:', err)

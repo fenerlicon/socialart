@@ -7,16 +7,17 @@ import {
   X, 
   ArrowRight,
   Sparkles,
-  Zap
+  Zap,
+  AlertCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import CheckoutModal from '../components/CheckoutModal';
-import { PortalHeader } from '../components/portal/PortalHeader';
-import { TabOverviewAds } from '../components/portal/TabOverviewAds';
-import { TabProductionStudio } from '../components/portal/TabProductionStudio';
-import { TabAssetsArchive } from '../components/portal/TabAssetsArchive';
-import { TabBillingSupport } from '../components/portal/TabBillingSupport';
-import { PortalFloatingAI } from '../components/portal/PortalFloatingAI';
+import PortalHeader from '../components/portal/PortalHeader';
+import TabOverviewAds from '../components/portal/TabOverviewAds';
+import TabProductionStudio from '../components/portal/TabProductionStudio';
+import TabAssetsArchive from '../components/portal/TabAssetsArchive';
+import TabBillingSupport from '../components/portal/TabBillingSupport';
+import PortalFloatingAI from '../components/portal/PortalFloatingAI';
 
 function ClientPortal() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -38,34 +39,47 @@ function ClientPortal() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Meta Ads live spend metrics
+  const [selectedDatePreset, setSelectedDatePreset] = useState('last_30d');
   const [metaSpend, setMetaSpend] = useState({
-    todaySpend: 199.13,
-    totalSpend: 3434.38,
-    campaignSpends: {},
-    adsetSpends: {},
-    adSpends: {}
+    todaySpend: 0,
+    spend: 0,
+    impressions: 0,
+    reach: 0,
+    clicks: 0,
+    cpc: 0,
+    cpm: 0,
+    liveAds: [],
+    activeAdsCount: 0,
+    datePreset: 'last_30d'
   });
 
   // Fetch Meta Spend from serverless backend
-  const fetchMetaSpend = useCallback(async () => {
+  const fetchMetaSpend = useCallback(async (code, preset = 'last_30d') => {
     try {
-      const res = await fetch('/api/meta-insights');
+      const compCode = code || customer?.company_code || customer?.brand || customer?.client_name || 'mallofgurme';
+      setSelectedDatePreset(preset);
+      const res = await fetch(`/api/meta-insights?company_code=${compCode}&date_preset=${preset}`);
       if (res.ok) {
         const json = await res.json();
-        if (json.success) {
+        if (json.success && json.data) {
           setMetaSpend({
-            todaySpend: json.todaySpend || 199.13,
-            totalSpend: json.totalSpend || 3434.38,
-            campaignSpends: json.campaignSpends || {},
-            adsetSpends: json.adsetSpends || {},
-            adSpends: json.adSpends || {}
+            todaySpend: json.data.todaySpend || 0,
+            spend: json.data.spend || 0,
+            impressions: json.data.impressions || 0,
+            reach: json.data.reach || 0,
+            clicks: json.data.clicks || 0,
+            cpc: json.data.cpc || 0,
+            cpm: json.data.cpm || 0,
+            liveAds: json.data.liveAds || [],
+            activeAdsCount: json.data.activeAdsCount || 0,
+            datePreset: preset
           });
         }
       }
     } catch (e) {
       console.warn('Portal meta insights fetch fallback:', e);
     }
-  }, []);
+  }, [customer?.company_code, customer?.brand, customer?.client_name]);
 
   const fetchClientData = async (name) => {
     try {
@@ -82,7 +96,7 @@ function ClientPortal() {
         .from('client_support_messages')
         .select('*')
         .eq('client_name', name)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
       if (data) setSupportMessages(data);
     } catch (err) {
       console.warn("Support messages fetch error:", err);
@@ -105,18 +119,18 @@ function ClientPortal() {
           const reqName = slugify(r.client_name);
           const reqCode = slugify(r.company_code);
           return (
-            !targetName ||
-            reqName === targetName ||
-            reqCode === targetCode ||
-            reqName.includes(targetName) ||
-            targetName.includes(reqName)
+            (targetCode && reqCode && reqCode === targetCode) ||
+            (targetName && reqName && (reqName === targetName || reqName.includes(targetName) || targetName.includes(reqName)))
           );
         });
 
-        setPaymentRequests(filtered.length > 0 ? filtered : dbRequests);
+        setPaymentRequests(filtered);
+      } else {
+        setPaymentRequests([]);
       }
     } catch (e) {
       console.warn('Payment requests fetch error:', e);
+      setPaymentRequests([]);
     }
   };
 
@@ -133,7 +147,7 @@ function ClientPortal() {
           await fetchClientData(clientName);
           await fetchSupportMessages(clientName);
           await fetchPaymentRequests(clientName, companyCode);
-          await fetchMetaSpend();
+          await fetchMetaSpend(companyCode);
           setCustomer(fullParsed);
           setIsLoggedIn(true);
         }
@@ -159,13 +173,16 @@ function ClientPortal() {
         filter: `client_name=eq.${customer.client_name}` 
       }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          setSupportMessages(prev => [payload.new, ...prev]);
+          setSupportMessages(prev => {
+            if (prev.some(m => m.id === payload.new.id)) return prev;
+            return [...prev, payload.new];
+          });
           if (payload.new.sender_type === 'admin') {
             setNewReplyAlert({
               message: payload.new.message,
               adminName: payload.new.admin_name || 'SocialArt Temsilcisi'
             });
-            setTimeout(() => setNewReplyAlert(null), 8000);
+            setTimeout(() => setNewReplyAlert(null), 6000);
           }
         } else {
           fetchSupportMessages(customer.client_name);
@@ -190,19 +207,18 @@ function ClientPortal() {
       return;
     }
 
-    // Default Client Accounts List
+    // Active Real Client Accounts Credentials
     const ALL_CLIENT_ACCOUNTS = [
-      { id: 'c-arayanvar', company_code: 'arayanvar', password: 'arayanvar2026', client_name: 'Arayanvar' },
-      { id: 'c-aryanvar', company_code: 'aryanvar', password: 'arayanvar2026', client_name: 'Arayanvar' },
-      { id: 'c-gurme', company_code: 'gurme', password: '123', client_name: 'Gurme Bahçeşehir' },
-      { id: 'c-mallofgurme', company_code: 'mallofgurme', password: '123', client_name: 'Mall Of Gurme' },
-      { id: 'c-ogena', company_code: 'ogena', password: '123', client_name: 'Ogena Yapı' },
-      { id: 'c-shineco', company_code: 'shineco', password: '123', client_name: 'Shineco' },
-      { id: 'c-miocasa', company_code: 'miocasa', password: '123', client_name: 'MioCasa' },
-      { id: 'c-vipcatring', company_code: 'vipcatring', password: '123', client_name: 'VIP Catring' },
-      { id: 'c-postprodart', company_code: 'postprodart', password: '123', client_name: 'Postprodart' },
-      { id: 'c-1', company_code: 'furkan', password: '123', client_name: 'Furkan Aslanbaş - Marka VIP' },
-      { id: 'c-soc-demo', company_code: 'demo', password: '123', client_name: 'SocialArt VIP Müşteri' }
+      { id: 'c-arayanvar', company_code: 'arayanvar', client_name: 'Arayanvar / Aryanvar', password: 'SOC-QVGR' },
+      { id: 'c-aryanvar', company_code: 'aryanvar', client_name: 'Arayanvar / Aryanvar', password: 'SOC-QVGR' },
+      { id: 'c-mallofgurme', company_code: 'mallofgurme', client_name: 'Mall Of Gurme', password: 'SOC-ZMLP' },
+      { id: 'c-miocasa', company_code: 'miocasa', client_name: 'MioCasa', password: 'SOC-94G3' },
+      { id: 'c-shineco', company_code: 'shineco', client_name: 'Shineco', password: 'SOC-XNCL' },
+      { id: 'c-gurme', company_code: 'gurme', client_name: 'Gurme Bahçeşehir', password: 'SOC-QB2L' },
+      { id: 'c-ogena', company_code: 'ogena', client_name: 'Ogena Yapı', password: 'SOC-X6QN' },
+      { id: 'c-vipcatring', company_code: 'vipcatring', client_name: 'VIP Catring', password: 'SOC-8WGK' },
+      { id: 'c-postprodart', company_code: 'postprodart', client_name: 'Postprodart', password: 'SOC-X6CL' },
+      { id: 'c-demo', company_code: 'demo', client_name: 'SocialArt VIP Demo', password: 'SOC-WKX7' }
     ];
 
     const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -215,16 +231,12 @@ function ClientPortal() {
     });
 
     if (!loggedClient) {
-      loggedClient = {
-        id: `c-dyn-${Date.now()}`,
-        company_code: cleanInput,
-        client_name: inputCodeRaw,
-        password: '123'
-      };
+      setLoginError('Şirket kodu bulunamadı. Lütfen size iletilen kodu kontrol ediniz.');
+      return;
     }
 
     if (inputPassRaw && loggedClient.password) {
-      const validPasswords = [loggedClient.password, 'arayanvar2026', 'arayanvar123', '123', 'admin'];
+      const validPasswords = [loggedClient.password, 'admin'];
       if (!validPasswords.includes(inputPassRaw)) {
         setLoginError('Hatalı şifre girdiniz. Lütfen şifrenizi kontrol ediniz.');
         return;
@@ -236,7 +248,7 @@ function ClientPortal() {
     await fetchClientData(loggedClient.client_name);
     await fetchSupportMessages(loggedClient.client_name);
     await fetchPaymentRequests(loggedClient.client_name, loggedClient.company_code);
-    await fetchMetaSpend();
+    await fetchMetaSpend(loggedClient.company_code);
     setIsLoggedIn(true);
   };
 
@@ -275,23 +287,30 @@ function ClientPortal() {
     setIsCheckoutOpen(true);
   };
 
-  const handleSendSupportMessage = async (e) => {
-    e.preventDefault();
-    if (!supportInput.trim() || !customer) return;
+  const handleSendSupportMessage = async (customMsg) => {
+    if (customMsg && typeof customMsg.preventDefault === 'function') {
+      customMsg.preventDefault();
+    }
+    const msg = (typeof customMsg === 'string' ? customMsg : (supportInput || '')).trim();
+    if (!msg || !customer) return;
 
-    const msg = supportInput.trim();
     setSupportInput('');
 
     try {
-      const { error } = await supabase.from('client_support_messages').insert([{
+      const { data, error } = await supabase.from('client_support_messages').insert([{
         client_name: customer.client_name,
         message: msg,
         sender_type: 'client',
         is_read: false
-      }]);
+      }]).select();
 
-      if (!error) {
-        fetchSupportMessages(customer.client_name);
+      if (!error && data && data.length > 0) {
+        setSupportMessages(prev => {
+          if (prev.some(m => m.id === data[0].id)) return prev;
+          return [...prev, data[0]];
+        });
+      } else {
+        await fetchSupportMessages(customer.client_name);
       }
     } catch (err) {
       console.warn('Support message send error:', err);
@@ -321,8 +340,15 @@ function ClientPortal() {
 
           <form onSubmit={handleLogin} className="space-y-4 text-left">
             {loginError && (
-              <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-bold">
-                {loginError}
+              <div className="relative overflow-hidden p-3.5 rounded-2xl bg-gradient-to-r from-rose-950/80 via-slate-900 to-slate-950 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-center gap-3 shadow-xl shadow-rose-950/40 animate-in fade-in duration-200">
+                <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 to-red-500 rounded-l-full" />
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-400/40 flex items-center justify-center text-rose-400 shrink-0">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 block">Giriş Hatası</span>
+                  <span className="text-xs text-rose-100">{loginError}</span>
+                </div>
               </div>
             )}
 
@@ -333,7 +359,7 @@ function ClientPortal() {
               <input
                 type="text"
                 required
-                placeholder="Örn: arayanvar, gurme, postprodart..."
+                placeholder="Şirket kodunuzu girin..."
                 value={loginData.code}
                 onChange={e => setLoginData({ ...loginData, code: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold outline-none focus:border-indigo-500/50"
@@ -402,7 +428,28 @@ function ClientPortal() {
 
       {/* 2. Active Tab Content */}
       <main className="min-h-[550px]">
-        {activeTab === 'billing_support' ? (
+        {activeTab === 'overview_ads' && (
+          <TabOverviewAds
+            customer={customer}
+            metaMetrics={metaSpend}
+            selectedPreset={selectedDatePreset}
+            onDatePresetChange={(preset) => fetchMetaSpend(customer?.company_code, preset)}
+          />
+        )}
+
+        {activeTab === 'production_studio' && (
+          <TabProductionStudio
+            customer={customer}
+          />
+        )}
+
+        {activeTab === 'assets_drive' && (
+          <TabAssetsArchive
+            customer={customer}
+          />
+        )}
+
+        {activeTab === 'billing_support' && (
           <TabBillingSupport
             customer={customer}
             paymentRequests={paymentRequests}
@@ -412,38 +459,13 @@ function ClientPortal() {
             supportInput={supportInput}
             setSupportInput={setSupportInput}
           />
-        ) : (
-          /* SYSTEM MAINTENANCE / ENTEGRASYON GUNCELLEMESI VIEW */
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 sm:p-12 text-center backdrop-blur-xl shadow-2xl space-y-6 max-w-2xl mx-auto my-6 animate-fadeIn">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-cyan-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto text-cyan-400 shadow-xl shadow-indigo-500/10">
-              <Sparkles className="w-10 h-10 animate-pulse" />
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
-                ⏳ Sistem & Veri Entegrasyonu Güncellemesi
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
-                Bu Modül Şu Anda Güncellenmektedir
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-                Markanıza özel canlı veri akışı ve dijital varlıklarınız sistem mühendislerimiz tarafından yapılandırılmaktadır. Çok yakında bu alandan tüm süreçlerinizi takip edebileceksiniz.
-              </p>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={() => setActiveTab('billing_support')}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl shadow-cyan-500/20 transition-all inline-flex items-center gap-2"
-              >
-                <span>💳 Finans & Ödeme Sayfasına Dön</span>
-              </button>
-            </div>
-          </div>
         )}
       </main>
 
-      {/* 3. iyzico 3D Secure Checkout Modal */}
+      {/* 3. Floating Mini AI Assistant [2, C] */}
+      <PortalFloatingAI customer={customer} />
+
+      {/* 4. iyzico 3D Secure Checkout Modal */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
