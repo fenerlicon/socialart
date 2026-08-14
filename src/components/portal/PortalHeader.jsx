@@ -19,8 +19,8 @@ export default function PortalHeader({
 }) {
   const tabs = [
     { id: 'overview_ads', label: 'Marka & Reklamlar', icon: BarChart3, badge: '🟢 Canlı' },
-    { id: 'production_studio', label: 'Prodüksiyon & Onay', icon: Clapperboard, badge: '🎬 Frame.io' },
-    { id: 'assets_drive', label: 'Dosyalar & Drive', icon: FolderDown, badge: '📁 4K Master' },
+    { id: 'production_studio', label: 'Prodüksiyon & Onay', icon: Clapperboard, badge: '⏳ Yakında' },
+    { id: 'assets_drive', label: 'Dosyalar & Drive', icon: FolderDown, badge: '⏳ Yakında' },
     { id: 'billing_support', label: 'Finans & İletişim', icon: CreditCard, badge: '💳 3D Secure' },
   ];
 

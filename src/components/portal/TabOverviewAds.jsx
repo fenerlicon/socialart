@@ -78,65 +78,58 @@ export default function TabOverviewAds({ customer, metaMetrics, selectedPreset =
       {/* 1. TOP RIBBON: Brand Health Score [F] & 1-Click Executive Summary [J] */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* Safe Brand Health Score [F] */}
-        <div className="lg:col-span-2 bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-500/30 p-5 rounded-3xl backdrop-blur-xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        {/* Safe Brand Health Score [F] - YAKINDA */}
+        <div className="lg:col-span-2 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 p-5 rounded-3xl backdrop-blur-xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative overflow-hidden">
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-2xl shadow-lg shadow-emerald-500/20 shrink-0">
+            <div className="relative w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-2xl shadow-lg shrink-0">
               95
-              <span className="text-[10px] text-emerald-400/80 font-normal absolute -bottom-1">/100</span>
+              <span className="text-[10px] text-indigo-400/80 font-normal absolute -bottom-1">/100</span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-black text-white">Marka Operasyon & Sağlık Skoru</h3>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  Mükemmel Seviye
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  ⏳ Çok Yakında • AI Analitiği V2
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                {brandConfig.name} için bu ayki tüm kreatif prodüksiyon, planlanan çekim takvimi ve reklam bütçesi optimizasyonları SocialArt disipliniyle eksiksiz yürütülmektedir.
+                Markanızın aylık kreatif prodüksiyon, planlanan çekim takvimi ve reklam bütçesi optimizasyon canlı sağlık skoru motoru çok yakında aktif olacaktır.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold text-slate-300 shrink-0">
-            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>İçerik Akışı: %100</span>
+          <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold text-slate-400 shrink-0">
+            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800 opacity-75">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>İçerik Akışı: Yakında</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800">
-              <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Reklamlar: Optimize</span>
+            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800 opacity-75">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>AI Optimizasyon</span>
             </div>
           </div>
         </div>
 
-        {/* 1-Click WhatsApp Executive Summary [J] */}
-        <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl flex flex-col justify-between gap-3 shadow-xl">
+        {/* 1-Click WhatsApp Executive Summary [J] - YAKINDA */}
+        <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-3xl flex flex-col justify-between gap-3 shadow-xl relative overflow-hidden">
           <div>
-            <span className="text-[10px] font-extrabold text-purple-400 uppercase tracking-wider block">Yönetici Paylaşım Aracı [J]</span>
-            <h4 className="text-sm font-black text-white mt-0.5">Tek Tıkla WhatsApp Özeti</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Ortağınıza veya ekibinize anlık başarı bülteni iletin</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold text-purple-400 uppercase tracking-wider block">Yönetici Paylaşım Aracı [J]</span>
+              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                ⏳ Yakında
+              </span>
+            </div>
+            <h4 className="text-sm font-black text-white mt-1">Tek Tıkla WhatsApp Özeti</h4>
+            <p className="text-[11px] text-slate-400 mt-1">Ortağınıza veya ekibinize anlık başarı bülteni iletme modülü hazırlanıyor</p>
           </div>
 
           <button
-            onClick={handleCopySummary}
-            className={`w-full py-2.5 px-4 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all ${
-              copiedSummary 
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-600/25'
-            }`}
+            type="button"
+            disabled
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-black flex items-center justify-center gap-2 bg-slate-800/80 text-slate-400 border border-slate-700/60 cursor-not-allowed opacity-80"
           >
-            {copiedSummary ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-300" />
-                <span>Panoya Kopyalandı!</span>
-              </>
-            ) : (
-              <>
-                <MessageCircle className="w-4 h-4" />
-                <span>Özeti WhatsApp'a Kopyala</span>
-              </>
-            )}
+            <Clock className="w-4 h-4 text-amber-400" />
+            <span>Çok Yakında Aktif</span>
           </button>
         </div>
 
@@ -278,31 +271,36 @@ export default function TabOverviewAds({ customer, metaMetrics, selectedPreset =
         )}
       </div>
 
-      {/* 3. COMPETITOR RADAR (Pazar & Reklam İstihbaratı) [G] - REVERSE ENGINEERING ANALYTICS */}
-      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5">
+      {/* 3. COMPETITOR RADAR (Pazar & Reklam İstihbaratı) [G] - YAKINDA */}
+      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <Search className="w-5 h-5 text-indigo-400" />
-              Sektörel Pazar & Rakip Reklam Radarı (Tersine Mühendislik Analizi)
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <Search className="w-5 h-5 text-indigo-400" />
+                Sektörel Pazar & Rakip Reklam Radarı (Tersine Mühendislik Analizi)
+              </h3>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                ⏳ Çok Yakında
+              </span>
+            </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Rakiplerin tahmini aylık reklam bütçeleri, kreatif format dağılımları ve SocialArt karşı hamle stratejisi
+              Rakiplerin tahmini aylık reklam bütçeleri, kreatif format dağılımları ve SocialArt karşı hamle stratejisi canlı istihbarat modülü hazırlanıyor.
             </p>
           </div>
-          <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 self-start sm:self-center">
-            Meta Ad Library Canlı Radar
+          <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700 self-start sm:self-center">
+            🔒 Meta Ad Library AI Radar (Yakında)
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 opacity-80">
           {brandConfig.competitors.map((comp, idx) => (
-            <div key={idx} className="bg-slate-950 p-5 rounded-2xl border border-slate-800/90 space-y-3.5 shadow-md flex flex-col justify-between">
+            <div key={idx} className="bg-slate-950 p-5 rounded-2xl border border-slate-800/90 space-y-3.5 shadow-md flex flex-col justify-between relative">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="font-black text-sm text-white">{comp.name}</span>
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    {comp.activeAdsCount || comp.activeAdsText || 'Aktif Reklamlar'}
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    ⏳ Çok Yakında
                   </span>
                 </div>
 

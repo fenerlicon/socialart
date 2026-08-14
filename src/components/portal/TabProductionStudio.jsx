@@ -214,16 +214,49 @@ export default function TabProductionStudio({ customer }) {
         </div>
       )}
 
+      {/* TOP VIP YAKINDA BANNER */}
+      <div className="relative overflow-hidden p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border border-amber-500/30 backdrop-blur-2xl shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-500/20">
+            <Clock className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">Geliştirme Aşamasında</span>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                ⏳ Çok Yakında
+              </span>
+            </div>
+            <h3 className="text-base font-black text-white mt-0.5">İnteraktif Prodüksiyon & Video Onay Stüdyosu</h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Frame.io saniye bazlı revizyon motoru, çekim call-sheet takvimi ve içerik onay modülü çok yakında tüm müşterilerimizin kullanımına açılacaktır.
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 flex items-center gap-2 self-start sm:self-center">
+          <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-3.5 py-2 rounded-xl border border-amber-500/30">
+            ⏳ Çok Yakında Aktif
+          </span>
+        </div>
+      </div>
+
       {/* 1. PRODUCTION WORKFLOW TRACKS / SLIDER [3, A] */}
-      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5">
-        <div>
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            Prodüksiyon & Üretim Süreci (4 Ana Kulvar)
-          </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Ajansımızın sizin için yürüttüğü prodüksiyon, kurgu ve tasarım aşamalarının canlı evresi
-          </p>
+      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5 opacity-90">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                Prodüksiyon & Üretim Süreci (4 Ana Kulvar)
+              </h3>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                ⏳ Çok Yakında
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Ajansımızın sizin için yürüttüğü prodüksiyon, kurgu ve tasarım aşamalarının canlı evresi
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -271,21 +304,21 @@ export default function TabProductionStudio({ customer }) {
         </div>
       </div>
 
-      {/* 2. FRAME.IO STYLE LIVE VIDEO REVIEW & 1-CLICK APPROVAL [A] */}
-      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-6">
+      {/* 2. FRAME.IO STYLE LIVE VIDEO REVIEW & 1-CLICK APPROVAL [A] - YAKINDA */}
+      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-6 opacity-90">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <Video className="w-5 h-5 text-cyan-400" />
                 İçerik İnceleme & Canlı Onay Stüdyosu
               </h3>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                Frame.io Onay Modeli
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                ⏳ Çok Yakında • Frame.io Modeli
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Kurgusu tamamlanan videoları HD izleyin; tek tıkla onaylayın veya revize notunuzu iletin.
+              Kurgusu tamamlanan videoları HD izleme, tek tıkla onaylama veya saniye bazlı revizyon iletme stüdyosu çok yakında aktif olacaktır.
             </p>
           </div>
         </div>
@@ -316,16 +349,8 @@ export default function TabProductionStudio({ customer }) {
                   {item.type} • {item.duration}
                 </span>
 
-                <span className={`absolute top-3 right-3 text-[10px] font-extrabold px-2.5 py-1 rounded-lg border backdrop-blur-md ${
-                  item.status === 'APPROVED'
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                    : item.status === 'REVISED'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                }`}>
-                  {item.status === 'APPROVED' && '🟢 ONAYLANDI (YAYINA HAZIR)'}
-                  {item.status === 'REVISED' && '🟡 REVİZE İŞLENİYOR'}
-                  {item.status === 'PENDING_APPROVAL' && '⏳ ONAYINIZ BEKLENİYOR'}
+                <span className="absolute top-3 right-3 text-[10px] font-extrabold px-2.5 py-1 rounded-lg border backdrop-blur-md bg-amber-500/20 text-amber-300 border-amber-500/40">
+                  ⏳ Çok Yakında Aktif
                 </span>
               </div>
 
@@ -336,57 +361,43 @@ export default function TabProductionStudio({ customer }) {
                   <p className="text-xs text-slate-400 mt-1">{item.description}</p>
                 </div>
 
-                {item.status === 'PENDING_APPROVAL' && (
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <button
-                      onClick={() => handleApprove(item)}
-                      disabled={submittingAction}
-                      className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all"
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                      <span>Onaylıyorum (Yayına Al)</span>
-                    </button>
-
-                    <button
-                      onClick={() => setApprovalModalItem(item)}
-                      disabled={submittingAction}
-                      className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      <span>Revize İste</span>
-                    </button>
-                  </div>
-                )}
-
-                {item.status === 'APPROVED' && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Bu içerik onaylandı. Sosyal medya yayın takvimine eklendi.</span>
-                  </div>
-                )}
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <span>İnteraktif Video Onay Motoru</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded">
+                    Yakında
+                  </span>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 3. INSTAGRAM FEED PREVIEW & SOCIAL CONTENT CALENDAR [D] */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 3. INSTAGRAM FEED PREVIEW & SOCIAL CONTENT CALENDAR [D] - YAKINDA */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-90">
         
         {/* Instagram 3-Grid View */}
         <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 p-6 rounded-3xl backdrop-blur-xl shadow-xl space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Grid className="w-5 h-5 text-pink-400" />
-                Sosyal Medya Yayın Takvimi (Instagram Grid)
-              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <Grid className="w-5 h-5 text-pink-400" />
+                  Sosyal Medya Yayın Takvimi (Instagram Grid)
+                </h3>
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  ⏳ Çok Yakında
+                </span>
+              </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Bu hafta ve ay profilinizde paylaşılacak içeriklerin görsel akışı
+                Profilinizde paylaşılacak içeriklerin görsel akışı ve planlanan yayın takvimi
               </p>
             </div>
-            <span className="text-xs font-bold text-pink-400 bg-pink-500/10 border border-pink-500/20 px-3 py-1 rounded-xl">
-              Haftalık Plan Hazır
+            <span className="text-xs font-bold text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1 rounded-xl">
+              ⏳ Yakında Aktif
             </span>
           </div>
 
@@ -411,14 +422,14 @@ export default function TabProductionStudio({ customer }) {
           </div>
         </div>
 
-        {/* 4. SHOOTING CALL SHEET & MOODBOARD [I] */}
+        {/* 4. SHOOTING CALL SHEET & MOODBOARD [I] - YAKINDA */}
         <div className="bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-900 border border-indigo-500/30 p-6 rounded-3xl backdrop-blur-xl shadow-xl flex flex-col justify-between gap-5">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                🎬 Sıradaki Çekim Günü
+              <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                ⏳ Sıradaki Çekim (Yakında)
               </span>
-              <span className="text-xs font-black text-cyan-400">18 Ağustos</span>
+              <span className="text-xs font-black text-amber-400">Çok Yakında</span>
             </div>
 
             <div>
