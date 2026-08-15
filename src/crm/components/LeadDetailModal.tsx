@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { 
   X, 
   Phone, 
@@ -156,9 +155,9 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     }
   };
 
-  if (!lead || typeof document === 'undefined') return null;
+  if (!lead) return null;
 
-  return createPortal(
+  return (
     <div
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999 }}
       className="w-full h-full bg-slate-950 flex flex-col sm:items-center sm:justify-center sm:p-4 sm:bg-slate-950/85 sm:backdrop-blur-sm animate-fade-in cursor-pointer"
@@ -697,7 +696,6 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           </div>
         </div>
       )}
-    </div>,
-    document.body
+    </div>
   );
 };

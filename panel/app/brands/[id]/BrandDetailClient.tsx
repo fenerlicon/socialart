@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getBrandById, saveBrand } from '@/lib/storage/local-brand-store'
@@ -1209,8 +1208,8 @@ export default function BrandDetailPage() {
         onRequestCancelCycle={handleRequestCancelCycle}
       />
 
-      {/* İptal Onay Modalı — document.body'e mount edilmiştir, overflow-hidden container sorununu çözer */}
-      {showCancelConfirm && createPortal(
+      {/* İptal Onay Modalı */}
+      {showCancelConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
@@ -1248,12 +1247,11 @@ export default function BrandDetailPage() {
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* Silme Onay Modalı */}
-      {showDeleteConfirm && createPortal(
+      {showDeleteConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
@@ -1291,12 +1289,11 @@ export default function BrandDetailPage() {
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* Plan Kalemi Silme Onay Modalı */}
-      {showDeletePlanItemConfirm && planItemToDeleteId && createPortal(
+      {showDeletePlanItemConfirm && planItemToDeleteId && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
@@ -1333,8 +1330,7 @@ export default function BrandDetailPage() {
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   )

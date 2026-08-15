@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { createPortal } from 'react-dom'
 import type { Brand, BrandOperationCycle, WorkflowInstance, WorkflowStepInstance } from '@/types/domain'
 import { OPERATION_PLAN_ITEM_TYPE_LABELS } from '@/types/domain'
 import { getCyclesByBrandId, saveOperationCycle, deleteOperationCycle } from '@/lib/storage/local-cycle-store'
@@ -711,7 +710,7 @@ export function BrandWorkflowSection({ brand, onProgress, onRequestCancelCycle }
       )}
 
       {/* Dönem Silme Onay Modalı */}
-      {showDeleteCycleConfirm && cycleToDelete && createPortal(
+      {showDeleteCycleConfirm && cycleToDelete && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
@@ -745,12 +744,11 @@ export function BrandWorkflowSection({ brand, onProgress, onRequestCancelCycle }
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* İş Akışı Üretim Loading Ekranı */}
-      {isGenerating && createPortal(
+      {isGenerating && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 max-w-sm w-full flex flex-col items-center text-center space-y-4 shadow-2xl">
             <div className="relative flex items-center justify-center">
@@ -768,8 +766,7 @@ export function BrandWorkflowSection({ brand, onProgress, onRequestCancelCycle }
               </p>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   )

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { Employee, WorkflowStepInstance, WorkflowInstance, Brand, ResponsibilityRole, BrandOperationCycle } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
@@ -1198,7 +1197,7 @@ export function TasksPage() {
       )}
 
       {/* Görev Silme Onay Modalı */}
-      {showDeleteStepConfirm && stepToDelete && createPortal(
+      {showDeleteStepConfirm && stepToDelete && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
@@ -1232,8 +1231,7 @@ export function TasksPage() {
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
       {/* Görev Detay Drawer */}
       {detailDrawerOpen && detailStep && (() => {

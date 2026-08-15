@@ -16,7 +16,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { createPortal } from 'react-dom'
 import {
   Zap,
   AlertTriangle,
@@ -1357,7 +1356,7 @@ export function OperationsPage() {
       )}
 
       {/* Detay Modalı (Afilli / Premium Görev Detayı) */}
-      {selectedInstance && createPortal(
+      {selectedInstance && (
         <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 sm:p-6 md:p-8 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-850 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200">
             {/* Header */}
@@ -1584,8 +1583,7 @@ export function OperationsPage() {
               <span>DÖNEM: {selectedInstance.cycleId.slice(0, 8)}</span>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   )

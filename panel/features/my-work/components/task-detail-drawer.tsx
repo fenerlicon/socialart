@@ -1,6 +1,5 @@
 'use client'
 
-import { createPortal } from 'react-dom'
 import type { WorkflowInstance, WorkflowStepInstance, Employee } from '@/types/domain'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -189,7 +188,7 @@ export function TaskDetailDrawer({
   // Sort sibling steps by order
   const sortedSiblings = [...siblingSteps].sort((a, b) => a.order - b.order)
 
-  return createPortal(
+  return (
     <div
       className="fixed inset-0 z-[9999] flex justify-end animate-in fade-in duration-200"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
@@ -560,7 +559,6 @@ export function TaskDetailDrawer({
           </section>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   )
 }

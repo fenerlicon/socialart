@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import type { WorkflowStepInstance } from '@/types/domain'
 import { updateWorkflowStepInstance, saveWorkflowHistory } from '@/lib/storage/local-workflow-instance-store'
 import { Button } from '@/components/ui/button'
@@ -83,7 +82,7 @@ export function TaskFailureExplanationModal({
     }
   }
 
-  return createPortal(
+  return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-neutral-900 border border-red-500/40 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl shadow-red-500/10 animate-in zoom-in-95">
         {/* Header */}
@@ -165,7 +164,6 @@ export function TaskFailureExplanationModal({
           </div>
         </form>
       </div>
-    </div>,
-    document.body
+    </div>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 import { KpiRepository } from '@/lib/repositories/KpiRepository'
 import { WorkflowRepository } from '@/lib/repositories/WorkflowRepository'
 import { ApprovalRepository } from '@/lib/repositories/ApprovalRepository'
@@ -591,7 +590,7 @@ export function KpiPage() {
       )}
 
       {/* Detay Modalı */}
-      {selectedCard && isMounted && createPortal(
+      {selectedCard && isMounted && (
         <KpiDetailModal
           card={selectedCard}
           employee={getEmployee(selectedCard.employeeId)}
@@ -602,8 +601,7 @@ export function KpiPage() {
             await loadData()
             toast.success('Yönetici değerlendirmesi kaydedildi')
           }}
-        />,
-        document.body
+        />
       )}
     </div>
   )

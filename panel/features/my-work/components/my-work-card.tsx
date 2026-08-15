@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import type { WorkflowInstance, WorkflowStepInstance, Employee } from '@/types/domain'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -764,7 +763,7 @@ export function MyWorkCard({
       )}
 
       {/* Paslama Modalı */}
-      {mounted && showHandoffModal && createPortal(
+      {mounted && showHandoffModal && (
         <HandoffModal
           step={step}
           instance={instance}
@@ -773,12 +772,11 @@ export function MyWorkCard({
           employees={employees}
           onClose={() => setShowHandoffModal(false)}
           onSuccess={onActionSuccess}
-        />,
-        document.body
+        />
       )}
 
       {/* Brief Detayları Giriş Modalı */}
-      {mounted && showBriefModal && createPortal(
+      {mounted && showBriefModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-neutral-950 border border-neutral-900 w-full max-w-lg p-6 rounded-2xl space-y-4">
             <div className="space-y-1">
@@ -847,12 +845,11 @@ export function MyWorkCard({
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* Görev Teslim Modalı */}
-      {showDeliveryModal && mounted && createPortal(
+      {showDeliveryModal && mounted && (
         <TaskDeliveryModal
           isOpen={showDeliveryModal}
           onClose={() => setShowDeliveryModal(false)}
@@ -860,12 +857,11 @@ export function MyWorkCard({
           taskTitle={step.title}
           stepTitle={step.title}
           stepTemplateId={step.workflowStepTemplateId}
-        />,
-        document.body
+        />
       )}
 
       {/* Süre Uzatım Modalı */}
-      {showExtensionModal && mounted && createPortal(
+      {showExtensionModal && mounted && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-neutral-950 border border-neutral-900 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
             <div className="space-y-1">
@@ -938,8 +934,7 @@ export function MyWorkCard({
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
       {/* Detay Drawer */}
