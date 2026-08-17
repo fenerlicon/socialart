@@ -83,12 +83,33 @@ function mapDbRowToLead(row) {
   const parsedNotes = (() => {
     // Fast path: if Supabase already stored proper note objects, use them directly
     if (Array.isArray(row.notes) && row.notes.length > 0 && typeof row.notes[0] === 'object' && row.notes[0].text) {
-      return row.notes.map(n => ({
-        id: n.id || `note-${Math.random()}`,
-        author: n.author || 'Temsilci Notu',
-        text: n.text,
-        createdAt: n.createdAt || n.created_at || new Date().toISOString()
-      })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return row.notes.map(n => {
+        let cleanAuthor = n.author || row.rep || row.assigned_to || 'Celal';
+        if (cleanAuthor.startsWith('-')) cleanAuthor = (row.rep || row.assigned_to || 'Celal') + ' (Temsilci Notu)';
+        const textLower = String(n.text || '').toLowerCase();
+        const isLog = n.type === 'log' || 
+          textLower.includes('aşama') || 
+          textLower.includes('kaliteli lead') || 
+          textLower.includes('bütçe') || 
+          textLower.includes('retargeting') ||
+          textLower.includes('temsilci');
+        return {
+          id: n.id || `note-${Math.random()}`,
+          author: cleanAuthor,
+          text: n.text,
+          createdAt: n.createdAt || n.created_at || new Date().toISOString(),
+          type: n.type || (isLog ? 'log' : 'note'),
+          actionType: n.actionType || (
+            textLower.includes('aşama') ? 'STAGE_CHANGE' :
+            textLower.includes('kaliteli') ? 'QUALIFIED' :
+            textLower.includes('bütçe') ? 'BUDGET_UPDATE' :
+            textLower.includes('retargeting') ? 'RETARGETING' :
+            textLower.includes('temsilci') ? 'ASSIGNED' : undefined
+          ),
+          oldValue: n.oldValue,
+          newValue: n.newValue
+        };
+      }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
     let notesArr = [];
     const seenNoteTexts = new Set();
@@ -399,6 +420,26 @@ const stageToStatus = {
   'WON': 'Anlaşıldı',
   'LOST': 'Reddedildi',
 };
+
+// Helper to determine currently active logged-in employee name
+export function getActiveStaffName() {
+  try {
+    const userStr = localStorage.getItem('ajans_user') || localStorage.getItem('socialart_user') || localStorage.getItem('social-art-base:credentials');
+    if (userStr) {
+      const parsed = JSON.parse(userStr);
+      if (parsed.name) return parsed.name;
+      if (parsed.full_name) return parsed.full_name;
+      if (parsed.username) return parsed.username;
+    }
+    const empId = localStorage.getItem('social-art-base:active-employee-id');
+    if (empId) {
+      const employees = JSON.parse(localStorage.getItem('social-art-base:employees') || '[]');
+      const found = employees.find(e => e.id === empId);
+      if (found?.name) return found.name;
+    }
+  } catch (e) {}
+  return 'Furkan';
+}
 
 // ----------------------------------------------------------------
 // CRMPage Component
@@ -738,9 +779,28 @@ export default function CRMPage({ embedded = false }) {
     const newStatus = stageToStatus[newStage];
     const currentLead = leads.find(l => String(l.id) === String(leadId));
     const leadDisplayName = currentLead?.title || currentLead?.contactName || 'Müşteri';
+    const oldStageObj = STAGES.find(s => s.id === currentLead?.stage);
+    const newStageObj = STAGES.find(s => s.id === newStage);
+    const oldStageLabel = oldStageObj?.label || currentLead?.stage || 'Yeni Lead';
+    const newStageLabel = newStageObj?.label || newStage;
+    const staffName = getActiveStaffName();
+    const nowIso = new Date().toISOString();
+
+    const stageLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: staffName,
+      text: `Mevcut satış aşaması "${oldStageLabel}" ➔ "${newStageLabel}" olarak güncellendi.`,
+      createdAt: nowIso,
+      type: 'log',
+      actionType: 'STAGE_CHANGE',
+      oldValue: oldStageLabel,
+      newValue: newStageLabel
+    };
+
+    const updatedNotes = [stageLog, ...(currentLead?.notes || [])];
 
     // Save to LocalStorage immediately to guarantee persistence on refresh
-    saveOverride(leadId, { stage: newStage });
+    saveOverride(leadId, { stage: newStage, notes: updatedNotes });
 
     // Also update stage in manual leads storage
     try {
@@ -748,7 +808,7 @@ export default function CRMPage({ embedded = false }) {
       if (storedManual) {
         const manualLeadsList = JSON.parse(storedManual);
         if (Array.isArray(manualLeadsList)) {
-          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, stage: newStage } : m);
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, stage: newStage, notes: updatedNotes } : m);
           localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
         }
       }
@@ -761,13 +821,15 @@ export default function CRMPage({ embedded = false }) {
         const updated = {
           ...lead,
           stage: newStage,
-          updatedAt: new Date().toISOString(),
+          notes: updatedNotes,
+          updatedAt: nowIso,
           activities: [
             {
               id: `act-${Date.now()}`,
-              title: `Aşama "${STAGES.find(s => s.id === newStage)?.label || newStage}" olarak güncellendi`,
-              date: new Date().toISOString(),
-              type: 'STAGE_CHANGE'
+              title: `Aşama "${newStageLabel}" olarak güncellendi`,
+              date: nowIso,
+              type: 'STAGE_CHANGE',
+              author: staffName
             },
             ...lead.activities
           ]
@@ -778,13 +840,14 @@ export default function CRMPage({ embedded = false }) {
       return lead;
     }));
 
-    logActivity('Lead Aşaması Güncellendi', `"${leadDisplayName}" aşaması ${newStage} (${newStatus}) olarak güncellendi.`, leadDisplayName);
+    logActivity('Lead Aşaması Güncellendi', `"${leadDisplayName}" aşaması ${newStage} (${newStatus}) olarak güncellendi. (${staffName})`, leadDisplayName);
 
     await supabaseLeads
       .from('leads')
       .update({ 
         status: newStatus,
-        stage: newStage
+        stage: newStage,
+        notes: updatedNotes
       })
       .eq('id', leadId);
 
@@ -841,29 +904,60 @@ export default function CRMPage({ embedded = false }) {
   };
 
   // Add note → Supabase (primary) + LocalStorage (backup)
-  const handleAddNote = async (leadId, noteText) => {
+  const handleAddNote = async (leadId, noteText, customAuthor = null) => {
     const currentLead = leads.find(l => l.id === leadId);
     const leadDisplayName = currentLead?.title || currentLead?.contactName || 'Müşteri';
-    const repName = currentLead?.assignedTo || 'Celal';
+    const repName = customAuthor || getActiveStaffName() || currentLead?.assignedTo || 'Celal';
+    const nowIso = new Date().toISOString();
     const newNote = {
       id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      author: `${repName} (Temsilci Notu)`,
+      author: repName,
       text: noteText,
-      createdAt: new Date().toISOString()
+      createdAt: nowIso,
+      type: 'note',
+      actionType: 'NOTE'
     };
     const updatedNotes = [newNote, ...(currentLead?.notes || [])];
+
+    saveOverride(leadId, { notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {}
 
     // Update UI immediately
     setLeads(prev => prev.map(lead => {
       if (lead.id === leadId) {
-        const updated = { ...lead, notes: updatedNotes, updatedAt: new Date().toISOString() };
+        const updated = { 
+          ...lead, 
+          notes: updatedNotes, 
+          updatedAt: nowIso,
+          activities: [
+            {
+              id: `act-${Date.now()}`,
+              title: `Yeni temsilci notu eklendi (${repName})`,
+              date: nowIso,
+              type: 'NOTE',
+              author: repName,
+              details: noteText
+            },
+            ...lead.activities
+          ]
+        };
         if (selectedLead?.id === leadId) setSelectedLead(updated);
         return updated;
       }
       return lead;
     }));
 
-    logActivity('Lead Notu Eklendi', `"${leadDisplayName}" için yeni not eklendi: "${noteText.slice(0, 100)}"`, leadDisplayName);
+    logActivity('Lead Notu Eklendi', `"${leadDisplayName}" için ${repName} tarafından yeni not eklendi: "${noteText.slice(0, 100)}"`, leadDisplayName);
 
     // Save to Supabase (primary storage)
     const { error } = await supabaseLeads
@@ -986,11 +1080,50 @@ export default function CRMPage({ embedded = false }) {
   const handleUpdateAssignedTo = async (leadId, newStaff) => {
     const targetLead = leads.find(l => String(l.id) === String(leadId));
     const leadDisplayName = targetLead?.title || targetLead?.contactName || 'Müşteri';
+    const staffName = getActiveStaffName();
+    const nowIso = new Date().toISOString();
 
-    saveOverride(leadId, { assignedTo: newStaff });
+    const assignLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: staffName,
+      text: `Temsilci sorumlusu "${newStaff}" olarak atandı.`,
+      createdAt: nowIso,
+      type: 'log',
+      actionType: 'ASSIGNED'
+    };
+    const updatedNotes = [assignLog, ...(targetLead?.notes || [])];
+
+    saveOverride(leadId, { assignedTo: newStaff, notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, assignedTo: newStaff, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {}
+
     setLeads(prev => prev.map(lead => {
       if (String(lead.id) === String(leadId)) {
-        const updated = { ...lead, assignedTo: newStaff, updatedAt: new Date().toISOString() };
+        const updated = { 
+          ...lead, 
+          assignedTo: newStaff, 
+          notes: updatedNotes, 
+          updatedAt: nowIso,
+          activities: [
+            {
+              id: `act-${Date.now()}`,
+              title: `Temsilci "${newStaff}" olarak atandı`,
+              date: nowIso,
+              type: 'ASSIGNED',
+              author: staffName
+            },
+            ...lead.activities
+          ]
+        };
         if (selectedLead?.id === leadId) setSelectedLead(updated);
         return updated;
       }
@@ -1003,14 +1136,14 @@ export default function CRMPage({ embedded = false }) {
 
       const { error } = await supabaseLeads
         .from('leads')
-        .update({ rep: newStaff, updated_at: new Date().toISOString() })
+        .update({ rep: newStaff, notes: updatedNotes, updated_at: nowIso })
         .eq('id', queryId);
 
       if (error) {
         console.error('Failed to update rep in Supabase:', error);
         showToast('Temsilci güncellenirken hata oluştu: ' + error.message, 'error');
       } else {
-        logActivity('Temsilci Atandı', `"${leadDisplayName}" müşterisine ${newStaff} temsilci olarak atandı.`, leadDisplayName);
+        logActivity('Temsilci Atandı', `"${leadDisplayName}" müşterisine ${newStaff} temsilci olarak atandı. (${staffName})`, leadDisplayName);
         showToast(`Temsilci "${newStaff}" olarak güncellendi.`);
       }
     } catch (e) {
@@ -1021,55 +1154,50 @@ export default function CRMPage({ embedded = false }) {
 
   // Update Lead Info (Title, Contact, Phone, Email, City)
   const handleUpdateLeadInfo = async (leadId, updatedData) => {
-    saveOverride(leadId, updatedData);
-    setLeads(prev => prev.map(lead => {
-      if (lead.id === leadId) {
-        const updated = { ...lead, ...updatedData, updatedAt: new Date().toISOString() };
-        if (selectedLead?.id === leadId) setSelectedLead(updated);
-        return updated;
-      }
-      return lead;
-    }));
-    await supabaseLeads
-      .from('leads')
-      .update({
-        title: updatedData.title,
-        name: updatedData.contactName,
-        phone: updatedData.phone,
-        email: updatedData.email,
-        city: updatedData.city,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', leadId);
-  };
+    const currentLead = leads.find(l => String(l.id) === String(leadId));
+    const staffName = getActiveStaffName();
+    const nowIso = new Date().toISOString();
 
-  // Update retargeting
-  const handleUpdateRetargeting = async (leadId, date, note) => {
-    setLeads(prev => prev.map(lead => {
-      if (lead.id === leadId) {
-        const updated = { ...lead, stage: 'RETARGETING', retargetingDate: date, retargetingNote: note, updatedAt: new Date().toISOString() };
-        if (selectedLead?.id === leadId) setSelectedLead(updated);
-        return updated;
-      }
-      return lead;
-    }));
-    await supabaseLeads
-      .from('leads')
-      .update({ status: 'Ertelendi', retargeting_date: date, retargeting_note: note, updated_at: new Date().toISOString() })
-      .eq('id', leadId);
-  };
+    const infoLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: staffName,
+      text: `Müşteri bilgileri güncellendi (${updatedData.title || updatedData.contactName || ''}).`,
+      createdAt: nowIso,
+      type: 'log',
+      actionType: 'INFO_UPDATE'
+    };
+    const updatedNotes = [infoLog, ...(currentLead?.notes || [])];
 
-  // Update budget
-  const handleUpdateBudget = async (leadId, newBudget) => {
+    saveOverride(leadId, { ...updatedData, notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, ...updatedData, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {}
+
     setLeads(prev => prev.map(lead => {
-      if (lead.id === leadId) {
-        const isProd = lead.pipeline === 'PRODUCTION';
-        const updated = {
-          ...lead,
-          budget: newBudget,
-          productionDetails: isProd ? { ...(lead.productionDetails || {}), budget: newBudget } : lead.productionDetails,
-          socialMediaDetails: !isProd ? { ...(lead.socialMediaDetails || {}), monthlyBudget: newBudget } : lead.socialMediaDetails,
-          updatedAt: new Date().toISOString()
+      if (String(lead.id) === String(leadId)) {
+        const updated = { 
+          ...lead, 
+          ...updatedData, 
+          notes: updatedNotes, 
+          updatedAt: nowIso,
+          activities: [
+            {
+              id: `act-${Date.now()}`,
+              title: 'Müşteri bilgileri güncellendi',
+              date: nowIso,
+              type: 'INFO_UPDATE',
+              author: staffName
+            },
+            ...lead.activities
+          ]
         };
         if (selectedLead?.id === leadId) setSelectedLead(updated);
         return updated;
@@ -1078,10 +1206,166 @@ export default function CRMPage({ embedded = false }) {
     }));
 
     try {
+      const numericId = Number(leadId);
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
       await supabaseLeads
         .from('leads')
-        .update({ budget: newBudget, updated_at: new Date().toISOString() })
-        .eq('id', leadId);
+        .update({
+          title: updatedData.title,
+          name: updatedData.contactName,
+          phone: updatedData.phone,
+          email: updatedData.email,
+          city: updatedData.city,
+          notes: updatedNotes,
+          updated_at: nowIso
+        })
+        .eq('id', queryId);
+    } catch (e) {
+      console.warn('Supabase info update error:', e);
+    }
+  };
+
+  // Update retargeting
+  const handleUpdateRetargeting = async (leadId, date, note) => {
+    const currentLead = leads.find(l => String(l.id) === String(leadId));
+    const staffName = getActiveStaffName();
+    const nowIso = new Date().toISOString();
+    const dateFormatted = date ? new Date(date).toLocaleDateString('tr-TR') : 'Tarih belirtilmedi';
+
+    const rtLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: staffName,
+      text: `Retargeting / Yeniden Görüşme planlandı (${dateFormatted})${note ? `: "${note}"` : ''}.`,
+      createdAt: nowIso,
+      type: 'log',
+      actionType: 'RETARGETING'
+    };
+    const updatedNotes = [rtLog, ...(currentLead?.notes || [])];
+
+    saveOverride(leadId, { stage: 'RETARGETING', retargetingDate: date, retargetingNote: note, notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, stage: 'RETARGETING', retargetingDate: date, retargetingNote: note, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {}
+
+    setLeads(prev => prev.map(lead => {
+      if (String(lead.id) === String(leadId)) {
+        const updated = { 
+          ...lead, 
+          stage: 'RETARGETING', 
+          retargetingDate: date, 
+          retargetingNote: note, 
+          notes: updatedNotes, 
+          updatedAt: nowIso,
+          activities: [
+            {
+              id: `act-${Date.now()}`,
+              title: `Retargeting planlandı (${dateFormatted})`,
+              date: nowIso,
+              type: 'RETARGETING',
+              author: staffName,
+              details: note
+            },
+            ...lead.activities
+          ]
+        };
+        if (selectedLead?.id === leadId) setSelectedLead(updated);
+        return updated;
+      }
+      return lead;
+    }));
+
+    try {
+      const numericId = Number(leadId);
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+      await supabaseLeads
+        .from('leads')
+        .update({ 
+          status: 'Ertelendi', 
+          stage: 'RETARGETING',
+          retargeting_date: date, 
+          retargeting_note: note, 
+          notes: updatedNotes, 
+          updated_at: nowIso 
+        })
+        .eq('id', queryId);
+    } catch (e) {
+      console.warn('Supabase retargeting update error:', e);
+    }
+  };
+
+  // Update budget
+  const handleUpdateBudget = async (leadId, newBudget) => {
+    const currentLead = leads.find(l => String(l.id) === String(leadId));
+    const isProd = currentLead?.pipeline === 'PRODUCTION';
+    const staffName = getActiveStaffName();
+    const nowIso = new Date().toISOString();
+
+    const budgetLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: staffName,
+      text: newBudget 
+        ? `Bütçe detayları ₺${newBudget.toLocaleString('tr-TR')} olarak güncellendi.`
+        : `Bütçe bilgisi sıfırlandı.`,
+      createdAt: nowIso,
+      type: 'log',
+      actionType: 'BUDGET_UPDATE'
+    };
+    const updatedNotes = [budgetLog, ...(currentLead?.notes || [])];
+
+    saveOverride(leadId, { budget: newBudget, notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, budget: newBudget, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {}
+
+    setLeads(prev => prev.map(lead => {
+      if (String(lead.id) === String(leadId)) {
+        const updated = {
+          ...lead,
+          budget: newBudget,
+          notes: updatedNotes,
+          productionDetails: isProd ? { ...(lead.productionDetails || {}), budget: newBudget } : lead.productionDetails,
+          socialMediaDetails: !isProd ? { ...(lead.socialMediaDetails || {}), monthlyBudget: newBudget } : lead.socialMediaDetails,
+          updatedAt: nowIso,
+          activities: [
+            {
+              id: `act-${Date.now()}`,
+              title: newBudget ? `Bütçe ₺${newBudget.toLocaleString('tr-TR')} olarak güncellendi` : 'Bütçe sıfırlandı',
+              date: nowIso,
+              type: 'BUDGET_UPDATE',
+              author: staffName
+            },
+            ...lead.activities
+          ]
+        };
+        if (selectedLead?.id === leadId) setSelectedLead(updated);
+        return updated;
+      }
+      return lead;
+    }));
+
+    try {
+      const numericId = Number(leadId);
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+      await supabaseLeads
+        .from('leads')
+        .update({ budget: newBudget, notes: updatedNotes, updated_at: nowIso })
+        .eq('id', queryId);
     } catch (e) {
       console.warn('Supabase budget update error:', e);
     }
@@ -1093,6 +1377,7 @@ export default function CRMPage({ embedded = false }) {
     const nowIso = new Date().toISOString();
     const generatedId = `lead-manual-${Date.now()}`;
     const leadDisplayName = leadData.title || leadData.contactName || 'İsimsiz Müşteri';
+    const staffName = getActiveStaffName();
 
     const newLeadObj = {
       id: generatedId,
@@ -1113,9 +1398,11 @@ export default function CRMPage({ embedded = false }) {
       notes: [
         {
           id: `note-${Date.now()}`,
-          author: 'Sistem',
+          author: staffName,
           text: `Manuel Lead eklendi. ${leadData.contactName} (${leadData.phone})`,
-          createdAt: nowIso
+          createdAt: nowIso,
+          type: 'log',
+          actionType: 'INFO_UPDATE'
         }
       ],
       activities: [
@@ -1123,7 +1410,8 @@ export default function CRMPage({ embedded = false }) {
           id: `act-${Date.now()}`,
           title: 'Manuel Lead Eklenme Kaydı',
           date: nowIso,
-          type: 'STAGE_CHANGE'
+          type: 'STAGE_CHANGE',
+          author: staffName
         }
       ]
     };
@@ -1184,17 +1472,64 @@ export default function CRMPage({ embedded = false }) {
     const targetLead = leads.find(l => String(l.id) === String(leadId));
     if (!targetLead) return;
     const nextVal = !targetLead.isQualified;
+    const staffName = getActiveStaffName();
+    const nowIso = new Date().toISOString();
+
+    const qualLog = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: staffName,
+      text: nextVal 
+        ? `Lead "🌟 Kaliteli Lead (Meta Lookalike / Custom Audience)" olarak işaretlendi.`
+        : `Lead "Kaliteli Lead" işareti kaldırıldı.`,
+      createdAt: nowIso,
+      type: 'log',
+      actionType: 'QUALIFIED'
+    };
+    const updatedNotes = [qualLog, ...(targetLead.notes || [])];
+
+    saveOverride(leadId, { isQualified: nextVal, notes: updatedNotes });
+
+    try {
+      const storedManual = localStorage.getItem('socialart_crm_manual_leads');
+      if (storedManual) {
+        const manualLeadsList = JSON.parse(storedManual);
+        if (Array.isArray(manualLeadsList)) {
+          const updatedManual = manualLeadsList.map(m => m.id === leadId ? { ...m, isQualified: nextVal, notes: updatedNotes } : m);
+          localStorage.setItem('socialart_crm_manual_leads', JSON.stringify(updatedManual));
+        }
+      }
+    } catch (e) {}
 
     // 1. Instant UI update
-    setLeads(prev => prev.map(l => String(l.id) === String(leadId) ? { ...l, isQualified: nextVal } : l));
-
-    if (selectedLead && String(selectedLead.id) === String(leadId)) {
-      setSelectedLead(prev => prev ? { ...prev, isQualified: nextVal } : null);
-    }
+    setLeads(prev => prev.map(l => {
+      if (String(l.id) === String(leadId)) {
+        const updated = {
+          ...l,
+          isQualified: nextVal,
+          notes: updatedNotes,
+          updatedAt: nowIso,
+          activities: [
+            {
+              id: `act-${Date.now()}`,
+              title: nextVal ? '🌟 Kaliteli Lead olarak işaretlendi' : 'Kaliteli Lead işareti kaldırıldı',
+              date: nowIso,
+              type: 'QUALIFIED',
+              author: staffName
+            },
+            ...l.activities
+          ]
+        };
+        if (selectedLead && String(selectedLead.id) === String(leadId)) {
+          setSelectedLead(updated);
+        }
+        return updated;
+      }
+      return l;
+    }));
 
     logActivity(
       nextVal ? 'Kaliteli Lead İşaretlendi' : 'Kaliteli Lead İşareti Kaldırıldı',
-      `"${targetLead.title}" adlı müşteri ${nextVal ? '⭐ Kaliteli (Meta Audience)' : 'Normal'} olarak güncellendi.`,
+      `"${targetLead.title}" adlı müşteri ${staffName} tarafından ${nextVal ? '⭐ Kaliteli (Meta Audience)' : 'Normal'} olarak güncellendi.`,
       targetLead.title
     );
 
@@ -1207,19 +1542,15 @@ export default function CRMPage({ embedded = false }) {
     // 2. Supabase DB update
     try {
       const numericId = parseInt(leadId, 10);
-      if (!isNaN(numericId) && numericId > 0) {
-        const { error } = await supabaseLeads
-          .from('leads')
-          .update({
-            is_qualified: nextVal,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', numericId);
-
-        if (error) {
-          console.error('Supabase update is_qualified error:', error);
-        }
-      }
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+      await supabaseLeads
+        .from('leads')
+        .update({
+          is_qualified: nextVal,
+          notes: updatedNotes,
+          updated_at: nowIso
+        })
+        .eq('id', queryId);
     } catch (err) {
       console.error('Error in handleToggleQualified:', err);
     }

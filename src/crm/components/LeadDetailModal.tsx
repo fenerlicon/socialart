@@ -29,7 +29,7 @@ interface LeadDetailModalProps {
   lead: Lead | null;
   onClose: () => void;
   onUpdateStage: (leadId: string, newStage: StageId) => void;
-  onAddNote: (leadId: string, noteText: string) => void;
+  onAddNote: (leadId: string, noteText: string, author?: string) => void;
   onDeleteNote?: (leadId: string, noteId: string) => void;
   onDeleteLead?: (leadId: string) => void;
   onUpdateRetargeting: (leadId: string, date: string, note: string) => void;
@@ -55,6 +55,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onToggleQualified
 }) => {
   const [newNoteText, setNewNoteText] = useState('');
+  const [noteAuthor, setNoteAuthor] = useState<string>('Furkan');
+  const [feedTab, setFeedTab] = useState<'all' | 'notes' | 'logs'>('all');
   const [retargetingDate, setRetargetingDate] = useState('');
   const [retargetingNote, setRetargetingNote] = useState('');
   const [isSavedRetargeting, setIsSavedRetargeting] = useState(false);
@@ -110,6 +112,25 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       const isProduction = lead.pipeline === 'PRODUCTION';
       const currentBudget = isProduction ? lead.productionDetails?.budget : lead.socialMediaDetails?.monthlyBudget;
       setEditableBudget(currentBudget ? String(currentBudget) : '');
+
+      // Detect active logged-in user
+      try {
+        const userStr = localStorage.getItem('ajans_user') || localStorage.getItem('socialart_user') || localStorage.getItem('social-art-base:credentials');
+        if (userStr) {
+          const parsed = JSON.parse(userStr);
+          const foundName = parsed.name || parsed.full_name || parsed.username;
+          if (foundName) {
+            setNoteAuthor(foundName);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      if (lead.assignedTo && lead.assignedTo !== 'Atanmadı') {
+        setNoteAuthor(lead.assignedTo);
+      } else {
+        setNoteAuthor('Furkan');
+      }
     }
   }, [lead]);
 
@@ -121,10 +142,40 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
   const currentStageObj = STAGES.find(s => s.id === lead.stage);
 
+  // Feed partition (Notes vs System Logs)
+  const manualNotes = (lead.notes || []).filter(n => n.type !== 'log');
+  const systemLogs = (lead.notes || []).filter(n => n.type === 'log');
+  const allFeed = [...(lead.notes || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const displayedFeed = feedTab === 'notes' ? manualNotes : feedTab === 'logs' ? systemLogs : allFeed;
+
+  const getInitials = (name: string) => {
+    if (!name) return 'TM';
+    const clean = name.replace(/\(.*\)/, '').trim();
+    const parts = clean.split(' ').filter(Boolean);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+  };
+
+  const formatLogDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString('tr-TR', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const handleAddNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
-    onAddNote(lead.id, newNoteText.trim());
+    onAddNote(lead.id, newNoteText.trim(), noteAuthor);
     setNewNoteText('');
   };
 
@@ -577,80 +628,272 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             </form>
           </div>
 
-          {/* Internal Notes Section */}
-          <div className="space-y-3">
-            <h3 className="font-bold text-slate-300 text-xs uppercase tracking-wider flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-400" />
-              <span>Temsilci Notu ({lead.assignedTo || 'Atanmadı'}) - Son Görüşme / Not ({lead.notes.length})</span>
-            </h3>
+          {/* Temsilci Notları & Aktivite / İşlem Günlüğü (Audit Log) */}
+          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl">
+            
+            {/* Header with 3 Tabs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+                    Temsilci Notları & İşlem Günlüğü
+                  </h3>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Sorumlu: <strong className="text-indigo-300">{lead.assignedTo || 'Atanmadı'}</strong>
+                  </span>
+                </div>
+              </div>
 
-            {/* Add Note Form */}
-            <form onSubmit={handleAddNoteSubmit} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Bu lead hakkında yeni not yaz (Örn: Müşteri fiyat revizesi istedi)..."
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                className="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2 focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Ekle</span>
-              </button>
-            </form>
+              {/* Feed Tabs Switcher */}
+              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setFeedTab('all')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    feedTab === 'all'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md font-extrabold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>Tümü ({allFeed.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFeedTab('notes')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    feedTab === 'notes'
+                      ? 'bg-indigo-600 text-white shadow-md font-extrabold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <MessageSquare className="w-3 h-3" />
+                  <span>Notlar ({manualNotes.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFeedTab('logs')}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    feedTab === 'logs'
+                      ? 'bg-purple-600 text-white shadow-md font-extrabold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Zap className="w-3 h-3" />
+                  <span>Loglar ({systemLogs.length})</span>
+                </button>
+              </div>
+            </div>
 
-            {/* Notes List */}
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {lead.notes.length === 0 ? (
-                <p className="text-xs text-slate-500 italic py-2">Henüz not eklenmedi.</p>
+            {/* Add Note Box (Shown on All & Notes tabs) */}
+            {feedTab !== 'logs' && (
+              <form onSubmit={handleAddNoteSubmit} className="space-y-2 bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <User className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="text-[11px] font-semibold">Notu Yazan:</span>
+                    <select
+                      value={noteAuthor}
+                      onChange={(e) => setNoteAuthor(e.target.value)}
+                      className="bg-slate-900 border border-slate-700/80 text-indigo-300 font-extrabold text-xs rounded-lg px-2 py-0.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      {STAFF_LIST.filter(s => s !== 'Atanmadı').map(staff => (
+                        <option key={staff} value={staff} className="bg-slate-900 text-slate-200">{staff}</option>
+                      ))}
+                      {!STAFF_LIST.includes(noteAuthor) && (
+                        <option value={noteAuthor} className="bg-slate-900 text-slate-200">{noteAuthor}</option>
+                      )}
+                    </select>
+                  </div>
+                  <span className="text-[10px] text-slate-500">Ekleyen: <strong className="text-slate-300">{noteAuthor}</strong></span>
+                </div>
+
+                <div className="flex gap-2">
+                  <textarea
+                    rows={2}
+                    placeholder={`"${lead.title || lead.contactName}" hakkında temsilci notu yazın (Örn: Müşteri fiyat revizesi istedi, Salı aranacak)...`}
+                    value={newNoteText}
+                    onChange={(e) => setNewNoteText(e.target.value)}
+                    className="flex-1 bg-slate-900/90 border border-slate-800 text-slate-100 text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        handleAddNoteSubmit(e);
+                      }
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newNoteText.trim()}
+                    className="px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex flex-col items-center justify-center gap-1 shrink-0 active:scale-95 cursor-pointer"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span className="text-[10px]">Kaydet</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Feed List Items */}
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              {displayedFeed.length === 0 ? (
+                <div className="text-center py-6 border border-dashed border-slate-800/80 rounded-xl bg-slate-950/40">
+                  <p className="text-xs text-slate-500 italic">
+                    {feedTab === 'notes' ? 'Henüz temsilci notu eklenmedi.' : feedTab === 'logs' ? 'Henüz kayıtlı işlem günlüğü yok.' : 'Henüz işlem veya not geçmişi bulunmuyor.'}
+                  </p>
+                </div>
               ) : (
-                lead.notes.map((note) => (
-                  <div key={note.id} className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1 group relative">
-                    <div className="flex items-center justify-between text-slate-400 font-medium text-[11px]">
-                      <span className="text-indigo-400 font-bold">{note.author}</span>
-                      <div className="flex items-center gap-2">
-                        <span>{new Date(note.createdAt).toLocaleString('tr-TR')}</span>
-                        {onDeleteNote && (
-                          confirmDeleteNoteId === note.id ? (
-                            <div className="flex items-center gap-1 bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/40 text-[10px] animate-fade-in">
-                              <span className="text-rose-300 font-bold">Silinsin mi?</span>
+                displayedFeed.map((item) => {
+                  const isLog = item.type === 'log';
+
+                  if (isLog) {
+                    // System / Audit Log Card
+                    const actionType = item.actionType || 'INFO_UPDATE';
+                    const isStageChange = actionType === 'STAGE_CHANGE';
+                    const isQuality = actionType === 'QUALIFIED';
+                    const isBudget = actionType === 'BUDGET_UPDATE';
+                    const isRetargeting = actionType === 'RETARGETING';
+                    const isAssigned = actionType === 'ASSIGNED';
+
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`p-3 rounded-xl border text-xs space-y-1.5 transition-all ${
+                          isQuality
+                            ? 'bg-amber-950/20 border-amber-500/30'
+                            : isStageChange
+                            ? 'bg-indigo-950/20 border-indigo-500/30'
+                            : isBudget
+                            ? 'bg-emerald-950/20 border-emerald-500/30'
+                            : isRetargeting
+                            ? 'bg-pink-950/20 border-pink-500/30'
+                            : isAssigned
+                            ? 'bg-blue-950/20 border-blue-500/30'
+                            : 'bg-slate-950/80 border-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[11px] gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            {isQuality && (
+                              <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/40 flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> Kalite Durumu
+                              </span>
+                            )}
+                            {isStageChange && (
+                              <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-extrabold border border-indigo-500/40 flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> Aşama Değişimi
+                              </span>
+                            )}
+                            {isBudget && (
+                              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/40 flex items-center gap-1">
+                                <DollarSign className="w-3 h-3" /> Bütçe Revizesi
+                              </span>
+                            )}
+                            {isRetargeting && (
+                              <span className="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 font-extrabold border border-pink-500/40 flex items-center gap-1">
+                                <Flame className="w-3 h-3" /> Retargeting Planı
+                              </span>
+                            )}
+                            {isAssigned && (
+                              <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-extrabold border border-blue-500/40 flex items-center gap-1">
+                                <User className="w-3 h-3" /> Temsilci Atandı
+                              </span>
+                            )}
+                            {!isQuality && !isStageChange && !isBudget && !isRetargeting && !isAssigned && (
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-extrabold border border-slate-700 flex items-center gap-1">
+                                <Zap className="w-3 h-3 text-purple-400" /> İşlem Günlüğü
+                              </span>
+                            )}
+                            <span className="text-slate-400 font-medium">
+                              Yapan: <strong className="text-slate-200">{item.author || 'Sistem'}</strong>
+                            </span>
+                          </div>
+
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {formatLogDate(item.createdAt)}
+                          </span>
+                        </div>
+
+                        <p className="text-slate-200 font-medium pl-1 leading-relaxed">
+                          {item.text}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  // Manual Note Card
+                  const authorName = item.author || 'Temsilci';
+                  const initials = getInitials(authorName);
+
+                  return (
+                    <div 
+                      key={item.id} 
+                      className="bg-slate-950/90 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2 group relative hover:border-slate-700 transition-all shadow-sm"
+                    >
+                      <div className="flex items-center justify-between text-[11px] gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white font-black text-[10px] flex items-center justify-center shadow-md">
+                            {initials}
+                          </div>
+                          <div>
+                            <span className="text-indigo-300 font-black">{authorName}</span>
+                            <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
+                              Temsilci Notu
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {formatLogDate(item.createdAt)}
+                          </span>
+                          {onDeleteNote && (
+                            confirmDeleteNoteId === item.id ? (
+                              <div className="flex items-center gap-1 bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/40 text-[10px] animate-fade-in">
+                                <span className="text-rose-300 font-bold">Silinsin mi?</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onDeleteNote(lead.id, item.id);
+                                    setConfirmDeleteNoteId(null);
+                                  }}
+                                  className="text-rose-400 hover:text-rose-200 font-extrabold underline px-1"
+                                >
+                                  Evet
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteNoteId(null)}
+                                  className="text-slate-400 hover:text-slate-200 px-1"
+                                >
+                                  Vazgeç
+                                </button>
+                              </div>
+                            ) : (
                               <button
                                 type="button"
-                                onClick={() => {
-                                  onDeleteNote(lead.id, note.id);
-                                  setConfirmDeleteNoteId(null);
-                                }}
-                                className="text-rose-400 hover:text-rose-200 font-extrabold underline px-1"
+                                onClick={() => setConfirmDeleteNoteId(item.id)}
+                                className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors opacity-70 group-hover:opacity-100 cursor-pointer"
+                                title="Notu Sil"
                               >
-                                Evet
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDeleteNoteId(null)}
-                                className="text-slate-400 hover:text-slate-200 px-1"
-                              >
-                                Vazgeç
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteNoteId(note.id)}
-                              className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition-colors opacity-70 group-hover:opacity-100"
-                              title="Notu Sil"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )
-                        )}
+                            )
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                        <p className="text-slate-100 font-medium leading-relaxed whitespace-pre-wrap">
+                          {item.text}
+                        </p>
                       </div>
                     </div>
-                    <p className="text-slate-200 leading-relaxed pr-4">{note.text}</p>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

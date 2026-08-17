@@ -16,13 +16,19 @@ export interface LeadNote {
   author: string;
   text: string;
   createdAt: string;
+  type?: 'note' | 'log';
+  actionType?: 'STAGE_CHANGE' | 'QUALIFIED' | 'BUDGET_UPDATE' | 'RETARGETING' | 'NOTE' | 'ASSIGNED' | 'INFO_UPDATE' | 'CALL' | 'WHATSAPP';
+  oldValue?: string;
+  newValue?: string;
 }
 
 export interface LeadActivity {
   id: string;
   title: string;
   date: string;
-  type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'EMAIL' | 'PROPOSAL';
+  type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'EMAIL' | 'PROPOSAL' | 'QUALIFIED' | 'BUDGET_UPDATE' | 'RETARGETING' | 'ASSIGNED' | 'INFO_UPDATE' | 'WHATSAPP';
+  author?: string;
+  details?: string;
 }
 
 export interface ProductionDetails {
