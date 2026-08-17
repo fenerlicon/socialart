@@ -144,8 +144,38 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   // Feed partition (Notes vs System Logs)
   const manualNotes = (lead.notes || []).filter(n => n.type !== 'log');
-  const systemLogs = (lead.notes || []).filter(n => n.type === 'log');
-  const allFeed = [...(lead.notes || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const explicitLogs = (lead.notes || []).filter(n => n.type === 'log');
+
+  // Convert each manual note into an audit log entry so Loglar tab records note additions
+  const noteAdditionLogs = manualNotes.map(n => ({
+    id: `log-from-${n.id}`,
+    author: n.author || 'Temsilci',
+    text: `Yeni temsilci notu eklendi: "${n.text.length > 100 ? n.text.slice(0, 100) + '...' : n.text}"`,
+    createdAt: n.createdAt,
+    type: 'log' as const,
+    actionType: 'NOTE' as const
+  }));
+
+  // Convert activities into log entries if not already present in explicitLogs
+  const activityLogs = (lead.activities || []).map(a => ({
+    id: a.id || `act-${Math.random()}`,
+    author: a.author || lead.assignedTo || 'Sistem',
+    text: a.title + (a.details ? `: "${a.details}"` : ''),
+    createdAt: a.date,
+    type: 'log' as const,
+    actionType: ((a.type as any) || 'INFO_UPDATE') as any
+  }));
+
+  // Combine logs without duplicate text & timestamp
+  const systemLogs = [...explicitLogs, ...noteAdditionLogs, ...activityLogs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  // All Feed combining manual note cards and logs
+  const allFeed = [...manualNotes, ...explicitLogs, ...activityLogs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   const displayedFeed = feedTab === 'notes' ? manualNotes : feedTab === 'logs' ? systemLogs : allFeed;
 
   const getInitials = (name: string) => {
@@ -688,54 +718,52 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               </div>
             </div>
 
-            {/* Add Note Box (Shown on All & Notes tabs) */}
-            {feedTab !== 'logs' && (
-              <form onSubmit={handleAddNoteSubmit} className="space-y-2 bg-slate-950/90 p-3 rounded-xl border border-slate-800">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <User className="w-3.5 h-3.5 text-indigo-400" />
-                    <span className="text-[11px] font-semibold">Notu Yazan:</span>
-                    <select
-                      value={noteAuthor}
-                      onChange={(e) => setNoteAuthor(e.target.value)}
-                      className="bg-slate-900 border border-slate-700/80 text-indigo-300 font-extrabold text-xs rounded-lg px-2 py-0.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
-                    >
-                      {STAFF_LIST.filter(s => s !== 'Atanmadı').map(staff => (
-                        <option key={staff} value={staff} className="bg-slate-900 text-slate-200">{staff}</option>
-                      ))}
-                      {!STAFF_LIST.includes(noteAuthor) && (
-                        <option value={noteAuthor} className="bg-slate-900 text-slate-200">{noteAuthor}</option>
-                      )}
-                    </select>
-                  </div>
-                  <span className="text-[10px] text-slate-500">Ekleyen: <strong className="text-slate-300">{noteAuthor}</strong></span>
-                </div>
-
-                <div className="flex gap-2">
-                  <textarea
-                    rows={2}
-                    placeholder={`"${lead.title || lead.contactName}" hakkında temsilci notu yazın (Örn: Müşteri fiyat revizesi istedi, Salı aranacak)...`}
-                    value={newNoteText}
-                    onChange={(e) => setNewNoteText(e.target.value)}
-                    className="flex-1 bg-slate-900/90 border border-slate-800 text-slate-100 text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        handleAddNoteSubmit(e);
-                      }
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newNoteText.trim()}
-                    className="px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex flex-col items-center justify-center gap-1 shrink-0 active:scale-95 cursor-pointer"
+            {/* Add Note Box (Available on all tabs) */}
+            <form onSubmit={handleAddNoteSubmit} className="space-y-2 bg-slate-950/90 p-3 rounded-xl border border-slate-800">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <User className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="text-[11px] font-semibold">Notu Yazan:</span>
+                  <select
+                    value={noteAuthor}
+                    onChange={(e) => setNoteAuthor(e.target.value)}
+                    className="bg-slate-900 border border-slate-700/80 text-indigo-300 font-extrabold text-xs rounded-lg px-2 py-0.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
                   >
-                    <Send className="w-4 h-4" />
-                    <span className="text-[10px]">Kaydet</span>
-                  </button>
+                    {STAFF_LIST.filter(s => s !== 'Atanmadı').map(staff => (
+                      <option key={staff} value={staff} className="bg-slate-900 text-slate-200">{staff}</option>
+                    ))}
+                    {!STAFF_LIST.includes(noteAuthor) && (
+                      <option value={noteAuthor} className="bg-slate-900 text-slate-200">{noteAuthor}</option>
+                    )}
+                  </select>
                 </div>
-              </form>
-            )}
+                <span className="text-[10px] text-slate-500">Ekleyen: <strong className="text-slate-300">{noteAuthor}</strong></span>
+              </div>
+
+              <div className="flex gap-2">
+                <textarea
+                  rows={2}
+                  placeholder={`"${lead.title || lead.contactName}" hakkında temsilci notu yazın (Örn: Müşteri fiyat revizesi istedi, Salı aranacak)...`}
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  className="flex-1 bg-slate-900/90 border border-slate-800 text-slate-100 text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      handleAddNoteSubmit(e);
+                    }
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={!newNoteText.trim()}
+                  className="px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex flex-col items-center justify-center gap-1 shrink-0 active:scale-95 cursor-pointer"
+                >
+                  <Send className="w-4 h-4" />
+                  <span className="text-[10px]">Kaydet</span>
+                </button>
+              </div>
+            </form>
 
             {/* Feed List Items */}
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
@@ -757,6 +785,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                     const isBudget = actionType === 'BUDGET_UPDATE';
                     const isRetargeting = actionType === 'RETARGETING';
                     const isAssigned = actionType === 'ASSIGNED';
+                    const isNote = actionType === 'NOTE';
 
                     return (
                       <div 
@@ -772,6 +801,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                             ? 'bg-pink-950/20 border-pink-500/30'
                             : isAssigned
                             ? 'bg-blue-950/20 border-blue-500/30'
+                            : isNote
+                            ? 'bg-indigo-950/20 border-indigo-500/30'
                             : 'bg-slate-950/80 border-slate-800'
                         }`}
                       >
@@ -802,7 +833,12 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                                 <User className="w-3 h-3" /> Temsilci Atandı
                               </span>
                             )}
-                            {!isQuality && !isStageChange && !isBudget && !isRetargeting && !isAssigned && (
+                            {isNote && (
+                              <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-extrabold border border-indigo-500/40 flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3 text-indigo-400" /> Temsilci Notu
+                              </span>
+                            )}
+                            {!isQuality && !isStageChange && !isBudget && !isRetargeting && !isAssigned && !isNote && (
                               <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-extrabold border border-slate-700 flex items-center gap-1">
                                 <Zap className="w-3 h-3 text-purple-400" /> İşlem Günlüğü
                               </span>
