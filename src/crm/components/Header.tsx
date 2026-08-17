@@ -147,6 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="bg-slate-900 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none"
             >
               <option value="" disabled>🏠 Menüye Git...</option>
+              <option value="/finans">💰 Finans & Muhasebe</option>
               <option value="/admin/dashboard">🏠 Ana Panel</option>
               <option value="/admin/my-work">📝 Benim İşlerim</option>
               <option value="/admin/todo">📌 Yapılacaklar</option>
@@ -354,6 +355,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
               >
                 <option value="" disabled>🏠 Git...</option>
+                <option value="/finans">💰 Finans & Muhasebe</option>
                 <option value="/admin/dashboard">🏠 Ana Panel</option>
                 <option value="/admin/my-work">📝 Benim İşlerim</option>
                 <option value="/admin/todo">📌 Yapılacaklar</option>

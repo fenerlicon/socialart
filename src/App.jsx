@@ -33,6 +33,7 @@ const Blog = lazy(() => import('./pages/Blog'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const Admin = lazy(() => import('./pages/StaffAdmin'));
 const CRMPage = lazy(() => import('./pages/CRMPage'));
+const FinancePage = lazy(() => import('./pages/FinancePage'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const ClientPortal = lazy(() => import('./pages/ClientPortal'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -187,7 +188,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].some(p => location.pathname.startsWith(p)) && (
+      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance'].some(p => location.pathname.startsWith(p)) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -329,6 +330,12 @@ function App() {
               <Route path="/crm" element={<Navigate to="/admin/crm" replace />} />
               <Route path="/crrm" element={<Navigate to="/admin/crm" replace />} />
 
+              {/* Finance & Accounting Routes */}
+              <Route path="/finans" element={<FinancePage />} />
+              <Route path="/finans/*" element={<FinancePage />} />
+              <Route path="/finance" element={<FinancePage />} />
+              <Route path="/finance/*" element={<FinancePage />} />
+
               <Route path="/fiyatlar" element={<Pricing />} />
               <Route path="/musteri" element={<ClientPortal />} />
               <Route path="/ugc-basvuru" element={<UGCApplication />} />
@@ -360,7 +367,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon'].some(p => location.pathname.startsWith(p)) && (
+      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance'].some(p => location.pathname.startsWith(p)) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
