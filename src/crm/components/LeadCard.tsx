@@ -15,7 +15,7 @@ import {
   Star,
   Target
 } from 'lucide-react';
-import { Lead, StageId, getRetargetingStatus } from '../types/crm';
+import { Lead, StageId, getRetargetingStatus, getLatestLeadNote } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 
 interface LeadCardProps {
@@ -130,22 +130,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   const isInactiveAlert = daysInactive >= 3 && lead.stage !== 'WON' && lead.stage !== 'LOST' && !retargetingStatus;
 
   const getLatestNoteDisplay = () => {
-    if (lead.notes && lead.notes.length > 0) {
-      const validNotes = lead.notes.filter(n => {
-        if (!n.text || typeof n.text !== 'string') return false;
-        const txt = n.text.trim();
-        if (txt.length < 2) return false;
-        if (/^\d{4}-\d{2}-\d{2}/.test(txt)) return false;
-        if (!isNaN(Date.parse(txt)) && (txt.length === 10 || txt.includes('T') || txt.includes('Z'))) return false;
-        return true;
-      });
-      if (validNotes.length > 0) {
-        const repNote = validNotes.find(n => n.author && n.author.includes('Temsilci'));
-        if (repNote) return repNote.text;
-        return validNotes[0].text;
-      }
-    }
-    return 'Form Doldurdu';
+    return getLatestLeadNote(lead);
   };
 
   return (

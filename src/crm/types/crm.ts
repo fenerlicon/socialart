@@ -196,3 +196,89 @@ export function getRetargetingStatus(lead: Partial<Lead>): RetargetingStatus | n
     };
   }
 }
+
+export function isSystemPlaceholderNote(text: string): boolean {
+  if (!text || typeof text !== 'string') return true;
+  const clean = text.trim();
+  if (clean.length < 2) return true;
+
+  // Filter out ISO Dates or date-only strings
+  if (/^\d{4}-\d{2}-\d{2}/.test(clean)) return true;
+  if (!isNaN(Date.parse(clean)) && (clean.length === 10 || clean.includes('T') || clean.includes('Z'))) return true;
+
+  const lower = clean.toLowerCase();
+
+  // Platform/source placeholders
+  if (
+    lower === 'meta ads (instagram)' ||
+    lower === 'meta ads' ||
+    lower === 'meta ad' ||
+    lower === 'instagram' ||
+    lower === 'google ads' ||
+    lower === 'google' ||
+    lower === 'web formu' ||
+    lower === 'web form' ||
+    lower === 'website' ||
+    lower === 'manuel' ||
+    lower === 'manuel lead' ||
+    lower === 'form doldurdu' ||
+    lower === 'form dolduruldu'
+  ) return true;
+
+  // Form submission placeholders
+  if (
+    lower.startsWith('meta ads (instagram)') ||
+    lower.startsWith('meta ads') ||
+    lower.startsWith('meta formu dolduruldu') ||
+    lower.startsWith('web formu dolduruldu') ||
+    lower.startsWith('manuel lead eklendi') ||
+    lower.startsWith('yeni lead geldi') ||
+    lower.startsWith('facebook form')
+  ) return true;
+
+  // Stage change logs
+  if (lower.startsWith('mevcut satış aşaması') || lower.startsWith('aşama güncellendi')) return true;
+
+  // Assignment logs
+  if (lower.startsWith('temsilci sorumlusu') || lower.startsWith('temsilci atandı')) return true;
+
+  // Retargeting logs
+  if (lower.startsWith('retargeting / yeniden görüşme') || lower.startsWith('retargeting planlandı')) return true;
+
+  // Budget logs
+  if (lower.startsWith('bütçe güncellendi')) return true;
+
+  // Qualified logs
+  if (lower.startsWith('kaliteli lead')) return true;
+
+  return false;
+}
+
+export function getLatestLeadNote(lead: Partial<Lead>): string {
+  if (Array.isArray(lead.notes) && lead.notes.length > 0) {
+    // Filter real conversational notes
+    const realNotes = lead.notes.filter(n => {
+      if (!n || !n.text || typeof n.text !== 'string') return false;
+      if (n.type === 'log') return false;
+      return !isSystemPlaceholderNote(n.text);
+    });
+
+    if (realNotes.length > 0) {
+      // Sort by createdAt descending (newest first)
+      const sorted = [...realNotes].sort((a, b) => {
+        const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tB - tA;
+      });
+      return sorted[0].text.trim();
+    }
+  }
+
+  // Fallback to retargetingNote if exists
+  if (lead.retargetingNote && !isSystemPlaceholderNote(lead.retargetingNote)) {
+    return lead.retargetingNote.trim();
+  }
+
+  return 'Henüz not eklenmedi';
+}
+

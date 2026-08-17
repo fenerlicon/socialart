@@ -93,7 +93,16 @@ function mapDbRowToLead(row) {
           textLower.includes('kaliteli lead') || 
           textLower.includes('bütçe') || 
           textLower.includes('retargeting') ||
-          textLower.includes('temsilci');
+          textLower.includes('temsilci') ||
+          textLower === 'meta ads (instagram)' ||
+          textLower === 'meta ads' ||
+          textLower === 'google ads' ||
+          textLower === 'web formu' ||
+          textLower === 'manuel' ||
+          textLower.startsWith('meta ads') ||
+          textLower.startsWith('meta formu') ||
+          textLower.startsWith('web formu') ||
+          textLower.startsWith('manuel lead');
         return {
           id: n.id || `note-${Math.random()}`,
           author: cleanAuthor,
@@ -125,6 +134,25 @@ function mapDbRowToLead(row) {
       if (!isNaN(Date.parse(clean)) && (clean.length === 10 || clean.includes('T') || clean.includes('Z'))) return true;
       // Filter boolean/number strings
       if (clean === 'true' || clean === 'false' || clean === 'null' || clean === 'undefined') return true;
+      
+      const lower = clean.toLowerCase();
+      if (
+        lower === 'meta ads (instagram)' ||
+        lower === 'meta ads' ||
+        lower === 'meta ad' ||
+        lower === 'instagram' ||
+        lower === 'google ads' ||
+        lower === 'web formu' ||
+        lower === 'manuel' ||
+        lower === 'form doldurdu' ||
+        lower.startsWith('meta ads') ||
+        lower.startsWith('meta formu dolduruldu') ||
+        lower.startsWith('web formu dolduruldu') ||
+        lower.startsWith('manuel lead eklendi') ||
+        lower.startsWith('mevcut satış aşaması') ||
+        lower.startsWith('temsilci sorumlusu')
+      ) return true;
+
       return false;
     };
 
@@ -259,8 +287,10 @@ function mapDbRowToLead(row) {
       'service', 'hizmet', 'service_type', 'form_type', 'form_date',
       'submitted_at', 'date', 'timestamp', 'time', 'ip', 'ip_address',
       'url', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
-      'ad_id', 'adset_id', 'campaign_id', 'form_id', 'lead_id',
-      'field_data', 'retailer_item_id', 'partner_name'
+      'ad_id', 'adset_id', 'campaign_id', 'form_id', 'lead_id', 'leadId',
+      'field_data', 'retailer_item_id', 'partner_name', 'platform', 'reaction',
+      'ad_name', 'adset_name', 'campaign_name', 'is_organic', 'is_qualified', 'tags',
+      'rep', 'author', 'user', 'staff', 'agent'
     ]);
 
     for (const [key, value] of Object.entries(row)) {

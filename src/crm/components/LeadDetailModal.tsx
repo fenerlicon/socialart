@@ -22,7 +22,7 @@ import {
   Target,
   Download
 } from 'lucide-react';
-import { Lead, StageId, getRetargetingStatus } from '../types/crm';
+import { Lead, StageId, getRetargetingStatus, isSystemPlaceholderNote } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 
 interface LeadDetailModalProps {
@@ -143,8 +143,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const currentStageObj = STAGES.find(s => s.id === lead.stage);
 
   // Feed partition (Notes vs System Logs)
-  const manualNotes = (lead.notes || []).filter(n => n.type !== 'log');
-  const explicitLogs = (lead.notes || []).filter(n => n.type === 'log');
+  const manualNotes = (lead.notes || []).filter(n => n.type !== 'log' && !isSystemPlaceholderNote(n.text));
+  const explicitLogs = (lead.notes || []).filter(n => n.type === 'log' || isSystemPlaceholderNote(n.text));
 
   // Convert each manual note into an audit log entry so Loglar tab records note additions
   const noteAdditionLogs = manualNotes.map(n => ({

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lead, StageId, PipelineType, getRetargetingStatus } from '../types/crm';
+import { Lead, StageId, PipelineType, getRetargetingStatus, getLatestLeadNote } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 import { Zap, Globe, MessageSquare, Phone, ChevronRight, ArrowUpDown, Filter, Layers, DollarSign, Star, Target, Flame } from 'lucide-react';
 
@@ -384,23 +384,9 @@ export const ListView: React.FC<ListViewProps> = ({
                       </td>
 
                       {/* Son Not Cell */}
-                      <td className="py-4 px-4 max-w-[200px]">
+                      <td className="py-4 px-4 max-w-[220px]">
                         {(() => {
-                          let noteTxt = 'Form Doldurdu';
-                          if (Array.isArray(lead.notes) && lead.notes.length > 0) {
-                            const validNotes = lead.notes.filter(n => {
-                              if (!n || !n.text || typeof n.text !== 'string') return false;
-                              const txt = n.text.trim();
-                              if (txt.length < 2) return false;
-                              if (/^\d{4}-\d{2}-\d{2}/.test(txt)) return false;
-                              if (!isNaN(Date.parse(txt)) && (txt.length === 10 || txt.includes('T') || txt.includes('Z'))) return false;
-                              return true;
-                            });
-                            if (validNotes.length > 0) {
-                              const repNote = validNotes.find(n => n.author && String(n.author).includes('Temsilci'));
-                              noteTxt = repNote ? repNote.text : validNotes[0].text;
-                            }
-                          }
+                          const noteTxt = getLatestLeadNote(lead);
                           return (
                             <div className="text-[11px] text-slate-300 line-clamp-2 italic font-sans" title={noteTxt}>
                               &ldquo;{noteTxt}&rdquo;
