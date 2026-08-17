@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Folder, Users, Zap, Bell, ShieldCheck } from 'lucide-react'
+import { Plus, Folder, Users, Zap, Bell, ShieldCheck, Sparkles } from 'lucide-react'
 
 export function QuickActionsCard() {
   const router = useRouter()
@@ -17,6 +17,13 @@ export function QuickActionsCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-5 flex flex-wrap gap-3">
+        <Button
+          onClick={() => router.push('/tasks')}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs h-10 flex items-center justify-center gap-1.5 shadow rounded-xl flex-1 sm:flex-initial min-w-[150px] px-4"
+        >
+          <Sparkles className="h-4 w-4" /> + Özel Görev Ata
+        </Button>
+
         <Button
           onClick={() => router.push('/brands/new')}
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-10 flex items-center justify-center gap-1.5 shadow rounded-xl flex-1 sm:flex-initial min-w-[150px] px-4"

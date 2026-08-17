@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase/client'
 import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { TaskDetailDrawer } from '@/features/my-work/components/task-detail-drawer'
+import { CustomTaskModal } from '@/components/shared/custom-task-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -38,33 +39,94 @@ import {
   Sparkles,
   X,
   Send,
+  Flame,
+  Paperclip,
+  Link as LinkIcon,
+  Layers,
+  FileText
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-const parseStepDelivery = (description: string) => {
-  if (!description) return { note: '', links: [], files: [], cleanDesc: '' }
+const parseStepDetails = (description: string) => {
+  if (!description) {
+    return {
+      note: '',
+      links: [],
+      files: [],
+      cleanDesc: '',
+      priority: null,
+      customDetail: '',
+      refLinks: [],
+      attachments: [],
+      isGeneral: false,
+      dueTime: ''
+    }
+  }
 
+  const priorityMatch = description.match(/\[Öncelik\]:\s*(.*?)(?=\n\[|$)/)
+  const dueTimeMatch = description.match(/\[Teslim Saati\]:\s*(.*?)(?=\n\[|$)/)
+  const categoryMatch = description.match(/\[Kategori\]:\s*(.*?)(?=\n\[|$)/)
+  const customDetailMatch = description.match(/\[Özel Görev Detayı\]:\s*([\s\S]*?)(?=\n\[|$)/)
+  const refLinksMatch = description.match(/\[Referans Bağlantılar\]:\s*([\s\S]*?)(?=\n\[|$)/)
+  const filesJsonMatch = description.match(/\[Ekli Dosyalar \/ Görseller\]:\s*([\s\S]*?)(?=\n\[|$)/)
   const deliveryNoteMatch = description.match(/\[Teslim Açıklaması\]:\s*([\s\S]*?)(?=\n\[|$)/)
-  const linksMatch = description.match(/\[Fotoğraf\/Görsel Bağlantıları\]:\s*(.*?)(?=\n\[|$)/)
-  const filesMatch = description.match(/\[Dosya Bağlantıları\]:\s*(.*?)(?=\n\[|$)/)
+  const photoLinksMatch = description.match(/\[Fotoğraf\/Görsel Bağlantıları\]:\s*(.*?)(?=\n\[|$)/)
+  const fileLinksMatch = description.match(/\[Dosya Bağlantıları\]:\s*(.*?)(?=\n\[|$)/)
 
+  let attachments: any[] = []
+  if (filesJsonMatch) {
+    try {
+      attachments = JSON.parse(filesJsonMatch[1].trim())
+    } catch {}
+  }
+
+  let refLinks: { title: string; url: string }[] = []
+  if (refLinksMatch) {
+    refLinks = refLinksMatch[1].split('\n').filter(Boolean).map(line => {
+      const trimmed = line.replace(/^-\s*/, '').trim()
+      const parts = trimmed.split(': ')
+      if (parts.length > 1 && parts[1].startsWith('http')) {
+        return { title: parts[0], url: parts.slice(1).join(': ') }
+      }
+      return { title: 'Bağlantı', url: trimmed }
+    })
+  }
+
+  const priority = priorityMatch ? priorityMatch[1].trim() : null
+  const dueTime = dueTimeMatch ? dueTimeMatch[1].trim() : ''
+  const isGeneral = categoryMatch ? categoryMatch[1].includes('Genel') : false
+  const customDetail = customDetailMatch ? customDetailMatch[1].trim() : ''
   const note = deliveryNoteMatch ? deliveryNoteMatch[1].trim() : ''
-  const links = linksMatch 
-    ? linksMatch[1].split(',').map(l => l.trim()).filter(Boolean)
-    : []
-  const files = filesMatch 
-    ? filesMatch[1].split(',').map(f => f.trim()).filter(Boolean)
-    : []
+  const photoLinks = photoLinksMatch ? photoLinksMatch[1].split(',').map(l => l.trim()).filter(Boolean) : []
+  const fileLinks = fileLinksMatch ? fileLinksMatch[1].split(',').map(f => f.trim()).filter(Boolean) : []
 
-  const cleanDesc = description
-    .replace(/\n\n\[Teslim Açıklaması\]:[\s\S]*$/, '')
-    .replace(/\n\[Teslim Açıklaması\]:[\s\S]*$/, '')
-    .replace(/\n\[Fotoğraf\/Görsel Bağlantıları\]:[\s\S]*$/, '')
-    .replace(/\n\[Dosya Bağlantıları\]:[\s\S]*$/, '')
+  const cleanDesc = customDetail || description
+    .replace(/\n\n\[[\s\S]*$/, '')
+    .replace(/\[Öncelik\]:[^\n]*/g, '')
+    .replace(/\[Teslim Saati\]:[^\n]*/g, '')
+    .replace(/\[Kategori\]:[^\n]*/g, '')
+    .replace(/\[Özel Görev Detayı\]:[\s\S]*?(?=\n\[|$)/g, '')
+    .replace(/\[Referans Bağlantılar\]:[\s\S]*?(?=\n\[|$)/g, '')
+    .replace(/\[Ekli Dosyalar \/ Görseller\]:[\s\S]*?(?=\n\[|$)/g, '')
+    .replace(/\[Teslim Açıklaması\]:[\s\S]*?(?=\n\[|$)/g, '')
+    .replace(/\[Brief Detayları\]:[\s\S]*?(?=\n\[|$)/g, '')
+    .replace(/\[Fotoğraf\/Görsel Bağlantıları\]:[^\n]*/g, '')
+    .replace(/\[Dosya Bağlantıları\]:[^\n]*/g, '')
     .trim()
 
-  return { note, links, files, cleanDesc }
+  return {
+    priority,
+    dueTime,
+    isGeneral,
+    customDetail,
+    refLinks,
+    attachments,
+    note,
+    photoLinks,
+    fileLinks,
+    cleanDesc
+  }
 }
 
 export function TasksPage() {
@@ -97,14 +159,6 @@ export function TasksPage() {
   const [reviewerId, setReviewerId] = useState('')
   const [selectedSupportIds, setSelectedSupportIds] = useState<string[]>([])
 
-  // Create Custom Task Fields
-  const [createBrandId, setCreateBrandId] = useState('')
-  const [createInstanceId, setCreateInstanceId] = useState('')
-  const [createTitle, setCreateTitle] = useState('')
-  const [createRole, setCreateRole] = useState<ResponsibilityRole>('custom')
-  const [createAssigneeId, setCreateAssigneeId] = useState('')
-  const [createDueDate, setCreateDueDate] = useState('')
-
   // Bulk Assign States
   const [showBulkAssign, setShowBulkAssign] = useState(false)
   const [bulkBrandId, setBulkBrandId] = useState('')
@@ -115,6 +169,7 @@ export function TasksPage() {
   const [brandFilter, setBrandFilter] = useState('all')
   const [assigneeFilter, setAssigneeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
   const [teamFilter, setTeamFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -187,7 +242,6 @@ export function TasksPage() {
     if (isManagerExposed) return true
     if (!activeEmployee) return false
 
-    // Check responsibility role
     if (step.responsibilityRole) {
       const teamId = ROLE_TO_TEAM[step.responsibilityRole]
       if (teamId && activeEmployee.teamIds.includes(teamId as any)) {
@@ -195,7 +249,6 @@ export function TasksPage() {
       }
     }
 
-    // Check assignee
     if (step.assignedEmployeeId) {
       const assignee = employees.find(e => e.id === step.assignedEmployeeId)
       if (assignee && assignee.teamIds.some(tId => activeEmployee.teamIds.includes(tId))) {
@@ -223,9 +276,28 @@ export function TasksPage() {
     return steps.filter((step) => {
       if (!isStepInManagerTeams(step)) return false
 
-      // Brand Filter
+      const details = parseStepDetails(step.description)
       const instance = instances.find((i) => i.id === step.workflowInstanceId)
-      if (brandFilter !== 'all' && instance?.brandId !== brandFilter) return false
+
+      // Brand Filter
+      if (brandFilter !== 'all') {
+        if (brandFilter === 'general') {
+          if (!details.isGeneral && instance?.brandId !== 'general-brand' && instance?.id !== 'inst-general-agency-tasks') {
+            return false
+          }
+        } else if (instance?.brandId !== brandFilter) {
+          return false
+        }
+      }
+
+      // Priority Filter
+      if (priorityFilter !== 'all') {
+        const p = (details.priority || '').toLowerCase()
+        if (priorityFilter === 'urgent' && !p.includes('acil') && !p.includes('kritik')) return false
+        if (priorityFilter === 'high' && !p.includes('yüksek')) return false
+        if (priorityFilter === 'medium' && !p.includes('normal') && !p.includes('orta')) return false
+        if (priorityFilter === 'low' && !p.includes('düşük')) return false
+      }
 
       // Assignee Filter
       if (assigneeFilter !== 'all') {
@@ -249,17 +321,21 @@ export function TasksPage() {
       if (searchQuery) {
         const titleMatch = step.title.toLowerCase().includes(searchQuery.toLowerCase())
         const instMatch = instance?.title.toLowerCase().includes(searchQuery.toLowerCase())
-        if (!titleMatch && !instMatch) return false
+        const detailMatch = details.cleanDesc.toLowerCase().includes(searchQuery.toLowerCase())
+        if (!titleMatch && !instMatch && !detailMatch) return false
       }
 
       return true
     })
-  }, [steps, brandFilter, assigneeFilter, statusFilter, teamFilter, searchQuery, instances, activeEmployee])
+  }, [steps, brandFilter, priorityFilter, assigneeFilter, statusFilter, teamFilter, searchQuery, instances, activeEmployee])
 
   // Get brand name helper
   const getBrandNameOfInstance = (instanceId: string) => {
     const inst = instances.find((i) => i.id === instanceId)
-    if (!inst) return 'Bilinmeyen Marka'
+    if (!inst) return 'Genel Ajans İşi'
+    if (inst.id === 'inst-general-agency-tasks' || inst.brandId === 'general-brand' || inst.title.includes('Genel')) {
+      return '🏢 Genel Ajans İşi'
+    }
     return brands.find((b) => b.id === inst.brandId)?.name || 'Marka'
   }
 
@@ -305,7 +381,7 @@ export function TasksPage() {
     }
     await updateWorkflowStepInstance(updated)
     toast.success('Görev Atandı', {
-      description: `Görev başarıyla ${getEmployeeName(assigneeId)} kullanıcısına atandı.`,
+      description: 'Görev başarıyla ' + getEmployeeName(assigneeId) + ' kullanıcısına atandı.',
     })
     setActiveModal(null)
     loadData()
@@ -315,11 +391,11 @@ export function TasksPage() {
     if (!selectedStep) return
     const updated: WorkflowStepInstance = {
       ...selectedStep,
-      dueDate: dueDateText ? `${dueDateText}T18:00:00.000Z` : undefined,
+      dueDate: dueDateText ? dueDateText + 'T18:00:00.000Z' : undefined,
     }
     await updateWorkflowStepInstance(updated)
     toast.success('Deadline Güncellendi', {
-      description: `Görevin son teslim tarihi güncellendi.`,
+      description: 'Görevin son teslim tarihi güncellendi.',
     })
     setActiveModal(null)
     loadData()
@@ -357,7 +433,7 @@ export function TasksPage() {
     }
     await updateWorkflowStepInstance(updated)
     toast.success('Onaylayıcı Değiştirildi', {
-      description: `Görev onaylayıcısı ${getEmployeeName(reviewerId)} olarak güncellendi.`,
+      description: 'Görev onaylayıcısı ' + getEmployeeName(reviewerId) + ' olarak güncellendi.',
     })
     setActiveModal(null)
     loadData()
@@ -371,44 +447,8 @@ export function TasksPage() {
     }
     await updateWorkflowStepInstance(updated)
     toast.success('Destek Ekip Güncellendi', {
-      description: `Destek veren ekip üyeleri başarıyla kaydedildi.`,
+      description: 'Destek veren ekip üyeleri başarıyla kaydedildi.',
     })
-    setActiveModal(null)
-    loadData()
-  }
-
-  const handleCreateCustomTask = async () => {
-    if (!createInstanceId || !createTitle) {
-      toast.error('Lütfen en azından bir iş akışı ve başlık belirleyin.')
-      return
-    }
-
-    const newStep: WorkflowStepInstance = {
-      id: `step-${Date.now()}`,
-      workflowInstanceId: createInstanceId,
-      workflowStepTemplateId: 'custom-step-template',
-      description: '',
-      order: steps.filter(s => s.workflowInstanceId === createInstanceId).length + 1,
-      title: createTitle,
-      responsibilityRole: createRole,
-      assignedEmployeeId: createAssigneeId || undefined,
-      status: 'active',
-      requiresApproval: false,
-      isFinalStep: false,
-      dueDate: createDueDate ? `${createDueDate}T18:00:00.000Z` : undefined,
-    }
-
-    // Save step
-    await saveWorkflowSteps([newStep])
-
-    toast.success('Özel Görev Oluşturuldu', {
-      description: `"${createTitle}" görevi başarıyla oluşturuldu ve iş akışına eklendi.`,
-    })
-
-    // Reset Form
-    setCreateTitle('')
-    setCreateAssigneeId('')
-    setCreateDueDate('')
     setActiveModal(null)
     loadData()
   }
@@ -439,7 +479,6 @@ export function TasksPage() {
           return
         }
 
-        // Only update if the assignment actually changed
         if (step.assignedEmployeeId === targetEmployeeId) {
           return
         }
@@ -458,9 +497,7 @@ export function TasksPage() {
       await saveWorkflowSteps(modifiedSteps)
 
       toast.success('Toplu Atama Başarılı', {
-        description: `${modifiedSteps.length} görev başarıyla ${
-          bulkEmployeeId === 'unassigned' ? 'ataması kaldırılarak' : getEmployeeName(bulkEmployeeId) + ' kullanıcısına'
-        } atandı.`,
+        description: modifiedSteps.length + ' görev başarıyla ' + (bulkEmployeeId === 'unassigned' ? 'ataması kaldırılarak' : getEmployeeName(bulkEmployeeId) + ' kullanıcısına') + ' atandı.',
       })
 
       setBulkEmployeeId('')
@@ -478,11 +515,36 @@ export function TasksPage() {
     )
   }
 
-  // Filter instances by selected brand
-  const brandInstances = useMemo(() => {
-    if (!createBrandId) return []
-    return instances.filter((i) => i.brandId === createBrandId)
-  }, [createBrandId, instances])
+  const getPriorityBadge = (p?: string | null) => {
+    if (!p) return null
+    const lower = p.toLowerCase()
+    if (lower.includes('acil') || lower.includes('kritik') || lower.includes('urgent')) {
+      return (
+        <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/40 text-[9px] font-black animate-pulse flex items-center gap-1">
+          <Flame className="h-2.5 w-2.5" /> Acil / Kritik
+        </Badge>
+      )
+    }
+    if (lower.includes('yüksek') || lower.includes('high')) {
+      return (
+        <Badge variant="outline" className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[9px] font-bold">
+          ⚡ Yüksek
+        </Badge>
+      )
+    }
+    if (lower.includes('orta') || lower.includes('normal') || lower.includes('medium')) {
+      return (
+        <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/40 text-[9px] font-medium">
+          🔵 Normal
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[9px] font-medium">
+        🟢 Düşük
+      </Badge>
+    )
+  }
 
   if (isLoadingAuth) {
     return (
@@ -508,7 +570,7 @@ export function TasksPage() {
             <h1 className="text-2xl font-black tracking-tight text-foreground">Görev Yönetim Merkezi</h1>
           </div>
           <p className="text-muted-foreground text-xs mt-0.5">
-            Ekibinizin görevlerini listeleyin, yeni görevler oluşturun, atamaları ve deadline tarihlerini yönetin.
+            Ekibinizin görevlerini listeleyin, serbest/özel görevler tanımlayın, Word formatlı detayları, 5MB dosyaları ve öncelikleri yönetin.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
@@ -518,44 +580,42 @@ export function TasksPage() {
               setShowBulkAssign(!showBulkAssign)
             }}
             variant="outline"
-            className="h-10 px-5 text-xs font-semibold rounded-xl flex items-center gap-1.5 border-neutral-850 hover:bg-neutral-900"
+            className="h-10 px-4 text-xs font-semibold rounded-xl flex items-center gap-1.5 border-neutral-850 hover:bg-neutral-900"
           >
             <ArrowRightLeft className="h-4 w-4" /> Toplu Görev Ata
           </Button>
           <Button
-            onClick={() => {
-              setCreateBrandId(brands[0]?.id || '')
-              setActiveModal('create')
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-10 px-5 flex items-center gap-1.5 shadow rounded-xl transition-all"
+            onClick={() => setActiveModal('create')}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs h-10 px-5 flex items-center gap-1.5 shadow-lg shadow-indigo-600/25 rounded-xl transition-all"
           >
-            <Plus className="h-4 w-4" /> Özel Görev Ekle
+            <Plus className="h-4 w-4" /> + Özel Görev Ata (Çoklu)
           </Button>
         </div>
       </div>
 
       {/* Filtre Kontrolleri */}
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-5 bg-neutral-950/20 border p-4 rounded-2xl backdrop-blur-md">
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-6 bg-neutral-950/40 border border-neutral-850 p-4 rounded-2xl backdrop-blur-md">
         {/* Arama */}
-        <div className="space-y-1.5 sm:col-span-2">
-          <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">Arama</label>
+        <div className="space-y-1 sm:col-span-2">
+          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-0.5">Arama</label>
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Görev veya iş akışı başlığı..."
-            className="h-9 text-xs bg-muted/5 border-neutral-850"
+            placeholder="Görev, marka veya talimat ara..."
+            className="h-9 text-xs bg-muted/5 border-neutral-850 font-semibold"
           />
         </div>
 
         {/* Marka Filtresi */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">Marka</label>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-0.5">Marka</label>
           <Select value={brandFilter} onValueChange={setBrandFilter}>
             <SelectTrigger className="h-9 text-xs bg-muted/5 border-neutral-850">
               <SelectValue placeholder="Seçin..." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tüm Markalar</SelectItem>
+              <SelectItem value="general" className="text-xs font-bold text-purple-400">🏢 Genel Ajans İşleri</SelectItem>
               {brands.map((b) => (
                 <SelectItem key={b.id} value={b.id} className="text-xs">
                   {b.name}
@@ -565,16 +625,33 @@ export function TasksPage() {
           </Select>
         </div>
 
+        {/* Öncelik Filtresi */}
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-0.5">Önem Sırası</label>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="h-9 text-xs bg-muted/5 border-neutral-850">
+              <SelectValue placeholder="Tüm Öncelikler" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tüm Öncelikler</SelectItem>
+              <SelectItem value="urgent" className="text-xs font-bold text-red-400">🔴 Acil / Kritik</SelectItem>
+              <SelectItem value="high" className="text-xs font-bold text-amber-400">🟠 Yüksek Öncelik</SelectItem>
+              <SelectItem value="medium" className="text-xs text-blue-400">🔵 Normal Öncelik</SelectItem>
+              <SelectItem value="low" className="text-xs text-emerald-400">🟢 Düşük Öncelik</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Çalışan Filtresi */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">Çalışan</label>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-0.5">Çalışan</label>
           <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
             <SelectTrigger className="h-9 text-xs bg-muted/5 border-neutral-850">
               <SelectValue placeholder="Seçin..." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tüm Ekip</SelectItem>
-              <SelectItem value="unassigned" className="text-xs font-bold text-red-400">⚠️ Atama Yapılmayanlar</SelectItem>
+              <SelectItem value="unassigned" className="text-xs font-bold text-red-400">⚠️ Atanmayanlar</SelectItem>
               {manageableEmployees.map((emp) => (
                 <SelectItem key={emp.id} value={emp.id} className="text-xs">
                   {emp.fullName}
@@ -585,8 +662,8 @@ export function TasksPage() {
         </div>
 
         {/* Durum Filtresi */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">Durum</label>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-0.5">Durum</label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-9 text-xs bg-muted/5 border-neutral-850">
               <SelectValue placeholder="Seçin..." />
@@ -602,31 +679,20 @@ export function TasksPage() {
         </div>
       </div>
 
-      {/* Toplu Görev Atama Kartı */}
+      {/* Toplu Atama Paneli */}
       {showBulkAssign && (
-        <Card className="border border-blue-500/10 bg-blue-500/[0.01] backdrop-blur-md rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center justify-between border-b border-blue-500/5 pb-3">
-            <div className="space-y-0.5">
-              <h3 className="text-sm font-extrabold text-foreground tracking-tight flex items-center gap-1.5">
-                <ArrowRightLeft className="h-4 w-4 text-blue-500" />
-                Hızlı / Toplu Görev Atama Şablonu
-              </h3>
-              <p className="text-[11px] text-muted-foreground">
-                Bir markanın kurgu, grafik veya tüm görevlerini tek bir çalışana toplu olarak atayabilirsiniz.
-              </p>
+        <Card className="p-5 border border-blue-500/20 bg-blue-500/[0.02] rounded-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-blue-500/10 pb-3">
+            <div className="flex items-center gap-2">
+              <ArrowRightLeft className="h-5 w-5 text-blue-400" />
+              <h3 className="text-sm font-extrabold text-foreground">Toplu Görev Atama Sihirbazı</h3>
             </div>
-            <Button
-              onClick={() => setShowBulkAssign(false)}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 rounded-full"
-            >
+            <Button onClick={() => setShowBulkAssign(false)} variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg">
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            {/* Marka Seçimi */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">1. Hedef Marka</label>
               <Select value={bulkBrandId} onValueChange={setBulkBrandId}>
@@ -643,9 +709,8 @@ export function TasksPage() {
               </Select>
             </div>
 
-            {/* Departman / Rol Seçimi */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">2. Departman / Rol (Filtre)</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">2. Görev Rol Filtresi</label>
               <Select value={bulkRoleFilter} onValueChange={setBulkRoleFilter}>
                 <SelectTrigger className="h-10 text-xs bg-muted/5 border-neutral-850">
                   <SelectValue placeholder="Seçin..." />
@@ -662,7 +727,6 @@ export function TasksPage() {
               </Select>
             </div>
 
-            {/* Çalışan Atama Seçimi */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">3. Atanacak Sorumlu Çalışan</label>
               <Select value={bulkEmployeeId} onValueChange={setBulkEmployeeId}>
@@ -694,17 +758,17 @@ export function TasksPage() {
       )}
 
       {/* Görevler Listesi */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {unassignedCount > 0 && (
-          <div className="rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-500/[0.05] to-amber-500/[0.05] p-5 text-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse shadow-lg ring-1 ring-red-500/10">
+          <div className="rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-500/[0.05] to-amber-500/[0.05] p-4 text-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse shadow-lg ring-1 ring-red-500/10">
             <div className="flex items-center gap-3">
-              <div className="bg-red-500/15 border border-red-500/25 p-2.5 rounded-xl text-red-400 shrink-0">
-                <AlertTriangle className="h-4.5 w-4.5" />
+              <div className="bg-red-500/15 border border-red-500/25 p-2 rounded-xl text-red-400 shrink-0">
+                <AlertTriangle className="h-4 w-4" />
               </div>
               <div className="space-y-0.5">
                 <span className="font-extrabold text-red-400 block uppercase tracking-wider">⚠️ DİKKAT: ATAMA BEKLEYEN AKTİF GÖREVLER VAR</span>
-                <span className="text-neutral-300 block">
-                  Şu anda sistemde herhangi bir çalışana atanmamış <strong>{unassignedCount} adet aktif görev</strong> bulunuyor. İş akışının aksamaması için lütfen sorumlu atamalarını tamamlayın.
+                <span className="text-neutral-300 block text-[11px]">
+                  Şu anda sistemde herhangi bir çalışana atanmamış <strong>{unassignedCount} adet aktif görev</strong> bulunuyor.
                 </span>
               </div>
             </div>
@@ -716,17 +780,19 @@ export function TasksPage() {
             </Button>
           </div>
         )}
+
         {filteredSteps.length > 0 ? (
           filteredSteps.map((step) => {
             const isCompleted = step.status === 'completed'
             const isOverdue = step.dueDate && new Date(step.dueDate) < new Date() && !isCompleted
+            const details = parseStepDetails(step.description)
 
             return (
               <Card
                 key={step.id}
                 className={cn(
-                  'border bg-card/15 backdrop-blur-md rounded-2xl transition-all duration-200 hover:border-neutral-800 overflow-hidden relative',
-                  isOverdue && 'border-red-500/10'
+                  'border bg-card/25 backdrop-blur-md rounded-2xl transition-all duration-200 hover:border-neutral-750 overflow-hidden relative group',
+                  isOverdue && 'border-red-500/20'
                 )}
               >
                 {/* Sol durum vurgu çizgisi */}
@@ -741,73 +807,50 @@ export function TasksPage() {
                   )}
                 />
 
-                <CardContent className="p-5 pl-7 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <CardContent className="p-4 sm:p-5 pl-6 sm:pl-7 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Bilgiler */}
-                  <div className="space-y-2 max-w-xl">
+                  <div className="space-y-2 max-w-2xl min-w-0 flex-1">
                     <div className="flex items-center flex-wrap gap-2 text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-                      <span className="flex items-center gap-1">
-                        <Building className="h-3 w-3" />
+                      <span className="flex items-center gap-1 font-bold text-neutral-300">
+                        <Building className="h-3 w-3 text-neutral-500" />
                         {getBrandNameOfInstance(step.workflowInstanceId)}
                       </span>
                       <span>•</span>
                       <span>{getInstanceTitle(step.workflowInstanceId)}</span>
+                      {getPriorityBadge(details.priority)}
                     </div>
 
-                    <h3 className="text-sm font-extrabold text-foreground tracking-tight">{step.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-extrabold text-foreground tracking-tight">{step.title}</h3>
+                    </div>
 
-                    {step.description && (
-                      <p className="text-[11px] text-neutral-450 leading-relaxed mt-1">
-                        {parseStepDelivery(step.description).cleanDesc}
+                    {details.cleanDesc && (
+                      <p className="text-[11px] text-neutral-400 leading-relaxed line-clamp-2">
+                        {details.cleanDesc}
                       </p>
                     )}
 
-                    {step.status === 'completed' && (() => {
-                      const { note, links, files } = parseStepDelivery(step.description)
-                      if (!note && links.length === 0 && files.length === 0 && !step.completedAt) return null
-                      return (
-                        <div className="mt-2.5 bg-neutral-950/40 border border-neutral-900 rounded-xl p-3 space-y-1.5 text-[10px] leading-relaxed max-w-lg">
-                          <div className="flex justify-between items-center border-b border-neutral-900 pb-1">
-                            <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest font-mono">
-                              TESLİM BİLGİLERİ VE DOSYALAR
-                            </span>
-                            {step.completedAt && (
-                              <span className="text-[8px] text-neutral-550 font-mono">
-                                Tamamlama: {new Date(step.completedAt).toLocaleString('tr-TR')}
-                              </span>
-                            )}
-                          </div>
-                          {note && (
-                            <p className="text-neutral-350 italic font-mono">&quot;{note}&quot;</p>
-                          )}
-                          {(links.length > 0 || files.length > 0) && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {links.map((link, lidx) => (
-                                <a
-                                  key={lidx}
-                                  href={link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 bg-neutral-900 border border-neutral-850 hover:bg-neutral-850 hover:border-neutral-700 text-neutral-300 hover:text-white px-2 py-0.5 rounded text-[8px] font-bold font-mono transition-all"
-                                >
-                                  🔗 LİNK {lidx + 1}
-                                </a>
-                              ))}
-                              {files.map((file, fidx) => (
-                                <a
-                                  key={fidx}
-                                  href={file}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 bg-neutral-900 border border-neutral-850 hover:bg-neutral-850 hover:border-neutral-700 text-neutral-300 hover:text-white px-2 py-0.5 rounded text-[8px] font-bold font-mono transition-all"
-                                >
-                                  📁 DOSYA {fidx + 1}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })()}
+                    {/* Rozetler: Dosya, Link ve Teslimat Bilgileri */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {details.attachments.length > 0 && (
+                        <Badge variant="outline" className="bg-purple-500/10 text-purple-300 border-purple-500/30 text-[9px] font-bold flex items-center gap-1">
+                          <Paperclip className="h-2.5 w-2.5" />
+                          {details.attachments.length} Dosya / Görsel (5MB)
+                        </Badge>
+                      )}
+                      {details.refLinks.length > 0 && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-300 border-blue-500/30 text-[9px] font-bold flex items-center gap-1">
+                          <LinkIcon className="h-2.5 w-2.5" />
+                          {details.refLinks.length} Link
+                        </Badge>
+                      )}
+                      {details.dueTime && (
+                        <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 border-indigo-500/30 text-[9px] font-semibold flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" />
+                          Saat: {details.dueTime}
+                        </Badge>
+                      )}
+                    </div>
 
                     {/* Sorumlu, Onaylayıcı ve Destekler */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground pt-1">
@@ -842,7 +885,7 @@ export function TasksPage() {
                   </div>
 
                   {/* Deadline & Aksiyonlar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
                     {/* Son Teslim Tarihi */}
                     <div className="flex items-center gap-2 bg-muted/10 px-3 py-1.5 rounded-xl border border-neutral-900/60 text-xs">
                       <Calendar className="h-3.5 w-3.5 text-neutral-500" />
@@ -859,20 +902,18 @@ export function TasksPage() {
 
                     {/* Yönetim Butonları */}
                     <div className="flex items-center gap-1">
-                      {/* Başkasına Pasla — sadece tasks.assign yetkisi olanlara görünür */}
                       {canPassTask && (
                         <Button
                           onClick={() => openAssignModal(step)}
                           variant="ghost"
                           size="sm"
-                          className="h-9 px-3 rounded-lg text-xs flex items-center gap-1.5 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20 font-semibold"
+                          className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/20 font-semibold"
                           title="Bu görevi başka bir çalışana pasla"
                         >
-                          <Send className="h-3.5 w-3.5" /> Pasla
+                          <Send className="h-3 w-3" /> Pasla
                         </Button>
                       )}
 
-                      {/* Detayları Görüntüle */}
                       <Button
                         onClick={() => {
                           setDetailStep(step)
@@ -880,60 +921,39 @@ export function TasksPage() {
                         }}
                         variant="ghost"
                         size="sm"
-                        className="h-9 px-3 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white text-blue-400 hover:text-blue-300"
+                        className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 font-bold"
                       >
-                        <Sparkles className="h-3.5 w-3.5" /> Detay
+                        <Sparkles className="h-3 w-3" /> Detay
                       </Button>
 
-                      {/* Atama Değiştir */}
                       <Button
                         onClick={() => openAssignModal(step)}
                         variant="ghost"
                         size="sm"
-                        className="h-9 px-3 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
+                        className="h-8 px-2 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
+                        title="Atamayı Güncelle"
                       >
-                        <User className="h-3.5 w-3.5" /> Ata
+                        <User className="h-3 w-3" /> Ata
                       </Button>
 
-                      {/* Deadline Değiştir */}
                       <Button
                         onClick={() => openDeadlineModal(step)}
                         variant="ghost"
                         size="sm"
-                        className="h-9 px-3 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
+                        className="h-8 px-2 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
+                        title="Deadline Güncelle"
                       >
-                        <Calendar className="h-3.5 w-3.5" /> Tarih
+                        <Calendar className="h-3 w-3" /> Tarih
                       </Button>
 
-                      {/* Reviewer Değiştir */}
-                      <Button
-                        onClick={() => openReviewerModal(step)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 px-3 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Onaylayıcı
-                      </Button>
-
-                      {/* Destek Ekle */}
-                      <Button
-                        onClick={() => openSupportModal(step)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 px-3 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
-                      >
-                        <Users className="h-3.5 w-3.5" /> Destek
-                      </Button>
-
-                      {/* Geçici Sil Yetkisi (Test aşamasında herkes silebilir) */}
                       <Button
                         onClick={() => handleDeleteStep(step)}
                         variant="ghost"
                         size="sm"
-                        className="h-9 w-9 rounded-lg text-red-400 hover:text-red-300 hover:bg-rose-500/10 p-0 flex items-center justify-center shrink-0"
+                        className="h-8 w-8 rounded-lg text-red-400 hover:text-red-300 hover:bg-rose-500/10 p-0 flex items-center justify-center shrink-0"
                         title="Görevi Sil"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
@@ -945,7 +965,7 @@ export function TasksPage() {
           <div className="text-center py-12 border border-dashed rounded-3xl bg-neutral-950/5">
             <AlertTriangle className="h-10 w-10 text-neutral-500 mx-auto mb-3" />
             <p className="text-sm font-semibold text-neutral-400">Aranan kriterlere uygun görev bulunamadı.</p>
-            <p className="text-xs text-neutral-500 mt-1">Filtre ayarlarınızı değiştirmeyi deneyebilirsiniz.</p>
+            <p className="text-xs text-neutral-500 mt-1">Filtre ayarlarınızı değiştirmeyi deneyebilir veya yeni özel görev oluşturabilirsiniz.</p>
           </div>
         )}
       </div>
@@ -1080,120 +1100,16 @@ export function TasksPage() {
         </div>
       )}
 
-      {/* 5. GÖREV OLUŞTURMA MODALI */}
+      {/* 5. YENİ GELİŞMİŞ ÇOKLU ÖZEL GÖREV MODALI */}
       {activeModal === 'create' && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-neutral-900 w-full max-w-lg p-6 rounded-2xl space-y-4">
-            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-400" />
-              Özel Görev Oluştur
-            </h3>
-            <p className="text-xs text-muted-foreground">Herhangi bir markanın aktif dönem iş akışına özel bir görev (adım) enjekte edin.</p>
-            
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Marka Seçimi */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Marka</label>
-                <Select value={createBrandId} onValueChange={(val) => {
-                  setCreateBrandId(val)
-                  setCreateInstanceId('')
-                }}>
-                  <SelectTrigger className="h-9 text-xs bg-muted/10 border-neutral-850">
-                    <SelectValue placeholder="Marka Seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brands.map((b) => (
-                      <SelectItem key={b.id} value={b.id} className="text-xs">
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Kampanya / İş Akışı Seçimi */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">İş Akışı (Kampanya)</label>
-                <Select value={createInstanceId} onValueChange={setCreateInstanceId} disabled={!createBrandId}>
-                  <SelectTrigger className="h-9 text-xs bg-muted/10 border-neutral-850">
-                    <SelectValue placeholder={brandInstances.length > 0 ? 'İş Akışı Seçin' : 'Aktif İş Akışı Bulunamadı'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brandInstances.map((i) => (
-                      <SelectItem key={i.id} value={i.id} className="text-xs">
-                        {i.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Görev Başlığı */}
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Görev Başlığı</label>
-                <Input
-                  value={createTitle}
-                  onChange={(e) => setCreateTitle(e.target.value)}
-                  placeholder="Örn: Instagram Reels video kurgusunun tamamlanması"
-                  className="h-9 text-xs bg-muted/5 border-neutral-850"
-                />
-              </div>
-
-              {/* Sorumlu Departman / Rol */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sorumlu Rol / Departman</label>
-                <Select value={createRole} onValueChange={(val) => setCreateRole(val as ResponsibilityRole)}>
-                  <SelectTrigger className="h-9 text-xs bg-muted/10 border-neutral-850">
-                    <SelectValue placeholder="Seçin..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom" className="text-xs">Özel / Operasyon</SelectItem>
-                    <SelectItem value="graphic_design" className="text-xs">Grafik Tasarım</SelectItem>
-                    <SelectItem value="video_editing" className="text-xs">Video Kurgu</SelectItem>
-                    <SelectItem value="photography" className="text-xs">Fotoğraf Üretimi</SelectItem>
-                    <SelectItem value="videography" className="text-xs">Video Üretimi</SelectItem>
-                    <SelectItem value="social_media" className="text-xs">Sosyal Medya</SelectItem>
-                    <SelectItem value="digital_marketing" className="text-xs">Dijital Pazarlama</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sorumlu Atama */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Görev Sorumlusu (Çalışan)</label>
-                <Select value={createAssigneeId} onValueChange={setCreateAssigneeId}>
-                  <SelectTrigger className="h-9 text-xs bg-muted/10 border-neutral-850">
-                    <SelectValue placeholder="İsteğe Bağlı Seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Atama Yok (Boş)</SelectItem>
-                    {manageableEmployees.map((emp) => (
-                      <SelectItem key={emp.id} value={emp.id} className="text-xs">
-                        {emp.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Deadline */}
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Son Teslim Tarihi (Deadline)</label>
-                <Input
-                  type="date"
-                  value={createDueDate}
-                  onChange={(e) => setCreateDueDate(e.target.value)}
-                  className="h-9 text-xs bg-muted/5 border-neutral-850"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button onClick={() => setActiveModal(null)} variant="outline" className="h-9 text-xs rounded-xl">İptal</Button>
-              <Button onClick={handleCreateCustomTask} className="h-9 text-xs bg-blue-650 hover:bg-blue-700 text-white rounded-xl">Görev Oluştur</Button>
-            </div>
-          </div>
-        </div>
+        <CustomTaskModal
+          isOpen={activeModal === 'create'}
+          onClose={() => setActiveModal(null)}
+          employees={manageableEmployees.length > 0 ? manageableEmployees : employees}
+          brands={brands}
+          instances={instances}
+          onSuccess={loadData}
+        />
       )}
 
       {/* Görev Silme Onay Modalı */}
@@ -1207,9 +1123,9 @@ export function TasksPage() {
               <div className="space-y-1">
                 <h3 className="text-base font-extrabold text-white">Görevi Sil?</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Bu görevi (iş adımını) sistemden kalıcı olarak silmek istediğinize emin misiniz?
+                  Bu görevi sistemden kalıcı olarak silmek istediğinize emin misiniz?
                   <br />
-                  <strong className="text-red-400 mt-1 block">Bu geçici test yetkisidir. Bu işlem geri alınamaz!</strong>
+                  <strong className="text-red-400 mt-1 block">Bu işlem geri alınamaz!</strong>
                 </p>
               </div>
             </div>
@@ -1233,10 +1149,22 @@ export function TasksPage() {
           </div>
         </div>
       )}
+
       {/* Görev Detay Drawer */}
       {detailDrawerOpen && detailStep && (() => {
-        const inst = instances.find(i => i.id === detailStep.workflowInstanceId)
-        if (!inst) return null
+        const inst = instances.find(i => i.id === detailStep.workflowInstanceId) || {
+          id: detailStep.workflowInstanceId,
+          brandId: 'general-brand',
+          cycleId: 'general-cycle',
+          operationPlanItemId: 'op-general',
+          operationTemplateId: 'general-op',
+          workflowTemplateId: 'general-wf',
+          title: 'Genel Görevler',
+          status: 'in_progress' as const,
+          currentStepId: detailStep.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
 
         const brandName = getBrandNameOfInstance(detailStep.workflowInstanceId)
         const siblingSteps = steps.filter(s => s.workflowInstanceId === detailStep.workflowInstanceId)
@@ -1245,7 +1173,7 @@ export function TasksPage() {
           'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
           'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
         ]
-        const cycleLabel = cycle ? `${months[cycle.month - 1]} ${cycle.year}` : 'Genel Dönem'
+        const cycleLabel = cycle ? (months[cycle.month - 1] + ' ' + cycle.year) : 'Genel Dönem'
 
         return (
           <TaskDetailDrawer

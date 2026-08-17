@@ -430,7 +430,29 @@ export function MyWorkCard({
           </h4>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {(() => {
+            const priorityMatch = step.description ? step.description.match(/\[Öncelik\]:\s*(.*?)(?=\n\[|$)/) : null
+            const priorityText = priorityMatch ? priorityMatch[1].trim() : null
+            if (!priorityText) return null
+            const isUrgent = priorityText.toLowerCase().includes('acil') || priorityText.toLowerCase().includes('kritik')
+            const isHigh = priorityText.toLowerCase().includes('yüksek')
+            const isMed = priorityText.toLowerCase().includes('normal') || priorityText.toLowerCase().includes('orta')
+            return (
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-[10px] px-2 py-0.5 rounded uppercase tracking-wider',
+                  isUrgent ? 'bg-red-500/20 text-red-400 border-red-500/40 font-black animate-pulse' :
+                  isHigh ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold' :
+                  isMed ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-medium' :
+                  'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-medium'
+                )}
+              >
+                {isUrgent ? '🔥 Acil' : isHigh ? '⚡ Yüksek' : isMed ? 'Normal' : 'Düşük'}
+              </Badge>
+            )
+          })()}
           {isOverdue ? (
             <Badge
               variant="outline"
