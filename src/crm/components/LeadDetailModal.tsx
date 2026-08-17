@@ -22,7 +22,7 @@ import {
   Target,
   Download
 } from 'lucide-react';
-import { Lead, StageId } from '../types/crm';
+import { Lead, StageId, getRetargetingStatus } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 
 interface LeadDetailModalProps {
@@ -618,9 +618,24 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
           {/* Retargeting & Reminders Box */}
           <div className="bg-pink-950/20 border border-pink-500/20 p-4 rounded-xl space-y-3">
-            <div className="flex items-center gap-2 text-pink-400 font-bold text-xs">
-              <Flame className="w-4 h-4" />
-              <span>Retargeting & İleride Görüşme Planı</span>
+            <div className="flex items-center justify-between gap-2 text-pink-400 font-bold text-xs flex-wrap">
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4" />
+                <span>Retargeting & İleride Görüşme Planı</span>
+              </div>
+              {(() => {
+                const rt = getRetargetingStatus({ retargetingDate, retargetingNote });
+                if (!rt) return null;
+                return (
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
+                    rt.type === 'TODAY' ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse' :
+                    rt.type === 'OVERDUE' ? 'bg-rose-500 text-white border-rose-400' :
+                    'bg-pink-500/20 text-pink-200 border-pink-500/40'
+                  }`}>
+                    {rt.label}
+                  </span>
+                );
+              })()}
             </div>
 
             <form onSubmit={handleSaveRetargeting} className="space-y-3 text-xs">

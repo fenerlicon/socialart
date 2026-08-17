@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Lead, StageId, PipelineType } from '../types/crm';
+import { Lead, StageId, PipelineType, getRetargetingStatus } from '../types/crm';
 import { STAGES } from '../mock/initialData';
-import { Zap, Globe, MessageSquare, Phone, ChevronRight, ArrowUpDown, Filter, Layers, DollarSign, Star, Target } from 'lucide-react';
+import { Zap, Globe, MessageSquare, Phone, ChevronRight, ArrowUpDown, Filter, Layers, DollarSign, Star, Target, Flame } from 'lucide-react';
 
 interface ListViewProps {
   leads: Lead[];
@@ -184,9 +184,24 @@ export const ListView: React.FC<ListViewProps> = ({
                     <h3 className="font-extrabold text-xs text-white truncate leading-tight">
                       {lead.title}
                     </h3>
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${stageObj?.badgeBg || 'bg-slate-800 text-slate-300'}`}>
-                      {stageObj?.label || lead.stage}
-                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {(() => {
+                        const rt = getRetargetingStatus(lead);
+                        if (!rt) return null;
+                        return (
+                          <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-md border ${
+                            rt.type === 'TODAY' ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse' :
+                            rt.type === 'OVERDUE' ? 'bg-rose-500 text-white border-rose-400' :
+                            'bg-pink-500/20 text-pink-300 border-pink-500/30'
+                          }`}>
+                            {rt.type === 'TODAY' ? '🔥 Bugün' : rt.type === 'OVERDUE' ? '⚠️ Gecikti' : '📅 Retargeting'}
+                          </span>
+                        );
+                      })()}
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${stageObj?.badgeBg || 'bg-slate-800 text-slate-300'}`}>
+                        {stageObj?.label || lead.stage}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Subtitle Row: Contact / Category & Budget */}
@@ -339,17 +354,33 @@ export const ListView: React.FC<ListViewProps> = ({
                         )}
                       </td>
 
-                      {/* Stage Select */}
+                      {/* Stage Select & Retargeting Status */}
                       <td className="py-4 px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <select
-                          value={lead.stage}
-                          onChange={(e) => onStageChange(lead.id, e.target.value as StageId)}
-                          className={`border text-xs rounded-lg px-2.5 py-1 font-semibold cursor-pointer focus:outline-none bg-slate-950 ${stageObj?.badgeBg || 'bg-slate-800 text-slate-300 border-slate-700'}`}
-                        >
-                          {STAGES.map(s => (
-                            <option key={s.id} value={s.id}>{s.label}</option>
-                          ))}
-                        </select>
+                        <div className="space-y-1">
+                          <select
+                            value={lead.stage}
+                            onChange={(e) => onStageChange(lead.id, e.target.value as StageId)}
+                            className={`border text-xs rounded-lg px-2.5 py-1 font-semibold cursor-pointer focus:outline-none bg-slate-950 block ${stageObj?.badgeBg || 'bg-slate-800 text-slate-300 border-slate-700'}`}
+                          >
+                            {STAGES.map(s => (
+                              <option key={s.id} value={s.id}>{s.label}</option>
+                            ))}
+                          </select>
+                          {(() => {
+                            const rt = getRetargetingStatus(lead);
+                            if (!rt) return null;
+                            return (
+                              <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${
+                                rt.type === 'TODAY' ? 'bg-amber-500 text-slate-950 border-amber-400 font-black animate-pulse' :
+                                rt.type === 'OVERDUE' ? 'bg-rose-500/25 text-rose-200 border-rose-500/50 font-black' :
+                                'bg-pink-500/15 text-pink-300 border-pink-500/30'
+                              }`} title={rt.note || rt.label}>
+                                <Flame className="w-3 h-3 shrink-0" />
+                                <span className="truncate max-w-[140px]">{rt.label}</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </td>
 
                       {/* Son Not Cell */}

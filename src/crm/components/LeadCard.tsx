@@ -15,7 +15,7 @@ import {
   Star,
   Target
 } from 'lucide-react';
-import { Lead, StageId } from '../types/crm';
+import { Lead, StageId, getRetargetingStatus } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 
 interface LeadCardProps {
@@ -34,6 +34,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   onToggleQualified
 }) => {
   const isProduction = lead.pipeline === 'PRODUCTION';
+  const retargetingStatus = getRetargetingStatus(lead);
 
   // Calculate formatted budget
   const getBudgetDisplay = () => {
@@ -126,7 +127,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   };
 
   const daysInactive = getDaysInactive();
-  const isInactiveAlert = daysInactive >= 3 && lead.stage !== 'WON' && lead.stage !== 'LOST';
+  const isInactiveAlert = daysInactive >= 3 && lead.stage !== 'WON' && lead.stage !== 'LOST' && !retargetingStatus;
 
   const getLatestNoteDisplay = () => {
     if (lead.notes && lead.notes.length > 0) {
@@ -151,12 +152,41 @@ export const LeadCard: React.FC<LeadCardProps> = ({
     <div 
       onClick={() => onSelect(lead)}
       className={`group relative bg-slate-900/90 hover:bg-slate-800/90 border rounded-2xl p-3.5 sm:p-4 transition-all duration-200 shadow-md hover:shadow-xl cursor-pointer flex flex-col justify-between ${
-        lead.isQualified
+        retargetingStatus?.type === 'TODAY'
+          ? 'border-amber-500/90 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/50 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-amber-950/30'
+          : retargetingStatus?.type === 'OVERDUE'
+          ? 'border-rose-500/80 shadow-md shadow-rose-500/15 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-rose-950/30'
+          : lead.isQualified
           ? 'border-amber-500/50 shadow-amber-500/10 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-amber-950/20'
           : isInactiveAlert ? 'border-amber-500/50 shadow-amber-500/5' : 'border-slate-800/90 hover:border-slate-700'
       }`}
     >
-      {/* Inactivity Warning Banner on Top */}
+      {/* Retargeting Today / Overdue Alert Banner on Top */}
+      {retargetingStatus?.type === 'TODAY' && (
+        <div className="mb-2.5 bg-gradient-to-r from-rose-600/30 via-amber-600/30 to-orange-600/30 border border-amber-500/80 rounded-xl px-3 py-1.5 text-amber-200 text-[11px] font-black flex items-center justify-between shadow-lg shadow-amber-500/20 animate-pulse">
+          <span className="flex items-center gap-1.5">
+            <Flame className="w-4 h-4 text-amber-300 fill-amber-300" />
+            <span>BUGÜN ARANACAK ({retargetingStatus.formattedDate})</span>
+          </span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/40 text-amber-100 font-black border border-amber-400/50">
+            🔔 Görüşme
+          </span>
+        </div>
+      )}
+
+      {retargetingStatus?.type === 'OVERDUE' && (
+        <div className="mb-2.5 bg-rose-500/20 border border-rose-500/60 rounded-xl px-3 py-1.5 text-rose-300 text-[11px] font-black flex items-center justify-between shadow-md shadow-rose-500/10">
+          <span className="flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-rose-400" />
+            <span>ARAMA GECİKTİ ({Math.abs(retargetingStatus.diffDays)} gün önce)</span>
+          </span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/30 text-rose-200 font-extrabold">
+            ⚠️ Acil
+          </span>
+        </div>
+      )}
+
+      {/* Inactivity Warning Banner on Top (if not retargeting) */}
       {isInactiveAlert && (
         <div className="mb-2.5 bg-gradient-to-r from-amber-500/20 to-rose-500/20 border border-amber-500/40 rounded-xl px-3 py-1 text-amber-300 text-[11px] font-bold flex items-center justify-between animate-pulse">
           <span className="flex items-center gap-1.5">
@@ -306,14 +336,38 @@ export const LeadCard: React.FC<LeadCardProps> = ({
           )}
         </div>
 
-        {/* Retargeting Note Warning if in Retargeting Stage */}
-        {lead.stage === 'RETARGETING' && (lead.retargetingNote || lead.retargetingDate) && (
-          <div className="mb-2.5 bg-pink-500/10 border border-pink-500/30 rounded-xl p-2 text-pink-300 text-[11px] flex items-start gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-pink-400 shrink-0 mt-0.5" />
-            <div>
-              {lead.retargetingDate && <div className="font-bold">Hedef Tarih: {lead.retargetingDate}</div>}
-              <div className="line-clamp-2 text-pink-200/80">{lead.retargetingNote}</div>
+        {/* Retargeting Note & Plan Box (Visible on ANY lead with retargeting info) */}
+        {retargetingStatus && (
+          <div className={`mb-2.5 rounded-xl p-2.5 text-[11px] space-y-1 border ${
+            retargetingStatus.type === 'TODAY'
+              ? 'bg-amber-950/40 border-amber-500/60 text-amber-200 shadow-md shadow-amber-500/10'
+              : retargetingStatus.type === 'OVERDUE'
+              ? 'bg-rose-950/40 border-rose-500/50 text-rose-200 shadow-md shadow-rose-500/10'
+              : retargetingStatus.type === 'TOMORROW'
+              ? 'bg-purple-950/30 border-purple-500/40 text-purple-200'
+              : 'bg-pink-500/10 border-pink-500/30 text-pink-300'
+          }`}>
+            <div className="flex items-center justify-between font-extrabold">
+              <span className="flex items-center gap-1.5">
+                <Flame className={`w-3.5 h-3.5 ${
+                  retargetingStatus.type === 'TODAY' ? 'text-amber-400 fill-amber-400' :
+                  retargetingStatus.type === 'OVERDUE' ? 'text-rose-400' : 'text-pink-400'
+                }`} />
+                <span>Retargeting Planı</span>
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                retargetingStatus.type === 'TODAY' ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50' :
+                retargetingStatus.type === 'OVERDUE' ? 'bg-rose-500/30 text-rose-200 border border-rose-400/50' :
+                'bg-slate-900 text-slate-300'
+              }`}>
+                {retargetingStatus.label}
+              </span>
             </div>
+            {lead.retargetingNote && (
+              <p className="text-[11px] text-slate-300 font-medium pl-5 line-clamp-2 italic">
+                &ldquo;{lead.retargetingNote}&rdquo;
+              </p>
+            )}
           </div>
         )}
 

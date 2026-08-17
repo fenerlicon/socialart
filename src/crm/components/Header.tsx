@@ -46,6 +46,8 @@ interface HeaderProps {
     retargetingCount: number;
     newCount: number;
     inactiveCount?: number;
+    todayRetargetingCount?: number;
+    overdueRetargetingCount?: number;
   };
 }
 
@@ -260,6 +262,49 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="font-extrabold text-blue-400">{stats.newCount}</span>
             </div>
             
+            {/* Today Retargeting Call Radar Button */}
+            {(stats.todayRetargetingCount || 0) > 0 && (
+              <>
+                <div className="h-3 w-px bg-slate-800/80" />
+                <button
+                  onClick={() => onSourceFilterChange(selectedSourceFilter === 'RETARGETING_TODAY' ? 'ALL' : 'RETARGETING_TODAY')}
+                  className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg transition-all cursor-pointer font-black ${
+                    selectedSourceFilter === 'RETARGETING_TODAY'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 border border-amber-400 shadow-md shadow-amber-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/50 hover:bg-amber-500/30 animate-pulse'
+                  }`}
+                  title="Bugün Aranması Gereken Müşterileri Listele"
+                >
+                  <Flame className="w-3.5 h-3.5 fill-current" />
+                  <span>Bugün Aranacak:</span>
+                  <span className="px-1.5 rounded text-[10px] bg-slate-950 text-amber-300 font-extrabold border border-amber-500/40">
+                    {stats.todayRetargetingCount}
+                  </span>
+                </button>
+              </>
+            )}
+
+            {/* Overdue Retargeting Alert Button */}
+            {(stats.overdueRetargetingCount || 0) > 0 && (
+              <>
+                <div className="h-3 w-px bg-slate-800/80" />
+                <button
+                  onClick={() => onSourceFilterChange(selectedSourceFilter === 'RETARGETING_OVERDUE' ? 'ALL' : 'RETARGETING_OVERDUE')}
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer font-black ${
+                    selectedSourceFilter === 'RETARGETING_OVERDUE'
+                      ? 'bg-rose-500 text-white border border-rose-400 shadow-md shadow-rose-500/30'
+                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                  }`}
+                  title="Araması Geciken Retargeting Leadlerini Listele"
+                >
+                  <span>⚠️ Geciken:</span>
+                  <span className="px-1.5 rounded text-[10px] bg-slate-950 text-rose-300 font-extrabold border border-rose-500/40">
+                    {stats.overdueRetargetingCount}
+                  </span>
+                </button>
+              </>
+            )}
+
             <div className="h-3 w-px bg-slate-800/80" />
             
             <button
@@ -410,6 +455,9 @@ export const Header: React.FC<HeaderProps> = ({
                 className="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer font-medium"
               >
                 <option value="ALL">Tüm Kaynaklar</option>
+                <option value="RETARGETING_TODAY">🔔 Bugün Aranacaklar ({stats.todayRetargetingCount || 0})</option>
+                <option value="RETARGETING_OVERDUE">⚠️ Geciken Retargeting ({stats.overdueRetargetingCount || 0})</option>
+                <option value="RETARGETING_ALL">🔥 Tüm Retargeting ({stats.retargetingCount || 0})</option>
                 <option value="INACTIVE">⚠️ Takipsizler (3+ Gün)</option>
                 <option value="META_ADS">⚡ Meta Ads (FB/IG)</option>
                 <option value="WEBSITE">🌐 Web Formu</option>

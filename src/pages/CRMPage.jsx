@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AlertCircle, Lock, ShieldAlert, Search } from 'lucide-react';
+import { AlertCircle, Lock, ShieldAlert, Search, Flame, Bell, Calendar } from 'lucide-react';
 import { supabase, supabaseLeads } from '../lib/supabase';
 import { Header } from '../crm/components/Header';
 import { KanbanBoard } from '../crm/components/KanbanBoard';
@@ -9,6 +9,7 @@ import { LeadDetailModal } from '../crm/components/LeadDetailModal';
 import { NewLeadModal } from '../crm/components/NewLeadModal';
 import { PipelineConfirmModal } from '../crm/components/PipelineConfirmModal';
 import { STAGES, INITIAL_LEADS } from '../crm/mock/initialData';
+import { getRetargetingStatus } from '../crm/types/crm';
 
 // ----------------------------------------------------------------
 // DB → Lead type mapping
@@ -1698,7 +1699,13 @@ export default function CRMPage({ embedded = false }) {
       phoneStr.includes(queryStr);
 
     let matchesFilter = true;
-    if (selectedSourceFilter === 'INACTIVE') {
+    if (selectedSourceFilter === 'RETARGETING_TODAY') {
+      matchesFilter = getRetargetingStatus(lead)?.type === 'TODAY';
+    } else if (selectedSourceFilter === 'RETARGETING_OVERDUE') {
+      matchesFilter = getRetargetingStatus(lead)?.type === 'OVERDUE';
+    } else if (selectedSourceFilter === 'RETARGETING_ALL') {
+      matchesFilter = lead.stage === 'RETARGETING' || Boolean(lead.retargetingDate || lead.retargetingNote);
+    } else if (selectedSourceFilter === 'INACTIVE') {
       if (lead.stage === 'WON' || lead.stage === 'LOST') {
         matchesFilter = false;
       } else {
@@ -1735,12 +1742,18 @@ export default function CRMPage({ embedded = false }) {
     return diffDays >= 3;
   }).length;
 
+  const todayRetargetingCount = pipelineLeads.filter(l => getRetargetingStatus(l)?.type === 'TODAY').length;
+  const overdueRetargetingCount = pipelineLeads.filter(l => getRetargetingStatus(l)?.type === 'OVERDUE').length;
+  const allRetargetingCount = pipelineLeads.filter(l => l.stage === 'RETARGETING' || Boolean(l.retargetingDate || l.retargetingNote)).length;
+
   const stats = {
     totalLeads: pipelineLeads.length,
     totalPipelineValue,
-    retargetingCount: pipelineLeads.filter(l => l.stage === 'RETARGETING').length,
+    retargetingCount: allRetargetingCount,
     newCount: pipelineLeads.filter(l => l.stage === 'NEW').length,
-    inactiveCount
+    inactiveCount,
+    todayRetargetingCount,
+    overdueRetargetingCount
   };
   // 🔒 Security Guard: Render unauthorized screen if active employee session is missing
   if (!hasValidSession && !embedded) {
@@ -1810,6 +1823,63 @@ export default function CRMPage({ embedded = false }) {
         }}
         stats={stats}
       />
+
+      {/* 🔔 Daily Retargeting Call Radar Banner */}
+      {(todayRetargetingCount > 0 || overdueRetargetingCount > 0) && (
+        <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-rose-950/50 border-b border-amber-500/40 px-4 py-2.5 flex items-center justify-between gap-3 text-xs flex-wrap animate-fade-in">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 font-bold shrink-0 animate-pulse">
+              <Flame className="w-4 h-4 fill-amber-400 text-amber-400" />
+            </div>
+            <div>
+              <div className="font-black text-amber-200 flex items-center gap-2 flex-wrap">
+                <span className="tracking-wide">GÜNLÜK ARAMA PLANI:</span>
+                {todayRetargetingCount > 0 && (
+                  <span className="text-slate-950 bg-gradient-to-r from-amber-400 to-orange-400 px-2 py-0.5 rounded-md font-black shadow-sm">
+                    🔥 Bugün {todayRetargetingCount} potansiyel müşteri aranacak!
+                  </span>
+                )}
+                {overdueRetargetingCount > 0 && (
+                  <span className="text-rose-200 bg-rose-500/30 px-2 py-0.5 rounded-md border border-rose-500/50 font-bold">
+                    ⚠️ {overdueRetargetingCount} geciken görüşme var
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-300 hidden sm:block font-medium">
+                Retargeting planı bugün olan müşterileri arayarak satış fırsatlarını anında yakalayın.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {todayRetargetingCount > 0 && (
+              <button
+                onClick={() => setSelectedSourceFilter(selectedSourceFilter === 'RETARGETING_TODAY' ? 'ALL' : 'RETARGETING_TODAY')}
+                className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all border flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 ${
+                  selectedSourceFilter === 'RETARGETING_TODAY'
+                    ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-amber-500/30 font-black'
+                    : 'bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 border-amber-500/50'
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5" />
+                <span>{selectedSourceFilter === 'RETARGETING_TODAY' ? 'Filtreyi Kaldır' : `Bugün Aranacakları Göster (${todayRetargetingCount})`}</span>
+              </button>
+            )}
+            {overdueRetargetingCount > 0 && (
+              <button
+                onClick={() => setSelectedSourceFilter(selectedSourceFilter === 'RETARGETING_OVERDUE' ? 'ALL' : 'RETARGETING_OVERDUE')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all border flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                  selectedSourceFilter === 'RETARGETING_OVERDUE'
+                    ? 'bg-rose-500 text-white border-rose-400 font-black'
+                    : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40'
+                }`}
+              >
+                <span>Gecikenleri Göster ({overdueRetargetingCount})</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mobile Main CRM Controls Bar (< md) */}
       <div className="md:hidden p-3 bg-slate-950 border-b border-slate-800/80 space-y-3">

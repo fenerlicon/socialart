@@ -1,8 +1,8 @@
 import React from 'react';
-import { Lead, StageId, PipelineType } from '../types/crm';
+import { Lead, StageId, PipelineType, getRetargetingStatus } from '../types/crm';
 import { STAGES } from '../mock/initialData';
 import { LeadCard } from './LeadCard';
-import { Plus, TrendingUp, Layers, ChevronRight } from 'lucide-react';
+import { Plus, TrendingUp, Layers, ChevronRight, Flame, Bell, AlertTriangle } from 'lucide-react';
 
 interface KanbanBoardProps {
   leads: Lead[];
@@ -57,8 +57,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             Tüm Aşamalar ({pipelineLeads.length})
           </button>
           {STAGES.map((st) => {
-            const count = pipelineLeads.filter(l => l.stage === st.id).length;
+            const stageLeads = pipelineLeads.filter(l => l.stage === st.id);
+            const count = stageLeads.length;
             const isSelected = activeMobileStage === st.id;
+            const todayCalls = stageLeads.filter(l => getRetargetingStatus(l)?.type === 'TODAY').length;
+            const overdueCalls = stageLeads.filter(l => getRetargetingStatus(l)?.type === 'OVERDUE').length;
+
             return (
               <button
                 key={st.id}
@@ -74,6 +78,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
                   {count}
                 </span>
+                {todayCalls > 0 && (
+                  <span className="px-1 py-0.2 rounded text-[9px] font-black bg-amber-500 text-slate-950 animate-pulse">
+                    🔥{todayCalls}
+                  </span>
+                )}
+                {overdueCalls > 0 && todayCalls === 0 && (
+                  <span className="px-1 py-0.2 rounded text-[9px] font-black bg-rose-500 text-white">
+                    ⚠️{overdueCalls}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -91,20 +105,38 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
             const stageLeads = pipelineLeads.filter(l => l.stage === stage.id);
             const stageValue = getStageTotalValue(stageLeads);
+            const todayCalls = stageLeads.filter(l => getRetargetingStatus(l)?.type === 'TODAY').length;
+            const overdueCalls = stageLeads.filter(l => getRetargetingStatus(l)?.type === 'OVERDUE').length;
 
             return (
               <div
                 key={stage.id}
-                className="w-full md:w-[310px] shrink-0 flex flex-col bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 shadow-md md:min-h-[calc(100vh-210px)] md:max-h-[calc(100vh-210px)] overflow-visible md:overflow-hidden transition-all"
+                className={`w-full md:w-[310px] shrink-0 flex flex-col bg-slate-950/70 border rounded-2xl p-3 shadow-md md:min-h-[calc(100vh-210px)] md:max-h-[calc(100vh-210px)] overflow-visible md:overflow-hidden transition-all ${
+                  todayCalls > 0 
+                    ? 'border-amber-500/50 shadow-amber-500/10' 
+                    : overdueCalls > 0
+                    ? 'border-rose-500/40'
+                    : 'border-slate-800/90'
+                }`}
               >
                 {/* Column Header */}
                 <div className="pb-2.5 border-b border-slate-800/80 mb-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${stage.color}`} />
                     <h2 className="font-extrabold text-sm text-slate-200">{stage.label}</h2>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold border ${stage.badgeBg}`}>
                       {stageLeads.length}
                     </span>
+                    {todayCalls > 0 && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 border border-amber-400 shadow-md shadow-amber-500/20 animate-pulse flex items-center gap-1">
+                        <Flame className="w-3 h-3 fill-slate-950" /> {todayCalls} Bugün
+                      </span>
+                    )}
+                    {overdueCalls > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-500/25 text-rose-300 border border-rose-500/40 flex items-center gap-0.5">
+                        ⚠️ {overdueCalls} Gecikti
+                      </span>
+                    )}
                   </div>
 
                   {stage.id === 'NEW' && (
