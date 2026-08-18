@@ -141,38 +141,19 @@ function ClientPortal() {
         const brandParam = params?.get('brand') || params?.get('code');
         const tabParam = params?.get('tab');
 
-        const BRAND_MAP = {
-          miocasa: { id: 'c-miocasa', company_code: 'miocasa', client_name: 'MioCasa', defaultTab: 'overview_ads' },
-          shineco: { id: 'c-shineco', company_code: 'shineco', client_name: 'Shineco', defaultTab: 'overview_ads' },
-          mallofgurme: { id: 'c-mallofgurme', company_code: 'mallofgurme', client_name: 'Mall Of Gurme', defaultTab: 'overview_ads' },
-          gurme: { id: 'c-gurme', company_code: 'gurme', client_name: 'Gurme Bahçeşehir', defaultTab: 'overview_ads' },
-          postprodart: { id: 'c-postprodart', company_code: 'postprodart', client_name: 'Postprodart', defaultTab: 'billing_support' },
-          arayanvar: { id: 'c-arayanvar', company_code: 'arayanvar', client_name: 'Arayanvar / Aryanvar', defaultTab: 'billing_support' },
-          aryanvar: { id: 'c-aryanvar', company_code: 'aryanvar', client_name: 'Arayanvar / Aryanvar', defaultTab: 'billing_support' },
-          ogena: { id: 'c-ogena', company_code: 'ogena', client_name: 'Ogena Yapı', defaultTab: 'billing_support' },
-          vipcatring: { id: 'c-vipcatring', company_code: 'vipcatring', client_name: 'VIP Catring', defaultTab: 'billing_support' }
-        };
+        if (brandParam) {
+          setLoginData(prev => ({ ...prev, code: brandParam }));
+        }
 
         let targetAccount = null;
-
-        if (brandParam) {
-          const cleanKey = brandParam.toLowerCase().replace(/[^a-z0-9]/g, '');
-          if (BRAND_MAP[cleanKey]) {
-            targetAccount = BRAND_MAP[cleanKey];
-            localStorage.setItem('socialart_client', JSON.stringify(targetAccount));
-          }
+        const saved = localStorage.getItem('socialart_client');
+        if (saved) {
+          try {
+            targetAccount = JSON.parse(saved);
+          } catch (e) {}
         }
 
-        if (!targetAccount) {
-          const saved = localStorage.getItem('socialart_client');
-          if (saved) {
-            try {
-              targetAccount = JSON.parse(saved);
-            } catch (e) {}
-          }
-        }
-
-        if (targetAccount) {
+        if (targetAccount && targetAccount.company_code) {
           const clientName = targetAccount.client_name || targetAccount.name || targetAccount.company || targetAccount.company_code || 'Müşteri';
           const companyCode = targetAccount.company_code || targetAccount.code || clientName;
           const fullParsed = { ...targetAccount, client_name: clientName, company_code: companyCode };
@@ -241,45 +222,31 @@ function ClientPortal() {
     const inputCodeRaw = String(loginData.code || '').trim();
     const inputPassRaw = String(loginData.password || '').trim();
 
-    if (!inputCodeRaw) {
-      setLoginError('Lütfen şirket kodunuzu giriniz.');
+    if (!inputCodeRaw || !inputPassRaw) {
+      setLoginError('Lütfen şirket kodunuzu ve erişim şifrenizi giriniz.');
       return;
     }
 
-    // Active Real Client Accounts Credentials
-    const ALL_CLIENT_ACCOUNTS = [
-      { id: 'c-arayanvar', company_code: 'arayanvar', client_name: 'Arayanvar / Aryanvar', password: 'SOC-QVGR' },
-      { id: 'c-aryanvar', company_code: 'aryanvar', client_name: 'Arayanvar / Aryanvar', password: 'SOC-QVGR' },
-      { id: 'c-mallofgurme', company_code: 'mallofgurme', client_name: 'Mall Of Gurme', password: 'SOC-ZMLP' },
-      { id: 'c-miocasa', company_code: 'miocasa', client_name: 'MioCasa', password: 'SOC-94G3' },
-      { id: 'c-shineco', company_code: 'shineco', client_name: 'Shineco', password: 'SOC-XNCL' },
-      { id: 'c-gurme', company_code: 'gurme', client_name: 'Gurme Bahçeşehir', password: 'SOC-QB2L' },
-      { id: 'c-ogena', company_code: 'ogena', client_name: 'Ogena Yapı', password: 'SOC-X6QN' },
-      { id: 'c-vipcatring', company_code: 'vipcatring', client_name: 'VIP Catring', password: 'SOC-8WGK' },
-      { id: 'c-postprodart', company_code: 'postprodart', client_name: 'Postprodart', password: 'SOC-X6CL' },
-      { id: 'c-demo', company_code: 'demo', client_name: 'SocialArt VIP Demo', password: 'SOC-WKX7' }
-    ];
+    let loggedClient = null;
 
-    const slugify = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanInput = slugify(inputCodeRaw);
+    try {
+      const res = await fetch('/api/client-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: inputCodeRaw, password: inputPassRaw })
+      });
 
-    let loggedClient = ALL_CLIENT_ACCOUNTS.find(acc => {
-      const codeClean = slugify(acc.company_code);
-      const nameClean = slugify(acc.client_name);
-      return cleanInput === codeClean || cleanInput === nameClean || nameClean.includes(cleanInput);
-    });
-
-    if (!loggedClient) {
-      setLoginError('Şirket kodu bulunamadı. Lütfen size iletilen kodu kontrol ediniz.');
-      return;
-    }
-
-    if (inputPassRaw && loggedClient.password) {
-      const validPasswords = [loggedClient.password, 'admin'];
-      if (!validPasswords.includes(inputPassRaw)) {
-        setLoginError('Hatalı şifre girdiniz. Lütfen şifrenizi kontrol ediniz.');
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.customer) {
+        setLoginError(data.error || 'Girdiğiniz şirket kodu veya erişim şifresi hatalı.');
         return;
       }
+
+      loggedClient = data.customer;
+    } catch (err) {
+      console.error('Client auth error:', err);
+      setLoginError('Giriş yapılırken sunucu bağlantı hatası oluştu.');
+      return;
     }
 
     localStorage.setItem('socialart_client', JSON.stringify(loggedClient));

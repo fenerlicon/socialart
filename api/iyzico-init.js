@@ -55,6 +55,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Geçersiz fiyat tutarı.' });
     }
 
+    // Server-side authoritative pricing for standard website packages
+    const OFFICIAL_PACKAGE_PRICES = {
+      'eko': 46000.00,
+      'eko paket': 46000.00,
+      'business': 60000.00,
+      'business paket': 60000.00,
+      'booster': 146000.00,
+      'booster paket': 146000.00
+    };
+
+    const cleanPlanKey = String(planName || '').toLowerCase().trim();
+    if (!requestId && OFFICIAL_PACKAGE_PRICES[cleanPlanKey]) {
+      // Overwrite client-provided price with authoritative server price to prevent price tampering
+      numericPrice = OFFICIAL_PACKAGE_PRICES[cleanPlanKey];
+    }
+
     // Security Validation: If paying an existing invoice (requestId), verify real amount from database
     if (requestId) {
       try {

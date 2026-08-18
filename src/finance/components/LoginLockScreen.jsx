@@ -25,11 +25,11 @@ export default function LoginLockScreen({ onLoginSuccess, userPasswords = {} }) 
     setIsSubmitting(true);
 
     setTimeout(() => {
-      // 2. Fetch specific user password from props or localStorage (fallback '1234')
+      // 2. Fetch specific user password from props or localStorage
       const storedLocal = localStorage.getItem(`socialart_pass_${cleanUsername}`);
-      const validPassword = userPasswords[cleanUsername] || storedLocal || '1234';
+      const validPassword = userPasswords[cleanUsername] || storedLocal;
 
-      if (passwordInput === validPassword) {
+      if (validPassword && passwordInput === validPassword) {
         const userObj = {
           username: cleanUsername,
           displayName: cleanUsername === 'ajanscelal26' ? 'Celal Bey' : 'Ercan Bey'

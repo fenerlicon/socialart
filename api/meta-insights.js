@@ -1,25 +1,25 @@
-const MASTER_TOKEN = 'EAALZAYfbO0yQBSOOZAZCN6ZBQ9TVIrIM9ZAiG2TeQvMZAdh1zAnu4TaJMBeCD8guDqYjBtyL9nCAxhAWdsQWlOESfu9qKMkNQNizOgbmb7FWD8oUNrsOIZBIJ4IzkxSgXs4ZAn9nS9bI57RckTR3uTAzGxUdZBWJUQbZCiqVMIsKPWpxd3yDnzbkKeSMeFCnS1lsnAZAciTUMOZA82LSfQ2J9ZCuwqZBTSSJxB8aSR4JZAjj0m8ZBquxyLwb1sgRqjr5dkrX5KOdM7XVR8oda5zjGpvvGT4B3gZDZD';
+const MASTER_TOKEN = process.env.META_PAGE_ACCESS_TOKEN || process.env.META_MASTER_TOKEN || '';
 
 const BRAND_META_CONFIGS = {
   mallofgurme: {
-    accountId: 'act_1623202645011162',
-    token: MASTER_TOKEN
+    accountId: process.env.META_ACCOUNT_MALLOFGURME || 'act_1623202645011162',
+    token: process.env.META_TOKEN_MALLOFGURME || MASTER_TOKEN
   },
   gurme: {
-    accountId: 'act_289754769812729',
-    token: MASTER_TOKEN
+    accountId: process.env.META_ACCOUNT_GURME || 'act_289754769812729',
+    token: process.env.META_TOKEN_GURME || MASTER_TOKEN
   },
   shineco: {
-    accountId: 'act_1608208866017447',
-    token: MASTER_TOKEN
+    accountId: process.env.META_ACCOUNT_SHINECO || 'act_1608208866017447',
+    token: process.env.META_TOKEN_SHINECO || MASTER_TOKEN
   },
   miocasa: {
-    accountId: 'act_521331138335695',
-    token: MASTER_TOKEN
+    accountId: process.env.META_ACCOUNT_MIOCASA || 'act_521331138335695',
+    token: process.env.META_TOKEN_MIOCASA || MASTER_TOKEN
   },
   postprodart: {
-    accountId: 'act_1341032947601781',
-    token: MASTER_TOKEN
+    accountId: process.env.META_ACCOUNT_POSTPRODART || 'act_1341032947601781',
+    token: process.env.META_TOKEN_POSTPRODART || MASTER_TOKEN
   }
 };
 
@@ -55,8 +55,12 @@ export default async function handler(req, res) {
   // Check if this brand has a registered Meta Ad Account
   const brandMeta = BRAND_META_CONFIGS[companyCode];
   
-  const token = brandMeta?.token || process.env.META_PAGE_ACCESS_TOKEN || 'EAALZAYfbO0yQBSK0m1WCQm2lnkvCjwmYKnv6Cvjz0ipxlud6iuWHAhe8A2rkyaLXrZCRNNjiW5YVhUp0vMypZCmEifZCqckEv0YnYlJMZB7QvVw82WIjNugn6ygwpYq08LzlR5CzegmUVi62u6SiqxhuJyPr2YhUGwYD07D5EXlVTgXEHvcBmuOvAXC9gegZDZD';
+  const token = brandMeta?.token || MASTER_TOKEN;
   const accountId = brandMeta?.accountId || process.env.META_AD_ACCOUNT_ID || 'act_1623202645011162';
+
+  if (!token) {
+    return res.status(503).json({ success: false, error: 'META_SERVICE_UNCONFIGURED' });
+  }
 
   const cacheKey = `${companyCode}_${accountId}_${datePreset}`;
   const now = Date.now();

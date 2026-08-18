@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
 
     const LEADS_SUPABASE_URL = process.env.LEADS_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
-    const LEADS_SUPABASE_KEY = process.env.LEADS_SUPABASE_SERVICE_KEY || process.env.LEADS_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
+    const LEADS_SUPABASE_KEY = process.env.LEADS_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.LEADS_SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY || PRIMARY_SUPABASE_KEY;
 
     if (isCustomInvoice) {
       // 1. EXISTING CLIENT INVOICE: Update payment status & notify agency team (DO NOT add as a new CRM lead)

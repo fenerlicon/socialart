@@ -18,9 +18,9 @@ export default async function handler(req, res) {
       const body = req.body;
       console.log('FB_LEAD_DATA_RECEIVED:', JSON.stringify(body));
 
-      const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.DT3n6RNiwA_Tr_xt9iHRqWpDH718lFamct9tAXG8E2w';
-      const metaAccessToken = process.env.META_PAGE_ACCESS_TOKEN || 'EAALZAYfbO0yQBSIuujz8eZC4rOCFWpX20ZAkrV3HobY86LZCZAb9cPqw7EiPdaGTsVZA0bFxheXlPyL2tSbj2EgKmvG7JF4ZAAxx6UuLHZAvMGaX4VzxPZCCYADD5JjqZBp1yZCSp5UBSx9ed8UoPeflxHi2xUkQtXmKyX1m0ZAIilc8k19VdLaFTMLa07T5meU4egZDZD';
+      const supabaseUrl = process.env.LEADS_SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://piffaggeshfrubyjkhej.supabase.co';
+      const supabaseKey = process.env.LEADS_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
+      const metaAccessToken = process.env.META_PAGE_ACCESS_TOKEN || '';
 
       const entry = body.entry?.[0];
       const change = entry?.changes?.[0];
