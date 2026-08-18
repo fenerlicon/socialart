@@ -7,6 +7,60 @@ const tempSessions = new Map();
 const MAX_ATTEMPTS = 4;
 const LOCKOUT_MS = 30 * 60 * 1000; // 30 Minutes
 
+// Google Authenticator Master Secret Key (Base32)
+const SENTINEL_TOTP_SECRET = process.env.SENTINEL_TOTP_SECRET || 'HXDMVJECJJWSRZ3U';
+
+// RFC 6238 Standard Base32 Decoder
+function base32tohex(base32) {
+  const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  let hex = '';
+  for (let i = 0; i < base32.length; i++) {
+    const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, '0');
+  }
+  for (let i = 0; i + 4 <= bits.length; i += 4) {
+    const chunk = bits.substr(i, 4);
+    hex += parseInt(chunk, 2).toString(16);
+  }
+  return hex;
+}
+
+// RFC 6238 Standard TOTP 6-Digit Generator
+function getTOTP(secretBase32, offsetWindows = 0) {
+  const epoch = Math.floor(Date.now() / 1000.0);
+  const time = Math.floor(epoch / 30) + offsetWindows;
+  const timeHex = time.toString(16).padStart(16, '0');
+  const timeBuffer = Buffer.from(timeHex, 'hex');
+  const secretHex = base32tohex(secretBase32);
+  const secretBuffer = Buffer.from(secretHex, 'hex');
+
+  const hmac = crypto.createHmac('sha1', secretBuffer);
+  hmac.update(timeBuffer);
+  const hmacResult = hmac.digest();
+
+  const offset = hmacResult[hmacResult.length - 1] & 0xf;
+  const code =
+    ((hmacResult[offset] & 0x7f) << 24) |
+    ((hmacResult[offset + 1] & 0xff) << 16) |
+    ((hmacResult[offset + 2] & 0xff) << 8) |
+    (hmacResult[offset + 3] & 0xff);
+
+  return (code % 1000000).toString().padStart(6, '0');
+}
+
+// Check +/- 1 window (tolerance for 30s drift)
+function verifyTOTP(token, secretBase32) {
+  const cleanToken = String(token || '').trim();
+  for (let i = -1; i <= 1; i++) {
+    if (getTOTP(secretBase32, i) === cleanToken) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
@@ -70,7 +124,6 @@ export default async function handler(req, res) {
     if (!sessionToken || typeof sessionToken !== 'string') {
       return res.status(401).json({ valid: false });
     }
-    // Token structure validation
     const isValidToken = sessionToken.startsWith('sec_tok_') && sessionToken.length > 30;
     return res.status(200).json({ valid: isValidToken });
   }
@@ -84,7 +137,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Kullanıcı adı ve şifre zorunludur.' });
     }
 
-    // Authoritative Server-Side User & Passwords Whitelist
     const validUsers = {
       'celal': process.env.SENTINEL_PASS_CELAL || 'Socialart2026!',
       'ercan': process.env.SENTINEL_PASS_ERCAN || 'Ajans2026@',
@@ -108,7 +160,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Pass 1 Passed: Generate temporary 2FA Ticket (valid for 3 minutes)
+    // Step 1 Success -> Issue temporary 2FA Ticket
     const ticket = 'ticket_' + crypto.randomBytes(16).toString('hex');
     tempSessions.set(ticket, {
       username: cleanUser,
@@ -116,15 +168,19 @@ export default async function handler(req, res) {
       expiresAt: Date.now() + 3 * 60 * 1000
     });
 
+    const qrOtpAuth = `otpauth://totp/SocialArt%20Sentinel:${cleanUser}?secret=${SENTINEL_TOTP_SECRET}&issuer=SocialArt%20Ajans`;
+
     return res.status(200).json({
       success: true,
       require2FA: true,
       tempTicket: ticket,
-      message: '1. Aşama doğrulandı. Lütfen 6 haneli 2FA güvenlik kodunuzu giriniz.'
+      totpSecret: SENTINEL_TOTP_SECRET,
+      otpAuthUri: qrOtpAuth,
+      message: '1. Aşama doğrulandı. Lütfen Google Authenticator uygulamanızdaki 6 haneli canlı kodu giriniz.'
     });
   }
 
-  // ACTION 3: Step 2 - Verify 2FA / OTP Code
+  // ACTION 3: Step 2 - Verify Live Rotating Google Authenticator (TOTP)
   if (action === 'verify-2fa') {
     if (!tempTicket || !otpCode) {
       return res.status(400).json({ error: '2FA bileti ve güvenlik kodu zorunludur.' });
@@ -138,11 +194,12 @@ export default async function handler(req, res) {
 
     const cleanOtp = String(otpCode || '').trim();
 
-    // Master 2FA Code or Server Time-based Rolling Code
-    const MASTER_2FA_CODE = process.env.SENTINEL_MASTER_2FA || '749206';
-    const EMERGENCY_BACKUP_2FA = '882619';
+    // Verify 30-Second Rotating TOTP Code
+    const isTotpValid = verifyTOTP(cleanOtp, SENTINEL_TOTP_SECRET);
+    // Emergency Backup Code (Master Override in case phone is lost)
+    const isEmergencyValid = cleanOtp === '882619';
 
-    if (cleanOtp !== MASTER_2FA_CODE && cleanOtp !== EMERGENCY_BACKUP_2FA) {
+    if (!isTotpValid && !isEmergencyValid) {
       const failInfo = recordFailedAttempt(clientIp);
       if (failInfo.isLocked) {
         tempSessions.delete(tempTicket);
@@ -152,12 +209,12 @@ export default async function handler(req, res) {
         });
       }
       return res.status(401).json({
-        error: `❌ 6 Haneli 2FA Güvenlik Kodu Hatalı! Kalan Hak: ${failInfo.remaining}`,
+        error: `❌ Google Authenticator Kodu Hatalı veya Süresi Doldu! Kalan Hak: ${failInfo.remaining}`,
         remainingAttempts: failInfo.remaining
       });
     }
 
-    // 2FA Verified Successfully!
+    // 2FA TOTP Verified Successfully!
     tempSessions.delete(tempTicket);
     resetAttempts(clientIp);
 

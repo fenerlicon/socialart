@@ -20,7 +20,10 @@ import {
   Smartphone,
   KeyRound,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  QrCode,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Sentinel } from '../lib/sentinel';
 
@@ -33,6 +36,9 @@ export default function SecurityControlCenter() {
   const [authUsernameInput, setAuthUsernameInput] = useState('');
   const [authOtpInput, setAuthOtpInput] = useState('');
   const [tempTicket, setTempTicket] = useState('');
+  const [totpSecret, setTotpSecret] = useState('HXDMVJECJJWSRZ3U');
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,6 +122,7 @@ export default function SecurityControlCenter() {
 
       if (data.require2FA) {
         setTempTicket(data.tempTicket);
+        if (data.totpSecret) setTotpSecret(data.totpSecret);
         setAuthStep(2);
         setAuthError('');
       }
@@ -126,7 +133,7 @@ export default function SecurityControlCenter() {
     }
   };
 
-  // STEP 2: Verify 6-Digit 2FA Code with Backend
+  // STEP 2: Verify 6-Digit Live TOTP Code with Backend
   const handleStep2Verify2FA = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -152,7 +159,7 @@ export default function SecurityControlCenter() {
           severity: 'CRITICAL',
           score: 90,
           source: `Gate 2FA (${authUsernameInput})`,
-          description: 'Hatalı 2FA güvenlik kodu denemesi yapıldı.',
+          description: 'Hatalı Google Authenticator 2FA güvenlik kodu denemesi yapıldı.',
           action: 'Erişim Engellendi'
         });
         loadData();
@@ -168,7 +175,7 @@ export default function SecurityControlCenter() {
           severity: 'LOW',
           score: 0,
           source: `Sentinel Gate (${authUsernameInput})`,
-          description: `${authUsernameInput.toUpperCase()} kullanıcısı 2FA doğrulaması ile tam yetkili giriş yaptı.`,
+          description: `${authUsernameInput.toUpperCase()} kullanıcısı canlı Google Authenticator doğrulaması ile tam yetkili giriş yaptı.`,
           action: 'Komuta Odası Açıldı'
         });
         loadData();
@@ -178,6 +185,12 @@ export default function SecurityControlCenter() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopySecret = () => {
+    navigator.clipboard.writeText(totpSecret);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2000);
   };
 
   const handleGateLogout = () => {
@@ -242,7 +255,7 @@ export default function SecurityControlCenter() {
     }
   };
 
-  // 🔒 IF NOT AUTHENTICATED: RENDER 2-STEP MILITARY SENTINEL ACCESS GATE
+  // 🔒 IF NOT AUTHENTICATED: RENDER 2-STEP GOOGLE AUTHENTICATOR GATE
   if (!isAuthenticated) {
     return (
       <div style={{
@@ -297,7 +310,7 @@ export default function SecurityControlCenter() {
               SENTINEL <span style={{ color: '#ef4444' }}>/KONTROL</span>
             </h2>
             <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>
-              {authStep === 1 ? '1. Aşama: Yönetici Kimlik Doğrulaması' : '2. Aşama: 2FA İki Aşamalı Güvenlik Kodu'}
+              {authStep === 1 ? '1. Aşama: Yönetici Kimlik Doğrulaması' : '2. Aşama: Canlı Google Authenticator (TOTP)'}
             </p>
           </div>
 
@@ -416,13 +429,34 @@ export default function SecurityControlCenter() {
             </form>
           )}
 
-          {/* STEP 2 FORM (2FA OTP) */}
+          {/* STEP 2 FORM (LIVE ROTATING 2FA OTP) */}
           {authStep === 2 && (
             <form onSubmit={handleStep2Verify2FA}>
               <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  📱 6 Haneli 2FA Güvenlik Kodu
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label style={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600 }}>
+                    📱 Google Authenticator Kodu
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowQrModal(!showQrModal)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#38bdf8',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <QrCode size={13} />
+                    <span>Kurulum / Anahtar</span>
+                  </button>
+                </div>
+
                 <input
                   type="text"
                   required
@@ -435,7 +469,7 @@ export default function SecurityControlCenter() {
                     width: '100%',
                     padding: '0.9rem',
                     background: 'rgba(15, 23, 42, 0.6)',
-                    border: authError ? '1px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.4)',
+                    border: authError ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.4)',
                     borderRadius: '14px',
                     color: '#fff',
                     fontSize: '1.4rem',
@@ -446,10 +480,51 @@ export default function SecurityControlCenter() {
                     boxSizing: 'border-box'
                   }}
                 />
-                <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.75rem', marginTop: '6px', textAlign: 'center' }}>
-                  Yetkili yöneticinin 2FA doğrulayıcısındaki 6 haneli kodu giriniz.
+                <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.74rem', marginTop: '6px', textAlign: 'center' }}>
+                  Telefonunuzdaki her 30 saniyede bir dönen canlı 6 haneli kodu giriniz.
                 </span>
               </div>
+
+              {/* SETUP KEY HELPER ACCORDION */}
+              {showQrModal && (
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '14px',
+                  padding: '1rem',
+                  marginBottom: '1.25rem',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#38bdf8', fontSize: '0.8rem', fontWeight: 800, marginBottom: '6px' }}>
+                    Google / Microsoft Authenticator Kurulum Anahtarı:
+                  </div>
+                  <div style={{
+                    background: 'rgba(0,0,0,0.5)',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontFamily: 'monospace',
+                    color: '#facc15',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    letterSpacing: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <span>{totpSecret}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopySecret}
+                      style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                    >
+                      {copiedKey ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '6px' }}>
+                    Authenticator uygulamanızda <b>"+" &gt; "Kurulum anahtarı gir"</b> seçeneğine basıp bu kodu yapıştırın.
+                  </div>
+                </div>
+              )}
 
               {authError && (
                 <div style={{
@@ -519,7 +594,7 @@ export default function SecurityControlCenter() {
 
           <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <Shield size={14} style={{ color: '#ef4444' }} />
-            <span>3 Katmanlı Çelik Zırh (Serverless + IP Jail + 2FA)</span>
+            <span>30 Saniyelik RFC 6238 Canlı Google Authenticator TOTP</span>
           </div>
         </div>
       </div>
