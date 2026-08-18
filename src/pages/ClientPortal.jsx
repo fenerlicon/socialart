@@ -58,7 +58,11 @@ function ClientPortal() {
     try {
       const compCode = code || customer?.company_code || customer?.brand || customer?.client_name || 'mallofgurme';
       setSelectedDatePreset(preset);
-      const res = await fetch(`/api/meta-insights?company_code=${compCode}&date_preset=${preset}`);
+      const headers = {};
+      if (customer?.token) {
+        headers['Authorization'] = `Bearer ${customer.token}`;
+      }
+      const res = await fetch(`/api/meta-insights?company_code=${compCode}&date_preset=${preset}`, { headers });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {

@@ -111,10 +111,7 @@ export default async function handler(req, res) {
     req.headers['x-api-key'] ||
     req.headers['api-key'] ||
     req.headers['apikey'] ||
-    bearerToken ||
-    req.query.api_key ||
-    req.query.apiKey ||
-    (req.body && (req.body.api_key || req.body.apiKey));
+    bearerToken;
 
   const expectedKey = process.env.GPT_API_KEY;
 

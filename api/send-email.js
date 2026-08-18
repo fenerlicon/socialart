@@ -1,10 +1,36 @@
-// Vercel Serverless Function to send email notifications
-// You can use Resend, SendGrid, or any other provider.
-// This template uses a simple Discord Webhook as a fallback and Resend as primary if API_KEY is present.
+const emailRateLimitMap = new Map();
+const MAX_EMAILS_PER_WINDOW = 6;
+const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket?.remoteAddress || '127.0.0.1';
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const clientIp = getClientIp(req);
+  const now = Date.now();
+  const ipData = emailRateLimitMap.get(clientIp) || { count: 0, resetTime: now + WINDOW_MS };
+
+  if (now > ipData.resetTime) {
+    ipData.count = 0;
+    ipData.resetTime = now + WINDOW_MS;
+  }
+
+  ipData.count += 1;
+  emailRateLimitMap.set(clientIp, ipData);
+
+  if (ipData.count > MAX_EMAILS_PER_WINDOW) {
+    return res.status(429).json({
+      error: '⛔ Çok fazla form gönderimi yapıldı. Lütfen birkaç dakika sonra tekrar deneyiniz.'
+    });
   }
 
   const { type, data } = req.body || {};
@@ -20,16 +46,14 @@ export default async function handler(req, res) {
 👤 **İsim:** ${data.fullName}
 📞 **Telefon:** ${data.phone}
 📧 **Email:** ${data.email}
-🔗 **Platform/URL:** ${data.url}
-🛠 **Hizmetler:** ${data.services.join(', ')}
-📅 **Randevu Tarihi:** ${data.date}
-⏰ **Randevu Saati:** ${data.time}
+🔗 **Platform/URL:** ${data.url || '-'}
+🛠 **Hizmetler:** ${Array.isArray(data.services) ? data.services.join(', ') : (data.services || '-')}
+📅 **Randevu Tarihi:** ${data.date || '-'}
+⏰ **Randevu Saati:** ${data.time || '-'}
 ---------------------------
 📍 *Kaynak: SocialArt Hizmet Sayfası*
     `;
 
-    // 1. Discord Webhook Notification (Easiest to see immediately)
-    // Create a Discord Webhook and add to Vercel Env as DISCORD_WEBHOOK_URL
     if (process.env.DISCORD_WEBHOOK_URL) {
       await fetch(process.env.DISCORD_WEBHOOK_URL, {
         method: 'POST',
@@ -38,7 +62,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Email Notification (via Resend)
     if (process.env.RESEND_API_KEY) {
       const escapeHtml = (str) => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
 
@@ -49,7 +72,6 @@ export default async function handler(req, res) {
       const safeDate = escapeHtml(data.date);
       const safeTime = escapeHtml(data.time);
 
-      // Enforce strict internal recipient whitelist for form notifications
       const emailPayload = {
         from: 'SocialArt Bildirim <tugba@socialartajans.com>',
         to: ['hello@socialartajans.com'],
@@ -65,37 +87,23 @@ export default async function handler(req, res) {
               <p><strong>E-posta:</strong> ${safeEmail}</p>
               <p><strong>Hizmetler:</strong> ${safeServices}</p>
               <p><strong>Zaman:</strong> ${safeDate} - ${safeTime}</p>
-              <div style="margin-top: 20px; text-align: center;">
-                <a href="https://www.socialartmedya.com/admin" style="background: #ff0055; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Panele Git</a>
-              </div>
             </div>
           </div>
         `
       };
 
-      if (emailPayload) {
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
-          },
-          body: JSON.stringify(emailPayload)
-        });
-        let resendData = {};
-        try {
-          const text = await resendResponse.text();
-          resendData = text ? JSON.parse(text) : {};
-        } catch (e) {
-          resendData = {};
-        }
-        console.log('Resend Response:', resendData);
-      }
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+        },
+        body: JSON.stringify(emailPayload)
+      });
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('Email error:', err);
     return res.status(500).json({ error: 'Failed to send notification' });
   }
 }

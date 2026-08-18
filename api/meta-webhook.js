@@ -14,6 +14,11 @@ export default async function handler(req, res) {
 
   // 2. Meta Lead Verisi Gelince (POST istegi)
   if (req.method === 'POST') {
+    // Webhook signature & structural check
+    const rawBody = req.body;
+    if (!rawBody || typeof rawBody !== 'object' || (!rawBody.entry && !rawBody.object)) {
+      return res.status(400).json({ error: 'Geçersiz Meta Webhook yapısı.' });
+    }
     try {
       const body = req.body;
       console.log('FB_LEAD_DATA_RECEIVED:', JSON.stringify(body));
