@@ -228,14 +228,30 @@ export function CustomTaskModal({
     updateTask(taskIndex, { links: task.links.filter(l => l.id !== linkId) })
   }
 
-  // File Attachments Management with 5MB validation
+  // File Attachments Management with 5MB validation and extension whitelist
+  const ALLOWED_TASK_FILE_EXTS = [
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv',
+    'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'heic',
+    'mp4', 'mov', 'avi', 'mkv', 'mp3', 'wav',
+    'zip', 'rar', '7z', 'psd', 'ai', 'prproj', 'aep'
+  ]
+  const DANGEROUS_EXTS = ['exe', 'bat', 'cmd', 'sh', 'vbs', 'js', 'mjs', 'html', 'htm', 'php', 'phtml', 'jar', 'apk']
+
   const handleFileUpload = (taskIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
     let rejectedCount = 0
+    let invalidExtCount = 0
 
     Array.from(files).forEach((file) => {
+      const ext = (file.name.split('.').pop() || '').toLowerCase()
+
+      if (DANGEROUS_EXTS.includes(ext) || !ALLOWED_TASK_FILE_EXTS.includes(ext)) {
+        invalidExtCount++
+        return
+      }
+
       if (file.size > MAX_FILE_SIZE_BYTES) {
         rejectedCount++
         return
@@ -256,9 +272,13 @@ export function CustomTaskModal({
       reader.readAsDataURL(file)
     })
 
-    if (rejectedCount > 0) {
-      toast.error('Bazı dosyalar eklenemedi!', {
-        description: rejectedCount + ' dosya 5MB sınırını aştığı için yüklenemedi. Maksimum dosya boyutu 5MB olmalıdır.'
+    if (invalidExtCount > 0) {
+      toast.error('Güvenlik Uyarısı', {
+        description: `${invalidExtCount} dosya geçersiz veya riskli dosya formatı nedeniyle engellendi.`
+      })
+    } else if (rejectedCount > 0) {
+      toast.error('Dosya Boyut Sınırı', {
+        description: `${rejectedCount} dosya 5MB sınırını aştığı için yüklenemedi.`
       })
     } else {
       toast.success('Dosyalar başarıyla eklendi.')

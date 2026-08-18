@@ -40,53 +40,38 @@ export default async function handler(req, res) {
 
     // 2. Email Notification (via Resend)
     if (process.env.RESEND_API_KEY) {
-      let emailPayload;
+      const escapeHtml = (str) => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
 
-      if (type === 'appointment') {
-        // Transactional Appointment Email
-        emailPayload = {
-          from: 'SocialArt Bildirim <tugba@socialartajans.com>',
-          to: ['hello@socialartajans.com'],
-          subject: `🔥 Yeni Randevu: ${data.fullName}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
-              <div style="background: #8a2be2; padding: 30px; text-align: center;">
-                <h1 style="color: #fff; margin: 0; font-size: 24px;">Yeni Lead Yakalandı!</h1>
-              </div>
-              <div style="padding: 30px; background: #fff;">
-                <p><strong>İsim:</strong> ${data.fullName}</p>
-                <p><strong>Telefon:</strong> ${data.phone}</p>
-                <p><strong>Hizmetler:</strong> ${data.services.join(', ')}</p>
-                <p><strong>Zaman:</strong> ${data.date} - ${data.time}</p>
-                <div style="margin-top: 20px; text-align: center;">
-                  <a href="https://www.socialartmedya.com/admin" style="background: #ff0055; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">Panele Git</a>
-                </div>
+      const safeName = escapeHtml(data.fullName);
+      const safePhone = escapeHtml(data.phone);
+      const safeEmail = escapeHtml(data.email);
+      const safeServices = Array.isArray(data.services) ? data.services.map(escapeHtml).join(', ') : escapeHtml(data.services || 'Genel');
+      const safeDate = escapeHtml(data.date);
+      const safeTime = escapeHtml(data.time);
+
+      // Enforce strict internal recipient whitelist for form notifications
+      const emailPayload = {
+        from: 'SocialArt Bildirim <tugba@socialartajans.com>',
+        to: ['hello@socialartajans.com'],
+        subject: `🔥 Yeni Randevu / Talep: ${safeName}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
+            <div style="background: #8a2be2; padding: 30px; text-align: center;">
+              <h1 style="color: #fff; margin: 0; font-size: 24px;">Yeni Lead & Randevu Talebi</h1>
+            </div>
+            <div style="padding: 30px; background: #fff;">
+              <p><strong>İsim:</strong> ${safeName}</p>
+              <p><strong>Telefon:</strong> ${safePhone}</p>
+              <p><strong>E-posta:</strong> ${safeEmail}</p>
+              <p><strong>Hizmetler:</strong> ${safeServices}</p>
+              <p><strong>Zaman:</strong> ${safeDate} - ${safeTime}</p>
+              <div style="margin-top: 20px; text-align: center;">
+                <a href="https://www.socialartmedya.com/admin" style="background: #ff0055; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Panele Git</a>
               </div>
             </div>
-          `
-        };
-      } else if (type === 'marketing') {
-        // Marketing Campaign Email
-        emailPayload = {
-          from: 'SocialArt <tugba@socialartajans.com>', // Tugba'nın maili olarak güncellendi
-          to: [data.to],
-          subject: data.subject,
-          html: `
-            <div style="font-family: sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-              <div style="background: #000; padding: 20px; text-align: center;">
-                <img src="https://www.socialartmedya.com/logo.png" alt="SocialArt" style="width: 150px;" />
-              </div>
-              <div style="padding: 40px 20px;">
-                ${data.content.replace(/\n/g, '<br />')}
-              </div>
-              <div style="background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #777;">
-                © ${new Date().getFullYear()} SocialArt Ajans. Tüm hakları saklıdır.<br />
-                Bu maili bir iş ortağımız olduğunuz için alıyorsunuz.
-              </div>
-            </div>
-          `
-        };
-      }
+          </div>
+        `
+      };
 
       if (emailPayload) {
         const resendResponse = await fetch('https://api.resend.com/emails', {

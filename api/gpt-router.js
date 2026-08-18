@@ -157,7 +157,8 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'UNKNOWN_ACTION', message: `Eylem '${action}' tanımlı değil.` });
     }
   } catch (err) {
-    return res.status(500).json({ error: 'Sunucu hatası', details: String(err) });
+    console.error('GPT Router Internal Error:', err);
+    return res.status(500).json({ error: 'Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyiniz.' });
   }
 }
 

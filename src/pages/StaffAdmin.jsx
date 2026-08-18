@@ -7,6 +7,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import CRMPage from './CRMPage';
+import { sanitizeHtml } from '../utils/sanitize';
 
 const AdminStyles = () => (
   <style>{`
@@ -2421,7 +2422,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     {person.tasks.map((task, ti) => (
                       <div key={ti} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px 16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                          <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: task.task_text }} className="task-html-content"></div>
+                          <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '600', flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(task.task_text) }} className="task-html-content"></div>
                           <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '6px', background: `${statusColor(task.status)}22`, color: statusColor(task.status), fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                             {task.status}
                           </span>
@@ -4346,7 +4347,7 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
               <label style={{ display: 'block', marginBottom: '15px', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '1px' }}>GÖREV DETAYI</label>
               <div 
                 style={{ color: '#fff', fontSize: '1.1rem', lineHeight: '1.8', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} 
-                dangerouslySetInnerHTML={{ __html: selectedTask.task_text }} 
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedTask.task_text) }} 
                 className="task-html-content"
               ></div>
             </div>

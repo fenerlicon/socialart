@@ -14,6 +14,8 @@ const AnalysisForm = ({ defaultService = "" }) => {
   const [formSuccess, setFormSuccess] = React.useState(false);
   const [formError, setFormError] = React.useState('');
   
+  const [honeypot, setHoneypot] = React.useState('');
+  
   const [formData, setFormData] = React.useState({
     fullName: '',
     phone: '',
@@ -55,6 +57,13 @@ const AnalysisForm = ({ defaultService = "" }) => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+
+    // Anti-Spam Bot Trap
+    if (honeypot) {
+      navigate('/tesekkurler');
+      return;
+    }
+
     if (!selectedDateStr || !selectedTimeStr) {
       setFormError('Lütfen bir toplantı tarihi ve saati seçiniz.');
       return;

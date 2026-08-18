@@ -17,8 +17,14 @@ export function UGCApplication() {
     about: ''
   });
 
+  const [honeypot, setHoneypot] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (honeypot) {
+      navigate('/tesekkurler');
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase
@@ -34,7 +40,8 @@ export function UGCApplication() {
         }]);
       navigate('/tesekkurler');
     } catch (err) {
-      alert('Başvuru sırasında bir hata oluştu: ' + err.message);
+      console.error("UGC Application Error:", err);
+      alert('Başvuru sırasında bir hata oluştu. Lütfen bilgilerinizi kontrol edip tekrar deneyiniz.');
     } finally {
       setLoading(false);
     }
@@ -121,12 +128,34 @@ export function JobApplication() {
     about: ''
   });
 
+  const [honeypot, setHoneypot] = useState('');
+  const ALLOWED_RESUME_EXTS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.webp', '.zip'];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Anti-Spam Bot Trap: If hidden honeypot is filled, silently discard
+    if (honeypot) {
+      navigate('/tesekkurler');
+      return;
+    }
 
     if (!formData.portfolio && !resumeFile) {
       alert('Lütfen bir Özgeçmiş / Portfolyo Linki girin veya bir Özgeçmiş Dosyası yükleyin.');
       return;
+    }
+
+    if (resumeFile) {
+      const ext = ('.' + (resumeFile.name.split('.').pop() || '')).toLowerCase();
+      if (!ALLOWED_RESUME_EXTS.includes(ext)) {
+        alert('Geçersiz dosya formatı! Sadece PDF, Word (DOC/DOCX), Resim (PNG/JPG) veya ZIP dosyaları yükleyebilirsiniz.');
+        return;
+      }
+      if (resumeFile.size > MAX_FILE_SIZE) {
+        alert('Dosya boyutu çok yüksek! Lütfen maksimum 10MB boyutunda bir dosya yükleyiniz.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -167,7 +196,8 @@ export function JobApplication() {
       if (error) throw error;
       navigate('/tesekkurler');
     } catch (err) {
-      alert('Başvuru sırasında bir hata oluştu: ' + err.message);
+      console.error("Job Application Error:", err);
+      alert('Başvuru sırasında bir hata oluştu. Lütfen bilgilerinizi kontrol edip tekrar deneyiniz.');
     } finally {
       setLoading(false);
     }
