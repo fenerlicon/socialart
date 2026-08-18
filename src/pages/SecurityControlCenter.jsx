@@ -13,6 +13,7 @@ import {
   CheckCircle2, 
   XCircle, 
   Eye, 
+  EyeOff, 
   Ban, 
   Play, 
   Search, 
@@ -24,11 +25,25 @@ import {
   Clock, 
   Filter, 
   Sparkles,
-  ArrowUpRight
+  ArrowUpRight,
+  KeyRound,
+  LogOut,
+  Shield
 } from 'lucide-react';
 import { Sentinel } from '../lib/sentinel';
 
+const SENTINEL_AUTH_KEY = 'socialart_sentinel_auth_session';
+const MAX_GATE_ATTEMPTS = 4;
+
 export default function SecurityControlCenter() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authPassInput, setAuthPassInput] = useState('');
+  const [authUsernameInput, setAuthUsernameInput] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+
   const [activeTab, setActiveTab] = useState('radar');
   const [logs, setLogs] = useState([]);
   const [quarantineList, setQuarantineList] = useState([]);
@@ -41,6 +56,15 @@ export default function SecurityControlCenter() {
   const [manualReason, setManualReason] = useState('');
 
   useEffect(() => {
+    // 1. Check existing Sentinel Gate session or Admin Portal session
+    const isSentinelAuth = sessionStorage.getItem(SENTINEL_AUTH_KEY) === 'true';
+    const isStaffAuth = localStorage.getItem('social-art-base:credentials');
+    const isFinanceAuth = sessionStorage.getItem('socialart_is_authenticated') === 'true';
+
+    if (isSentinelAuth || isStaffAuth || isFinanceAuth) {
+      setIsAuthenticated(true);
+    }
+
     loadData();
     const interval = setInterval(loadData, 5000);
     return () => clearInterval(interval);
@@ -49,6 +73,78 @@ export default function SecurityControlCenter() {
   const loadData = () => {
     setLogs(Sentinel.getLogs());
     setQuarantineList(Sentinel.getQuarantineList());
+  };
+
+  const handleGateLogin = (e) => {
+    e.preventDefault();
+    setAuthError('');
+
+    if (isLockedOut) {
+      setAuthError('⛔ Çok fazla hatalı deneme! Güvenlik nedeniyle erişim geçici olarak kilitlendi.');
+      return;
+    }
+
+    const u = authUsernameInput.trim().toLowerCase();
+    const p = authPassInput.trim();
+
+    // Authorized Sentinel Gate Credentials Check
+    const allowedUsers = ['celal', 'ercan', 'furkan', 'admin', 'sentinel'];
+    const validPasswords = ['Socialart2026!', 'Ajans2026@', 'SentinelSecure2026#'];
+
+    // Also check saved credentials in DB / local storage for admins
+    const storedPassCelal = localStorage.getItem('socialart_pass_ajanscelal26');
+    const storedPassErcan = localStorage.getItem('socialart_pass_ajansercan26');
+
+    const isUserValid = allowedUsers.includes(u);
+    const isPassValid = validPasswords.includes(p) || 
+                        (u === 'celal' && storedPassCelal && p === storedPassCelal) ||
+                        (u === 'ercan' && storedPassErcan && p === storedPassErcan);
+
+    if (isUserValid && isPassValid) {
+      sessionStorage.setItem(SENTINEL_AUTH_KEY, 'true');
+      setIsAuthenticated(true);
+      setFailedAttempts(0);
+      setAuthError('');
+      Sentinel.recordEvent({
+        type: 'ADMIN_ACCESS_GRANTED',
+        severity: 'LOW',
+        score: 0,
+        source: `Sentinel Gate (${u})`,
+        description: `${u.toUpperCase()} kullanıcısı /kontrol Komuta Merkezine başarıyla giriş yaptı.`,
+        action: 'Erişim Verildi'
+      });
+      loadData();
+    } else {
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+
+      Sentinel.recordEvent({
+        type: 'UNAUTHORIZED_GATE_ATTEMPT',
+        severity: newAttempts >= 3 ? 'CRITICAL' : 'HIGH',
+        score: 85,
+        source: `Sentinel Gate (${u || 'Bilinmeyen'})`,
+        description: `/kontrol sayfasına yetkisiz erişim denemesi tespit edildi (${newAttempts}/${MAX_GATE_ATTEMPTS}).`,
+        action: 'Erişim Reddedildi & Kaydedildi'
+      });
+      loadData();
+
+      if (newAttempts >= MAX_GATE_ATTEMPTS) {
+        setIsLockedOut(true);
+        setAuthError('🚨 4 Başarısız deneme! Kötü niyetli girişim şüphesiyle erişim kilitlendi.');
+        Sentinel.addToQuarantine('Unauthorized-Gate-Actor', 'Komuta merkezine art arda başarısız şifre denemesi', 30);
+      } else {
+        setAuthError(`❌ Hatalı kullanıcı adı veya güvenlik anahtarı! Kalan Hak: ${MAX_GATE_ATTEMPTS - newAttempts}`);
+      }
+    }
+  };
+
+  const handleGateLogout = () => {
+    sessionStorage.removeItem(SENTINEL_AUTH_KEY);
+    localStorage.removeItem('social-art-base:credentials');
+    sessionStorage.removeItem('socialart_is_authenticated');
+    setIsAuthenticated(false);
+    setAuthPassInput('');
+    setAuthUsernameInput('');
   };
 
   const handleRunAudit = async () => {
@@ -103,6 +199,187 @@ export default function SecurityControlCenter() {
     }
   };
 
+  // 🔒 IF NOT AUTHENTICATED: RENDER MILITARY-GRADE SENTINEL ACCESS GATE
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        fontFamily: "'Inter', -apple-system, sans-serif"
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '440px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          borderRadius: '24px',
+          padding: '2.5rem 2rem',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(239, 68, 68, 0.15)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Top Red Security Accent */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: 'linear-gradient(90deg, #ef4444 0%, #f97316 50%, #dc2626 100%)'
+          }} />
+
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              color: '#ef4444',
+              boxShadow: '0 8px 20px rgba(239, 68, 68, 0.2)'
+            }}>
+              <ShieldAlert size={32} />
+            </div>
+
+            <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 900, margin: '0 0 0.4rem 0', letterSpacing: '-0.5px' }}>
+              SENTINEL <span style={{ color: '#ef4444' }}>/KONTROL</span>
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>
+              En Yüksek Düzey Güvenlikli Komuta Merkezi Girişi
+            </p>
+          </div>
+
+          <form onSubmit={handleGateLogin}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                Yetkili Kimliği (Admin ID)
+              </label>
+              <input
+                type="text"
+                required
+                autoFocus
+                placeholder="Kullanıcı adınızı giriniz..."
+                value={authUsernameInput}
+                onChange={(e) => setAuthUsernameInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.85rem 1rem',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '14px',
+                  color: '#fff',
+                  fontSize: '0.92rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                Güvenlik Anahtarı (Master Key)
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  required
+                  placeholder="Güvenlik anahtarınızı giriniz..."
+                  value={authPassInput}
+                  onChange={(e) => setAuthPassInput(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 2.8rem 0.85rem 1rem',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: authError ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '14px',
+                    color: '#fff',
+                    fontSize: '0.92rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {authError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#fca5a5',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                fontSize: '0.82rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLockedOut || !authUsernameInput || !authPassInput}
+              style={{
+                width: '100%',
+                padding: '0.9rem',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                border: 'none',
+                borderRadius: '14px',
+                color: '#fff',
+                fontWeight: 800,
+                fontSize: '0.95rem',
+                cursor: (isLockedOut || !authUsernameInput || !authPassInput) ? 'not-allowed' : 'pointer',
+                opacity: (isLockedOut || !authUsernameInput || !authPassInput) ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)'
+              }}
+            >
+              <Lock size={18} />
+              <span>Komuta Merkezini Aç</span>
+            </button>
+          </form>
+
+          <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <Shield size={14} style={{ color: '#ef4444' }} />
+            <span>Yalnızca Yetkili Kurucu & Yönetici Erişimi</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 🟢 IF AUTHENTICATED: RENDER FULL COMMAND CENTER
   return (
     <div style={{
       minHeight: '100vh',
@@ -169,6 +446,7 @@ export default function SecurityControlCenter() {
             </div>
           </div>
 
+          {/* Quick Actions & Logout */}
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
               onClick={handleRunAudit}
@@ -190,6 +468,26 @@ export default function SecurityControlCenter() {
             >
               <RefreshCw size={16} style={{ animation: isAuditing ? 'spin 1s linear infinite' : 'none' }} />
               <span>{isAuditing ? 'Denetleniyor...' : 'Sistemi Şimdi Tara'}</span>
+            </button>
+
+            <button
+              onClick={handleGateLogout}
+              style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#f87171',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <LogOut size={16} />
+              <span>Kilitle</span>
             </button>
           </div>
         </div>
