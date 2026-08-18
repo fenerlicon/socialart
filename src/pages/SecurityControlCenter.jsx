@@ -4,29 +4,17 @@ import {
   ShieldAlert, 
   AlertTriangle, 
   Activity, 
-  Terminal, 
   Lock, 
   Radio, 
   RefreshCw, 
   Cpu, 
   Zap, 
   CheckCircle2, 
-  XCircle, 
   Eye, 
   EyeOff, 
   Ban, 
   Play, 
-  Search, 
-  Sliders, 
-  Globe, 
-  Database, 
-  FileCode, 
-  Server, 
   Clock, 
-  Filter, 
-  Sparkles,
-  ArrowUpRight,
-  KeyRound,
   LogOut,
   Shield
 } from 'lucide-react';
@@ -56,9 +44,8 @@ export default function SecurityControlCenter() {
   const [manualReason, setManualReason] = useState('');
 
   useEffect(() => {
-    // 1. Strict Sentinel Master Gate session check
+    // Strict Sentinel Gate session check
     const isSentinelAuth = sessionStorage.getItem(SENTINEL_AUTH_KEY) === 'true';
-
     if (isSentinelAuth) {
       setIsAuthenticated(true);
     }
@@ -85,11 +72,9 @@ export default function SecurityControlCenter() {
     const u = authUsernameInput.trim().toLowerCase();
     const p = authPassInput.trim();
 
-    // Authorized Sentinel Gate Credentials Check
     const allowedUsers = ['celal', 'ercan', 'furkan', 'admin', 'sentinel'];
     const validPasswords = ['Socialart2026!', 'Ajans2026@', 'SentinelSecure2026#'];
 
-    // Also check saved credentials in DB / local storage for admins
     const storedPassCelal = localStorage.getItem('socialart_pass_ajanscelal26');
     const storedPassErcan = localStorage.getItem('socialart_pass_ajansercan26');
 
@@ -138,8 +123,6 @@ export default function SecurityControlCenter() {
 
   const handleGateLogout = () => {
     sessionStorage.removeItem(SENTINEL_AUTH_KEY);
-    localStorage.removeItem('social-art-base:credentials');
-    sessionStorage.removeItem('socialart_is_authenticated');
     setIsAuthenticated(false);
     setAuthPassInput('');
     setAuthUsernameInput('');
@@ -197,7 +180,7 @@ export default function SecurityControlCenter() {
     }
   };
 
-  // 🔒 IF NOT AUTHENTICATED: RENDER MILITARY-GRADE SENTINEL ACCESS GATE
+  // 🔒 IF NOT AUTHENTICATED: RENDER SENTINEL ACCESS GATE
   if (!isAuthenticated) {
     return (
       <div style={{
@@ -221,7 +204,6 @@ export default function SecurityControlCenter() {
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Top Red Security Accent */}
           <div style={{
             position: 'absolute',
             top: 0,
