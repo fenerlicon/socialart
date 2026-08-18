@@ -18,7 +18,6 @@ import {
   LogOut,
   Shield,
   Smartphone,
-  KeyRound,
   ArrowRight,
   ArrowLeft,
   QrCode,
@@ -125,6 +124,7 @@ export default function SecurityControlCenter() {
         if (data.qrCodeUrl) setQrCodeUrl(data.qrCodeUrl);
         setAuthStep(2);
         setAuthError('');
+        setShowQrModal(false);
       }
     } catch (err) {
       setAuthError('Sunucu bağlantı hatası oluştu. Lütfen tekrar deneyiniz.');
@@ -133,8 +133,7 @@ export default function SecurityControlCenter() {
     }
   };
 
-  const handleStep2Verify2FA = async (e) => {
-    e.preventDefault();
+  const executeVerify2FA = async (otpToVerify) => {
     setAuthError('');
     setIsSubmitting(true);
 
@@ -145,7 +144,7 @@ export default function SecurityControlCenter() {
         body: JSON.stringify({
           action: 'verify-2fa',
           tempTicket,
-          otpCode: authOtpInput
+          otpCode: otpToVerify
         })
       });
 
@@ -183,6 +182,20 @@ export default function SecurityControlCenter() {
       setAuthError('2FA doğrulama sunucusuna ulaşılamadı.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStep2Verify2FA = (e) => {
+    e.preventDefault();
+    if (authOtpInput.length < 6) return;
+    executeVerify2FA(authOtpInput);
+  };
+
+  const handleOtpInputChange = (e) => {
+    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+    setAuthOtpInput(val);
+    if (val.length === 6 && !isSubmitting) {
+      executeVerify2FA(val);
     }
   };
 
@@ -308,7 +321,7 @@ export default function SecurityControlCenter() {
               SENTINEL <span style={{ color: '#ef4444' }}>/KONTROL</span>
             </h2>
             <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>
-              {authStep === 1 ? '1. Aşama: Yönetici Kimlik Doğrulaması' : '2. Aşama: Canlı Google Authenticator (TOTP)'}
+              {authStep === 1 ? '1. Aşama: Yönetici Kimlik Doğrulaması' : '2. Aşama: Google Authenticator Canlı Kodu'}
             </p>
           </div>
 
@@ -427,63 +440,48 @@ export default function SecurityControlCenter() {
             </form>
           )}
 
-          {/* STEP 2 FORM (LIVE ROTATING 2FA OTP) */}
+          {/* STEP 2 FORM (DIRECT 6-DIGIT TOTP CHALLENGE) */}
           {authStep === 2 && (
             <form onSubmit={handleStep2Verify2FA}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600 }}>
-                    📱 Google Authenticator Kodu
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowQrModal(!showQrModal)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#38bdf8',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <QrCode size={13} />
-                    <span>{showQrModal ? 'QR Kapat' : 'QR Kod ile Tara'}</span>
-                  </button>
-                </div>
+              <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1.25rem 0' }}>
+                  Telefonunuzdaki <b>Google Authenticator</b> uygulamasını açın ve ekrandaki <b>6 haneli canlı şifreyi</b> girin:
+                </p>
 
                 <input
                   type="text"
                   required
                   autoFocus
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={6}
-                  placeholder="• • • • • •"
+                  placeholder="000000"
                   value={authOtpInput}
-                  onChange={(e) => setAuthOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                  onChange={handleOtpInputChange}
                   style={{
                     width: '100%',
-                    padding: '0.9rem',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: authError ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.4)',
-                    borderRadius: '14px',
-                    color: '#fff',
-                    fontSize: '1.4rem',
+                    padding: '1rem',
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    border: authError ? '1px solid #ef4444' : '2px solid rgba(56, 189, 248, 0.6)',
+                    borderRadius: '16px',
+                    color: '#38bdf8',
+                    fontSize: '1.8rem',
                     fontWeight: 900,
-                    letterSpacing: '8px',
+                    letterSpacing: '10px',
                     textAlign: 'center',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    boxShadow: '0 0 25px rgba(56, 189, 248, 0.15)'
                   }}
                 />
-                <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.74rem', marginTop: '6px', textAlign: 'center' }}>
-                  Telefonunuzdaki her 30 saniyede bir dönen canlı 6 haneli kodu giriniz.
-                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '10px', color: '#10b981', fontSize: '0.76rem', fontWeight: 600 }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }} />
+                  <span>30 Saniyelik Canlı Kod Bekleniyor (6 haneyi girince otomatik açılır)</span>
+                </div>
               </div>
 
-              {/* VISUAL QR CODE & KEY ACCORDION */}
+              {/* HELPER MODAL FOR NEW DEVICES */}
               {showQrModal && (
                 <div style={{
                   background: 'rgba(15, 23, 42, 0.95)',
@@ -494,7 +492,7 @@ export default function SecurityControlCenter() {
                   textAlign: 'center'
                 }}>
                   <div style={{ color: '#38bdf8', fontSize: '0.82rem', fontWeight: 800, marginBottom: '10px' }}>
-                    📷 Telefonunuzla QR Kodu Taratın:
+                    📷 Yeni Cihaz İçin QR Kod:
                   </div>
                   
                   <div style={{
@@ -513,16 +511,13 @@ export default function SecurityControlCenter() {
                     />
                   </div>
 
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '6px' }}>
-                    Veya Manuel Kurulum Anahtarı:
-                  </div>
                   <div style={{
                     background: 'rgba(0,0,0,0.5)',
                     padding: '8px 12px',
                     borderRadius: '8px',
                     fontFamily: 'monospace',
                     color: '#facc15',
-                    fontSize: '0.95rem',
+                    fontSize: '0.9rem',
                     fontWeight: 800,
                     letterSpacing: '2px',
                     display: 'flex',
@@ -559,7 +554,7 @@ export default function SecurityControlCenter() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem' }}>
                 <button
                   type="button"
                   onClick={() => { setAuthStep(1); setAuthError(''); setAuthOtpInput(''); }}
@@ -604,12 +599,30 @@ export default function SecurityControlCenter() {
                   <span>{isSubmitting ? 'Doğrulanıyor...' : 'Komuta Merkezini Aç'}</span>
                 </button>
               </div>
+
+              {/* Discreet First-time Setup Toggle */}
+              <div style={{ textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowQrModal(!showQrModal)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: '0.74rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  {showQrModal ? 'Kurulum Kutusunu Gizle' : 'Cihaz değiştirdiniz mi veya henüz kurmadınız mı?'}
+                </button>
+              </div>
             </form>
           )}
 
           <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <Shield size={14} style={{ color: '#ef4444' }} />
-            <span>30 Saniyelik RFC 6238 Canlı Google Authenticator TOTP</span>
+            <span>RFC 6238 Canlı TOTP Şifreleme</span>
           </div>
         </div>
       </div>
@@ -687,7 +700,7 @@ export default function SecurityControlCenter() {
               onClick={handleRunAudit}
               disabled={isAuditing}
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                 color: '#fff',
                 border: 'none',
                 padding: '10px 18px',
@@ -698,7 +711,7 @@ export default function SecurityControlCenter() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 8px 16px rgba(16, 185, 129, 0.25)'
+                boxShadow: '0 8px 16px rgba(59, 130, 246, 0.25)'
               }}
             >
               <RefreshCw size={16} style={{ animation: isAuditing ? 'spin 1s linear infinite' : 'none' }} />
