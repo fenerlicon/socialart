@@ -16,21 +16,26 @@ import {
   Play, 
   Clock, 
   LogOut,
-  Shield
+  Shield,
+  Smartphone,
+  KeyRound,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { Sentinel } from '../lib/sentinel';
 
 const SENTINEL_AUTH_KEY = 'socialart_sentinel_auth_session';
-const MAX_GATE_ATTEMPTS = 4;
 
 export default function SecurityControlCenter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authStep, setAuthStep] = useState(1); // 1 = Credentials, 2 = 2FA OTP
   const [authPassInput, setAuthPassInput] = useState('');
   const [authUsernameInput, setAuthUsernameInput] = useState('');
+  const [authOtpInput, setAuthOtpInput] = useState('');
+  const [tempTicket, setTempTicket] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [activeTab, setActiveTab] = useState('radar');
   const [logs, setLogs] = useState([]);
@@ -44,10 +49,26 @@ export default function SecurityControlCenter() {
   const [manualReason, setManualReason] = useState('');
 
   useEffect(() => {
-    // Strict Sentinel Gate session check
-    const isSentinelAuth = sessionStorage.getItem(SENTINEL_AUTH_KEY) === 'true';
-    if (isSentinelAuth) {
-      setIsAuthenticated(true);
+    // Verify existing token with serverless endpoint
+    const existingToken = sessionStorage.getItem(SENTINEL_AUTH_KEY);
+    if (existingToken) {
+      fetch('/api/sentinel-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify-session', sessionToken: existingToken })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.valid) {
+          setIsAuthenticated(true);
+        } else {
+          sessionStorage.removeItem(SENTINEL_AUTH_KEY);
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        sessionStorage.removeItem(SENTINEL_AUTH_KEY);
+      });
     }
 
     loadData();
@@ -60,72 +81,113 @@ export default function SecurityControlCenter() {
     setQuarantineList(Sentinel.getQuarantineList());
   };
 
-  const handleGateLogin = (e) => {
+  // STEP 1: Submit Credentials to Backend
+  const handleStep1Login = async (e) => {
     e.preventDefault();
     setAuthError('');
+    setIsSubmitting(true);
 
-    if (isLockedOut) {
-      setAuthError('⛔ Çok fazla hatalı deneme! Güvenlik nedeniyle erişim geçici olarak kilitlendi.');
-      return;
-    }
-
-    const u = authUsernameInput.trim().toLowerCase();
-    const p = authPassInput.trim();
-
-    const allowedUsers = ['celal', 'ercan', 'furkan', 'admin', 'sentinel'];
-    const validPasswords = ['Socialart2026!', 'Ajans2026@', 'SentinelSecure2026#'];
-
-    const storedPassCelal = localStorage.getItem('socialart_pass_ajanscelal26');
-    const storedPassErcan = localStorage.getItem('socialart_pass_ajansercan26');
-
-    const isUserValid = allowedUsers.includes(u);
-    const isPassValid = validPasswords.includes(p) || 
-                        (u === 'celal' && storedPassCelal && p === storedPassCelal) ||
-                        (u === 'ercan' && storedPassErcan && p === storedPassErcan);
-
-    if (isUserValid && isPassValid) {
-      sessionStorage.setItem(SENTINEL_AUTH_KEY, 'true');
-      setIsAuthenticated(true);
-      setFailedAttempts(0);
-      setAuthError('');
-      Sentinel.recordEvent({
-        type: 'ADMIN_ACCESS_GRANTED',
-        severity: 'LOW',
-        score: 0,
-        source: `Sentinel Gate (${u})`,
-        description: `${u.toUpperCase()} kullanıcısı /kontrol Komuta Merkezine başarıyla giriş yaptı.`,
-        action: 'Erişim Verildi'
+    try {
+      const res = await fetch('/api/sentinel-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'login',
+          username: authUsernameInput,
+          password: authPassInput
+        })
       });
-      loadData();
-    } else {
-      const newAttempts = failedAttempts + 1;
-      setFailedAttempts(newAttempts);
 
-      Sentinel.recordEvent({
-        type: 'UNAUTHORIZED_GATE_ATTEMPT',
-        severity: newAttempts >= 3 ? 'CRITICAL' : 'HIGH',
-        score: 85,
-        source: `Sentinel Gate (${u || 'Bilinmeyen'})`,
-        description: `/kontrol sayfasına yetkisiz erişim denemesi tespit edildi (${newAttempts}/${MAX_GATE_ATTEMPTS}).`,
-        action: 'Erişim Reddedildi & Kaydedildi'
-      });
-      loadData();
+      const data = await res.json();
 
-      if (newAttempts >= MAX_GATE_ATTEMPTS) {
-        setIsLockedOut(true);
-        setAuthError('🚨 4 Başarısız deneme! Kötü niyetli girişim şüphesiyle erişim kilitlendi.');
-        Sentinel.addToQuarantine('Unauthorized-Gate-Actor', 'Komuta merkezine art arda başarısız şifre denemesi', 30);
-      } else {
-        setAuthError(`❌ Hatalı kullanıcı adı veya güvenlik anahtarı! Kalan Hak: ${MAX_GATE_ATTEMPTS - newAttempts}`);
+      if (!res.ok) {
+        setAuthError(data.error || 'Kimlik doğrulanamadı.');
+        Sentinel.recordEvent({
+          type: 'UNAUTHORIZED_GATE_ATTEMPT',
+          severity: 'HIGH',
+          score: 80,
+          source: `Gate (${authUsernameInput || 'Anonim'})`,
+          description: data.error || 'Geçersiz şifre veya kullanıcı adı denemesi.',
+          action: 'Sunucu Tarafından Reddedildi'
+        });
+        loadData();
+        return;
       }
+
+      if (data.require2FA) {
+        setTempTicket(data.tempTicket);
+        setAuthStep(2);
+        setAuthError('');
+      }
+    } catch (err) {
+      setAuthError('Sunucu bağlantı hatası oluştu. Lütfen tekrar deneyiniz.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // STEP 2: Verify 6-Digit 2FA Code with Backend
+  const handleStep2Verify2FA = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/sentinel-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify-2fa',
+          tempTicket,
+          otpCode: authOtpInput
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAuthError(data.error || '2FA Kodu doğrulanamadı.');
+        Sentinel.recordEvent({
+          type: 'INVALID_2FA_CODE',
+          severity: 'CRITICAL',
+          score: 90,
+          source: `Gate 2FA (${authUsernameInput})`,
+          description: 'Hatalı 2FA güvenlik kodu denemesi yapıldı.',
+          action: 'Erişim Engellendi'
+        });
+        loadData();
+        return;
+      }
+
+      if (data.success && data.sessionToken) {
+        sessionStorage.setItem(SENTINEL_AUTH_KEY, data.sessionToken);
+        setIsAuthenticated(true);
+        setAuthError('');
+        Sentinel.recordEvent({
+          type: 'ADMIN_ACCESS_GRANTED_2FA',
+          severity: 'LOW',
+          score: 0,
+          source: `Sentinel Gate (${authUsernameInput})`,
+          description: `${authUsernameInput.toUpperCase()} kullanıcısı 2FA doğrulaması ile tam yetkili giriş yaptı.`,
+          action: 'Komuta Odası Açıldı'
+        });
+        loadData();
+      }
+    } catch (err) {
+      setAuthError('2FA doğrulama sunucusuna ulaşılamadı.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleGateLogout = () => {
     sessionStorage.removeItem(SENTINEL_AUTH_KEY);
     setIsAuthenticated(false);
+    setAuthStep(1);
     setAuthPassInput('');
     setAuthUsernameInput('');
+    setAuthOtpInput('');
+    setTempTicket('');
   };
 
   const handleRunAudit = async () => {
@@ -180,7 +242,7 @@ export default function SecurityControlCenter() {
     }
   };
 
-  // 🔒 IF NOT AUTHENTICATED: RENDER SENTINEL ACCESS GATE
+  // 🔒 IF NOT AUTHENTICATED: RENDER 2-STEP MILITARY SENTINEL ACCESS GATE
   if (!isAuthenticated) {
     return (
       <div style={{
@@ -213,6 +275,7 @@ export default function SecurityControlCenter() {
             background: 'linear-gradient(90deg, #ef4444 0%, #f97316 50%, #dc2626 100%)'
           }} />
 
+          {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <div style={{
               width: '64px',
@@ -227,59 +290,36 @@ export default function SecurityControlCenter() {
               color: '#ef4444',
               boxShadow: '0 8px 20px rgba(239, 68, 68, 0.2)'
             }}>
-              <ShieldAlert size={32} />
+              {authStep === 1 ? <ShieldAlert size={32} /> : <Smartphone size={32} />}
             </div>
 
             <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 900, margin: '0 0 0.4rem 0', letterSpacing: '-0.5px' }}>
               SENTINEL <span style={{ color: '#ef4444' }}>/KONTROL</span>
             </h2>
             <p style={{ color: '#94a3b8', fontSize: '0.84rem', margin: 0 }}>
-              En Yüksek Düzey Güvenlikli Komuta Merkezi Girişi
+              {authStep === 1 ? '1. Aşama: Yönetici Kimlik Doğrulaması' : '2. Aşama: 2FA İki Aşamalı Güvenlik Kodu'}
             </p>
           </div>
 
-          <form onSubmit={handleGateLogin}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                Yetkili Kimliği (Admin ID)
-              </label>
-              <input
-                type="text"
-                required
-                autoFocus
-                placeholder="Kullanıcı adınızı giriniz..."
-                value={authUsernameInput}
-                onChange={(e) => setAuthUsernameInput(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.85rem 1rem',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '14px',
-                  color: '#fff',
-                  fontSize: '0.92rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                Güvenlik Anahtarı (Master Key)
-              </label>
-              <div style={{ position: 'relative' }}>
+          {/* STEP 1 FORM */}
+          {authStep === 1 && (
+            <form onSubmit={handleStep1Login}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  Yetkili Kimliği (Admin ID)
+                </label>
                 <input
-                  type={showPass ? 'text' : 'password'}
+                  type="text"
                   required
-                  placeholder="Güvenlik anahtarınızı giriniz..."
-                  value={authPassInput}
-                  onChange={(e) => setAuthPassInput(e.target.value)}
+                  autoFocus
+                  placeholder="Kullanıcı adınızı giriniz..."
+                  value={authUsernameInput}
+                  onChange={(e) => setAuthUsernameInput(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '0.85rem 2.8rem 0.85rem 1rem',
+                    padding: '0.85rem 1rem',
                     background: 'rgba(15, 23, 42, 0.6)',
-                    border: authError ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
                     borderRadius: '14px',
                     color: '#fff',
                     fontSize: '0.92rem',
@@ -287,72 +327,199 @@ export default function SecurityControlCenter() {
                     boxSizing: 'border-box'
                   }}
                 />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  Güvenlik Anahtarı (Master Key)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    placeholder="Güvenlik anahtarınızı giriniz..."
+                    value={authPassInput}
+                    onChange={(e) => setAuthPassInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.85rem 2.8rem 0.85rem 1rem',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: authError ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '14px',
+                      color: '#fff',
+                      fontSize: '0.92rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#64748b',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {authError && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#fca5a5',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  fontSize: '0.82rem',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting || !authUsernameInput || !authPassInput}
+                style={{
+                  width: '100%',
+                  padding: '0.9rem',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  border: 'none',
+                  borderRadius: '14px',
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '0.95rem',
+                  cursor: (isSubmitting || !authUsernameInput || !authPassInput) ? 'not-allowed' : 'pointer',
+                  opacity: (isSubmitting || !authUsernameInput || !authPassInput) ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)'
+                }}
+              >
+                <span>{isSubmitting ? 'Doğrulanıyor...' : '2. Aşamaya İlerle'}</span>
+                {!isSubmitting && <ArrowRight size={18} />}
+              </button>
+            </form>
+          )}
+
+          {/* STEP 2 FORM (2FA OTP) */}
+          {authStep === 2 && (
+            <form onSubmit={handleStep2Verify2FA}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  📱 6 Haneli 2FA Güvenlik Kodu
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  maxLength={6}
+                  placeholder="• • • • • •"
+                  value={authOtpInput}
+                  onChange={(e) => setAuthOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                  style={{
+                    width: '100%',
+                    padding: '0.9rem',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: authError ? '1px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '14px',
+                    color: '#fff',
+                    fontSize: '1.4rem',
+                    fontWeight: 900,
+                    letterSpacing: '8px',
+                    textAlign: 'center',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.75rem', marginTop: '6px', textAlign: 'center' }}>
+                  Yetkili yöneticinin 2FA doğrulayıcısındaki 6 haneli kodu giriniz.
+                </span>
+              </div>
+
+              {authError && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#fca5a5',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  fontSize: '0.82rem',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   type="button"
-                  onClick={() => setShowPass(!showPass)}
+                  onClick={() => { setAuthStep(1); setAuthError(''); setAuthOtpInput(''); }}
                   style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#64748b',
-                    cursor: 'pointer'
+                    padding: '0.9rem 1.2rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '14px',
+                    color: '#cbd5e1',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
-                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  <ArrowLeft size={18} />
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || authOtpInput.length < 6}
+                  style={{
+                    flex: 1,
+                    padding: '0.9rem',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    border: 'none',
+                    borderRadius: '14px',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    cursor: (isSubmitting || authOtpInput.length < 6) ? 'not-allowed' : 'pointer',
+                    opacity: (isSubmitting || authOtpInput.length < 6) ? 0.6 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 10px 20px -5px rgba(16, 185, 129, 0.4)'
+                  }}
+                >
+                  <Lock size={18} />
+                  <span>{isSubmitting ? 'Doğrulanıyor...' : 'Komuta Merkezini Aç'}</span>
                 </button>
               </div>
-            </div>
-
-            {authError && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#fca5a5',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
-                fontSize: '0.82rem',
-                marginBottom: '1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-                <span>{authError}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLockedOut || !authUsernameInput || !authPassInput}
-              style={{
-                width: '100%',
-                padding: '0.9rem',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                border: 'none',
-                borderRadius: '14px',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '0.95rem',
-                cursor: (isLockedOut || !authUsernameInput || !authPassInput) ? 'not-allowed' : 'pointer',
-                opacity: (isLockedOut || !authUsernameInput || !authPassInput) ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)'
-              }}
-            >
-              <Lock size={18} />
-              <span>Komuta Merkezini Aç</span>
-            </button>
-          </form>
+            </form>
+          )}
 
           <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <Shield size={14} style={{ color: '#ef4444' }} />
-            <span>Yalnızca Yetkili Kurucu & Yönetici Erişimi</span>
+            <span>3 Katmanlı Çelik Zırh (Serverless + IP Jail + 2FA)</span>
           </div>
         </div>
       </div>
