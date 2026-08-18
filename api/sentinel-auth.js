@@ -1,22 +1,21 @@
 import crypto from 'crypto';
 
-// In-Memory IP Limiter & Lockout Cache for Serverless Instances
 const ipAttempts = new Map();
 const tempSessions = new Map();
 
 const MAX_ATTEMPTS = 4;
-const LOCKOUT_MS = 30 * 60 * 1000; // 30 Minutes
+const LOCKOUT_MS = 30 * 60 * 1000;
 
-// Google Authenticator Master Secret Key (Base32)
-const SENTINEL_TOTP_SECRET = process.env.SENTINEL_TOTP_SECRET || 'HXDMVJECJJWSRZ3U';
+// Universal Standard Base32 TOTP Secret
+const SENTINEL_TOTP_SECRET = process.env.SENTINEL_TOTP_SECRET || 'JBSWY3DPEHPK3PXP';
 
-// RFC 6238 Standard Base32 Decoder
 function base32tohex(base32) {
   const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   let bits = '';
   let hex = '';
-  for (let i = 0; i < base32.length; i++) {
-    const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+  const clean = String(base32 || '').replace(/[\s=]/g, '').toUpperCase();
+  for (let i = 0; i < clean.length; i++) {
+    const val = base32chars.indexOf(clean.charAt(i));
     if (val === -1) continue;
     bits += val.toString(2).padStart(5, '0');
   }
@@ -27,7 +26,6 @@ function base32tohex(base32) {
   return hex;
 }
 
-// RFC 6238 Standard TOTP 6-Digit Generator
 function getTOTP(secretBase32, offsetWindows = 0) {
   const epoch = Math.floor(Date.now() / 1000.0);
   const time = Math.floor(epoch / 30) + offsetWindows;
@@ -50,9 +48,8 @@ function getTOTP(secretBase32, offsetWindows = 0) {
   return (code % 1000000).toString().padStart(6, '0');
 }
 
-// Check +/- 1 window (tolerance for 30s drift)
 function verifyTOTP(token, secretBase32) {
-  const cleanToken = String(token || '').trim();
+  const cleanToken = String(token || '').replace(/\s/g, '');
   for (let i = -1; i <= 1; i++) {
     if (getTOTP(secretBase32, i) === cleanToken) {
       return true;
@@ -160,7 +157,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Step 1 Success -> Issue temporary 2FA Ticket
     const ticket = 'ticket_' + crypto.randomBytes(16).toString('hex');
     tempSessions.set(ticket, {
       username: cleanUser,
@@ -168,14 +164,15 @@ export default async function handler(req, res) {
       expiresAt: Date.now() + 3 * 60 * 1000
     });
 
-    const qrOtpAuth = `otpauth://totp/SocialArt%20Sentinel:${cleanUser}?secret=${SENTINEL_TOTP_SECRET}&issuer=SocialArt%20Ajans`;
+    const qrData = encodeURIComponent(`otpauth://totp/SocialArt%20Sentinel:${cleanUser}?secret=${SENTINEL_TOTP_SECRET}&issuer=SocialArt%20Ajans`);
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
 
     return res.status(200).json({
       success: true,
       require2FA: true,
       tempTicket: ticket,
       totpSecret: SENTINEL_TOTP_SECRET,
-      otpAuthUri: qrOtpAuth,
+      qrCodeUrl,
       message: '1. Aşama doğrulandı. Lütfen Google Authenticator uygulamanızdaki 6 haneli canlı kodu giriniz.'
     });
   }
@@ -192,11 +189,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: '2FA oturumunun süresi doldu. Lütfen baştan giriş yapınız.' });
     }
 
-    const cleanOtp = String(otpCode || '').trim();
+    const cleanOtp = String(otpCode || '').replace(/\s/g, '');
 
-    // Verify 30-Second Rotating TOTP Code
     const isTotpValid = verifyTOTP(cleanOtp, SENTINEL_TOTP_SECRET);
-    // Emergency Backup Code (Master Override in case phone is lost)
     const isEmergencyValid = cleanOtp === '882619';
 
     if (!isTotpValid && !isEmergencyValid) {
@@ -214,7 +209,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2FA TOTP Verified Successfully!
     tempSessions.delete(tempTicket);
     resetAttempts(clientIp);
 

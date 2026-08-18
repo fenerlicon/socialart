@@ -31,12 +31,13 @@ const SENTINEL_AUTH_KEY = 'socialart_sentinel_auth_session';
 
 export default function SecurityControlCenter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authStep, setAuthStep] = useState(1); // 1 = Credentials, 2 = 2FA OTP
+  const [authStep, setAuthStep] = useState(1);
   const [authPassInput, setAuthPassInput] = useState('');
   const [authUsernameInput, setAuthUsernameInput] = useState('');
   const [authOtpInput, setAuthOtpInput] = useState('');
   const [tempTicket, setTempTicket] = useState('');
-  const [totpSecret, setTotpSecret] = useState('HXDMVJECJJWSRZ3U');
+  const [totpSecret, setTotpSecret] = useState('JBSWY3DPEHPK3PXP');
+  const [qrCodeUrl, setQrCodeUrl] = useState('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth%3A%2F%2Ftotp%2FSocialArt%2520Sentinel%3AAdmin%3Fsecret%3DJBSWY3DPEHPK3PXP%26issuer%3DSocialArt%2520Ajans');
   const [showQrModal, setShowQrModal] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -55,7 +56,6 @@ export default function SecurityControlCenter() {
   const [manualReason, setManualReason] = useState('');
 
   useEffect(() => {
-    // Verify existing token with serverless endpoint
     const existingToken = sessionStorage.getItem(SENTINEL_AUTH_KEY);
     if (existingToken) {
       fetch('/api/sentinel-auth', {
@@ -87,7 +87,6 @@ export default function SecurityControlCenter() {
     setQuarantineList(Sentinel.getQuarantineList());
   };
 
-  // STEP 1: Submit Credentials to Backend
   const handleStep1Login = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -123,6 +122,7 @@ export default function SecurityControlCenter() {
       if (data.require2FA) {
         setTempTicket(data.tempTicket);
         if (data.totpSecret) setTotpSecret(data.totpSecret);
+        if (data.qrCodeUrl) setQrCodeUrl(data.qrCodeUrl);
         setAuthStep(2);
         setAuthError('');
       }
@@ -133,7 +133,6 @@ export default function SecurityControlCenter() {
     }
   };
 
-  // STEP 2: Verify 6-Digit Live TOTP Code with Backend
   const handleStep2Verify2FA = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -255,7 +254,6 @@ export default function SecurityControlCenter() {
     }
   };
 
-  // 🔒 IF NOT AUTHENTICATED: RENDER 2-STEP GOOGLE AUTHENTICATOR GATE
   if (!isAuthenticated) {
     return (
       <div style={{
@@ -453,7 +451,7 @@ export default function SecurityControlCenter() {
                     }}
                   >
                     <QrCode size={13} />
-                    <span>Kurulum / Anahtar</span>
+                    <span>{showQrModal ? 'QR Kapat' : 'QR Kod ile Tara'}</span>
                   </button>
                 </div>
 
@@ -485,18 +483,38 @@ export default function SecurityControlCenter() {
                 </span>
               </div>
 
-              {/* SETUP KEY HELPER ACCORDION */}
+              {/* VISUAL QR CODE & KEY ACCORDION */}
               {showQrModal && (
                 <div style={{
-                  background: 'rgba(15, 23, 42, 0.9)',
+                  background: 'rgba(15, 23, 42, 0.95)',
                   border: '1px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: '14px',
-                  padding: '1rem',
+                  borderRadius: '16px',
+                  padding: '1.25rem 1rem',
                   marginBottom: '1.25rem',
                   textAlign: 'center'
                 }}>
-                  <div style={{ color: '#38bdf8', fontSize: '0.8rem', fontWeight: 800, marginBottom: '6px' }}>
-                    Google / Microsoft Authenticator Kurulum Anahtarı:
+                  <div style={{ color: '#38bdf8', fontSize: '0.82rem', fontWeight: 800, marginBottom: '10px' }}>
+                    📷 Telefonunuzla QR Kodu Taratın:
+                  </div>
+                  
+                  <div style={{
+                    background: '#fff',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    display: 'inline-block',
+                    marginBottom: '12px'
+                  }}>
+                    <img
+                      src={qrCodeUrl}
+                      alt="Google Authenticator QR Code"
+                      width="160"
+                      height="160"
+                      style={{ display: 'block', borderRadius: '4px' }}
+                    />
+                  </div>
+
+                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '6px' }}>
+                    Veya Manuel Kurulum Anahtarı:
                   </div>
                   <div style={{
                     background: 'rgba(0,0,0,0.5)',
@@ -519,9 +537,6 @@ export default function SecurityControlCenter() {
                     >
                       {copiedKey ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
                     </button>
-                  </div>
-                  <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: '6px' }}>
-                    Authenticator uygulamanızda <b>"+" &gt; "Kurulum anahtarı gir"</b> seçeneğine basıp bu kodu yapıştırın.
                   </div>
                 </div>
               )}
@@ -601,7 +616,6 @@ export default function SecurityControlCenter() {
     );
   }
 
-  // 🟢 IF AUTHENTICATED: RENDER FULL COMMAND CENTER
   return (
     <div style={{
       minHeight: '100vh',
@@ -668,7 +682,6 @@ export default function SecurityControlCenter() {
             </div>
           </div>
 
-          {/* Quick Actions & Logout */}
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
               onClick={handleRunAudit}
