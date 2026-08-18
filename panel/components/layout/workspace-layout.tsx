@@ -31,7 +31,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   useEffect(() => {
     async function loadData() {
-      const isAuthPage = !pathname || pathname === '/login' || pathname === '/employees/new' || pathname.endsWith('/login');
+      const isAuthPage = !pathname || pathname === '/login' || pathname === '/login/' || pathname.endsWith('/login');
       if (isAuthPage) {
         setIsLoadingAuth(false)
         return
@@ -44,17 +44,17 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         let savedId = getActiveEmployeeId()
         if (savedId && list.some((e) => e.id === savedId)) {
           setCurrentEmployeeId(savedId)
-        } else if (list.length > 0) {
-          // If no active ID stored, default to the first employee if not on explicit login page or redirect
-          const defaultEmp = list.find(e => e.id === 'emp-celal') || list[0]
-          if (defaultEmp) {
-            setActiveEmployeeId(defaultEmp.id)
-            setCurrentEmployeeId(defaultEmp.id)
-          } else {
-            router.replace('/login')
-            return
-          }
         } else {
+          // GÜVENLİK KORUMASI: Oturumu olmayan kullanıcı asla varsayılan kullanıcı olarak içeri alınamaz!
+          setActiveEmployeeId('')
+          setCurrentEmployeeId('')
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('social-art-base:active-employee-id')
+            window.localStorage.removeItem('social-art-base:credentials')
+            window.localStorage.removeItem('ajans_user')
+            window.localStorage.removeItem('socialart_user')
+          }
+          setIsLoadingAuth(false)
           router.replace('/login')
           return
         }
@@ -270,14 +270,15 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     return segments
   }, [pathname])
 
-  if (pathname === '/login' || pathname === '/employees/new') {
+  if (pathname === '/login' || pathname === '/login/' || pathname?.endsWith('/login')) {
     return <div className="animate-in fade-in duration-300">{children}</div>
   }
 
-  if (isLoadingAuth) {
+  if (isLoadingAuth || !currentEmployeeId || !activeEmployee) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-neutral-950">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-950 text-neutral-400 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <span className="text-xs font-semibold tracking-wider">Yetki ve Oturum Doğrulanıyor...</span>
       </div>
     )
   }

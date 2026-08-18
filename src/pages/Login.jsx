@@ -27,8 +27,8 @@ function Login({ onLoginSuccess }) {
         const empName = (e.full_name || '').toLowerCase();
         const empEmail = (e.email || '').toLowerCase();
 
-        return (empUser === cleanUser || empEmail === cleanUser || empName.includes(cleanUser) || cleanUser.includes(empName)) &&
-               (empPass === cleanPass || cleanPass === '123');
+        return (empUser === cleanUser || empEmail === cleanUser || empName === cleanUser) &&
+               (empPass === cleanPass);
       });
 
       if (!matched) {

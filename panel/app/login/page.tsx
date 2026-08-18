@@ -60,11 +60,6 @@ export default function LoginPage() {
           })
         )
 
-        console.log("Loaded employees from DB:", list.map(emp => ({
-          fullName: emp.fullName,
-          username: emp.username,
-          password: emp.password
-        })))
         setEmployees(hasUpdates ? updatedList : list)
       } catch (err) {
         console.error('Failed to load employees:', err)
@@ -79,18 +74,6 @@ export default function LoginPage() {
     e.preventDefault()
     if (!usernameInput.trim() || !passwordInput.trim()) return
 
-    console.log("Login Attempt Debug:", {
-      enteredUsername: usernameInput.trim().toLowerCase(),
-      enteredPassword: passwordInput.trim(),
-      loadedEmployees: employees.map(emp => ({
-        id: emp.id,
-        fullName: emp.fullName,
-        email: emp.email,
-        username: emp.username,
-        password: emp.password
-      }))
-    })
-
     const cleanInput = usernameInput.trim().toLowerCase()
     const cleanPass = passwordInput.trim()
 
@@ -99,8 +82,8 @@ export default function LoginPage() {
         const empUser = (emp.username || emp.email.split('@')[0] || '').toLowerCase()
         const empEmail = emp.email.toLowerCase()
         const empName = emp.fullName.toLowerCase()
-        const isMatchUser = empUser === cleanInput || empEmail === cleanInput || empName === cleanInput || empName.includes(cleanInput)
-        const isMatchPass = emp.password === cleanPass || cleanPass === '123'
+        const isMatchUser = empUser === cleanInput || empEmail === cleanInput || empName === cleanInput
+        const isMatchPass = emp.password ? (emp.password === cleanPass) : (cleanPass === '123')
         return isMatchUser && isMatchPass
       }
     )

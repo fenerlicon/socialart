@@ -191,61 +191,6 @@ function Pricing() {
           ))}
         </div>
 
-        {/* 1 TL Test Payment Banner */}
-        <div style={{
-          marginTop: '50px',
-          background: 'linear-gradient(135deg, rgba(0, 229, 255, 0.08), rgba(138, 43, 226, 0.12))',
-          border: '1px solid rgba(0, 229, 255, 0.25)',
-          borderRadius: '24px',
-          padding: '28px 36px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '20px',
-          boxShadow: '0 10px 30px rgba(0, 229, 255, 0.08)'
-        }}>
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '800', marginBottom: '10px' }}>
-              🧪 Canlı Ödeme Test Altyapısı
-            </div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#ffffff', margin: '0 0 6px 0' }}>
-              1 ₺ Canlı Ödeme Testi Yapın
-            </h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.92rem', margin: 0, maxWidth: '550px' }}>
-              Ödeme altyapımızın (3D Secure, Visa/Mastercard/Troy) düzgün çalıştığını doğrulamak için 1 ₺ tutarında canlı test çekimi yapabilirsiniz.
-            </p>
-          </div>
-
-          <button
-            onClick={() => handleOpenCheckout({
-              name: '1 ₺ Sistem & Ödeme Testi',
-              price: '1.00',
-              isTest: true,
-              description: 'Ödeme altyapısı canlı doğrulama çekimi.'
-            })}
-            style={{
-              background: 'linear-gradient(135deg, #00e5ff, #8a2be2)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '16px',
-              padding: '16px 28px',
-              fontSize: '1rem',
-              fontWeight: '800',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              boxShadow: '0 8px 25px rgba(0, 229, 255, 0.25)',
-              transition: 'transform 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <CreditCard size={20} /> 1 ₺ Test Ödemesi Yap (iyzico 3D) <ArrowRight size={20} />
-          </button>
-        </div>
-
         {/* iyzico Payment Logos & Legal Policies Banner */}
         <div style={{
           marginTop: '50px',
