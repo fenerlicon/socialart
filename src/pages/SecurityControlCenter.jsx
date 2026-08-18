@@ -56,12 +56,10 @@ export default function SecurityControlCenter() {
   const [manualReason, setManualReason] = useState('');
 
   useEffect(() => {
-    // 1. Check existing Sentinel Gate session or Admin Portal session
+    // 1. Strict Sentinel Master Gate session check
     const isSentinelAuth = sessionStorage.getItem(SENTINEL_AUTH_KEY) === 'true';
-    const isStaffAuth = localStorage.getItem('social-art-base:credentials');
-    const isFinanceAuth = sessionStorage.getItem('socialart_is_authenticated') === 'true';
 
-    if (isSentinelAuth || isStaffAuth || isFinanceAuth) {
+    if (isSentinelAuth) {
       setIsAuthenticated(true);
     }
 
