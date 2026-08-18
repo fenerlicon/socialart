@@ -41,6 +41,7 @@ const ThankYou = lazy(() => import('./pages/ThankYou'));
 const Contact = lazy(() => import('./pages/Contact'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const CancellationPolicy = lazy(() => import('./pages/CancellationPolicy'));
+const SecurityControlCenter = lazy(() => import('./pages/SecurityControlCenter'));
 
 // Service Detail Pages
 const MetaAds = lazy(() => import('./pages/services/MetaAds'));
@@ -188,7 +189,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance'].some(p => location.pathname.startsWith(p)) && (
+      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance', '/kontrol', '/admin/kontrol'].some(p => location.pathname.startsWith(p)) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
@@ -360,6 +361,12 @@ function App() {
 
               <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
               <Route path="/iptal-ve-iade-kosullari" element={<CancellationPolicy />} />
+
+              {/* Security Sentinel /kontrol Command Center */}
+              <Route path="/kontrol" element={<SecurityControlCenter />} />
+              <Route path="/kontrol/*" element={<SecurityControlCenter />} />
+              <Route path="/admin/kontrol" element={<Navigate to="/kontrol" replace />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
@@ -367,7 +374,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance'].some(p => location.pathname.startsWith(p)) && (
+      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance', '/kontrol', '/admin/kontrol'].some(p => location.pathname.startsWith(p)) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
