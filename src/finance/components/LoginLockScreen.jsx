@@ -48,7 +48,7 @@ export default function LoginLockScreen({ onLoginSuccess, userPasswords = {} }) 
 
     // 1. Strict Whitelist Check
     if (!allowedUsers.includes(cleanUsername)) {
-      const failMsg = `⚠️ Yetkisiz Kullanıcı! '${cleanUsername}' hesabının şirketin finans ve kasa kayıtlarına erişim yetkisi yoktur. Bu işlem güvenlik kayıtlarına (/kontrol) işlenmiştir.`;
+      const failMsg = '⚠️ Yetkisiz Erişim! Bu hesabın finans ve kasa kayıtlarına erişim yetkisi bulunmamaktadır. Bu işlem güvenlik kayıtlarına (/kontrol) işlenmiştir.';
       setErrorMsg(failMsg);
 
       // Record unauthorized attempt in Sentinel for /kontrol audit
@@ -269,7 +269,7 @@ export default function LoginLockScreen({ onLoginSuccess, userPasswords = {} }) 
                 type="text" 
                 required
                 autoFocus
-                placeholder="Örn: ajansercan26" 
+                placeholder="Kullanıcı adınızı giriniz..." 
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
                 style={{

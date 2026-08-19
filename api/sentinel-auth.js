@@ -6,8 +6,12 @@ const tempSessions = new Map();
 const MAX_ATTEMPTS = 4;
 const LOCKOUT_MS = 30 * 60 * 1000;
 
-// Universal Standard Base32 TOTP Secret
-const SENTINEL_TOTP_SECRET = process.env.SENTINEL_TOTP_SECRET || 'JBSWY3DPEHPK3PXP';
+// Individual Standard Base32 TOTP Secrets per User (Strict Base32 [A-Z2-7])
+const USER_TOTP_SECRETS = {
+  'furkan': process.env.SENTINEL_TOTP_FURKAN || 'FURKAN7SENTINEL7KEY7SA7SECRETX72',
+  'ercan': process.env.SENTINEL_TOTP_ERCAN || 'ERCAN7SENTINEL7KEY7SA7SECRETX723',
+  'celal': process.env.SENTINEL_TOTP_CELAL || 'CELAL7SENTINEL7KEY7SA7SECRETX724'
+};
 
 function base32tohex(base32) {
   const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -135,10 +139,9 @@ export default async function handler(req, res) {
     }
 
     const validUsers = {
-      'celal': process.env.SENTINEL_PASS_CELAL || 'Socialart2026!',
-      'ercan': process.env.SENTINEL_PASS_ERCAN || 'Ajans2026@',
       'furkan': process.env.SENTINEL_PASS_FURKAN || 'Socialart2026!',
-      'admin': process.env.SENTINEL_PASS_ADMIN || 'SentinelSecure2026#'
+      'ercan': process.env.SENTINEL_PASS_ERCAN || 'Ajans2026@',
+      'celal': process.env.SENTINEL_PASS_CELAL || 'Socialart2026!'
     };
 
     const expectedPass = validUsers[cleanUser];
@@ -185,11 +188,16 @@ export default async function handler(req, res) {
     }
 
     const cleanOtp = String(otpCode || '').replace(/\s/g, '');
+    const userTotpSecret = USER_TOTP_SECRETS[session.username];
 
-    const isTotpValid = verifyTOTP(cleanOtp, SENTINEL_TOTP_SECRET);
-    const isEmergencyValid = cleanOtp === '882619';
+    if (!userTotpSecret) {
+      tempSessions.delete(tempTicket);
+      return res.status(401).json({ error: 'Bu kullanıcı için tanımlı 2FA anahtarı bulunamadı.' });
+    }
 
-    if (!isTotpValid && !isEmergencyValid) {
+    const isTotpValid = verifyTOTP(cleanOtp, userTotpSecret);
+
+    if (!isTotpValid) {
       const failInfo = recordFailedAttempt(clientIp);
       if (failInfo.isLocked) {
         tempSessions.delete(tempTicket);
@@ -209,13 +217,19 @@ export default async function handler(req, res) {
 
     const token = 'sec_tok_' + crypto.randomBytes(24).toString('hex') + '_' + Date.now();
 
+    const displayNames = {
+      furkan: 'Arda Furkan Aslanbaş',
+      ercan: 'Ercan Bey',
+      celal: 'Celal Bey'
+    };
+
     return res.status(200).json({
       success: true,
       sessionToken: token,
       user: {
         username: session.username,
         role: 'SENTINEL_COMMANDER',
-        displayName: session.username === 'celal' ? 'Celal Bey' : session.username === 'ercan' ? 'Ercan Bey' : 'Güvenlik Yöneticisi'
+        displayName: displayNames[session.username] || 'Güvenlik Yöneticisi'
       }
     });
   }
