@@ -12,7 +12,11 @@ const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 const npxCmd = isWindows ? 'npx.cmd' : 'npx';
 
 try {
-  // 0. Install panel dependencies
+  // 0. Run Automated Architectural & Security Integrity Validator
+  console.log('--- Step 0: Checking Architectural Integrity Rules... ---');
+  execSync(`node "${path.join(__dirname, 'verify-integrity.cjs')}"`, { stdio: 'inherit' });
+
+  // 0.2. Install panel dependencies
   console.log('--- Installing panel dependencies... ---');
   execSync(`${npmCmd} install --legacy-peer-deps`, { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
 

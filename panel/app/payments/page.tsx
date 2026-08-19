@@ -595,7 +595,6 @@ export default function PaymentsPage() {
     try {
       await supabase.from('payment_requests').update({
         status: nextStatus,
-        paid_at: nextStatus === 'paid' ? nowIso : null,
         updated_at: nowIso
       }).eq('id', item.id)
     } catch (err) {
