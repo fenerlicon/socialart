@@ -5,13 +5,13 @@ import {
   ShieldCheck, 
   Receipt, 
   Layers, 
-  Building2, 
   CheckCircle2, 
   AlertCircle, 
   Lock, 
   ArrowLeft,
   Calendar,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import CheckoutModal from '../components/CheckoutModal';
@@ -44,7 +44,7 @@ export default function DirectPaymentPage() {
           .maybeSingle();
 
         if (dbErr || !data) {
-          setError('Ödeme talebi bulunamadı veya süresi dolmuş olabilir.');
+          setError('Ödeme talebi bulunamadı veya bağlantının süresi dolmuş olabilir.');
         } else {
           setPaymentReq(data);
         }
@@ -91,25 +91,30 @@ export default function DirectPaymentPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fff', padding: '20px' }}>
-        <div style={{ width: '48px', height: '48px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#00e5ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <p style={{ marginTop: '16px', fontSize: '0.9rem', color: '#a1a1aa', fontWeight: 600 }}>Güvenli Ödeme Detayları Yükleniyor...</p>
+      <div className="min-h-screen bg-[#07070a] text-white flex flex-col items-center justify-center p-6 select-none">
+        <div className="w-12 h-12 border-3 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4" />
+        <p className="text-sm font-semibold text-neutral-400 tracking-wide animate-pulse">
+          Güvenli Ödeme Portalı Yükleniyor...
+        </p>
       </div>
     );
   }
 
   if (error || !paymentReq) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fff', padding: '20px' }}>
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(239,68,68,0.3)', padding: '36px', borderRadius: '24px', maxWidth: '480px', width: '100%', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#ef4444' }}>
+      <div className="min-h-screen bg-[#07070a] text-white flex items-center justify-center p-6">
+        <div className="bg-[#121218] border border-red-500/30 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-4">
             <AlertCircle size={28} />
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Ödeme Talebi Bulunamadı</h2>
-          <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.5 }}>
+          <h2 className="text-xl font-extrabold text-white mb-2">Ödeme Talebi Bulunamadı</h2>
+          <p className="text-sm text-neutral-400 leading-relaxed mb-6">
             {error || 'Girdiğiniz ödeme bağlantısı geçersiz veya sistemden kaldırılmış.'}
           </p>
-          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '12px', background: '#27272a', color: '#fff', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}>
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold transition-all"
+          >
             <ArrowLeft size={16} /> Ana Sayfaya Dön
           </Link>
         </div>
@@ -125,158 +130,177 @@ export default function DirectPaymentPage() {
   const hasItems = Array.isArray(paymentReq.items) && paymentReq.items.length > 0;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #0d0d14 50%, #150d24 100%)', color: '#fff', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ maxWidth: '580px', width: '100%', spaceY: '24px' }}>
-        
-        {/* Header Branding */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', padding: '0 8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #a855f7, #00e5ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1rem', color: '#000', boxShadow: '0 0 20px rgba(0,229,255,0.3)' }}>
-              SA
-            </div>
-            <div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 900, margin: 0, letterSpacing: '-0.02em', color: '#fff' }}>SocialArt Medya</h1>
-              <span style={{ fontSize: '0.75rem', color: '#a1a1aa', fontWeight: 600 }}>Güvenli Müşteri Ödeme Portalı</span>
-            </div>
+    <div className="min-h-screen bg-[#060609] text-white flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+      
+      {/* 1. TOP NAVBAR BRANDING */}
+      <header className="w-full border-b border-white/5 bg-[#09090e]/80 backdrop-blur-xl px-6 py-4 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/logo.png" 
+              alt="SocialArt Ajans" 
+              className="h-7 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+            <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+            <span className="text-xs font-semibold text-neutral-400 hidden sm:block tracking-wide">
+              Güvenli Ödeme Portalı
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', padding: '6px 12px', borderRadius: '999px' }}>
-            <ShieldCheck size={14} /> 256-Bit SSL 3D Secure
+
+          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 px-3 py-1.5 rounded-full text-emerald-400 text-xs font-bold shadow-sm">
+            <ShieldCheck size={15} />
+            <span>256-Bit SSL 3D Secure</span>
           </div>
         </div>
+      </header>
 
-        {/* Main Payment Invoice Card */}
-        <div style={{ background: 'rgba(20, 20, 28, 0.75)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '28px', padding: '32px', boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 50px rgba(168,85,247,0.08)' }}>
+      {/* 2. MAIN PAYMENT CARD SECTION */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8 my-auto">
+        <div className="max-w-xl w-full">
           
-          {/* Status Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '16px', marginBottom: '20px' }}>
-            <div>
-              <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#71717a', fontWeight: 800, display: 'block', marginBottom: '4px' }}>Sayın Müşterimiz</span>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fff', margin: 0 }}>{paymentReq.client_name}</h2>
+          <div className="bg-gradient-to-b from-[#161622] to-[#0f0f16] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_50px_rgba(0,229,255,0.06)] relative overflow-hidden">
+            
+            {/* Subtle glow accent */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Header: Client & Status */}
+            <div className="flex items-start justify-between gap-4 border-b border-white/8 pb-5 mb-6">
+              <div>
+                <span className="text-[10px] font-extrabold tracking-wider uppercase text-neutral-400 block mb-1">
+                  Sayın Müşterimiz
+                </span>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  {paymentReq.client_name}
+                </h1>
+              </div>
+
+              <div className="shrink-0">
+                {isPaid ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-1.5 rounded-full shadow-sm">
+                    <CheckCircle2 size={15} /> ÖDENDİ
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-3.5 py-1.5 rounded-full shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" /> ÖDEME BEKLENİYOR
+                  </span>
+                )}
+              </div>
             </div>
-            <div>
-              {isPaid ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 800, color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 14px', borderRadius: '999px' }}>
-                  <CheckCircle2 size={16} /> ÖDENDİ
-                </span>
-              ) : (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 800, color: '#f59e0b', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', padding: '6px 14px', borderRadius: '999px' }}>
-                  🟡 ÖDEME BEKLENİYOR
-                </span>
+
+            {/* Service Title & Details */}
+            <div className="space-y-2 mb-6">
+              <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
+                Hizmet / Masraf Konusu
+              </span>
+              <h2 className="text-lg font-bold text-cyan-400">
+                {paymentReq.title}
+              </h2>
+              {paymentReq.description && (
+                <p className="text-xs text-neutral-300 bg-black/40 border border-white/5 rounded-xl p-3 leading-relaxed mt-2">
+                  {paymentReq.description}
+                </p>
               )}
             </div>
-          </div>
 
-          {/* Title & Description */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: 600, marginBottom: '4px' }}>Hizmet / Masraf Konusu:</div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#00e5ff', margin: '0 0 8px' }}>{paymentReq.title}</h3>
-            {paymentReq.description && (
-              <p style={{ fontSize: '0.85rem', color: '#d4d4d8', background: 'rgba(0,0,0,0.3)', padding: '12px 16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)', lineHeight: 1.5, margin: 0 }}>
-                {paymentReq.description}
-              </p>
+            {/* Items Breakdown (If Present) */}
+            {hasItems && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between text-[11px] font-extrabold uppercase text-purple-400 tracking-wider mb-2">
+                  <span className="flex items-center gap-1.5"><Layers size={14} /> Kalem Detayları</span>
+                  <span>{paymentReq.items.length} Kalem</span>
+                </div>
+                <div className="bg-black/35 rounded-2xl border border-white/5 overflow-hidden divide-y divide-white/5">
+                  {paymentReq.items.map((it, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-4 py-2.5 text-xs">
+                      <span className="text-neutral-300 font-medium truncate pr-3">
+                        <span className="text-neutral-400 mr-2 font-mono">{idx + 1}.</span>
+                        {it.title}
+                      </span>
+                      <span className="font-bold text-white font-mono shrink-0">
+                        ₺ {Number(it.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
+
+            {/* Price Calculations Summary Box */}
+            <div className="bg-black/50 border border-white/8 rounded-2xl p-4 sm:p-5 space-y-2.5 mb-6">
+              <div className="flex items-center justify-between text-xs text-neutral-400">
+                <span>Ara Toplam (Net Hizmet Bedeli):</span>
+                <span className="font-bold text-white font-mono">
+                  ₺ {netAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-neutral-400">
+                <span>KDV {isExempt ? '(%0 Muaf):' : '(%20 Dahil):'}</span>
+                <span className={`font-bold font-mono ${isExempt ? 'text-emerald-400' : 'text-cyan-400'}`}>
+                  {isExempt ? '₺ 0,00 (KDV Muaf)' : `+ ₺ ${kdvAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`}
+                </span>
+              </div>
+
+              <div className="h-[1px] bg-white/10 my-1" />
+
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider">
+                  ÖDENECEK TOPLAM TUTAR:
+                </span>
+                <span className="text-xl sm:text-2xl font-extrabold text-cyan-400 font-mono tracking-tight drop-shadow-[0_0_15px_rgba(0,229,255,0.4)]">
+                  ₺ {grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* CTA Button or Paid Banner */}
+            {isPaid ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 text-center space-y-2">
+                <CheckCircle2 size={32} className="text-emerald-400 mx-auto" />
+                <h3 className="text-base font-extrabold text-emerald-400">Ödemeniz Başarıyla Alındı</h3>
+                <p className="text-xs text-neutral-400">
+                  Bu ödeme talebi iyzico 3D Secure ile tahsil edilmiştir. İş birliğiniz için teşekkür ederiz.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleStartPayment}
+                  className="w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 text-black font-extrabold text-sm sm:text-base py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_10px_30px_rgba(0,229,255,0.25)] hover:shadow-[0_15px_40px_rgba(0,229,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+                >
+                  <CreditCard size={20} className="text-black" />
+                  <span>Kredi / Banka Kartı ile Güvenli Öde</span>
+                </button>
+
+                {/* Trust badge */}
+                <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-neutral-400">
+                  <Lock size={12} className="text-cyan-400" />
+                  <span>Tüm banka ve kredi kartlarıyla 3D Secure ödeme desteklenir</span>
+                </div>
+              </div>
+            )}
+
           </div>
 
-          {/* Itemized Breakdown (if present) */}
-          {hasItems && (
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#a855f7', letterSpacing: '0.05em' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Layers size={14} /> Hizmet & Masraf Kalemleri</span>
-                <span>{paymentReq.items.length} Kalem</span>
-              </div>
-              <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                {paymentReq.items.map((it, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: idx < paymentReq.items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#e4e4e7', fontWeight: 500 }}>
-                      <span style={{ color: '#71717a', marginRight: '8px', fontFamily: 'monospace' }}>{idx + 1}.</span>
-                      {it.title}
-                    </span>
-                    <span style={{ fontWeight: 800, color: '#fff', fontFamily: 'monospace' }}>
-                      ₺ {Number(it.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Amount Breakdown Summary */}
-          <div style={{ background: 'rgba(0,0,0,0.5)', borderRadius: '20px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#a1a1aa', marginBottom: '8px' }}>
-              <span>Ara Toplam (Net Hizmet Bedeli):</span>
-              <span style={{ fontWeight: 700, color: '#fff', fontFamily: 'monospace' }}>
-                ₺ {netAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#a1a1aa', marginBottom: '12px' }}>
-              <span>KDV {isExempt ? '(%0 Muaf):' : '(%20 Dahil):'}</span>
-              <span style={{ fontWeight: 700, color: isExempt ? '#10b981' : '#00e5ff', fontFamily: 'monospace' }}>
-                {isExempt ? '₺ 0,00 (KDV Muaf)' : `+ ₺ ${kdvAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`}
-              </span>
-            </div>
-
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '12px 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#fff' }}>ÖDENECEK TOPLAM TUTAR:</span>
-              <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#00e5ff', fontFamily: 'monospace', textShadow: '0 0 20px rgba(0,229,255,0.4)' }}>
-                ₺ {grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-          </div>
-
-          {/* Action Button */}
-          {isPaid ? (
-            <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', padding: '20px', borderRadius: '18px', textAlign: 'center' }}>
-              <CheckCircle2 size={36} color="#10b981" style={{ margin: '0 auto 8px' }} />
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10b981', margin: '0 0 4px' }}>Ödemeniz Alınmıştır</h4>
-              <p style={{ fontSize: '0.85rem', color: '#a1a1aa', margin: 0 }}>
-                Bu ödeme talebi iyzico 3D Secure ile başarıyla tahsil edilmiştir. İş birliğiniz için teşekkür ederiz.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <button
-                onClick={handleStartPayment}
-                style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, #00e5ff 0%, #a855f7 100%)',
-                  border: 'none',
-                  color: '#000',
-                  fontWeight: 900,
-                  fontSize: '1.05rem',
-                  padding: '18px 24px',
-                  borderRadius: '18px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  boxShadow: '0 10px 30px rgba(0,229,255,0.3)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,229,255,0.45)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,229,255,0.3)'; }}
-              >
-                <CreditCard size={22} color="#000" /> Kredi / Banka Kartı ile Güvenli Öde
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginTop: '16px', opacity: 0.7 }}>
-                <img src="/iyzico-payment-logos.png" alt="Visa Mastercard Troy iyzico" style={{ height: '22px', objectFit: 'contain' }} onError={(e) => e.target.style.display = 'none'} />
-              </div>
-            </div>
-          )}
-
         </div>
+      </main>
 
-        {/* Footer Support Info */}
-        <div style={{ textAlign: 'center', marginTop: '24px', color: '#71717a', fontSize: '0.75rem', lineHeight: 1.6 }}>
-          Ödemeniz <strong>iyzico 3D Secure</strong> güvencesiyle 256-bit şifrelenerek tahsil edilir.<br />
-          Sorularınız için: <a href="mailto:iletisim@socialartmedya.com" style={{ color: '#00e5ff', textDecoration: 'none', fontWeight: 600 }}>iletisim@socialartmedya.com</a>
+      {/* 3. FOOTER INFO */}
+      <footer className="w-full border-t border-white/5 py-4 px-6 text-center text-[11px] text-neutral-400 bg-[#07070a]">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>
+            Ödemeleriniz <strong>iyzico 3D Secure</strong> güvencesiyle 256-bit şifrelenerek korunur.
+          </span>
+          <span>
+            Destek: <a href="mailto:iletisim@socialartmedya.com" className="text-cyan-400 hover:underline">iletisim@socialartmedya.com</a>
+          </span>
         </div>
-
-      </div>
+      </footer>
 
       {/* 3D Secure Checkout Modal */}
       <CheckoutModal

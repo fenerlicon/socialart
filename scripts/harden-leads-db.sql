@@ -1,41 +1,31 @@
 -- =========================================================================
 -- SOCIALART AJANS — LEADS / SALES DATABASE (piffaggeshfrubyjkhej) RLS HARDENING
 -- Bu scripti İkinci Supabase (Leads) Dashboard -> SQL Editor içerisine yapıştırıp çalıştırın.
+-- Herhangi bir tablo adı hatası vermeden dinamik olarak tüm tabloları kilitler.
 -- =========================================================================
 
--- 1. Tüm satış ve başvuru tablolarında Row Level Security (RLS) aktif edilir
-ALTER TABLE IF EXISTS public.leads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.contacts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.job_applications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.ugc_applications ENABLE ROW LEVEL SECURITY;
-
--- 2. Anonim rolden (anon) tüm SELECT, UPDATE, DELETE yetkileri GERİ ALINIR
-REVOKE SELECT, UPDATE, DELETE ON public.leads FROM anon;
-REVOKE SELECT, UPDATE, DELETE ON public.contacts FROM anon;
-REVOKE SELECT, UPDATE, DELETE ON public.job_applications FROM anon;
-REVOKE SELECT, UPDATE, DELETE ON public.ugc_applications FROM anon;
-
--- 3. Eski izin politikalarını temizle
-DROP POLICY IF EXISTS "Public can view leads" ON public.leads;
-DROP POLICY IF EXISTS "Allow public select" ON public.leads;
-DROP POLICY IF EXISTS "Allow anon read" ON public.leads;
-
--- 4. YALNIZCA INSERT İzni Tanımla (Web sitesi ziyaretçileri form doldurup gönderebilir, fakat kayıtlı 229 müşteriyi ASLA OKUYAMAZ!)
-CREATE POLICY "Allow public website lead submission" ON public.leads
-  FOR INSERT TO anon WITH CHECK (true);
-
-CREATE POLICY "Allow public contact form submission" ON public.contacts
-  FOR INSERT TO anon WITH CHECK (true);
-
-CREATE POLICY "Allow public job application submission" ON public.job_applications
-  FOR INSERT TO anon WITH CHECK (true);
-
-CREATE POLICY "Allow public ugc application submission" ON public.ugc_applications
-  FOR INSERT TO anon WITH CHECK (true);
-
--- 5. Okuma ve Güncelleme İznini Yalnızca Giriş Yapmış Yöneticiye (authenticated / service_role) Ver
-CREATE POLICY "Full access for authenticated admins" ON public.leads
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
-CREATE POLICY "Full access for contacts authenticated" ON public.contacts
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DO $$ 
+DECLARE 
+    r RECORD;
+BEGIN
+    FOR r IN (
+        SELECT tablename 
+        FROM pg_tables 
+        WHERE schemaname = 'public'
+    ) 
+    LOOP
+        -- 1. Tabloda Row Level Security'yi aktif et
+        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', r.tablename);
+        
+        -- 2. Anonim rolden (anon) tüm SELECT, UPDATE, DELETE yetkilerini geri al
+        EXECUTE format('REVOKE SELECT, UPDATE, DELETE ON public.%I FROM anon;', r.tablename);
+        
+        -- 3. Ziyaretçilerin YALNIZCA INSERT (yeni form/lead gönderme) yapabilmesine izin ver
+        EXECUTE format('DROP POLICY IF EXISTS "allow_anon_insert_%s" ON public.%I;', r.tablename, r.tablename);
+        EXECUTE format('CREATE POLICY "allow_anon_insert_%s" ON public.%I FOR INSERT TO anon WITH CHECK (true);', r.tablename, r.tablename);
+        
+        -- 4. Giriş yapmış yöneticilere tam yetki ver
+        EXECUTE format('DROP POLICY IF EXISTS "allow_auth_all_%s" ON public.%I;', r.tablename, r.tablename);
+        EXECUTE format('CREATE POLICY "allow_auth_all_%s" ON public.%I FOR ALL TO authenticated USING (true) WITH CHECK (true);', r.tablename, r.tablename);
+    END LOOP;
+END $$;

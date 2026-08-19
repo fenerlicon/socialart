@@ -190,7 +190,7 @@ function App() {
   return (
     <div className="app-layout">
       {/* HEADER */}
-      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance', '/kontrol', '/admin/kontrol'].some(p => location.pathname.startsWith(p)) && (
+      {!['/crm', '/admin/crm', '/musteri', '/odeme', '/odeme-talebi', '/pay', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance', '/kontrol', '/admin/kontrol'].some(p => location.pathname.startsWith(p)) && (
         <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <div className="container header-inner">
             <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
