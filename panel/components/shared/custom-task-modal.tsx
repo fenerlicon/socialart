@@ -507,11 +507,11 @@ export function CustomTaskModal({
               </div>
 
               <div className="w-full sm:w-72">
-                <Select value={targetEmployeeId} onValueChange={setTargetEmployeeId}>
+                <Select value={targetEmployeeId || undefined} onValueChange={setTargetEmployeeId}>
                   <SelectTrigger className="h-10 text-xs bg-neutral-950 border-neutral-800 focus:border-indigo-500 font-bold text-white">
                     <SelectValue placeholder="👤 Çalışan Seçin..." />
                   </SelectTrigger>
-                  <SelectContent className="max-h-72">
+                  <SelectContent className="max-h-72 z-[99999]">
                     {employees.map((emp) => (
                       <SelectItem key={emp.id} value={emp.id} className="text-xs font-semibold">
                         {emp.fullName} ({emp.title || 'Personel'})
@@ -596,11 +596,11 @@ export function CustomTaskModal({
                   {/* Marka Seçimi (Genel Ajans İşi Destekli) */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Marka / Proje</label>
-                    <Select value={task.brandId} onValueChange={(val) => updateTask(index, { brandId: val })}>
-                      <SelectTrigger className="h-9 text-xs bg-neutral-950 border-neutral-800">
+                    <Select value={task.brandId || 'general'} onValueChange={(val) => updateTask(index, { brandId: val })}>
+                      <SelectTrigger className="h-9 text-xs bg-neutral-950 border-neutral-800 font-semibold text-white">
                         <SelectValue placeholder="Marka Seçin" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[99999]">
                         <SelectItem value="general" className="text-xs font-bold text-purple-400">
                           🏢 Genel Ajans İşi (Markasız)
                         </SelectItem>
@@ -616,11 +616,11 @@ export function CustomTaskModal({
                   {/* Öncelik Sırası */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Önem Sırası</label>
-                    <Select value={task.priority} onValueChange={(val) => updateTask(index, { priority: val as TaskPriority })}>
-                      <SelectTrigger className="h-9 text-xs bg-neutral-950 border-neutral-800 font-bold">
+                    <Select value={task.priority || 'medium'} onValueChange={(val) => updateTask(index, { priority: val as TaskPriority })}>
+                      <SelectTrigger className="h-9 text-xs bg-neutral-950 border-neutral-800 font-bold text-white">
                         <SelectValue placeholder="Öncelik Seçin" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[99999]">
                         <SelectItem value="low" className="text-xs text-emerald-400 font-medium">🟢 Düşük Öncelik</SelectItem>
                         <SelectItem value="medium" className="text-xs text-blue-400 font-semibold">🔵 Normal / Orta</SelectItem>
                         <SelectItem value="high" className="text-xs text-amber-400 font-bold">🟠 Yüksek Öncelik</SelectItem>
@@ -632,11 +632,11 @@ export function CustomTaskModal({
                   {/* Departman / Sorumluluk Rolü */}
                   <div className="space-y-1 sm:col-span-2">
                     <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Sorumlu Rol / Alan</label>
-                    <Select value={task.responsibilityRole} onValueChange={(val) => updateTask(index, { responsibilityRole: val as ResponsibilityRole })}>
-                      <SelectTrigger className="h-9 text-xs bg-neutral-950 border-neutral-800">
+                    <Select value={task.responsibilityRole || 'custom'} onValueChange={(val) => updateTask(index, { responsibilityRole: val as ResponsibilityRole })}>
+                      <SelectTrigger className="h-9 text-xs bg-neutral-950 border-neutral-800 font-semibold text-white">
                         <SelectValue placeholder="Rol Seçin" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[99999]">
                         <SelectItem value="custom" className="text-xs font-bold">Özel Görev / Operasyon</SelectItem>
                         <SelectItem value="video_editing" className="text-xs">Video Kurgu & Montaj</SelectItem>
                         <SelectItem value="graphic_design" className="text-xs">Grafik Tasarım</SelectItem>
