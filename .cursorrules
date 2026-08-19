@@ -1,0 +1,7 @@
+# SocialArt Ajans System Rules
+
+1. SCHEMA INTEGRITY: Never send unverified columns (like paid_at) to Supabase Postgres tables without verifying schema.
+2. Z-INDEX COMPLIANCE: All Radix UI Portal dropdowns (SelectContent, PopoverContent) MUST use z-[99999] so they never render behind z-[9999] modal backdrops.
+3. STATELESS SERVERLESS: All /api/ functions on Vercel must use HMAC-signed stateless tokens, never in-memory Maps.
+4. DYNAMIC PERMISSIONS: Never check a single legacy boolean for menu access; always use resolveEffectivePermissions.
+5. BUILD PIPELINE: Always verify changes with `node scripts/build-all.cjs` ensuring both Next.js and Vite build with 0 errors.
