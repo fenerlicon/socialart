@@ -682,9 +682,14 @@ export default function PaymentsPage() {
   }
 
   const copyPaymentLink = (req: PaymentRequest) => {
-    const url = `${window.location.origin}/musteri`
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://www.socialartmedya.com'
+    const url = `${origin}/odeme?id=${encodeURIComponent(req.id)}`
     navigator.clipboard.writeText(url)
-    triggerToast('Bağlantı Kopyalandı! 📋', `Müşteri Paneli adresi panoya kopyalandı (${url})`, 'success')
+    triggerToast(
+      'Ödeme Linki Kopyalandı! 🔗',
+      `"${req.client_name}" için direkt 3D Secure kart ödeme bağlantısı panoya kopyalandı:\n${url}`,
+      'success'
+    )
   }
 
   return (
@@ -856,6 +861,13 @@ export default function PaymentsPage() {
                               🟡 Beklet
                             </button>
                           )}
+                          <button
+                            onClick={() => copyPaymentLink(reqItem)}
+                            title="Müşteriye Gönderilecek Direkt Ödeme Linkini Kopyala"
+                            className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 transition-all inline-flex items-center gap-1 font-bold text-[11px]"
+                          >
+                            <Copy className="w-3.5 h-3.5" /> Link
+                          </button>
                           <button
                             onClick={() => setViewingRequest(reqItem)}
                             title="Kalem ve Detayları Gör"

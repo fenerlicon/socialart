@@ -42,6 +42,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const CancellationPolicy = lazy(() => import('./pages/CancellationPolicy'));
 const SecurityControlCenter = lazy(() => import('./pages/SecurityControlCenter'));
+const DirectPaymentPage = lazy(() => import('./pages/DirectPaymentPage'));
 
 // Service Detail Pages
 const MetaAds = lazy(() => import('./pages/services/MetaAds'));
@@ -339,6 +340,10 @@ function App() {
 
               <Route path="/fiyatlar" element={<Pricing />} />
               <Route path="/musteri" element={<ClientPortal />} />
+              <Route path="/odeme" element={<DirectPaymentPage />} />
+              <Route path="/odeme/:id" element={<DirectPaymentPage />} />
+              <Route path="/odeme-talebi" element={<DirectPaymentPage />} />
+              <Route path="/pay" element={<DirectPaymentPage />} />
               <Route path="/ugc-basvuru" element={<UGCApplication />} />
               <Route path="/is-basvurusu" element={<JobApplication />} />
               <Route path="/post-produksiyon" element={<PostProduction />} />
@@ -374,7 +379,7 @@ function App() {
       </main>
 
       {/* FOOTER */}
-      {!['/crm', '/admin/crm', '/musteri', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance', '/kontrol', '/admin/kontrol'].some(p => location.pathname.startsWith(p)) && (
+      {!['/crm', '/admin/crm', '/musteri', '/odeme', '/odeme-talebi', '/pay', '/email-marketing', '/tesekkurler', '/post-produksiyon', '/finans', '/finance', '/kontrol', '/admin/kontrol'].some(p => location.pathname.startsWith(p)) && (
         <footer className="footer" id="contact">
           <div className="container">
             <div className="footer-inner" style={{ borderBottom: '1px solid var(--surface-border)', paddingBottom: '40px' }}>
