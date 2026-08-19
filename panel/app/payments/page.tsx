@@ -580,6 +580,68 @@ export default function PaymentsPage() {
     )
   }
 
+  // --- Quick Status Toggle (One-Click) ---
+  const handleToggleStatus = async (item: PaymentRequest) => {
+    const nextStatus = item.status === 'paid' ? 'pending' : 'paid'
+    const nowIso = new Date().toISOString()
+
+    const updatedItem: PaymentRequest = {
+      ...item,
+      status: nextStatus,
+      paid_at: nextStatus === 'paid' ? nowIso : undefined
+    }
+
+    // 1. Update payment_requests table
+    try {
+      await supabase.from('payment_requests').update({
+        status: nextStatus,
+        paid_at: nextStatus === 'paid' ? nowIso : null,
+        updated_at: nowIso
+      }).eq('id', item.id)
+    } catch (err) {
+      console.warn('DB payment_requests toggle error:', err)
+    }
+
+    // 2. Update client_payment_requests table
+    try {
+      await supabase.from('client_payment_requests').update({
+        status: nextStatus,
+        updated_at: nowIso
+      }).eq('id', item.id)
+    } catch (err) {}
+
+    // 3. Update notifications table
+    try {
+      await supabase.from('notifications').update({
+        is_read: nextStatus === 'paid'
+      }).eq('id', item.id)
+    } catch (err) {}
+
+    // 4. Update localStorage
+    if (typeof window !== 'undefined') {
+      const localStr = localStorage.getItem('socialart_payment_requests') || '[]'
+      const localRequests: PaymentRequest[] = JSON.parse(localStr)
+      const updated = localRequests.map(r => r.id === item.id ? updatedItem : r)
+      localStorage.setItem('socialart_payment_requests', JSON.stringify(updated))
+    }
+
+    setPaymentRequests(prev => prev.map(r => r.id === item.id ? updatedItem : r))
+
+    if (nextStatus === 'paid') {
+      triggerToast(
+        'Ödeme Onaylandı! 🟢',
+        `"${item.client_name}" müşterisinin "${item.title}" ödemesi "ÖDENDİ" olarak işaretlendi.`,
+        'success'
+      )
+    } else {
+      triggerToast(
+        'Ödeme Beklemeye Alındı 🟡',
+        `"${item.client_name}" ödemesi "BEKLİYOR" durumuna getirildi.`,
+        'success'
+      )
+    }
+  }
+
   // --- Delete ---
   const handleDeleteRequest = async (id: string) => {
     if (!window.confirm('Bu ödeme talebini silmek istediğinize emin misiniz?')) return
@@ -759,19 +821,42 @@ export default function PaymentsPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${
-                          isPending 
-                            ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' 
-                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                        }`}>
-                          {isPending ? '🟡 BEKLİYOR' : '🟢 ÖDENDİ'}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(reqItem)}
+                          title="Durumu değiştirmek için tıklayın"
+                          className={`text-[10px] font-extrabold px-3 py-1 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5 ${
+                            isPending 
+                              ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/20' 
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                          }`}
+                        >
+                          <span>{isPending ? '🟡 BEKLİYOR' : '🟢 ÖDENDİ'}</span>
+                          <span className="text-[9px] opacity-60 underline">Değiştir</span>
+                        </button>
                       </td>
                       <td className="p-4 text-neutral-500 text-[11px]">
                         {reqItem.created_at ? new Date(reqItem.created_at).toLocaleDateString('tr-TR') : 'Bugün'}
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {isPending ? (
+                            <button
+                              onClick={() => handleToggleStatus(reqItem)}
+                              title="Ödeme Alındı Olarak İşaretle"
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-all inline-flex items-center gap-1 font-bold text-[11px] shadow-sm"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Ödendi Yap
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleStatus(reqItem)}
+                              title="Ödemeyi Tekrar Beklemeye Al"
+                              className="px-2.5 py-1.5 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 transition-all inline-flex items-center gap-1 font-bold text-[11px]"
+                            >
+                              🟡 Beklet
+                            </button>
+                          )}
                           <button
                             onClick={() => setViewingRequest(reqItem)}
                             title="Kalem ve Detayları Gör"
