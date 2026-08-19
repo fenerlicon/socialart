@@ -43,8 +43,13 @@ export default async function handler(req, res) {
 
     // Check if this payment is for an existing customer's custom payment request/invoice
     const isCustomInvoice = conversationId.startsWith('SOC_INV_');
-    const invoiceMatch = conversationId.match(/^SOC_INV_([^_]+)/);
-    const extractedRequestId = (invoiceMatch && invoiceMatch[1] !== 'custom') ? invoiceMatch[1] : null;
+    let extractedRequestId = null;
+    if (isCustomInvoice) {
+      const parts = conversationId.replace('SOC_INV_', '').split('_');
+      if (parts[0] && parts[0] !== 'custom') {
+        extractedRequestId = parts[0];
+      }
+    }
 
     const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
     const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
@@ -66,7 +71,14 @@ export default async function handler(req, res) {
 
           try {
             await supabasePrimary.from('client_payment_requests').update({
-              status: 'paid'
+              status: 'paid',
+              updated_at: new Date().toISOString()
+            }).eq('id', extractedRequestId);
+          } catch (e) {}
+
+          try {
+            await supabasePrimary.from('notifications').update({
+              is_read: true
             }).eq('id', extractedRequestId);
           } catch (e) {}
         } else if (buyerName) {

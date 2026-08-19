@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       try {
         const PRIMARY_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://osuwytugjscwhcxxkhfa.supabase.co';
         const PRIMARY_SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
-        const checkRes = await fetch(`${PRIMARY_SUPABASE_URL}/rest/v1/payment_requests?id=eq.${encodeURIComponent(requestId)}&select=amount,status`, {
+        const checkRes = await fetch(`${PRIMARY_SUPABASE_URL}/rest/v1/payment_requests?id=eq.${encodeURIComponent(requestId)}&select=amount,kdv_amount,total_amount,is_kdv_exempt,status`, {
           headers: {
             'apikey': PRIMARY_SUPABASE_KEY,
             'Authorization': `Bearer ${PRIMARY_SUPABASE_KEY}`
@@ -85,13 +85,13 @@ export default async function handler(req, res) {
         if (checkRes.ok) {
           const rows = await checkRes.json();
           if (rows && rows.length > 0) {
-            const dbAmount = parseFloat(rows[0].amount);
             if (rows[0].status === 'paid') {
               return res.status(400).json({ error: 'Bu ödeme talebi zaten daha önce tamamlanmıştır.' });
             }
-            if (dbAmount > 0) {
-              // Enforce real DB amount to prevent client-side price tampering
-              numericPrice = dbAmount;
+            const dbTotal = parseFloat(rows[0].total_amount || (rows[0].is_kdv_exempt ? rows[0].amount : rows[0].amount * 1.20));
+            if (dbTotal > 0) {
+              // Enforce real DB total amount (including KDV if applicable)
+              numericPrice = dbTotal;
             }
           }
         }
