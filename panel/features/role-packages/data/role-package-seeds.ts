@@ -32,7 +32,9 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
       'brand.manage',
       'team.manage',
       'approval.review',
-      'settings.manage'
+      'settings.manage',
+      'calendar.view',
+      'calendar.manage'
     ],
   },
   {
@@ -51,6 +53,7 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
       'crm.proposals',
       'reports.view',
       'reports.submit',
+      'calendar.view'
     ],
   },
   {
@@ -65,6 +68,7 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
       'brands.edit',
       'reports.view',
       'reports.submit',
+      'calendar.view'
     ],
   },
   {
@@ -78,6 +82,7 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
       'brands.view',
       'reports.view',
       'reports.submit',
+      'calendar.view'
     ],
   },
   {
@@ -100,7 +105,9 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
       'operations.view',
       'task.manage',
       'team.manage',
-      'approval.review'
+      'approval.review',
+      'calendar.view',
+      'calendar.manage'
     ],
   },
   {
@@ -117,7 +124,9 @@ export const ROLE_PACKAGE_SEEDS: RolePackage[] = [
       'brands.view',
       'reports.view',
       'reports.submit',
-      'approval.review'
+      'approval.review',
+      'calendar.view',
+      'calendar.manage'
     ],
   },
   {

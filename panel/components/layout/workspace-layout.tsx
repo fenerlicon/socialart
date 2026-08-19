@@ -131,6 +131,21 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     // Kişisel To-Do List
     menuItems.push({ label: 'To-Do List', icon: '📌', href: '/todo' })
 
+    // Takvim (Calendar)
+    const canAccessCalendar =
+      activeEmployee.hasAdvancedCalendarAccess === true ||
+      hasPermission('calendar.view') ||
+      hasPermission('calendar.manage') ||
+      activeEmployee.rolePackageId === 'operasyon-yonetimi' ||
+      activeEmployee.rolePackageId === 'kreatif-direktor' ||
+      activeEmployee.rolePackageId === 'kreatif-yonetim' ||
+      activeEmployee.permissionOverrides?.['calendar.view'] === true ||
+      activeEmployee.permissionOverrides?.['calendar.manage'] === true
+
+    if (canAccessCalendar) {
+      menuItems.push({ label: 'Takvim', icon: '📅', href: '/calendar' })
+    }
+
     // Brands (Markalar)
     if (hasPermission('brand.manage')) {
       menuItems.push({ label: 'Markalar', icon: '🏢', href: '/brands' })
@@ -181,10 +196,6 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       { label: 'DRİVE', icon: '📂', href: '/drive' },
       { label: 'Fikir Merkezi', icon: '💡', href: '/ideas' },
     ]
-
-    if (activeEmployee.hasAdvancedCalendarAccess) {
-      list.push({ label: 'Takvim', icon: '📅', href: '/calendar' })
-    }
 
     // Standard Raporlar (if reports.manage is NOT present)
     const effective = resolveEffectivePermissions({

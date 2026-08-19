@@ -82,7 +82,14 @@ export const EmployeeRepository = {
       employeeStatus: row.employee_status,
       workLocationStatus: row.work_location_status,
       avatarUrl: row.avatar_url || undefined,
-      hasAdvancedCalendarAccess: row.has_advanced_calendar_access || false,
+      hasAdvancedCalendarAccess:
+        row.has_advanced_calendar_access === true ||
+        row.has_advanced_calendar_access === 'true' ||
+        overrides['calendar.view'] === true ||
+        overrides['calendar.manage'] === true ||
+        row.role_package_id === 'operasyon-yonetimi' ||
+        row.role_package_id === 'kreatif-direktor' ||
+        row.role_package_id === 'kreatif-yonetim',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }
