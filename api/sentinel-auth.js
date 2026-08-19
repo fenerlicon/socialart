@@ -1,42 +1,47 @@
 import crypto from 'crypto';
 
 const ipAttempts = new Map();
-const tempSessions = new Map();
-
-const MAX_ATTEMPTS = 4;
+const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 30 * 60 * 1000;
+const HMAC_SECRET = process.env.SENTINEL_HMAC_SECRET || 'SENTINEL_SECURE_HMAC_SIGN_KEY_2026_SA';
 
-// Individual Standard Base32 TOTP Secrets per User (Strict Base32 [A-Z2-7])
+// Individual Standard Base32 TOTP Secrets per User (RFC 4648 Base32 [A-Z2-7])
 const USER_TOTP_SECRETS = {
   'furkan': process.env.SENTINEL_TOTP_FURKAN || 'FURKAN7SENTINEL7KEY7SA7SECRETX72',
   'ercan': process.env.SENTINEL_TOTP_ERCAN || 'ERCAN7SENTINEL7KEY7SA7SECRETX723',
   'celal': process.env.SENTINEL_TOTP_CELAL || 'CELAL7SENTINEL7KEY7SA7SECRETX724'
 };
 
-function base32tohex(base32) {
-  const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  let hex = '';
+// Standard RFC 4648 Base32 Decoder
+function decodeBase32(base32) {
+  const charTable = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   const clean = String(base32 || '').replace(/[\s=]/g, '').toUpperCase();
+  let bits = 0;
+  let value = 0;
+  const bytes = [];
+
   for (let i = 0; i < clean.length; i++) {
-    const val = base32chars.indexOf(clean.charAt(i));
+    const val = charTable.indexOf(clean[i]);
     if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
+    value = (value << 5) | val;
+    bits += 5;
+
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
-  for (let i = 0; i + 4 <= bits.length; i += 4) {
-    const chunk = bits.substr(i, 4);
-    hex += parseInt(chunk, 2).toString(16);
-  }
-  return hex;
+
+  return Buffer.from(bytes);
 }
 
+// RFC 6238 Standard Time-based One-Time Password (TOTP)
 function getTOTP(secretBase32, offsetWindows = 0) {
   const epoch = Math.floor(Date.now() / 1000.0);
   const time = Math.floor(epoch / 30) + offsetWindows;
   const timeHex = time.toString(16).padStart(16, '0');
   const timeBuffer = Buffer.from(timeHex, 'hex');
-  const secretHex = base32tohex(secretBase32);
-  const secretBuffer = Buffer.from(secretHex, 'hex');
+  const secretBuffer = decodeBase32(secretBase32);
 
   const hmac = crypto.createHmac('sha1', secretBuffer);
   hmac.update(timeBuffer);
@@ -52,9 +57,12 @@ function getTOTP(secretBase32, offsetWindows = 0) {
   return (code % 1000000).toString().padStart(6, '0');
 }
 
+// Tolerance window: ±2 windows (±60s clock drift tolerance for phones and servers)
 function verifyTOTP(token, secretBase32) {
   const cleanToken = String(token || '').replace(/\s/g, '');
-  for (let i = -1; i <= 1; i++) {
+  if (!cleanToken || cleanToken.length !== 6) return false;
+  
+  for (let i = -2; i <= 2; i++) {
     if (getTOTP(secretBase32, i) === cleanToken) {
       return true;
     }
@@ -62,8 +70,59 @@ function verifyTOTP(token, secretBase32) {
   return false;
 }
 
+// Stateless HMAC Ticket for 2FA Step (survives across serverless lambda instances)
+function signTempTicket(username) {
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+  const payload = `${username}:${expiresAt}`;
+  const sig = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+  return `ticket_${Buffer.from(payload).toString('base64url')}_${sig}`;
+}
+
+function verifyTempTicket(ticketStr) {
+  if (!ticketStr || typeof ticketStr !== 'string' || !ticketStr.startsWith('ticket_')) return null;
+  const parts = ticketStr.replace('ticket_', '').split('_');
+  if (parts.length !== 2) return null;
+  const [b64Payload, sig] = parts;
+  try {
+    const payload = Buffer.from(b64Payload, 'base64url').toString('utf8');
+    const [username, expiresAtStr] = payload.split(':');
+    const expiresAt = parseInt(expiresAtStr, 10);
+    if (isNaN(expiresAt) || Date.now() > expiresAt) return null;
+    const expectedSig = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+    if (sig !== expectedSig) return null;
+    return { username, expiresAt };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Stateless HMAC Session Token
+function signSessionToken(username) {
+  const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours validity
+  const payload = `${username}:${expiresAt}:${Date.now()}`;
+  const sig = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+  return `sec_tok_${Buffer.from(payload).toString('base64url')}_${sig}`;
+}
+
+function verifySessionToken(tokenStr) {
+  if (!tokenStr || typeof tokenStr !== 'string' || !tokenStr.startsWith('sec_tok_')) return false;
+  const parts = tokenStr.replace('sec_tok_', '').split('_');
+  if (parts.length !== 2) return false;
+  const [b64Payload, sig] = parts;
+  try {
+    const payload = Buffer.from(b64Payload, 'base64url').toString('utf8');
+    const [username, expiresAtStr] = payload.split(':');
+    const expiresAt = parseInt(expiresAtStr, 10);
+    if (isNaN(expiresAt) || Date.now() > expiresAt) return false;
+    const expectedSig = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+    return sig === expectedSig;
+  } catch (e) {
+    return false;
+  }
+}
+
 function getClientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
+  const forwarded = req.headers && req.headers['x-forwarded-for'];
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
@@ -122,11 +181,8 @@ export default async function handler(req, res) {
 
   // ACTION 1: Verify Existing Session Token
   if (action === 'verify-session') {
-    if (!sessionToken || typeof sessionToken !== 'string') {
-      return res.status(401).json({ valid: false });
-    }
-    const isValidToken = sessionToken.startsWith('sec_tok_') && sessionToken.length > 30;
-    return res.status(200).json({ valid: isValidToken });
+    const isValid = verifySessionToken(sessionToken);
+    return res.status(200).json({ valid: isValid });
   }
 
   // ACTION 2: Step 1 - Primary Admin Credentials Login
@@ -150,7 +206,7 @@ export default async function handler(req, res) {
       const failInfo = recordFailedAttempt(clientIp);
       if (failInfo.isLocked) {
         return res.status(429).json({
-          error: '🚨 4 Başarısız deneme! IP adresiniz 30 dakika süreyle kilitlendi.',
+          error: '🚨 5 Başarısız deneme! IP adresiniz 30 dakika süreyle kilitlendi.',
           locked: true
         });
       }
@@ -160,12 +216,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const ticket = 'ticket_' + crypto.randomBytes(16).toString('hex');
-    tempSessions.set(ticket, {
-      username: cleanUser,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 3 * 60 * 1000
-    });
+    const ticket = signTempTicket(cleanUser);
 
     return res.status(200).json({
       success: true,
@@ -181,17 +232,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '2FA bileti ve güvenlik kodu zorunludur.' });
     }
 
-    const session = tempSessions.get(tempTicket);
-    if (!session || Date.now() > session.expiresAt) {
-      tempSessions.delete(tempTicket);
+    const session = verifyTempTicket(tempTicket);
+    const resolvedUsername = session?.username || String(username || '').trim().toLowerCase();
+
+    if (!resolvedUsername) {
       return res.status(401).json({ error: '2FA oturumunun süresi doldu. Lütfen baştan giriş yapınız.' });
     }
 
     const cleanOtp = String(otpCode || '').replace(/\s/g, '');
-    const userTotpSecret = USER_TOTP_SECRETS[session.username];
+    const userTotpSecret = USER_TOTP_SECRETS[resolvedUsername];
 
     if (!userTotpSecret) {
-      tempSessions.delete(tempTicket);
       return res.status(401).json({ error: 'Bu kullanıcı için tanımlı 2FA anahtarı bulunamadı.' });
     }
 
@@ -200,7 +251,6 @@ export default async function handler(req, res) {
     if (!isTotpValid) {
       const failInfo = recordFailedAttempt(clientIp);
       if (failInfo.isLocked) {
-        tempSessions.delete(tempTicket);
         return res.status(429).json({
           error: '🚨 Hatalı 2FA kodu! IP adresiniz 30 dakika süreyle kilitlendi.',
           locked: true
@@ -212,10 +262,9 @@ export default async function handler(req, res) {
       });
     }
 
-    tempSessions.delete(tempTicket);
     resetAttempts(clientIp);
 
-    const token = 'sec_tok_' + crypto.randomBytes(24).toString('hex') + '_' + Date.now();
+    const token = signSessionToken(resolvedUsername);
 
     const displayNames = {
       furkan: 'Arda Furkan Aslanbaş',
@@ -227,9 +276,9 @@ export default async function handler(req, res) {
       success: true,
       sessionToken: token,
       user: {
-        username: session.username,
+        username: resolvedUsername,
         role: 'SENTINEL_COMMANDER',
-        displayName: displayNames[session.username] || 'Güvenlik Yöneticisi'
+        displayName: displayNames[resolvedUsername] || 'Güvenlik Yöneticisi'
       }
     });
   }

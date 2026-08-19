@@ -4,6 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import metaInsightsHandler from './api/meta-insights.js'
+import sentinelAuthHandler from './api/sentinel-auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -14,8 +15,46 @@ export default defineConfig({
     {
       name: 'serve-api-and-admin',
       configureServer(server) {
-        // 1. API Route Handler for local Vite dev server
+        // 1. API Route Handlers for local Vite dev server
         server.middlewares.use(async (req, res, next) => {
+          if (req.url?.startsWith('/api/sentinel-auth')) {
+            try {
+              let body = {};
+              if (req.method === 'POST') {
+                const buffers = [];
+                for await (const chunk of req) {
+                  buffers.push(chunk);
+                }
+                const rawBody = Buffer.concat(buffers).toString();
+                if (rawBody) {
+                  body = JSON.parse(rawBody);
+                }
+              }
+              req.body = body;
+
+              if (!res.status) {
+                res.status = (code) => {
+                  res.statusCode = code;
+                  return res;
+                };
+              }
+              if (!res.json) {
+                res.json = (data) => {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify(data));
+                };
+              }
+
+              return await sentinelAuthHandler(req, res);
+            } catch (apiErr) {
+              console.error('Vite local sentinel-auth error:', apiErr);
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: apiErr.message }));
+              return;
+            }
+          }
+
           if (req.url?.startsWith('/api/meta-insights')) {
             try {
               const urlObj = new URL(req.url, 'http://localhost');

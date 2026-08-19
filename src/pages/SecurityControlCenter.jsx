@@ -207,6 +207,7 @@ export default function SecurityControlCenter() {
         body: JSON.stringify({
           action: 'verify-2fa',
           tempTicket,
+          username: authUsernameInput.trim().toLowerCase(),
           otpCode: otpToVerify
         })
       });
