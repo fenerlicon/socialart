@@ -556,10 +556,19 @@ export default function App() {
   // MUTATOR 4: Add expense + Auto cash journal or card update
   const handleAddExpense = async (expenseData) => {
     try {
-      // 1. Insert expense record
+      // 1. Insert clean expense record matching Supabase schema
+      const cleanExpense = {
+        expense_date: expenseData.expense_date,
+        category: expenseData.category,
+        description: expenseData.description || `${expenseData.category} Gideri`,
+        amount: parseFloat(expenseData.amount),
+        period: expenseData.period,
+        payment_method: expenseData.payment_method || 'Banka'
+      };
+
       const { data: expData, error: expError } = await supabase
         .from('finance_expenses')
-        .insert([expenseData])
+        .insert([cleanExpense])
         .select();
       if (expError) throw expError;
       setExpenses(prev => [...prev, expData[0]]);
@@ -1564,7 +1573,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'income' && (
+          {(activeTab === 'income' || activeTab === 'revenues') && (
             <GelirlerView 
               clients={clients}
               clientPayments={clientPayments}

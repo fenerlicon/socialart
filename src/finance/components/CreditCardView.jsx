@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, CreditCard, DollarSign, Calendar, RefreshCw, Trash2, Edit, AlertTriangle } from 'lucide-react';
+import { Plus, CreditCard, DollarSign, Calendar, RefreshCw, Trash2, Edit, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function CreditCardView({ 
   creditCards, 
@@ -50,8 +50,9 @@ export default function CreditCardView({
 
   // Open pay modal
   const openPayModal = (card) => {
-    setSelectedCard(card);
-    setPaymentAmount(card.used_amount.toString());
+    const targetCard = card || creditCards[0] || null;
+    setSelectedCard(targetCard);
+    setPaymentAmount(targetCard && targetCard.used_amount > 0 ? targetCard.used_amount.toString() : '');
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setPaymentAccount('Banka');
     setShowPayModal(true);
@@ -59,7 +60,8 @@ export default function CreditCardView({
 
   // Open spend modal
   const openSpendModal = (card) => {
-    setSelectedCard(card);
+    const targetCard = card || creditCards[0] || null;
+    setSelectedCard(targetCard);
     setSpendAmount('');
     setSpendDescription('');
     setSpendCategory('Ofis Gideri');
@@ -153,12 +155,60 @@ export default function CreditCardView({
 
   return (
     <div className="credit-card-view">
-      {/* Search & Actions */}
-      <div className="filter-bar" style={{ justifyContent: 'flex-end' }}>
-        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-          <Plus size={16} />
-          <span>Yeni Kart Tanımla</span>
-        </button>
+      {/* Top Action Bar with prominent Payment & Spend buttons */}
+      <div className="filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+            <CreditCard size={18} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>Kredi Kartı & Borç Yönetimi</h3>
+            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Toplam {creditCards.length} adet kayıtlı kart</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <button 
+            type="button" 
+            className="btn btn-secondary" 
+            onClick={() => openSpendModal(null)}
+            disabled={creditCards.length === 0}
+            style={{ padding: '0.5rem 0.9rem', fontSize: '0.84rem', height: '38px', borderRadius: '8px', gap: '6px' }}
+          >
+            <Plus size={15} />
+            <span>+ Harcama Kaydet</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={() => openPayModal(null)}
+            disabled={creditCards.length === 0}
+            style={{ 
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+              border: 'none', 
+              padding: '0.5rem 1rem', 
+              fontSize: '0.84rem', 
+              height: '38px', 
+              borderRadius: '8px', 
+              gap: '6px', 
+              fontWeight: 800,
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)' 
+            }}
+          >
+            <DollarSign size={15} />
+            <span>💳 Kredi Kartı Ödemesi Yap (Borç Kapat)</span>
+          </button>
+
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setShowAddModal(true)} 
+            style={{ padding: '0.5rem 0.9rem', fontSize: '0.84rem', height: '38px', borderRadius: '8px', gap: '6px' }}
+          >
+            <Plus size={15} />
+            <span>+ Yeni Kart Ekle</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -197,6 +247,10 @@ export default function CreditCardView({
             <CreditCard size={48} style={{ color: 'var(--text-muted)' }} />
             <h4 className="empty-state-title">Kayıtlı Kart Bulunmadı</h4>
             <p>Sistemde kayıtlı aktif kredi kartı bulunmamaktadır.</p>
+            <button className="btn btn-primary" onClick={() => setShowAddModal(true)} style={{ marginTop: '1rem' }}>
+              <Plus size={16} />
+              <span>İlk Kredi Kartınızı Ekleyin</span>
+            </button>
           </div>
         ) : (
           <div className="table-container">
@@ -254,9 +308,9 @@ export default function CreditCardView({
 
                           <button 
                             className="btn btn-primary btn-sm"
+                            title="Karta Borç / Ödeme Yap"
                             onClick={() => openPayModal(card)}
-                            disabled={used === 0}
-                            style={{ opacity: used === 0 ? 0.5 : 1 }}
+                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', fontWeight: 700 }}
                           >
                             <DollarSign size={13} />
                             <span>Öde</span>
@@ -293,22 +347,53 @@ export default function CreditCardView({
       </div>
 
       {/* MODAL 1: PAY CARD DEBT */}
-      {showPayModal && selectedCard && (
+      {showPayModal && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Kredi Kartı Ödemesi Yap</h2>
+              <h2>💳 Kredi Kartı Ödemesi Yap (Borç Kapat)</h2>
               <button className="modal-close" onClick={() => setShowPayModal(false)}>×</button>
             </div>
             
             <form onSubmit={handlePaySubmit}>
-              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid var(--border-light)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>KREDİ KARTI</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, margin: '2px 0' }}>{selectedCard.card_name}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Güncel Borç: {parseFloat(selectedCard.used_amount).toLocaleString('tr-TR')} ₺
-                </div>
+              {/* Card Selector if multiple cards exist */}
+              <div className="form-group">
+                <label className="form-label">Ödeme Yapılacak Kredi Kartı</label>
+                <select 
+                  className="select-custom"
+                  value={selectedCard?.id || ''}
+                  onChange={(e) => {
+                    const card = creditCards.find(c => c.id === parseInt(e.target.value));
+                    setSelectedCard(card || null);
+                    if (card && card.used_amount > 0) {
+                      setPaymentAmount(String(card.used_amount));
+                    }
+                  }}
+                >
+                  {creditCards.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.card_name} (Borç: {parseFloat(c.used_amount).toLocaleString('tr-TR')} ₺ / Limit: {parseFloat(c.limit).toLocaleString('tr-TR')} ₺)
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {selectedCard && (
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', marginBottom: '1.25rem', border: '1px solid var(--border-light)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>SEÇİLİ KART</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, margin: '2px 0', color: '#fff' }}>{selectedCard.card_name}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>GÜNCEL BORÇ</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-danger)' }}>
+                        {parseFloat(selectedCard.used_amount).toLocaleString('tr-TR')} ₺
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Yatırılan Ödeme Tutarı (₺)</label>
@@ -336,20 +421,22 @@ export default function CreditCardView({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Ödeme Yapılan Hesabınız</label>
+                <label className="form-label">Ödeme Yapılan Kaynak Hesap</label>
                 <select 
                   className="select-custom"
                   value={paymentAccount}
                   onChange={(e) => setPaymentAccount(e.target.value)}
                 >
-                  <option value="Banka">Banka Hesabı</option>
-                  <option value="Kasa">Elden (Kasa)</option>
+                  <option value="Banka">Banka Hesabı (Havale/EFT)</option>
+                  <option value="Kasa">Nakit (Elden Kasa)</option>
                 </select>
               </div>
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPayModal(false)}>İptal</button>
-                <button type="submit" className="btn btn-primary">Ödemeyi İşle</button>
+                <button type="submit" className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', fontWeight: 800 }}>
+                  Ödemeyi Kaydet
+                </button>
               </div>
             </form>
           </div>
@@ -357,21 +444,32 @@ export default function CreditCardView({
       )}
 
       {/* MODAL 2: SPEND FROM CARD */}
-      {showSpendModal && selectedCard && (
+      {showSpendModal && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Karttan Harcama Yap / Borçlandır</h2>
+              <h2>💳 Karttan Harcama Yap / Borçlandır</h2>
               <button className="modal-close" onClick={() => setShowSpendModal(false)}>×</button>
             </div>
             
             <form onSubmit={handleSpendSubmit}>
-              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid var(--border-light)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>KREDİ KARTI</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, margin: '2px 0' }}>{selectedCard.card_name}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Kullanılabilir Limit: {Math.max(0, parseFloat(selectedCard.limit) - parseFloat(selectedCard.used_amount)).toLocaleString('tr-TR')} ₺
-                </div>
+              {/* Card Selector */}
+              <div className="form-group">
+                <label className="form-label">Harcama Yapılacak Kredi Kartı</label>
+                <select 
+                  className="select-custom"
+                  value={selectedCard?.id || ''}
+                  onChange={(e) => {
+                    const card = creditCards.find(c => c.id === parseInt(e.target.value));
+                    setSelectedCard(card || null);
+                  }}
+                >
+                  {creditCards.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.card_name} (Kullanılabilir: {Math.max(0, parseFloat(c.limit) - parseFloat(c.used_amount)).toLocaleString('tr-TR')} ₺)
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -396,7 +494,7 @@ export default function CreditCardView({
                     value={spendInstallments}
                     onChange={(e) => setSpendInstallments(e.target.value)}
                   >
-                    <option value="1">1 Taksit (Peşin)</option>
+                    <option value="1">1 Taksit (Tek Çekim)</option>
                     <option value="2">2 Taksit</option>
                     <option value="3">3 Taksit</option>
                     <option value="4">4 Taksit</option>
@@ -448,13 +546,13 @@ export default function CreditCardView({
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Yeni Kredi Kartı Ekle</h2>
+              <h2>Yeni Kredi Kartı Tanımla</h2>
               <button className="modal-close" onClick={() => setShowAddModal(false)}>×</button>
             </div>
             
             <form onSubmit={handleAddCardSubmit}>
               <div className="form-group">
-                <label className="form-label">Kart İsmi / Banka</label>
+                <label className="form-label">Kart Adı / Banka</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -465,26 +563,26 @@ export default function CreditCardView({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Kart Limiti (₺)</label>
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    required
-                    placeholder="50000"
-                    value={cardLimit}
-                    onChange={(e) => setCardLimit(e.target.value)}
-                    min="1"
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label">Kart Limiti (₺)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  className="form-input" 
+                  required
+                  placeholder="0.00"
+                  value={cardLimit}
+                  onChange={(e) => setCardLimit(e.target.value)}
+                  min="1"
+                />
+              </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Asgari Ödeme Oranı (%)</label>
                   <input 
                     type="number" 
                     className="form-input" 
-                    required
                     placeholder="20"
                     value={cardMinPayment}
                     onChange={(e) => setCardMinPayment(e.target.value)}
@@ -492,21 +590,21 @@ export default function CreditCardView({
                     max="100"
                   />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label className="form-label">Son Ödeme Tarihi</label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  value={cardDueDate}
-                  onChange={(e) => setCardDueDate(e.target.value)}
-                />
+                <div className="form-group">
+                  <label className="form-label">Hesap Kesim / Son Ödeme</label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={cardDueDate}
+                    onChange={(e) => setCardDueDate(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>İptal</button>
-                <button type="submit" className="btn btn-primary">Kartı Kaydet</button>
+                <button type="submit" className="btn btn-primary">Kartı Tanımla</button>
               </div>
             </form>
           </div>
@@ -519,12 +617,12 @@ export default function CreditCardView({
           <div className="modal-content">
             <div className="modal-header">
               <h2>Kredi Kartı Düzenle</h2>
-              <button className="modal-close" onClick={() => { setShowEditModal(false); setSelectedCard(null); }}>×</button>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
             </div>
             
             <form onSubmit={handleEditCardSubmit}>
               <div className="form-group">
-                <label className="form-label">Kart İsmi / Banka</label>
+                <label className="form-label">Kart Adı / Banka</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -534,46 +632,45 @@ export default function CreditCardView({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Kart Limiti (₺)</label>
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    required
-                    value={editCardLimit}
-                    onChange={(e) => setEditCardLimit(e.target.value)}
-                    min="1"
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label">Kart Limiti (₺)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  className="form-input" 
+                  required
+                  value={editCardLimit}
+                  onChange={(e) => setEditCardLimit(e.target.value)}
+                  min="1"
+                />
+              </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Asgari Ödeme Oranı (%)</label>
                   <input 
                     type="number" 
                     className="form-input" 
-                    required
-                    placeholder="20"
                     value={editCardMinPayment}
                     onChange={(e) => setEditCardMinPayment(e.target.value)}
                     min="0"
                     max="100"
                   />
                 </div>
-              </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Son Ödeme Tarihi</label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  value={editCardDueDate}
-                  onChange={(e) => setEditCardDueDate(e.target.value)}
-                />
+                <div className="form-group">
+                  <label className="form-label">Son Ödeme Tarihi</label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={editCardDueDate}
+                    onChange={(e) => setEditCardDueDate(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowEditModal(false); setSelectedCard(null); }}>İptal</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary">Değişiklikleri Kaydet</button>
               </div>
             </form>
@@ -581,73 +678,35 @@ export default function CreditCardView({
         </div>
       )}
 
-      {/* DELETE CARD CONFIRMATION MODAL */}
+      {/* DELETE CONFIRMATION MODAL */}
       {cardToDelete && (
-        <div className="modal-overlay" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-          <div className="modal-content" style={{ maxWidth: '440px' }}>
-            <div className="modal-header" style={{ borderBottom: '1px solid rgba(239,68,68,0.2)' }}>
-              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171', margin: 0 }}>
-                <AlertTriangle size={20} />
-                Kredi Kartı Kaydını Sil
-              </h2>
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2>Kartı Sil</h2>
               <button className="modal-close" onClick={() => setCardToDelete(null)}>×</button>
             </div>
-
-            <div style={{ padding: '1.25rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', padding: '1.25rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
-                  Silinecek Kredi Kartı
-                </div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {cardToDelete.card_name}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Limit: {(parseFloat(cardToDelete.limit) || 0).toLocaleString('tr-TR')} ₺ · Güncel Borç: {(parseFloat(cardToDelete.used_amount) || 0).toLocaleString('tr-TR')} ₺
-                </div>
-              </div>
-
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
-                <strong>{cardToDelete.card_name}</strong> isimli kredi kartını sistemden silmek istediğinize emin misiniz?<br />
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px', display: 'inline-block' }}>
-                  ⚠️ Bu işlem kart tanımını listeden kaldıracaktır.
-                </span>
+            
+            <div style={{ padding: '1rem 0', textAlign: 'center' }}>
+              <AlertTriangle size={48} style={{ color: 'var(--color-danger)', marginBottom: '1rem' }} />
+              <p style={{ margin: 0, fontWeight: 600 }}>
+                "{cardToDelete.card_name}" adlı kredi kartını silmek istediğinize emin misiniz?
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                Bu işlem geri alınamaz.
               </p>
             </div>
 
-            <div className="modal-footer" style={{ justifyContent: 'center', gap: '0.75rem' }}>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setCardToDelete(null)}>Vazgeç</button>
               <button 
-                type="button" 
-                className="btn btn-secondary" 
-                onClick={() => setCardToDelete(null)}
-                style={{ minWidth: '110px' }}
-              >
-                Vazgeç
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-sm" 
+                className="btn btn-danger" 
                 onClick={() => {
                   onDeleteCard(cardToDelete.id);
                   setCardToDelete(null);
                 }}
-                style={{ 
-                  minWidth: '130px', 
-                  background: 'rgba(239,68,68,0.2)', 
-                  border: '1px solid rgba(239,68,68,0.5)', 
-                  color: '#fca5a5', 
-                  fontWeight: 700,
-                  padding: '0.6rem 1.25rem',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer'
-                }}
               >
-                <Trash2 size={15} />
-                Evet, Sil
+                Evet, Kartı Sil
               </button>
             </div>
           </div>

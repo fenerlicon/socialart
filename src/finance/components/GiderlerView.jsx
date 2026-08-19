@@ -52,8 +52,6 @@ export default function GiderlerView({
       amount: totalAmt,
       category,
       expense_date: expenseDate,
-      kdv_rate: rate,
-      kdv_amount: kdvAmt,
       period,
       payment_method: paymentMethod,
       description: description || `${category} Gideri`
