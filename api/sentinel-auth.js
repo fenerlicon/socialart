@@ -164,15 +164,10 @@ export default async function handler(req, res) {
       expiresAt: Date.now() + 3 * 60 * 1000
     });
 
-    const qrData = encodeURIComponent(`otpauth://totp/SocialArt%20Sentinel:${cleanUser}?secret=${SENTINEL_TOTP_SECRET}&issuer=SocialArt%20Ajans`);
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
-
     return res.status(200).json({
       success: true,
       require2FA: true,
       tempTicket: ticket,
-      totpSecret: SENTINEL_TOTP_SECRET,
-      qrCodeUrl,
       message: '1. Aşama doğrulandı. Lütfen Google Authenticator uygulamanızdaki 6 haneli canlı kodu giriniz.'
     });
   }

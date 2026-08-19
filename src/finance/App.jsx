@@ -97,11 +97,29 @@ export default function App() {
   const [creditCards, setCreditCards] = useState([]);
   const [cashJournal, setCashJournal] = useState([]);
 
-  // Auth & Security States (Only ajanscelal26 & ajansercan26 allowed)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('socialart_is_authenticated') === 'true');
+  // Auth & Security States (Only ajanscelal26 & ajansercan26 allowed - Strictly isolated from CRM)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const isEmergencyLocked = localStorage.getItem('socialart_finance_emergency_lock') === 'true';
+    if (isEmergencyLocked) return false;
+
+    const token = sessionStorage.getItem('socialart_finance_session_token');
+    const expiry = sessionStorage.getItem('socialart_finance_session_expiry');
+    if (!token || !expiry) return false;
+
+    // Check 30-minute session expiry
+    if (Date.now() > parseInt(expiry, 10)) {
+      sessionStorage.removeItem('socialart_finance_session_token');
+      sessionStorage.removeItem('socialart_finance_auth_user');
+      sessionStorage.removeItem('socialart_finance_session_expiry');
+      return false;
+    }
+    return true;
+  });
   const [authUser, setAuthUser] = useState(() => {
     try {
-      return JSON.parse(sessionStorage.getItem('socialart_auth_user') || 'null');
+      const isEmergencyLocked = localStorage.getItem('socialart_finance_emergency_lock') === 'true';
+      if (isEmergencyLocked) return null;
+      return JSON.parse(sessionStorage.getItem('socialart_finance_auth_user') || 'null');
     } catch(e) { return null; }
   });
   const [userPasswords, setUserPasswords] = useState(() => ({
@@ -324,8 +342,9 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('socialart_is_authenticated');
-    sessionStorage.removeItem('socialart_auth_user');
+    sessionStorage.removeItem('socialart_finance_session_token');
+    sessionStorage.removeItem('socialart_finance_auth_user');
+    sessionStorage.removeItem('socialart_finance_session_expiry');
     setIsAuthenticated(false);
     setAuthUser(null);
   };

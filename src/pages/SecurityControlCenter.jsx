@@ -79,10 +79,6 @@ export default function SecurityControlCenter() {
   const [authUsernameInput, setAuthUsernameInput] = useState('');
   const [authOtpInput, setAuthOtpInput] = useState('');
   const [tempTicket, setTempTicket] = useState('');
-  const [totpSecret, setTotpSecret] = useState('JBSWY3DPEHPK3PXP');
-  const [qrCodeUrl, setQrCodeUrl] = useState('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth%3A%2F%2Ftotp%2FSocialArt%2520Sentinel%3AAdmin%3Fsecret%3DJBSWY3DPEHPK3PXP%26issuer%3DSocialArt%2520Ajans');
-  const [showQrModal, setShowQrModal] = useState(false);
-  const [copiedKey, setCopiedKey] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,6 +95,30 @@ export default function SecurityControlCenter() {
   const [manualIp, setManualIp] = useState('');
   const [manualReason, setManualReason] = useState('');
   const [panicActive, setPanicActive] = useState(false);
+
+  // Finance Security & Whitelist States
+  const [financeAllowedUsers, setFinanceAllowedUsers] = useState(() => {
+    try {
+      const stored = localStorage.getItem('socialart_finance_allowed_users');
+      return stored ? JSON.parse(stored) : ['ajansercan26', 'ajanscelal26'];
+    } catch(e) {
+      return ['ajansercan26', 'ajanscelal26'];
+    }
+  });
+  const [financeAuditLogs, setFinanceAuditLogs] = useState(() => {
+    try {
+      const stored = localStorage.getItem('socialart_finance_audit_logs');
+      return stored ? JSON.parse(stored) : [
+        { id: 'fa-1', timestamp: new Date().toISOString(), timeStr: '13:50:22', dateStr: '19.08.2026', username: 'furkan', status: 'BLOCKED', reason: 'Yetkisiz CRM Kullanıcısı Engellendi', source: '/finans' },
+        { id: 'fa-2', timestamp: new Date().toISOString(), timeStr: '12:15:10', dateStr: '19.08.2026', username: 'ajansercan26', status: 'GRANTED', reason: 'Mali İşler Yetkili Girişi', source: '/finans' }
+      ];
+    } catch(e) { return []; }
+  });
+  const [financeEmergencyLock, setFinanceEmergencyLock] = useState(() => {
+    return localStorage.getItem('socialart_finance_emergency_lock') === 'true';
+  });
+  const [newAllowedUser, setNewAllowedUser] = useState('');
+  const [newAllowedPass, setNewAllowedPass] = useState('');
 
   useEffect(() => {
     const existingToken = sessionStorage.getItem(SENTINEL_AUTH_KEY);
@@ -166,11 +186,8 @@ export default function SecurityControlCenter() {
 
       if (data.require2FA) {
         setTempTicket(data.tempTicket);
-        if (data.totpSecret) setTotpSecret(data.totpSecret);
-        if (data.qrCodeUrl) setQrCodeUrl(data.qrCodeUrl);
         setAuthStep(2);
         setAuthError('');
-        setShowQrModal(false);
       }
     } catch (err) {
       setAuthError('Sunucu bağlantı hatası oluştu. Lütfen tekrar deneyiniz.');
@@ -245,12 +262,6 @@ export default function SecurityControlCenter() {
     }
   };
 
-  const handleCopySecret = () => {
-    navigator.clipboard.writeText(totpSecret);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
-  };
-
   const handleGateLogout = () => {
     sessionStorage.removeItem(SENTINEL_AUTH_KEY);
     setIsAuthenticated(false);
@@ -312,6 +323,93 @@ export default function SecurityControlCenter() {
   const handleRemoveQuarantine = (target) => {
     Sentinel.removeFromQuarantine(target);
     loadData();
+  };
+
+  const handleToggleFinanceEmergencyLock = () => {
+    const newState = !financeEmergencyLock;
+    setFinanceEmergencyLock(newState);
+    localStorage.setItem('socialart_finance_emergency_lock', newState ? 'true' : 'false');
+    
+    Sentinel.recordEvent({
+      type: newState ? 'FINANCE_EMERGENCY_LOCK_ENGAGED' : 'FINANCE_EMERGENCY_LOCK_DISENGAGED',
+      severity: newState ? 'CRITICAL' : 'MEDIUM',
+      score: newState ? 99 : 20,
+      source: 'Security Control Center (/kontrol)',
+      description: newState 
+        ? 'Finans modülü Acil Durum Kilidine alındı! Tüm oturumlar donduruldu.' 
+        : 'Finans modülü Acil Durum Kilidi kaldırıldı. Yetkili kullanıcı girişine açıldı.',
+      action: newState ? 'Tüm Finans Girişleri Kilitlendi' : 'Kilit Açıldı'
+    });
+
+    if (newState) {
+      handleRevokeAllFinanceSessions();
+    }
+  };
+
+  const handleAddFinanceAllowedUser = (e) => {
+    e.preventDefault();
+    if (!newAllowedUser) return;
+    const clean = newAllowedUser.trim().toLowerCase();
+    if (financeAllowedUsers.includes(clean)) {
+      alert('Bu kullanıcı zaten izinli listede yer alıyor.');
+      return;
+    }
+    const updated = [...financeAllowedUsers, clean];
+    setFinanceAllowedUsers(updated);
+    localStorage.setItem('socialart_finance_allowed_users', JSON.stringify(updated));
+    if (newAllowedPass) {
+      localStorage.setItem(`socialart_pass_${clean}`, newAllowedPass);
+    }
+    setNewAllowedUser('');
+    setNewAllowedPass('');
+
+    Sentinel.recordEvent({
+      type: 'FINANCE_WHITELIST_MODIFIED',
+      severity: 'HIGH',
+      score: 70,
+      source: 'Security Control Center (/kontrol)',
+      description: `${clean} kullanıcısına Finans Modülü (/finans) tam yetki izni tanımlandı.`,
+      action: 'Whitelist Güncellendi'
+    });
+  };
+
+  const handleRemoveFinanceAllowedUser = (targetUser) => {
+    if (targetUser === 'ajansercan26' || targetUser === 'ajanscelal26') {
+      if (!window.confirm(`${targetUser} ana finans yöneticisidir. Kaldırmak istediğinize emin misiniz?`)) return;
+    }
+    const updated = financeAllowedUsers.filter(u => u !== targetUser);
+    setFinanceAllowedUsers(updated);
+    localStorage.setItem('socialart_finance_allowed_users', JSON.stringify(updated));
+
+    Sentinel.recordEvent({
+      type: 'FINANCE_WHITELIST_REVOKED',
+      severity: 'HIGH',
+      score: 75,
+      source: 'Security Control Center (/kontrol)',
+      description: `${targetUser} kullanıcısının Finans Modülü yetkisi tamamen kaldırıldı.`,
+      action: 'Yetki İptal Edildi'
+    });
+  };
+
+  const handleRevokeAllFinanceSessions = () => {
+    sessionStorage.removeItem('socialart_finance_session_token');
+    sessionStorage.removeItem('socialart_finance_auth_user');
+    sessionStorage.removeItem('socialart_finance_session_expiry');
+    alert('Tüm aktif Finans oturumları başarıyla sonlandırıldı ve kapatıldı.');
+
+    Sentinel.recordEvent({
+      type: 'FINANCE_SESSIONS_REVOKED',
+      severity: 'HIGH',
+      score: 80,
+      source: 'Security Control Center (/kontrol)',
+      description: 'Yönetici tarafından tüm aktif Finans oturumları anında sonlandırıldı.',
+      action: 'Oturumlar Düşürüldü'
+    });
+  };
+
+  const handleClearFinanceAuditLogs = () => {
+    setFinanceAuditLogs([]);
+    localStorage.removeItem('socialart_finance_audit_logs');
   };
 
   const filteredThreats = INITIAL_A_Z_THREATS.filter(t => {
@@ -552,61 +650,6 @@ export default function SecurityControlCenter() {
                 </div>
               </div>
 
-              {/* HELPER MODAL */}
-              {showQrModal && (
-                <div style={{
-                  background: 'rgba(15, 23, 42, 0.95)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: '16px',
-                  padding: '1.25rem 1rem',
-                  marginBottom: '1.25rem',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ color: '#38bdf8', fontSize: '0.82rem', fontWeight: 800, marginBottom: '10px' }}>
-                    📷 Yeni Cihaz İçin QR Kod:
-                  </div>
-                  
-                  <div style={{
-                    background: '#fff',
-                    padding: '10px',
-                    borderRadius: '12px',
-                    display: 'inline-block',
-                    marginBottom: '12px'
-                  }}>
-                    <img
-                      src={qrCodeUrl}
-                      alt="Google Authenticator QR Code"
-                      width="160"
-                      height="160"
-                      style={{ display: 'block', borderRadius: '4px' }}
-                    />
-                  </div>
-
-                  <div style={{
-                    background: 'rgba(0,0,0,0.5)',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    fontFamily: 'monospace',
-                    color: '#facc15',
-                    fontSize: '0.9rem',
-                    fontWeight: 800,
-                    letterSpacing: '2px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <span>{totpSecret}</span>
-                    <button
-                      type="button"
-                      onClick={handleCopySecret}
-                      style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-                    >
-                      {copiedKey ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {authError && (
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.15)',
@@ -668,24 +711,6 @@ export default function SecurityControlCenter() {
                 >
                   <Lock size={18} />
                   <span>{isSubmitting ? 'Doğrulanıyor...' : 'Komuta Merkezini Aç'}</span>
-                </button>
-              </div>
-
-              {/* Discreet First-time Setup Toggle */}
-              <div style={{ textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowQrModal(!showQrModal)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#64748b',
-                    fontSize: '0.74rem',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
-                >
-                  {showQrModal ? 'Kurulum Kutusunu Gizle' : 'Cihaz değiştirdiniz mi veya henüz kurmadınız mı?'}
                 </button>
               </div>
             </form>
@@ -982,6 +1007,26 @@ export default function SecurityControlCenter() {
           >
             <Play size={16} />
             <span>⚡ Sızma Testi Laboratuvarı</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('finance_security')}
+            style={{
+              background: activeTab === 'finance_security' ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
+              border: activeTab === 'finance_security' ? '1px solid rgba(234, 179, 8, 0.4)' : '1px solid transparent',
+              color: activeTab === 'finance_security' ? '#eab308' : '#94a3b8',
+              padding: '10px 18px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <KeyRound size={16} />
+            <span>💰 Finans Güvenlik & Yetki Denetimi</span>
           </button>
         </div>
 
@@ -1554,6 +1599,378 @@ export default function SecurityControlCenter() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 6: FINANCE SECURITY & ACCESS CONTROL */}
+        {activeTab === 'finance_security' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Top Stat & Control Banner */}
+            <div style={{
+              background: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(20px)',
+              border: financeEmergencyLock ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(234, 179, 8, 0.3)',
+              borderRadius: '24px',
+              padding: '2rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>
+                    💰 Şirket Finans Modülü Güvenlik & Yetki Karargahı
+                  </h3>
+                  <span style={{
+                    background: financeEmergencyLock ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                    color: financeEmergencyLock ? '#f87171' : '#34d399',
+                    border: financeEmergencyLock ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.74rem',
+                    fontWeight: 800
+                  }}>
+                    {financeEmergencyLock ? '🚨 ACİL KİLİT AKTİF' : '🛡️ KAPALI DEVRE KORUMALI'}
+                  </span>
+                </div>
+                <p style={{ margin: '6px 0 0 0', color: '#94a3b8', fontSize: '0.84rem' }}>
+                  Şirketin tüm kasa, gelir, gider ve personel maaş kayıtlarını CRM kullanıcılarından ve yetkisiz kişilerden izole edin.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleToggleFinanceEmergencyLock}
+                  style={{
+                    background: financeEmergencyLock ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: financeEmergencyLock ? '0 8px 16px rgba(16, 185, 129, 0.3)' : '0 8px 16px rgba(239, 68, 68, 0.3)'
+                  }}
+                >
+                  <Ban size={16} />
+                  <span>{financeEmergencyLock ? '🔓 Acil Durum Kilidini Aç' : '🔒 Acil Finans Kilidi Vur'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRevokeAllFinanceSessions}
+                  style={{
+                    background: 'rgba(234, 179, 8, 0.15)',
+                    border: '1px solid rgba(234, 179, 8, 0.4)',
+                    color: '#facc15',
+                    padding: '10px 16px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <LogOut size={16} />
+                  <span>Tüm Finans Oturumlarını Sonlandır</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2-Column Grid: Whitelist & Staff Isolation */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '20px' }}>
+              {/* Whitelist Panel */}
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.7)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                padding: '1.75rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
+                      🔑 İzinli Finans Yöneticileri (Whitelist)
+                    </h4>
+                    <p style={{ margin: '2px 0 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
+                      /finans paneline giriş izni olan tekil hesaplar
+                    </p>
+                  </div>
+                  <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 800, background: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
+                    {financeAllowedUsers.length} Yetkili Hesap
+                  </span>
+                </div>
+
+                {/* Whitelist User List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.5rem' }}>
+                  {financeAllowedUsers.map((usr) => (
+                    <div
+                      key={usr}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                          {usr.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.88rem' }}>
+                            {usr} {usr === 'ajansercan26' ? '(Ercan Bey - Mali İşler)' : usr === 'ajanscelal26' ? '(Celal Bey - Ajans Başkanı)' : '(Finans Sorumlusu)'}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>
+                            ✅ Tam Finansal Erişim İzni
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFinanceAllowedUser(usr)}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          color: '#f87171',
+                          padding: '4px 8px',
+                          borderRadius: '8px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Yetkiyi Kaldır
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add New Authorized User Form */}
+                <form onSubmit={handleAddFinanceAllowedUser} style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '14px', padding: '12px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '8px' }}>
+                    ➕ Yeni Yetkili Finans Hesabı Ekle
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      placeholder="Kullanıcı adı (örn: finansomur26)"
+                      value={newAllowedUser}
+                      onChange={(e) => setNewAllowedUser(e.target.value)}
+                      style={{
+                        flex: 1,
+                        minWidth: '150px',
+                        padding: '8px 12px',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <input
+                      type="password"
+                      placeholder="Başlangıç Şifresi"
+                      value={newAllowedPass}
+                      onChange={(e) => setNewAllowedPass(e.target.value)}
+                      style={{
+                        width: '130px',
+                        padding: '8px 12px',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Ekle
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Staff Isolation Status Matrix */}
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.7)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                padding: '1.75rem'
+              }}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
+                    🔒 CRM Personel İzolasyon Matrisi
+                  </h4>
+                  <p style={{ margin: '2px 0 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
+                    CRM / Admin panellerindeki personellerin /finans erişim engelleme durumları
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    { name: 'Furkan', role: 'İş Geliştirme / CRM Satış Temsilcisi', status: 'BLOCKED', desc: 'Finans URL geçişi doğrudan engellidir.' },
+                    { name: 'Selin', role: 'Kreatif / Prodüksiyon Sorumlusu', status: 'BLOCKED', desc: 'Finans URL geçişi doğrudan engellidir.' },
+                    { name: 'Tuğba', role: 'Sosyal Medya Uzmanı', status: 'BLOCKED', desc: 'Finans URL geçişi doğrudan engellidir.' },
+                    { name: 'Simge', role: 'Müşteri İlişkileri Temsilcisi', status: 'BLOCKED', desc: 'Finans URL geçişi doğrudan engellidir.' },
+                    { name: 'Ercan Bey', role: 'Ajans Finans & Muhasebe Yöneticisi', status: 'ALLOWED', desc: 'Özel finans anahtarı ile tam yetkili.' },
+                    { name: 'Celal Bey', role: 'Ajans Başkanı & Kurucu', status: 'ALLOWED', desc: 'Özel finans anahtarı ile tam yetkili.' }
+                  ].map((staff) => (
+                    <div
+                      key={staff.name}
+                      style={{
+                        background: staff.status === 'BLOCKED' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)',
+                        border: staff.status === 'BLOCKED' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(16, 185, 129, 0.2)',
+                        borderRadius: '12px',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.86rem' }}>
+                          {staff.name} <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '0.76rem' }}>— {staff.role}</span>
+                        </div>
+                        <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                          {staff.desc}
+                        </div>
+                      </div>
+
+                      <span style={{
+                        background: staff.status === 'BLOCKED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                        color: staff.status === 'BLOCKED' ? '#f87171' : '#34d399',
+                        border: staff.status === 'BLOCKED' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {staff.status === 'BLOCKED' ? '❌ ERİŞİM ENGELLİ' : '✅ YETKİLİ'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Audit Trail Log Table */}
+            <div style={{
+              background: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '20px',
+              padding: '1.75rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
+                    📋 Finans Giriş & Yetkisiz Erişim Denetim Günlüğü
+                  </h4>
+                  <p style={{ margin: '2px 0 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
+                    /finans kapısına gelen tüm oturum açma ve sızma denemelerinin Sentinel audit kayıtları
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleClearFinanceAuditLogs}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#94a3b8',
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Logları Temizle
+                </button>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                      <th style={{ padding: '8px 12px' }}>Zaman</th>
+                      <th style={{ padding: '8px 12px' }}>Kullanıcı</th>
+                      <th style={{ padding: '8px 12px' }}>Kaynak</th>
+                      <th style={{ padding: '8px 12px' }}>Açıklama</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right' }}>Sonuç Durumu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {financeAuditLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                          Henüz şüpheli veya yetkisiz finans giriş denemesi kaydedilmedi.
+                        </td>
+                      </tr>
+                    ) : (
+                      financeAuditLogs.map((item) => (
+                        <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: '#cbd5e1' }}>
+                            {item.dateStr} {item.timeStr}
+                          </td>
+                          <td style={{ padding: '10px 12px', fontWeight: 700, color: item.status === 'BLOCKED' ? '#f87171' : '#34d399' }}>
+                            {item.username}
+                          </td>
+                          <td style={{ padding: '10px 12px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                            {item.source}
+                          </td>
+                          <td style={{ padding: '10px 12px', color: '#e2e8f0' }}>
+                            {item.reason}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                            <span style={{
+                              background: item.status === 'BLOCKED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                              color: item.status === 'BLOCKED' ? '#f87171' : '#34d399',
+                              border: item.status === 'BLOCKED' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800
+                            }}>
+                              {item.status === 'BLOCKED' ? 'ENGELLEDİ' : 'İZİN VERİLDİ'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
