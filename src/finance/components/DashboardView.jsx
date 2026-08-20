@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import React, { useState } from 'react';
 import { DollarSign, Users, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Calendar, CreditCard, Landmark, Percent, Target, Bell, AlertTriangle, Edit3, CheckCircle2, ChevronRight } from 'lucide-react';
 
@@ -18,15 +19,38 @@ export default function DashboardView({
   const [monthlyGoal, setMonthlyGoal] = useState(() => {
     return parseFloat(localStorage.getItem('socialart_monthly_goal')) || 500000;
   });
+
+  React.useEffect(() => {
+    const fetchGoal = async () => {
+      try {
+        const { data } = await supabase.from('app_settings').select('setting_value').eq('setting_key', 'monthly_goal').single();
+        if (data && data.setting_value) {
+          const val = parseFloat(data.setting_value);
+          if (!isNaN(val)) {
+            setMonthlyGoal(val);
+            localStorage.setItem('socialart_monthly_goal', val);
+          }
+        }
+      } catch (e) {}
+    };
+    fetchGoal();
+  }, []);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState(monthlyGoal.toString());
 
-  const handleGoalSave = (e) => {
+  const handleGoalSave = async (e) => {
     e.preventDefault();
     const val = parseFloat(tempGoal) || 500000;
     setMonthlyGoal(val);
     localStorage.setItem('socialart_monthly_goal', val);
     setIsEditingGoal(false);
+
+    try {
+      await supabase.from('app_settings').upsert({
+        setting_key: 'monthly_goal',
+        setting_value: val.toString()
+      }, { onConflict: 'setting_key' });
+    } catch (err) {}
   };
 
   // 1. Calculations
