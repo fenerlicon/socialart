@@ -197,50 +197,89 @@ export default async function handler(req, res) {
     });
   }
 
-  // Parse path action
+  // Parse path action for Bot 1 (Ops/CRM) and Bot 2 (Finance)
   const urlPath = (req.url || '').split('?')[0];
-  const actionMatch = urlPath.match(/\/api\/gpt\/([a-zA-Z0-9_-]+)/);
-  const action = actionMatch ? actionMatch[1] : (req.query.action || '');
+  let action = '';
+  
+  if (urlPath.includes('/api/gpt/ops/')) {
+    action = 'ops-' + urlPath.split('/api/gpt/ops/')[1];
+  } else if (urlPath.includes('/api/gpt/finance/')) {
+    action = 'finance-' + urlPath.split('/api/gpt/finance/')[1];
+  } else {
+    const actionMatch = urlPath.match(/\/api\/gpt\/([a-zA-Z0-9_-]+)/);
+    action = actionMatch ? actionMatch[1] : (req.query.action || '');
+  }
 
   try {
     switch (action) {
+      // --- BOT 1: OPERASYON, CRM & İK (/admin & /crm) ---
+      case 'ops-leads':
       case 'leads':
         return await handleGetLeads(req, res);
+      case 'ops-create-lead':
       case 'create-lead':
         return await handleCreateLead(req, res);
+      case 'ops-lead-history':
       case 'lead-history':
         return await handleLeadHistory(req, res);
+      case 'ops-lead-note':
       case 'lead-note':
         return await handleLeadNote(req, res);
-      case 'payment-request':
-        return await handlePaymentRequest(req, res);
-      case 'whatsapp-link':
-        return await handleWhatsAppLink(req, res);
-      case 'reports':
-        return await handleReports(req, res);
+      case 'ops-calendar':
       case 'calendar':
         return await handleCalendar(req, res);
+      case 'ops-tasks':
       case 'tasks':
         return await handleTasks(req, res);
+      case 'ops-todo':
       case 'todo':
       case 'create-todo':
         return await handleCreateTodo(req, res);
+      case 'ops-create-job-application':
       case 'create-job-application':
         return await handleCreateJobApp(req, res);
+      case 'ops-create-ugc-application':
       case 'create-ugc-application':
         return await handleCreateUgcApp(req, res);
+      case 'ops-delete-application':
       case 'delete-application':
         return await handleDeleteApp(req, res);
+      case 'ops-update-application':
       case 'update-application':
         return await handleUpdateApp(req, res);
+      case 'ops-health':
       case 'operations-health':
         return await handleOperationsHealth(req, res);
+      case 'ops-brand-performance':
       case 'brand-performance':
         return await handleBrandPerformance(req, res);
+      case 'ops-staff-kpi':
       case 'staff-kpi-analysis':
         return await handleStaffKpiAnalysis(req, res);
+      case 'ops-crm-metrics-update':
       case 'crm-metrics-update':
         return await handleCrmMetricsUpdate(req, res);
+
+      // --- BOT 2: FİNANS & PATRON (/finans) ---
+      case 'finance-summary':
+      case 'reports':
+        return await handleFinanceSummary(req, res);
+      case 'finance-payments':
+        return await handleFinancePayments(req, res);
+      case 'finance-payment-request':
+      case 'payment-request':
+        return await handlePaymentRequest(req, res);
+      case 'finance-expenses':
+        return await handleFinanceExpenses(req, res);
+      case 'finance-credit-cards':
+        return await handleFinanceCreditCards(req, res);
+      case 'finance-salaries':
+        return await handleFinanceSalaries(req, res);
+      case 'finance-production-projects':
+        return await handleFinanceProductionProjects(req, res);
+      case 'whatsapp-link':
+        return await handleWhatsAppLink(req, res);
+
       default:
         return res.status(404).json({ error: 'UNKNOWN_ACTION', message: `Eylem '${action}' tanımlı değil.` });
     }
@@ -1309,5 +1348,134 @@ async function handleCrmMetricsUpdate(req, res) {
     });
   } catch (e) {
     return res.status(500).json({ error: 'CRM metriği güncellenirken hata oluştu', details: e.message });
+  }
+}
+
+// --- BOT 2: FİNANS & PATRON HANDLERS (/finans) ---
+
+async function handleFinanceSummary(req, res) {
+  try {
+    const { data: clients } = await supabasePrimary.from('active_clients').select('*');
+    const { data: expenses } = await supabasePrimary.from('finance_expenses').select('*');
+    const { data: cards } = await supabasePrimary.from('finance_credit_cards').select('*');
+    const { data: projects } = await supabasePrimary.from('finance_production_projects').select('*');
+
+    const totalClientRevenue = (clients || []).reduce((acc, c) => acc + (Number(c.monthly_fee) || 0), 0);
+    const totalExpenses = (expenses || []).reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+    const totalCardDebt = (cards || []).reduce((acc, c) => acc + (Number(c.current_balance) || 0), 0);
+    const totalProdRevenue = (projects || []).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+    const netProfit = (totalClientRevenue + totalProdRevenue) - totalExpenses;
+
+    return res.status(200).json({
+      success: true,
+      finance_dashboard: {
+        total_monthly_contract_revenue: `₺${totalClientRevenue.toLocaleString('tr-TR')}`,
+        total_production_revenue: `₺${totalProdRevenue.toLocaleString('tr-TR')}`,
+        total_monthly_expenses: `₺${totalExpenses.toLocaleString('tr-TR')}`,
+        total_credit_card_debts: `₺${totalCardDebt.toLocaleString('tr-TR')}`,
+        estimated_net_monthly_profit: `₺${netProfit.toLocaleString('tr-TR')}`,
+        profitability_status: netProfit >= 0 ? '🟢 Kârlı Durumda' : '🔴 Zararda / Yüksek Masraf'
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Finans özet verileri çekilirken hata oluştu', details: e.message });
+  }
+}
+
+async function handleFinancePayments(req, res) {
+  try {
+    const { data: clients } = await supabasePrimary.from('active_clients').select('*');
+    return res.status(200).json({
+      success: true,
+      active_client_contracts: (clients || []).map(c => ({
+        client_name: c.name || c.brand_name,
+        monthly_fee: `₺${(Number(c.monthly_fee) || 0).toLocaleString('tr-TR')}`,
+        payment_day: c.payment_day || 'Ayın 1\'i',
+        status: c.status || 'Aktif'
+      }))
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Müşteri ödemeleri çekilirken hata oluştu', details: e.message });
+  }
+}
+
+async function handleFinanceExpenses(req, res) {
+  try {
+    const { data: expenses } = await supabasePrimary.from('finance_expenses').select('*');
+    return res.status(200).json({
+      success: true,
+      agency_expenses: (expenses || []).map(e => ({
+        id: e.id,
+        title: e.title || e.category,
+        category: e.category,
+        amount: `₺${(Number(e.amount) || 0).toLocaleString('tr-TR')}`,
+        date: e.date
+      }))
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Giderler çekilirken hata oluştu', details: e.message });
+  }
+}
+
+async function handleFinanceCreditCards(req, res) {
+  try {
+    const { data: cards } = await supabasePrimary.from('finance_credit_cards').select('*');
+    const todayDay = new Date().getDate();
+
+    return res.status(200).json({
+      success: true,
+      credit_cards: (cards || []).map(c => {
+        const dueDay = Number(c.cutoff_day || c.due_day || 15);
+        const daysLeft = dueDay >= todayDay ? (dueDay - todayDay) : (30 - todayDay + dueDay);
+        return {
+          bank_name: c.bank_name,
+          card_holder: c.card_holder,
+          current_balance: `₺${(Number(c.current_balance) || 0).toLocaleString('tr-TR')}`,
+          card_limit: `₺${(Number(c.limit_amount) || 0).toLocaleString('tr-TR')}`,
+          due_day: `Ayın ${dueDay}. Günü`,
+          warning: daysLeft <= 3 ? `⚠️ DİKKAT: Son ödeme gününe ${daysLeft} gün kaldı!` : '🟢 Normal'
+        };
+      })
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Kredi kartları çekilirken hata oluştu', details: e.message });
+  }
+}
+
+async function handleFinanceSalaries(req, res) {
+  try {
+    const { data: staff } = await supabasePrimary.from('employees').select('id, full_name, title, salary');
+    const totalPayroll = (staff || []).reduce((acc, s) => acc + (Number(s.salary) || 0), 0);
+
+    return res.status(200).json({
+      success: true,
+      total_monthly_payroll: `₺${totalPayroll.toLocaleString('tr-TR')}`,
+      employee_salaries: (staff || []).map(s => ({
+        name: s.full_name,
+        role: s.title || 'Ekip Üyesi',
+        salary: `₺${(Number(s.salary) || 0).toLocaleString('tr-TR')}`
+      }))
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Personel maaşları çekilirken hata oluştu', details: e.message });
+  }
+}
+
+async function handleFinanceProductionProjects(req, res) {
+  try {
+    const { data: projects } = await supabasePrimary.from('finance_production_projects').select('*');
+    return res.status(200).json({
+      success: true,
+      production_projects: (projects || []).map(p => ({
+        client_name: p.client_name,
+        project_name: p.project_name,
+        budget: `₺${(Number(p.amount) || 0).toLocaleString('tr-TR')}`,
+        status: p.status || 'ongoing',
+        date: p.date
+      }))
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Prodüksiyon projeleri çekilirken hata oluştu', details: e.message });
   }
 }

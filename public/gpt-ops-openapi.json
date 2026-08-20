@@ -1,0 +1,97 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Bot 1: SocialArt Operasyon, CRM & İK Asistanı",
+    "description": "SocialArt Ajans /admin ve /crm verilerinden beslenen Operasyon, Müşteri İlişkileri, İş Takibi ve Kariyer Havuzu ChatGPT Botu",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://www.socialartmedya.com",
+      "description": "Canlı Yayın Sunucusu"
+    }
+  ],
+  "paths": {
+    "/api/gpt/ops/leads": {
+      "get": {
+        "summary": "CRM'deki Tüm Aktif Müşteri Adaylarını Getir (/crm)",
+        "operationId": "getLeads"
+      }
+    },
+    "/api/gpt/ops/create-lead": {
+      "post": {
+        "summary": "Yeni CRM Müşteri Adayı Ekledi",
+        "operationId": "createLead"
+      }
+    },
+    "/api/gpt/ops/create-job-application": {
+      "post": {
+        "summary": "Yeni Kariyer / İş Başvurusu Ekle (Mail veya Dış Havuzdan)",
+        "operationId": "createJobApplication"
+      }
+    },
+    "/api/gpt/ops/create-ugc-application": {
+      "post": {
+        "summary": "Yeni UGC & Influencer Başvurusu Ekle",
+        "operationId": "createUgcApplication"
+      }
+    },
+    "/api/gpt/ops/update-application": {
+      "post": {
+        "summary": "Başvuru Durumunu Değiştir (Mülakat Adayı, Pasif, Yedek)",
+        "operationId": "updateApplication"
+      }
+    },
+    "/api/gpt/ops/delete-application": {
+      "post": {
+        "summary": "İş / UGC Başvurusunu Sil",
+        "operationId": "deleteApplication"
+      }
+    },
+    "/api/gpt/ops/calendar": {
+      "post": {
+        "summary": "Takvime Çekim, Toplantı, Deadline veya Etkinlik Ekle",
+        "operationId": "addCalendarEvent"
+      }
+    },
+    "/api/gpt/ops/tasks": {
+      "post": {
+        "summary": "Personele Resmî Görev Ata",
+        "operationId": "assignTask"
+      }
+    },
+    "/api/gpt/ops/todo": {
+      "post": {
+        "summary": "Personelin Kişisel To-Do Listesine Görev Ekle",
+        "operationId": "createTodo"
+      }
+    },
+    "/api/gpt/ops/staff-kpi": {
+      "get": {
+        "summary": "Personel Görev Yükü, Geciken İşler ve KPI Raporu",
+        "operationId": "getStaffKpi"
+      }
+    },
+    "/api/gpt/ops/health": {
+      "get": {
+        "summary": "Ajans Operasyon Sağlık Skoru ve Risk Analizi",
+        "operationId": "getOpsHealth"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Bearer socialart-gpt-key-2026"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}

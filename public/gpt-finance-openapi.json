@@ -1,0 +1,73 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Bot 2: SocialArt Finans & Patron Asistanı (Gizli & Yetkili)",
+    "description": "SocialArt Ajans /finans verilerinden beslenen Gelir, Gider, KDV Dahil Ödemeler, Kredi Kartı Borçları, Maaşlar ve Kârlılık Raporlama ChatGPT Botu",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://www.socialartmedya.com",
+      "description": "Canlı Yayın Sunucusu"
+    }
+  ],
+  "paths": {
+    "/api/gpt/finance/summary": {
+      "get": {
+        "summary": "Özet Finans Tablosu (Toplam Ciro, Masraflar, Net Kâr)",
+        "operationId": "getFinanceSummary"
+      }
+    },
+    "/api/gpt/finance/payments": {
+      "get": {
+        "summary": "Aktif Müşteri Sözleşmeleri ve Aylık Hizmet Bedelleri",
+        "operationId": "getFinancePayments"
+      }
+    },
+    "/api/gpt/finance/payment-request": {
+      "post": {
+        "summary": "Müşteriye %20 KDV Dahil Ödeme Talebi ve Linki Oluştur",
+        "operationId": "createPaymentRequest"
+      }
+    },
+    "/api/gpt/finance/expenses": {
+      "get": {
+        "summary": "Ajans Giderleri ve Masraf Dökümü",
+        "operationId": "getFinanceExpenses"
+      }
+    },
+    "/api/gpt/finance/credit-cards": {
+      "get": {
+        "summary": "Kredi Kartı Borçları, Limitler ve Son Ödeme Günü Uyarıları",
+        "operationId": "getCreditCards"
+      }
+    },
+    "/api/gpt/finance/salaries": {
+      "get": {
+        "summary": "Personel Maaşları ve Toplam Aylık Maaş Yükü",
+        "operationId": "getSalaries"
+      }
+    },
+    "/api/gpt/finance/production-projects": {
+      "get": {
+        "summary": "Prodüksiyon Proje Bütçeleri ve Kârlılık Durumları",
+        "operationId": "getProductionProjects"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Bearer socialart-gpt-key-2026"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}
