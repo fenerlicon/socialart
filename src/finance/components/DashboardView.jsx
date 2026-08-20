@@ -4,6 +4,7 @@ import { DollarSign, Users, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRigh
 export default function DashboardView({ 
   clients, 
   staff, 
+  productionProjects = [], 
   clientPayments, 
   expenses, 
   staffPayments, 
@@ -48,8 +49,16 @@ export default function DashboardView({
   
   const totalExpenses = totalDirectExpenses + totalStaffPaid;
 
-  // Net Nakit Durumu (Gelir - Gider)
-  const netCashStatus = totalReceived - totalExpenses;
+  // Net Prodüksiyon Kârı (Bütçe - Masraf)
+  const totalProductionBudget = (productionProjects || []).reduce((acc, p) => acc + (parseFloat(p.budget) || 0), 0);
+  const totalProductionExpense = (productionProjects || []).reduce((acc, p) => {
+    const expList = Array.isArray(p.expenses) ? p.expenses : [];
+    return acc + expList.reduce((eAcc, e) => eAcc + (parseFloat(e.amount) || 0), 0);
+  }, 0);
+  const netProductionProfit = totalProductionBudget - totalProductionExpense;
+
+  // Net Nakit Durumu (Tahsilat + Prodüksiyon Kârı - Gider)
+  const netCashStatus = totalReceived + netProductionProfit - totalExpenses;
 
   // Personel Net Maaş Yükü
   const totalNetSalaries = staff.reduce((acc, s) => {
@@ -296,6 +305,19 @@ export default function DashboardView({
       </div>
 
       <div className="metrics-grid">
+        <div className="glass-card metric-card" onClick={() => setTab('projects')} style={{ cursor: 'pointer' }}>
+          <div className="metric-header">
+            <span className="metric-title">Net Prodüksiyon Kârı</span>
+            <div className="metric-icon-wrapper profit" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' }}>
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div className="metric-value text-success" style={{ color: '#c084fc' }}>
+            {netProductionProfit >= 0 ? `+${netProductionProfit.toLocaleString('tr-TR')} ₺` : `${netProductionProfit.toLocaleString('tr-TR')} ₺`}
+          </div>
+          <div className="metric-footer"><span>Bütçe (${totalProductionBudget.toLocaleString('tr-TR')} ₺) - Masraf</span></div>
+        </div>
+
         <div className="glass-card metric-card" onClick={() => setTab('employees')} style={{ cursor: 'pointer' }}>
           <div className="metric-header">
             <span className="metric-title">Personel Net Maaş</span>

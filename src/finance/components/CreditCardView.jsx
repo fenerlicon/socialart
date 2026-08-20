@@ -258,10 +258,8 @@ export default function CreditCardView({
               <thead>
                 <tr>
                   <th>Kart Adı</th>
-                  <th>Limit</th>
-                  <th>Kullanılan (Borç)</th>
-                  <th>Son Ödeme Tarihi</th>
-                  <th>Asgari Ödeme</th>
+                  <th>Toplam Limit</th>
+                  <th>Güncel Borç</th>
                   <th>Kullanılabilir Limit</th>
                   <th style={{ textAlign: 'right' }}>İşlemler</th>
                 </tr>
@@ -282,15 +280,6 @@ export default function CreditCardView({
                       <td style={{ fontWeight: 500 }}>{limit.toLocaleString('tr-TR')} ₺</td>
                       <td className="text-danger" style={{ fontWeight: 700 }}>
                         {used.toLocaleString('tr-TR')} ₺
-                      </td>
-                      <td style={{ color: 'var(--text-secondary)' }}>
-                        {card.due_date ? new Date(card.due_date).toLocaleDateString('tr-TR') : '-'}
-                      </td>
-                      <td>
-                        %{card.minimum_payment || 0}
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '6px' }}>
-                          ({((used * parseFloat(card.minimum_payment || 0)) / 100).toLocaleString('tr-TR')} ₺)
-                        </span>
                       </td>
                       <td className="text-success" style={{ fontWeight: 600 }}>
                         {avail.toLocaleString('tr-TR')} ₺

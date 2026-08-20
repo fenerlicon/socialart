@@ -59,7 +59,15 @@ export default function ActivityLogView() {
 
   const filteredLogs = (logs || []).filter(log => {
     if (!log) return false;
-    const text = `${log.action || ''} ${log.details || ''} ${log.target_name || ''} ${log.user_name || ''}`.toLowerCase();
+    const text = `${log.action || ''} ${log.details || ''} ${log.target_name || ''} ${log.user_name || ''} ${log.module || ''}`.toLowerCase();
+    
+    // Exclude general CRM lead pipeline logs
+    if (text.includes('lead') || text.includes('crm aşama') || text.includes('kanban') || text.includes('potansiyel müşteri')) {
+      if (!text.includes('crm entegrasyonu') && !text.includes('prodüksiyon geliri')) {
+        return false;
+      }
+    }
+
     return text.includes((searchTerm || '').toLowerCase());
   });
 

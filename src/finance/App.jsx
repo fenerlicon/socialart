@@ -96,6 +96,7 @@ export default function App() {
   const [taxes, setTaxes] = useState([]);
   const [creditCards, setCreditCards] = useState([]);
   const [cashJournal, setCashJournal] = useState([]);
+  const [productionProjects, setProductionProjects] = useState([]);
 
   // Auth & Security States (Only ajanscelal26 & ajansercan26 allowed - Strictly isolated from CRM)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -199,6 +200,14 @@ export default function App() {
         .eq('period', selectedPeriod);
       if (journalError) throw journalError;
       setCashJournal(journalData || []);
+
+      // Fetch production projects
+      try {
+        const { data: projData } = await supabase
+          .from('finance_production_projects')
+          .select('*');
+        setProductionProjects(projData || []);
+      } catch (e) {}
 
       // 9. Fetch app settings (user passwords)
       try {
@@ -1319,7 +1328,7 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="nav-menu">
+        <ul className="nav-menu" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           <li className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}>
             <button onClick={() => setActiveTab('dashboard')}>
               <LayoutDashboard size={16} />
@@ -1386,7 +1395,7 @@ export default function App() {
               <span>11. Büyüme Raporu</span>
             </button>
           </li>
-        </nav>
+        </ul>
 
         <div className="sidebar-footer">
           <div className="month-picker-container">
@@ -1545,6 +1554,7 @@ export default function App() {
           {activeTab === 'dashboard' && (
             <DashboardView 
               clients={clients}
+              productionProjects={productionProjects}
               staff={staff}
               clientPayments={clientPayments}
               expenses={expenses}
@@ -1587,6 +1597,8 @@ export default function App() {
           {activeTab === 'expenses' && (
             <GiderlerView 
               expenses={expenses}
+              staff={staff}
+              staffPayments={staffPayments}
               period={selectedPeriod}
               onAddExpense={handleAddExpense}
               onDeleteExpense={handleDeleteExpense}

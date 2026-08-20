@@ -29,7 +29,7 @@ export default function GelirlerView({
   const [iyzicoRate, setIyzicoRate] = useState('4.29');
 
   // Filter clients for modal select
-  const modalClients = clients.filter(c => {
+  const modalClients = (clients || []).filter(c => {
     if (c.durum === 'pasif') return false;
     if (selectedCategory === 'ALL') return true;
 
@@ -46,7 +46,7 @@ export default function GelirlerView({
   });
 
   // Find selected client details
-  const selectedClient = clients.find(c => c.id === parseInt(selectedClientId));
+  const selectedClient = (clients || []).find(c => c.id === parseInt(selectedClientId));
   const clientStats = (() => {
     if (!selectedClient) return null;
     const payments = clientPayments.filter(p => p.client_id === selectedClient.id);
@@ -60,7 +60,7 @@ export default function GelirlerView({
   const totalRevenues = clientPayments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
 
   // Filter payments
-  const filteredPayments = clientPayments.filter(payment => {
+  const filteredPayments = (clientPayments || []).filter(payment => {
     const client = clients.find(c => c.id === payment.client_id);
     return (client && client.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
            (payment.notes && payment.notes.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -99,7 +99,7 @@ export default function GelirlerView({
   const handleExportGelirlerExcel = () => {
     const headers = [
       { label: "Ödeme Tarihi", accessor: p => p.payment_date },
-      { label: "Müşteri Ünvanı", accessor: p => { const c = clients.find(cl => cl.id === p.client_id); return c ? c.name : 'Diğer / Harici Gelir'; } },
+      { label: "Müşteri Ünvanı", accessor: p => { const c = (clients || []).find(cl => cl.id === p.client_id); return c ? c.name : 'Diğer / Harici Gelir'; } },
       { label: "Açıklama / Dönem", accessor: p => p.notes || `Tahsilat (${p.period})` },
       { label: "Ödeme Türü", accessor: p => p.payment_type || 'Havale' },
       { label: "KDV Oranı (%)", accessor: p => p.kdv_rate !== undefined ? p.kdv_rate : 20 },

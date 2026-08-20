@@ -3,7 +3,9 @@ import { Plus, Search, Tag, Calendar, DollarSign, Trash2, AlertTriangle, FileSpr
 import { exportToCSV } from '../utils/exportUtils';
 
 export default function GiderlerView({ 
-  expenses, 
+  expenses = [], 
+  staff = [], 
+  staffPayments = [], 
   period, 
   onAddExpense, 
   onDeleteExpense, 
@@ -24,12 +26,35 @@ export default function GiderlerView({
   const [isKdvExempt, setIsKdvExempt] = useState(false);
 
   const expenseCategories = [
-    'Kira', 'Muhasebeci', 'Elektrik', 'Su', 'İnternet', 
+    'Personel Maaş & Prim Giderleri', 'Kira', 'Muhasebeci', 'Elektrik', 'Su', 'İnternet', 
     'Telefon', 'Araç', 'Yakıt', 'Vergi', 'Kredi Kartı', 'Ofis Gideri', 'Diğer / Harici Gider'
   ];
 
+  // Combine direct expenses with staff payroll payments
+  const combinedExpenses = React.useMemo(() => {
+    const list = [...(expenses || [])];
+    (staffPayments || []).forEach(sp => {
+      const amountPaid = parseFloat(sp.amount_paid || sp.total_amount) || 0;
+      if (amountPaid > 0) {
+        const staffMember = (staff || []).find(s => s.id === sp.staff_id);
+        const name = staffMember ? (staffMember.display_name || staffMember.name) : 'Personel';
+        list.push({
+          id: `staff_pay_${sp.id}`,
+          category: 'Personel Maaş & Prim Giderleri',
+          amount: amountPaid,
+          expense_date: sp.payment_date || `${period}-01`,
+          period,
+          payment_method: 'Banka',
+          description: `Maaş / Prim Ödemesi - ${name}`,
+          isStaffPayment: true
+        });
+      }
+    });
+    return list;
+  }, [expenses, staffPayments, staff, period]);
+
   // Filter expenses
-  const filteredExpenses = expenses.filter(e => {
+  const filteredExpenses = combinedExpenses.filter(e => {
     const matchesSearch = (e.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (e.category || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || e.category === categoryFilter;

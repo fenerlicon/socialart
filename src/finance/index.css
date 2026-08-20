@@ -744,3 +744,19 @@ body {
   color: #a5b4fc;
 }
 
+
+.nav-menu, .nav-links {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+.nav-menu li, .nav-links li {
+  list-style-type: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
