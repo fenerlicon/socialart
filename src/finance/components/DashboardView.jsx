@@ -52,7 +52,7 @@ export default function DashboardView({
   // Net Prodüksiyon Kârı (Bütçe - Masraf)
   const totalProductionBudget = (productionProjects || []).reduce((acc, p) => acc + (parseFloat(p.budget) || 0), 0);
   const totalProductionExpense = (productionProjects || []).reduce((acc, p) => {
-    const expList = Array.isArray(p.expenses) ? p.expenses : [];
+    const expList = Array.isArray(p.costs) ? p.costs : (Array.isArray(p.expenses) ? p.expenses : []);
     return acc + expList.reduce((eAcc, e) => eAcc + (parseFloat(e.amount) || 0), 0);
   }, 0);
   const netProductionProfit = totalProductionBudget - totalProductionExpense;
