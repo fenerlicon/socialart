@@ -21,6 +21,70 @@ const EMPLOYEE_MAP = {
   betül: { id: '4721de06-0bd6-4681-a2c8-0c0d53da8eaf', name: 'Betül Ünlü' }
 };
 
+async function resolveEmployee(searchKey) {
+  if (!searchKey || !searchKey.trim()) {
+    return { status: 'MISSING', message: 'Personel adı belirtilmedi.' };
+  }
+
+  const clean = searchKey.toLowerCase().trim();
+
+  // 1. Fetch employees from Supabase primary DB
+  let empList = [];
+  try {
+    const { data } = await supabasePrimary.from('employees').select('id, full_name, email, title');
+    if (data && data.length > 0) empList = data;
+  } catch (e) {}
+
+  if (empList.length === 0) {
+    // Fallback if DB fetch fails
+    const mapped = EMPLOYEE_MAP[clean];
+    if (mapped) return { status: 'MATCH', employee: { id: mapped.id, name: mapped.name } };
+    return { status: 'NOT_FOUND', message: `"${searchKey}" isimli personel sistemde bulunamadı.` };
+  }
+
+  // 2. Exact match check (full_name or email)
+  const exact = empList.filter(e => {
+    const fn = (e.full_name || '').toLowerCase().trim();
+    const em = (e.email || '').toLowerCase().trim();
+    return fn === clean || (em && em.startsWith(clean));
+  });
+
+  if (exact.length === 1) {
+    return { status: 'MATCH', employee: { id: exact[0].id, name: exact[0].full_name } };
+  }
+
+  // 3. Substring / Word Match (e.g. "furkan" matching "Arda Furkan Aslanbaş", "Furkan Yılmaz")
+  const matches = empList.filter(e => {
+    const fn = (e.full_name || '').toLowerCase();
+    const parts = fn.split(/\s+/);
+    return parts.some(p => p === clean) || fn.includes(clean);
+  });
+
+  if (matches.length === 1) {
+    return { status: 'MATCH', employee: { id: matches[0].id, name: matches[0].full_name } };
+  }
+
+  if (matches.length > 1) {
+    return {
+      status: 'AMBIGUOUS',
+      message: `Birden fazla "${searchKey}" isimli personel bulundu. Lütfen kullanıcıya "Hangi ${searchKey}?" diye sorup tam ismi isteyiniz.`,
+      candidates: matches.map(m => ({ id: m.id, full_name: m.full_name, title: m.title || 'Ekip Üyesi' }))
+    };
+  }
+
+  // 4. Fallback map check
+  const mapped = EMPLOYEE_MAP[clean];
+  if (mapped) {
+    return { status: 'MATCH', employee: { id: mapped.id, name: mapped.name } };
+  }
+
+  return {
+    status: 'NOT_FOUND',
+    message: `"${searchKey}" isimli personel sistemde bulunamadı.`,
+    candidates: empList.map(e => ({ id: e.id, full_name: e.full_name }))
+  };
+}
+
 function parseCalendarDateTime(dateStr, timeStr) {
   try {
     const now = new Date();
@@ -827,8 +891,24 @@ async function handleTasks(req, res) {
     const { assignee, title, description, due_date, priority } = req.body || {};
     if (!title) return res.status(400).json({ error: 'Görev başlığı zorunludur.' });
 
-    const assigneeKey = (assignee || 'furkan').toLowerCase().trim();
-    const matchedEmployee = EMPLOYEE_MAP[assigneeKey] || EMPLOYEE_MAP.furkan;
+    const resolution = await resolveEmployee(assignee);
+    if (resolution.status === 'AMBIGUOUS') {
+      return res.status(400).json({
+        error: 'AMBIGUOUS_EMPLOYEE',
+        message: resolution.message,
+        candidates: resolution.candidates
+      });
+    }
+
+    if (resolution.status === 'NOT_FOUND' || !resolution.employee) {
+      return res.status(400).json({
+        error: 'EMPLOYEE_NOT_FOUND',
+        message: resolution.message,
+        candidates: resolution.candidates
+      });
+    }
+
+    const matchedEmployee = resolution.employee;
 
     const nowIso = new Date().toISOString();
     const taskId = `GPT-TASK-${Date.now()}`;
@@ -890,8 +970,24 @@ async function handleCreateTodo(req, res) {
     return res.status(400).json({ error: 'MISSING_TITLE', message: 'Kişisel görev / not başlığı (title) zorunludur.' });
   }
 
-  const employeeKey = (employee || 'celal').toLowerCase().trim();
-  const matchedEmployee = EMPLOYEE_MAP[employeeKey] || EMPLOYEE_MAP.celal;
+  const resolution = await resolveEmployee(employee);
+  if (resolution.status === 'AMBIGUOUS') {
+    return res.status(400).json({
+      error: 'AMBIGUOUS_EMPLOYEE',
+      message: resolution.message,
+      candidates: resolution.candidates
+    });
+  }
+
+  if (resolution.status === 'NOT_FOUND' || !resolution.employee) {
+    return res.status(400).json({
+      error: 'EMPLOYEE_NOT_FOUND',
+      message: resolution.message,
+      candidates: resolution.candidates
+    });
+  }
+
+  const matchedEmployee = resolution.employee;
 
   const nowIso = new Date().toISOString();
   const todoId = `TODO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
