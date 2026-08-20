@@ -713,7 +713,7 @@ function Admin() {
       if (apptData) setAppointments(apptData);
 
       // 3. Fetch staff and then fetch tasks to group
-      const { data: staffData } = await supabase.from('staff').select('*').order('id', { ascending: true });
+      const { data: staffData } = await supabase.from('employees').select('*').order('id', { ascending: true });
       const { data: tasksData } = await supabase.from('tasks').select('*');
 
       if (staffData) {

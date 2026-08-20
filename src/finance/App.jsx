@@ -163,60 +163,87 @@ export default function App() {
         console.warn('Active clients fetch warning:', cErr);
       }
 
-      // 2. Fetch staff members
-      const { data: staffData, error: staffError } = await supabase
-        .from('staff')
-        .select('*')
-        .order('display_name', { ascending: true });
-      if (staffError) throw staffError;
-      setStaff(staffData || []);
+      // 2. Fetch staff members (employees table)
+      try {
+        const { data: staffData } = await supabase
+          .from('employees')
+          .select('*')
+          .order('full_name', { ascending: true });
+        const mappedStaff = (staffData || []).map(s => ({
+          ...s,
+          display_name: s.full_name || s.display_name || 'Personel',
+          role: s.title || s.role || 'Ekip Üyesi'
+        }));
+        setStaff(mappedStaff);
+      } catch (sErr) {
+        console.warn('Staff fetch warning:', sErr);
+        setStaff([]);
+      }
 
       // 3. Fetch client payments (Gelirler)
-      const { data: cPaymentsData, error: cPaymentsError } = await supabase
-        .from('finance_client_payments')
-        .select('*')
-        .eq('period', selectedPeriod);
-      if (cPaymentsError) throw cPaymentsError;
-      setClientPayments(cPaymentsData || []);
+      try {
+        const { data: cPaymentsData } = await supabase
+          .from('finance_client_payments')
+          .select('*')
+          .eq('period', selectedPeriod);
+        setClientPayments(cPaymentsData || []);
+      } catch (e) {
+        setClientPayments([]);
+      }
 
       // 4. Fetch expenses (Giderler)
-      const { data: expensesData, error: expensesError } = await supabase
-        .from('finance_expenses')
-        .select('*')
-        .eq('period', selectedPeriod);
-      if (expensesError) throw expensesError;
-      setExpenses(expensesData || []);
+      try {
+        const { data: expensesData } = await supabase
+          .from('finance_expenses')
+          .select('*')
+          .eq('period', selectedPeriod);
+        setExpenses(expensesData || []);
+      } catch (e) {
+        setExpenses([]);
+      }
 
       // 5. Fetch staff payments (Payroll)
-      const { data: sPaymentsData, error: sPaymentsError } = await supabase
-        .from('finance_staff_payments')
-        .select('*')
-        .eq('period', selectedPeriod);
-      if (sPaymentsError) throw sPaymentsError;
-      setStaffPayments(sPaymentsData || []);
+      try {
+        const { data: sPaymentsData } = await supabase
+          .from('finance_staff_payments')
+          .select('*')
+          .eq('period', selectedPeriod);
+        setStaffPayments(sPaymentsData || []);
+      } catch (e) {
+        setStaffPayments([]);
+      }
 
       // 6. Fetch taxes
-      const { data: taxesData, error: taxesError } = await supabase
-        .from('finance_taxes')
-        .select('*');
-      if (taxesError) throw taxesError;
-      setTaxes(taxesData || []);
+      try {
+        const { data: taxesData } = await supabase
+          .from('finance_taxes')
+          .select('*');
+        setTaxes(taxesData || []);
+      } catch (e) {
+        setTaxes([]);
+      }
 
       // 7. Fetch credit cards
-      const { data: cardsData, error: cardsError } = await supabase
-        .from('finance_credit_cards')
-        .select('*')
-        .eq('period', selectedPeriod);
-      if (cardsError) throw cardsError;
-      setCreditCards(cardsData || []);
+      try {
+        const { data: cardsData } = await supabase
+          .from('finance_credit_cards')
+          .select('*')
+          .eq('period', selectedPeriod);
+        setCreditCards(cardsData || []);
+      } catch (e) {
+        setCreditCards([]);
+      }
 
       // 8. Fetch cash journal
-      const { data: journalData, error: journalError } = await supabase
-        .from('finance_cash_journal')
-        .select('*')
-        .eq('period', selectedPeriod);
-      if (journalError) throw journalError;
-      setCashJournal(journalData || []);
+      try {
+        const { data: journalData } = await supabase
+          .from('finance_cash_journal')
+          .select('*')
+          .eq('period', selectedPeriod);
+        setCashJournal(journalData || []);
+      } catch (e) {
+        setCashJournal([]);
+      }
 
       // Fetch production projects
       try {
@@ -872,7 +899,7 @@ export default function App() {
   const handleUpdateBaseSalary = async (salaryData) => {
     try {
       const { error } = await supabase
-        .from('staff')
+        .from('employees')
         .update({ base_salary: salaryData.base_salary })
         .eq('id', salaryData.id);
       if (error) throw error;
@@ -1250,14 +1277,14 @@ export default function App() {
       };
 
       let { data, error } = await supabase
-        .from('staff')
+        .from('employees')
         .insert([payload])
         .select();
 
       if (error && error.code === '23505') {
         const nextId = staff.length > 0 ? Math.max(...staff.map(s => Number(s.id) || 0)) + 100 : 100;
         const res = await supabase
-          .from('staff')
+          .from('employees')
           .insert([{ id: nextId, ...payload }])
           .select();
         data = res.data;
@@ -1281,7 +1308,7 @@ export default function App() {
   const handleDeleteStaff = async (staffId) => {
     try {
       const member = staff.find(s => s.id === staffId);
-      const { error } = await supabase.from('staff').delete().eq('id', staffId);
+      const { error } = await supabase.from('employees').delete().eq('id', staffId);
       if (error) throw error;
 
       setStaff(prev => prev.filter(s => s.id !== staffId));
