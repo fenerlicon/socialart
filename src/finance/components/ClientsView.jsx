@@ -782,7 +782,7 @@ export default function ClientsView({
       {/* MODAL 2: EDIT CLIENT CARI CARD & COMMISSIONS */}
       {selectedClientForContract && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '560px' }}>
+          <div className="modal-content" style={{ maxWidth: '580px', maxHeight: '88vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>Müşteri Cari & Prim Ayarları</h2>
               <button className="modal-close" onClick={() => setSelectedClientForContract(null)}>×</button>
@@ -994,52 +994,54 @@ export default function ClientsView({
                 <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>
                   ➕ Müşteriye Özel Yeni İşlem Ekle (Gelir / Gider)
                 </h4>
-                <form onSubmit={handleCustomTxSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <form onSubmit={handleCustomTxSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>İşlem Türü</label>
-                      <select className="select-custom" value={customTxType} onChange={(e) => setCustomTxType(e.target.value)}>
+                      <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px', display: 'block' }}>İşlem Türü</label>
+                      <select className="select-custom" style={{ height: '38px' }} value={customTxType} onChange={(e) => setCustomTxType(e.target.value)}>
                         <option value="Gelir">Tahsilat / Gelir (+)</option>
                         <option value="Gider">Proje Gideri / Harcama (-)</option>
                       </select>
                     </div>
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Tutar (₺)</label>
-                      <input type="number" step="0.01" required className="form-input" placeholder="0.00" value={customTxAmount} onChange={(e) => setCustomTxAmount(e.target.value)} />
+                      <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px', display: 'block' }}>Tutar (₺)</label>
+                      <input type="number" step="0.01" required className="form-input" style={{ height: '38px' }} placeholder="0.00" value={customTxAmount} onChange={(e) => setCustomTxAmount(e.target.value)} />
                     </div>
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Tarih</label>
-                      <input type="date" required className="form-input" value={customTxDate} onChange={(e) => setCustomTxDate(e.target.value)} />
+                      <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px', display: 'block' }}>Tarih</label>
+                      <input type="date" required className="form-input" style={{ height: '38px' }} value={customTxDate} onChange={(e) => setCustomTxDate(e.target.value)} />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Açıklama (Reklam filmi, ekipman kiralama vb.)</label>
-                      <input type="text" className="form-input" placeholder="Örn: Arayanvar reklam filmi harcaması" value={customTxNotes} onChange={(e) => setCustomTxNotes(e.target.value)} />
+                      <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px', display: 'block' }}>Açıklama (Reklam filmi, ekipman vb.)</label>
+                      <input type="text" className="form-input" style={{ height: '38px' }} placeholder="Örn: Arayanvar reklam filmi harcaması" value={customTxNotes} onChange={(e) => setCustomTxNotes(e.target.value)} />
                     </div>
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Ödeme Hesabı</label>
-                      <select className="select-custom" value={customTxAccount} onChange={(e) => setCustomTxAccount(e.target.value)}>
+                      <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px', display: 'block' }}>Ödeme Hesabı</label>
+                      <select className="select-custom" style={{ height: '38px' }} value={customTxAccount} onChange={(e) => setCustomTxAccount(e.target.value)}>
                         <option value="Banka">Banka Hesabı</option>
                         <option value="Kasa">Elden Kasa</option>
                         <option value="Kredi Kartı">Kredi Kartı</option>
                       </select>
                     </div>
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>KDV Oranı (%)</label>
-                        <button type="button" onClick={() => { setCustomTxKdvExempt(!customTxKdvExempt); if (!customTxKdvExempt) setCustomTxKdvRate('0'); else setCustomTxKdvRate('20'); }} style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: '0.65rem', cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem', margin: 0 }}>KDV Oranı (%)</label>
+                        <button type="button" onClick={() => { setCustomTxKdvExempt(!customTxKdvExempt); if (!customTxKdvExempt) setCustomTxKdvRate('0'); else setCustomTxKdvRate('20'); }} style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: '0.68rem', cursor: 'pointer', fontWeight: 600 }}>
                           {customTxKdvExempt ? '✓ Muaf' : 'Muaf Et'}
                         </button>
                       </div>
-                      <input type="number" disabled={customTxKdvExempt} className="form-input" value={customTxKdvRate} onChange={(e) => setCustomTxKdvRate(e.target.value)} />
+                      <input type="number" disabled={customTxKdvExempt} className="form-input" style={{ height: '38px' }} value={customTxKdvRate} onChange={(e) => setCustomTxKdvRate(e.target.value)} />
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: '4px' }}>
-                    İşlemi Kaydet (Listelere Yansıt)
-                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                    <button type="submit" className="btn btn-primary" style={{ padding: '0 20px', height: '38px', fontSize: '0.85rem', fontWeight: 700 }}>
+                      İşlemi Kaydet (Listelere Yansıt)
+                    </button>
+                  </div>
                 </form>
               </div>
 
@@ -1109,7 +1111,7 @@ export default function ClientsView({
       {/* MODAL 3: ADD NEW CLIENT */}
       {showAddClientModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '560px' }}>
+          <div className="modal-content" style={{ maxWidth: '580px', maxHeight: '88vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>Yeni Müşteri Ekle</h2>
               <button className="modal-close" onClick={() => setShowAddClientModal(false)}>×</button>
