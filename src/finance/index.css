@@ -991,3 +991,14 @@ body {
     overflow-y: auto !important;
   }
 }
+
+
+/* Fix select text vertical alignment & prevent text cut-off */
+.select-custom, select.form-input, select.input-custom {
+  height: 40px !important;
+  padding: 0 10px !important;
+  line-height: 38px !important;
+  font-size: 0.82rem !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+}

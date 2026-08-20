@@ -212,26 +212,21 @@ export default function CreditCardView({
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="glass-card" style={{ borderLeft: '4px solid var(--color-danger)' }}>
-          <span className="form-label" style={{ margin: 0 }}>Toplam Kart Borcu</span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '8px', color: 'var(--color-danger)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
+        <div className="glass-card" style={{ borderLeft: '4px solid #ef4444', padding: '1.25rem' }}>
+          <span className="form-label" style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Güncel Kart Borçları</span>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '6px', color: '#ef4444' }}>
             {totalDebt.toLocaleString('tr-TR')} ₺
           </h2>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Ödenmesi gereken toplam borç meblağı</span>
         </div>
 
-        <div className="glass-card" style={{ borderLeft: '4px solid var(--color-success)' }}>
-          <span className="form-label" style={{ margin: 0 }}>Toplam Kullanılabilir Limit</span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '8px', color: 'var(--color-success)' }}>
+        <div className="glass-card" style={{ borderLeft: '4px solid #10b981', padding: '1.25rem' }}>
+          <span className="form-label" style={{ margin: 0, fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Kullanılabilir Limit</span>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '6px', color: '#10b981' }}>
             {totalAvailable.toLocaleString('tr-TR')} ₺
           </h2>
-        </div>
-
-        <div className="glass-card">
-          <span className="form-label" style={{ margin: 0 }}>Toplam Kart Limiti</span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '8px' }}>
-            {totalLimit.toLocaleString('tr-TR')} ₺
-          </h2>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Toplam limit: {totalLimit.toLocaleString('tr-TR')} ₺</span>
         </div>
       </div>
 
