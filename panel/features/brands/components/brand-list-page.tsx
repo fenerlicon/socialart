@@ -81,8 +81,9 @@ export function BrandListPage() {
   }, [activeEmployee])
 
   // Helper to compute live progress for a brand from workflow instances and operation plan
-  const getBrandProgress = (b: Brand, brandWorkflows?: WorkflowInstance[]) => {
-    const wfs = brandWorkflows || workflows.filter(w => w.brandId === b.id);
+  const getBrandProgress = (b: Brand) => {
+    let wfProgress = 0;
+    const wfs = workflows.filter(w => w.brandId === b.id);
     if (wfs && wfs.length > 0) {
       const activeOrCompleted = wfs.filter(w => w.status !== 'cancelled');
       if (activeOrCompleted.length > 0) {
@@ -100,22 +101,28 @@ export function BrandListPage() {
           }
         });
         if (totalPoints > 0) {
-          return Math.round((completedPoints / totalPoints) * 100);
+          wfProgress = Math.round((completedPoints / totalPoints) * 100);
         }
       }
     }
 
+    let planProgress = 0;
     const plan = b.operationPlan || [];
-    if (!plan.length) return 0;
-    let totalTarget = 0;
-    let totalCompleted = 0;
-    plan.forEach((item) => {
-      if (item.status !== 'cancelled') {
-        totalTarget += item.target;
-        totalCompleted += Math.min(item.target, item.completed);
+    if (plan.length > 0) {
+      let totalTarget = 0;
+      let totalCompleted = 0;
+      plan.forEach((item) => {
+        if (item.status !== 'cancelled') {
+          totalTarget += item.target;
+          totalCompleted += Math.min(item.target, item.completed);
+        }
+      });
+      if (totalTarget > 0) {
+        planProgress = Math.round((totalCompleted / totalTarget) * 100);
       }
-    });
-    return totalTarget > 0 ? Math.round((totalCompleted / totalTarget) * 100) : 0;
+    }
+
+    return Math.max(wfProgress, planProgress);
   }
 
   // Handle deletion confirmation
@@ -255,6 +262,7 @@ export function BrandListPage() {
                   key={brand.id}
                   brand={brand}
                   managerName={getEmployeeName(brand.operationManagerId)}
+                  progressPercentage={getBrandProgress(brand)}
                   onEdit={() => {
                     setEditingBrand(brand)
                     setIsEditOpen(true)
