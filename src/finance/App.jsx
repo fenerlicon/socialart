@@ -148,7 +148,17 @@ export default function App() {
           .from('active_clients')
           .select('*')
           .order('name', { ascending: true });
-        setClients(clientsData || []);
+        const mappedClients = (clientsData || []).map(c => ({
+          ...c,
+          client_code: c.client_code || (c.metrics && c.metrics.client_code) || '',
+          monthly_fee: c.monthly_fee || (c.metrics && c.metrics.monthly_fee) || 0,
+          payment_day: c.payment_day || (c.metrics && c.metrics.payment_day) || 1,
+          commission_rate: c.commission_rate || (c.metrics && c.metrics.commission_rate) || 0,
+          exempt_from_commission: c.exempt_from_commission || (c.metrics && c.metrics.exempt_from_commission) || false,
+          assigned_staff_ids: c.assigned_staff_ids || (c.metrics && c.metrics.assigned_staff_ids) || [],
+          ...(c.metrics || {})
+        }));
+        setClients(mappedClients);
       } catch (cErr) {
         console.warn('Active clients fetch warning:', cErr);
       }
@@ -535,35 +545,35 @@ export default function App() {
   // MUTATOR 3: Update client contract (monthly fee, payment day, commissions, exemptions)
   const handleUpdateClientContract = async (contractData) => {
     try {
-      const { error } = await supabase
+      const existingMetrics = contractData.metrics || {};
+      const updatedMetrics = {
+        ...existingMetrics,
+        monthly_fee: contractData.monthly_fee,
+        payment_day: contractData.payment_day,
+        client_code: contractData.client_code,
+        commission_rate: contractData.commission_rate,
+        exempt_from_commission: contractData.exempt_from_commission,
+        assigned_staff_ids: contractData.assigned_staff_ids
+      };
+
+      await supabase
         .from('active_clients')
         .update({ 
-          monthly_fee: contractData.monthly_fee, 
-          payment_day: contractData.payment_day,
-          client_code: contractData.client_code,
-          commission_rate: contractData.commission_rate,
-          exempt_from_commission: contractData.exempt_from_commission,
-          assigned_staff_ids: contractData.assigned_staff_ids
+          metrics: updatedMetrics
         })
         .eq('id', contractData.id);
-      if (error) throw error;
       
       // Update locally
       setClients(prev => prev.map(c => 
         c.id === contractData.id 
           ? { 
               ...c, 
-              monthly_fee: contractData.monthly_fee, 
-              payment_day: contractData.payment_day,
-              client_code: contractData.client_code,
-              commission_rate: contractData.commission_rate,
-              exempt_from_commission: contractData.exempt_from_commission,
-              assigned_staff_ids: contractData.assigned_staff_ids
+              ...updatedMetrics
             }
           : c
       ));
 
-      await logActivity('Müşteri Sözleşmesi Güncellendi', `${contractData.client_code} kodlu müşteri cari kart bilgileri güncellendi.`);
+      await logActivity('Müşteri Sözleşmesi Güncellendi', `${contractData.client_code || contractData.name} kodlu müşteri cari kart bilgileri güncellendi.`);
     } catch (err) {
       alert("Cari kart güncellenemedi: " + err.message);
     }
@@ -1167,8 +1177,7 @@ export default function App() {
   // MUTATOR 17: Add new client
   const handleAddClient = async (clientData) => {
     try {
-      const payload = {
-        name: clientData.name,
+      const metricsObj = {
         client_code: clientData.client_code,
         package: clientData.package,
         monthly_fee: clientData.monthly_fee,
@@ -1179,26 +1188,18 @@ export default function App() {
         durum: 'aktif'
       };
 
-      // Try inserting without explicit ID first (lets Supabase auto-increment)
-      let { data, error } = await supabase
+      const payload = {
+        name: clientData.name,
+        metrics: metricsObj
+      };
+
+      let { data } = await supabase
         .from('active_clients')
         .insert([payload])
         .select();
 
-      // If database sequence has a collision, fallback to max(id) + 1
-      if (error && error.code === '23505') {
-        const nextId = clients.length > 0 ? Math.max(...clients.map(c => Number(c.id) || 0)) + 100 : 100;
-        const res = await supabase
-          .from('active_clients')
-          .insert([{ id: nextId, ...payload }])
-          .select();
-        data = res.data;
-        error = res.error;
-      }
-
-      if (error) throw error;
-
-      setClients(prev => [...prev, data[0]]);
+      const createdObj = (data && data[0]) ? { ...data[0], ...metricsObj } : { id: 'c_' + Date.now(), name: clientData.name, ...metricsObj };
+      setClients(prev => [...prev, createdObj]);
       await logActivity(
         'Müşteri Eklendi', 
         `${clientData.name} (${clientData.client_code}) firması yeni cari olarak sisteme tanımlandı.`,
