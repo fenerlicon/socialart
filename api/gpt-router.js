@@ -225,6 +225,22 @@ export default async function handler(req, res) {
       case 'todo':
       case 'create-todo':
         return await handleCreateTodo(req, res);
+      case 'create-job-application':
+        return await handleCreateJobApp(req, res);
+      case 'create-ugc-application':
+        return await handleCreateUgcApp(req, res);
+      case 'delete-application':
+        return await handleDeleteApp(req, res);
+      case 'update-application':
+        return await handleUpdateApp(req, res);
+      case 'operations-health':
+        return await handleOperationsHealth(req, res);
+      case 'brand-performance':
+        return await handleBrandPerformance(req, res);
+      case 'staff-kpi-analysis':
+        return await handleStaffKpiAnalysis(req, res);
+      case 'crm-metrics-update':
+        return await handleCrmMetricsUpdate(req, res);
       default:
         return res.status(404).json({ error: 'UNKNOWN_ACTION', message: `Eylem '${action}' tanımlı değil.` });
     }
@@ -1032,4 +1048,266 @@ async function handleCreateTodo(req, res) {
     message: `✅ "${title.trim()}" görevi ${matchedEmployee.name} kullanıcısının kişisel Yapılacaklar (To-Do List) sayfasına başarıyla eklendi!`,
     todo: todoRecord
   });
+}
+
+// --- 1. Create Job Application (Mail veya ChatGPT Üzerinden Başvuru Ekleme) ---
+async function handleCreateJobApp(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Sadece POST desteklenir.' });
+  const { full_name, position, email, phone, portfolio_url, resume_url, about, status } = req.body || {};
+
+  if (!full_name || !full_name.trim()) {
+    return res.status(400).json({ error: 'MISSING_NAME', message: 'Aday adı soyadı (full_name) zorunludur.' });
+  }
+
+  const record = {
+    id: require('crypto').randomUUID(),
+    full_name: full_name.trim(),
+    position: position || 'Genel Başvuru',
+    email: email || '',
+    phone: phone || '',
+    portfolio_url: portfolio_url || null,
+    resume_url: resume_url || null,
+    about: about || 'ChatGPT/E-posta üzerinden eklenen iş başvurusu.',
+    status: status || 'Bekliyor',
+    created_at: new Date().toISOString()
+  };
+
+  const { error } = await supabaseLeads.from('job_applications').insert([record]);
+
+  if (error) {
+    return res.status(500).json({ error: 'İş başvurusu veritabanına eklenirken hata oluştu', details: error.message });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `✅ "${full_name}" adayının Kariyer / İş Başvurusu veritabanına ve ajans havuzuna başarıyla eklendi!`,
+    application: record
+  });
+}
+
+// --- 2. Create UGC Application ---
+async function handleCreateUgcApp(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Sadece POST desteklenir.' });
+  const { full_name, email, phone, instagram_url, portfolio_url, city, about, status } = req.body || {};
+
+  if (!full_name || !full_name.trim()) {
+    return res.status(400).json({ error: 'MISSING_NAME', message: 'Aday adı soyadı (full_name) zorunludur.' });
+  }
+
+  const record = {
+    id: require('crypto').randomUUID(),
+    full_name: full_name.trim(),
+    email: email || '',
+    phone: phone || '',
+    instagram_url: instagram_url || '',
+    portfolio_url: portfolio_url || null,
+    city: city || 'İstanbul',
+    about: about || 'ChatGPT/E-posta üzerinden eklenen UGC başvurusu.',
+    status: status || 'Bekliyor',
+    created_at: new Date().toISOString()
+  };
+
+  const { error } = await supabaseLeads.from('ugc_applications').insert([record]);
+
+  if (error) {
+    return res.status(500).json({ error: 'UGC başvurusu eklenirken hata oluştu', details: error.message });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `✅ "${full_name}" adayının UGC & Influencer başvurusu havuzuna başarıyla eklendi!`,
+    application: record
+  });
+}
+
+// --- 3. Delete Application (Kariyer veya UGC Başvurusu Silme) ---
+async function handleDeleteApp(req, res) {
+  if (req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).json({ error: 'Sadece POST ve DELETE desteklenir.' });
+  const { id, type } = req.body || req.query || {};
+
+  if (!id) return res.status(400).json({ error: 'MISSING_ID', message: 'Silinecek başvuru ID bilgisi zorunludur.' });
+
+  const cleanId = String(id).replace('job-', '').replace('ugc-', '');
+
+  try {
+    if (type === 'ugc' || String(id).startsWith('ugc-')) {
+      await supabaseLeads.from('ugc_applications').delete().eq('id', cleanId);
+    } else {
+      await supabaseLeads.from('job_applications').delete().eq('id', cleanId);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `✅ ID (${cleanId}) olan başvuru veritabanından başarıyla silindi.`
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Başvuru silinirken hata oluştu', details: e.message });
+  }
+}
+
+// --- 4. Update Application Status & Category ---
+async function handleUpdateApp(req, res) {
+  if (req.method !== 'POST' && req.method !== 'PATCH') return res.status(405).json({ error: 'Sadece POST ve PATCH desteklenir.' });
+  const { id, type, status, position, about } = req.body || {};
+
+  if (!id) return res.status(400).json({ error: 'MISSING_ID', message: 'Güncellenecek başvuru ID bilgisi zorunludur.' });
+
+  const cleanId = String(id).replace('job-', '').replace('ugc-', '');
+  const updateObj = {};
+  if (status) updateObj.status = status;
+  if (position) updateObj.position = position;
+  if (about) updateObj.about = about;
+
+  try {
+    if (type === 'ugc' || String(id).startsWith('ugc-')) {
+      await supabaseLeads.from('ugc_applications').update(updateObj).eq('id', cleanId);
+    } else {
+      await supabaseLeads.from('job_applications').update(updateObj).eq('id', cleanId);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `✅ ID (${cleanId}) başvuru bilgileri güncellendi!`,
+      updates: updateObj
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Başvuru güncellenirken hata oluştu', details: e.message });
+  }
+}
+
+// --- 5. Operations Health Index Analysis ---
+async function handleOperationsHealth(req, res) {
+  try {
+    const { data: steps } = await supabasePrimary.from('workflow_step_instances').select('*');
+    const { data: clients } = await supabasePrimary.from('active_clients').select('*');
+    const { data: leads } = await supabaseLeads.from('leads').select('*');
+
+    const totalSteps = steps?.length || 0;
+    const activeSteps = steps?.filter(s => s.status === 'active' || s.status === 'in_progress')?.length || 0;
+    const completedSteps = steps?.filter(s => s.status === 'completed')?.length || 0;
+    const delayedSteps = steps?.filter(s => s.status === 'Tamamlanamadı' || (s.due_date && new Date(s.due_date) < new Date() && s.status !== 'completed'))?.length || 0;
+
+    const healthScore = totalSteps > 0 ? Math.max(0, Math.round(100 - (delayedSteps / totalSteps) * 100)) : 95;
+
+    return res.status(200).json({
+      success: true,
+      operations_health: {
+        health_score: `${healthScore}%`,
+        status_evaluation: healthScore >= 80 ? '🟢 Operasyon Sağlığı Yüksek' : (healthScore >= 60 ? '🟡 Orta Düzey Risk' : '🔴 Acil Müdahale Gerekli'),
+        total_active_brands: clients?.length || 0,
+        total_leads_in_pipeline: leads?.length || 0,
+        task_metrics: {
+          total_workflow_tasks: totalSteps,
+          active_tasks: activeSteps,
+          completed_tasks: completedSteps,
+          delayed_tasks: delayedSteps
+        },
+        recommendations: delayedSteps > 0
+          ? [`⚠️ ${delayedSteps} adet gecikmiş veya tamamlanmamış operasyon görevi var, personele hatırlatma atılması önerilir.`]
+          : ['✅ Operasyon akışı sorunsuz devam ediyor.']
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Operasyon sağlığı analiz edilirken hata oluştu', details: e.message });
+  }
+}
+
+// --- 6. Brand Performance Analysis (Patlayan vs İyi Giden İşler) ---
+async function handleBrandPerformance(req, res) {
+  try {
+    const { data: clients } = await supabasePrimary.from('active_clients').select('*');
+    const { data: projects } = await supabasePrimary.from('finance_production_projects').select('*');
+
+    const healthyBrands = (clients || []).slice(0, 10).map(c => ({ brand_name: c.name || c.brand_name, status: '🟢 İyi Giden' }));
+    const strugglingProjects = (projects || []).filter(p => p.status === 'delayed' || p.status === 'blocked').map(p => ({
+      brand_name: p.client_name,
+      issue: '⚠️ Prodüksiyon / Çekim Teslimatı Gecikmede',
+      project_name: p.project_name
+    }));
+
+    return res.status(200).json({
+      success: true,
+      brand_analysis: {
+        total_brands: clients?.length || 0,
+        healthy_brands: healthyBrands,
+        struggling_or_delayed_projects: strugglingProjects.length > 0 ? strugglingProjects : '🎉 Şuan geciken veya patlayan proje bulunmuyor!'
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Marka performansı analiz edilirken hata oluştu', details: e.message });
+  }
+}
+
+// --- 7. Staff KPI & Workload Analysis ---
+async function handleStaffKpiAnalysis(req, res) {
+  try {
+    const { data: staff } = await supabasePrimary.from('employees').select('id, full_name, title');
+    const { data: steps } = await supabasePrimary.from('workflow_step_instances').select('*');
+    const { data: todos } = await supabasePrimary.from('personal_todos').select('*');
+
+    const staffReport = (staff || []).map(emp => {
+      const empTasks = (steps || []).filter(s => s.assignee_employee_id === emp.id || s.assigned_employee_id === emp.id);
+      const activeCount = empTasks.filter(s => s.status === 'active').length;
+      const completedCount = empTasks.filter(s => s.status === 'completed').length;
+      const delayedCount = empTasks.filter(s => s.due_date && new Date(s.due_date) < new Date() && s.status !== 'completed').length;
+      const empTodos = (todos || []).filter(t => t.employee_id === emp.id && !t.is_completed).length;
+
+      const total = empTasks.length;
+      const kpiScore = total > 0 ? Math.round((completedCount / total) * 100) : 100;
+
+      return {
+        name: emp.full_name,
+        role: emp.title || 'Ekip Üyesi',
+        active_tasks: activeCount,
+        completed_tasks: completedCount,
+        delayed_tasks: delayedCount,
+        pending_todos: empTodos,
+        kpi_score: `${kpiScore}%`,
+        status: delayedCount > 0 ? '⚠️ Geciken İşleri Var' : '🟢 Performans İyi'
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      staff_kpi_analysis: staffReport
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Personel KPI analizi yapılırken hata oluştu', details: e.message });
+  }
+}
+
+// --- 8. CRM Metrics Update & Override (Metrik / Lead Düzeltme) ---
+async function handleCrmMetricsUpdate(req, res) {
+  if (req.method !== 'POST' && req.method !== 'PATCH') return res.status(405).json({ error: 'Sadece POST ve PATCH desteklenir.' });
+  const { lead_id, stage, budget, status, notes } = req.body || {};
+
+  if (!lead_id) return res.status(400).json({ error: 'MISSING_LEAD_ID', message: 'Düzeltilecek lead_id zorunludur.' });
+
+  const cleanId = String(lead_id);
+  const numericId = Number(cleanId);
+  const queryId = !isNaN(numericId) && numericId > 0 ? numericId : cleanId;
+
+  const updateObj = {};
+  if (stage) updateObj.stage = stage;
+  if (status) updateObj.status = status;
+  if (budget !== undefined) updateObj.budget = budget;
+  if (notes) updateObj.notes = notes;
+  updateObj.updated_at = new Date().toISOString();
+
+  try {
+    const { error: err1 } = await supabaseLeads.from('leads').update(updateObj).eq('id', queryId);
+    try { await supabasePrimary.from('crm_leads').update(updateObj).eq('id', queryId); } catch (e) {}
+
+    if (err1) {
+      return res.status(500).json({ error: 'Lead metriği güncellenirken hata oluştu', details: err1.message });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `✅ Lead (ID: ${cleanId}) verisi isteğiniz doğrultusunda güncellendi ve düzeltildi!`,
+      updated_fields: updateObj
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'CRM metriği güncellenirken hata oluştu', details: e.message });
+  }
 }

@@ -1,0 +1,251 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SocialArt Ajans AI Assistant API",
+    "description": "SocialArt Ajans Yönetim Paneli, CRM, Kariyer/UGC Başvuru Havuzu, Finans ve Operasyon Analitiği için OpenAI ChatGPT Action API Entegrasyonu",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://www.socialartmedya.com",
+      "description": "Canlı Yayın Sunucusu"
+    }
+  ],
+  "paths": {
+    "/api/gpt/create-job-application": {
+      "post": {
+        "summary": "Yeni Kariyer / İş Başvurusu Ekle (Mail veya Dış Kaynak Aday Havuzu)",
+        "operationId": "createJobApplication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["full_name"],
+                "properties": {
+                  "full_name": { "type": "string", "example": "Ahmet Yılmaz" },
+                  "position": { "type": "string", "example": "Video Editor" },
+                  "email": { "type": "string", "example": "ahmet@example.com" },
+                  "phone": { "type": "string", "example": "05551234567" },
+                  "portfolio_url": { "type": "string", "example": "https://behance.net/ahmet" },
+                  "resume_url": { "type": "string", "example": "https://drive.google.com/cv.pdf" },
+                  "about": { "type": "string", "example": "5 yıllık video kurgu deneyimim var..." },
+                  "status": { "type": "string", "enum": ["Bekliyor", "Öne Çıkan", "Yedek Havuz", "Reddedildi"], "default": "Bekliyor" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Başvuru eklendi" }
+        }
+      }
+    },
+    "/api/gpt/create-ugc-application": {
+      "post": {
+        "summary": "Yeni UGC / Influencer Başvurusu Ekle",
+        "operationId": "createUgcApplication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["full_name"],
+                "properties": {
+                  "full_name": { "type": "string", "example": "Ayşe Kaya" },
+                  "email": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "instagram_url": { "type": "string", "example": "@aysekaya" },
+                  "portfolio_url": { "type": "string" },
+                  "city": { "type": "string", "example": "İstanbul" },
+                  "about": { "type": "string" },
+                  "status": { "type": "string", "default": "Bekliyor" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "UGC başvurusu eklendi" }
+        }
+      }
+    },
+    "/api/gpt/delete-application": {
+      "post": {
+        "summary": "Kariyer veya UGC Başvurusunu Sil",
+        "operationId": "deleteApplication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string", "description": "Silinecek başvuru ID'si" },
+                  "type": { "type": "string", "enum": ["job", "ugc"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Başvuru silindi" }
+        }
+      }
+    },
+    "/api/gpt/update-application": {
+      "post": {
+        "summary": "Başvuru Durumunu veya Kategorisini Güncelle (Öne Çıkan, Pasif, Yedek)",
+        "operationId": "updateApplication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "type": { "type": "string", "enum": ["job", "ugc"] },
+                  "status": { "type": "string", "enum": ["Bekliyor", "Öne Çıkan", "Yedek Havuz", "Reddedildi"] },
+                  "position": { "type": "string" },
+                  "about": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Başvuru güncellendi" }
+        }
+      }
+    },
+    "/api/gpt/operations-health": {
+      "get": {
+        "summary": "Ajans Operasyon Sağlığı ve Genel Performans İndeksi",
+        "operationId": "getOperationsHealth",
+        "responses": {
+          "200": { "description": "Operasyon sağlığı analizi" }
+        }
+      }
+    },
+    "/api/gpt/brand-performance": {
+      "get": {
+        "summary": "Markaların Patlayan (Geciken) ve İyi Giden İşlerini Analiz Et",
+        "operationId": "getBrandPerformance",
+        "responses": {
+          "200": { "description": "Marka performans raporu" }
+        }
+      }
+    },
+    "/api/gpt/staff-kpi-analysis": {
+      "get": {
+        "summary": "Personel İş Yükü, Geciken İşler ve KPI Performans Analizi",
+        "operationId": "getStaffKpiAnalysis",
+        "responses": {
+          "200": { "description": "Personel KPI raporu" }
+        }
+      }
+    },
+    "/api/gpt/crm-metrics-update": {
+      "post": {
+        "summary": "CRM Metriklerini, Bütçeleri ve Lead Aşamasını Düzelt / Güncelle",
+        "operationId": "updateCrmMetrics",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["lead_id"],
+                "properties": {
+                  "lead_id": { "type": "string" },
+                  "stage": { "type": "string", "enum": ["NEW", "CONTACTED", "WAITING", "PROPOSAL_SENT", "RETARGETING", "WON", "LOST"] },
+                  "budget": { "type": "number" },
+                  "status": { "type": "string" },
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "CRM metriği düzeltildi" }
+        }
+      }
+    },
+    "/api/gpt/todo": {
+      "post": {
+        "summary": "Personelin Kişisel To-Do Listesine Not/Görev Ekle",
+        "operationId": "createPersonalTodo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "employee": { "type": "string", "example": "furkan" },
+                  "title": { "type": "string", "example": "Görüşme Notları" },
+                  "notes": { "type": "string" },
+                  "due_date": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+                  "category": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "To-Do eklendi" }
+        }
+      }
+    },
+    "/api/gpt/tasks": {
+      "post": {
+        "summary": "Personele Resmî Görev Ata",
+        "operationId": "assignTask",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "assignee": { "type": "string", "example": "celal" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "due_date": { "type": "string" },
+                  "priority": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Görev atandı" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Bearer socialart-gpt-key-2026"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}

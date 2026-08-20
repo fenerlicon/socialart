@@ -3385,9 +3385,37 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', margin: 0 }}>{app.full_name}</h4>
-                        <span style={{ display: 'inline-block', color: '#c084fc', fontWeight: '800', fontSize: '0.75rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '3px 8px', borderRadius: '6px', marginTop: '6px' }}>
-                          {app.position || 'İş Başvurusu'}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                          <span style={{ display: 'inline-block', color: '#c084fc', fontWeight: '800', fontSize: '0.75rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '3px 8px', borderRadius: '6px' }}>
+                            {app.position || 'İş Başvurusu'}
+                          </span>
+                          
+                          {/* Aday Değerlendirme Durumu Seçici */}
+                          <select
+                            value={app.status || 'Bekliyor'}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              await supabase.from('job_applications').update({ status: newStatus }).eq('id', app.id);
+                              setJobApps(prev => prev.map(j => j.id === app.id ? { ...j, status: newStatus } : j));
+                            }}
+                            style={{
+                              background: app.status === 'Öne Çıkan' ? 'rgba(234, 179, 8, 0.2)' : (app.status === 'Yedek Havuz' ? 'rgba(168, 85, 247, 0.2)' : (app.status === 'Reddedildi' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)')),
+                              color: app.status === 'Öne Çıkan' ? '#fde047' : (app.status === 'Yedek Havuz' ? '#c084fc' : (app.status === 'Reddedildi' ? '#fca5a5' : '#93c5fd')),
+                              border: `1px solid ${app.status === 'Öne Çıkan' ? 'rgba(234, 179, 8, 0.4)' : (app.status === 'Yedek Havuz' ? 'rgba(168, 85, 247, 0.4)' : (app.status === 'Reddedildi' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)'))}`,
+                              padding: '2px 6px',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: '800',
+                              cursor: 'pointer',
+                              outline: 'none'
+                            }}
+                          >
+                            <option value="Bekliyor" style={{ background: '#09090b', color: '#fff' }}>📄 İnceleme Bekliyor</option>
+                            <option value="Öne Çıkan" style={{ background: '#09090b', color: '#fde047' }}>🌟 Mülakat / Öne Çıkan</option>
+                            <option value="Yedek Havuz" style={{ background: '#09090b', color: '#c084fc' }}>📁 Yedek Havuz</option>
+                            <option value="Reddedildi" style={{ background: '#09090b', color: '#fca5a5' }}>⛔ Pasif / Uymadı</option>
+                          </select>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '0.75rem', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</span>
