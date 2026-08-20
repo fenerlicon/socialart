@@ -46,7 +46,8 @@ export default function PersonelView({
   // Process staff list with monthly payments — prim is fully manual (no auto commission)
   const processedStaff = staff.map(member => {
     // Find payment record for this staff for this period
-    const payment = staffPayments.find(p => p.staff_id === member.id) || {
+    const memberName = (member.full_name || member.display_name || member.name || '').toLowerCase();
+    const payment = staffPayments.find(p => String(p.staff_id) === String(member.id) || (p.staff_name && p.staff_name.toLowerCase().includes(memberName))) || {
       base_salary: parseFloat(member.base_salary || 0),
       advance_amount: 0,
       commission_amount: 0,
@@ -89,7 +90,7 @@ export default function PersonelView({
 
   // Filter staff by search term
   const filteredStaff = processedStaff.filter(member => 
-    member.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (member.display_name || member.full_name || member.name || 'Personel').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (member.role && member.role.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (member.class && member.class.toLowerCase().includes(searchTerm.toLowerCase()))
   );
