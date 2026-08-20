@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.1.0",
   "info": {
     "title": "Bot 1: SocialArt Operasyon, CRM & İK Asistanı",
     "description": "SocialArt Ajans /admin ve /crm verilerinden beslenen Operasyon, Müşteri İlişkileri, İş Takibi ve Kariyer Havuzu ChatGPT Botu",
@@ -365,6 +365,7 @@
     }
   },
   "components": {
+    "schemas": {},
     "securitySchemes": {
       "ApiKeyAuth": {
         "type": "apiKey",

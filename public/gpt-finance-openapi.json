@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.1.0",
   "info": {
     "title": "Bot 2: SocialArt Finans & Patron Asistanı (Gizli & Yetkili)",
     "description": "SocialArt Ajans /finans verilerinden beslenen Gelir, Gider, KDV Dahil Ödemeler, Kredi Kartı Borçları, Maaşlar ve Kârlılık Raporlama ChatGPT Botu",
@@ -15,47 +15,71 @@
     "/api/gpt/finance/summary": {
       "get": {
         "summary": "Özet Finans Tablosu (Toplam Ciro, Masraflar, Net Kâr)",
-        "operationId": "getFinanceSummary"
+        "operationId": "getFinanceSummary",
+        "responses": { "200": { "description": "Finans özeti" } }
       }
     },
     "/api/gpt/finance/payments": {
       "get": {
         "summary": "Aktif Müşteri Sözleşmeleri ve Aylık Hizmet Bedelleri",
-        "operationId": "getFinancePayments"
+        "operationId": "getFinancePayments",
+        "responses": { "200": { "description": "Müşteri ödeme listesi" } }
       }
     },
     "/api/gpt/finance/payment-request": {
       "post": {
         "summary": "Müşteriye %20 KDV Dahil Ödeme Talebi ve Linki Oluştur",
-        "operationId": "createPaymentRequest"
+        "operationId": "createPaymentRequest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["client_name", "amount"],
+                "properties": {
+                  "client_name": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Ödeme talebi oluşturuldu" } }
       }
     },
     "/api/gpt/finance/expenses": {
       "get": {
         "summary": "Ajans Giderleri ve Masraf Dökümü",
-        "operationId": "getFinanceExpenses"
+        "operationId": "getFinanceExpenses",
+        "responses": { "200": { "description": "Gider dökümü" } }
       }
     },
     "/api/gpt/finance/credit-cards": {
       "get": {
         "summary": "Kredi Kartı Borçları, Limitler ve Son Ödeme Günü Uyarıları",
-        "operationId": "getCreditCards"
+        "operationId": "getCreditCards",
+        "responses": { "200": { "description": "Kredi kartı durumu" } }
       }
     },
     "/api/gpt/finance/salaries": {
       "get": {
         "summary": "Personel Maaşları ve Toplam Aylık Maaş Yükü",
-        "operationId": "getSalaries"
+        "operationId": "getSalaries",
+        "responses": { "200": { "description": "Maaş yükü" } }
       }
     },
     "/api/gpt/finance/production-projects": {
       "get": {
         "summary": "Prodüksiyon Proje Bütçeleri ve Kârlılık Durumları",
-        "operationId": "getProductionProjects"
+        "operationId": "getProductionProjects",
+        "responses": { "200": { "description": "Prodüksiyon projeleri" } }
       }
     }
   },
   "components": {
+    "schemas": {},
     "securitySchemes": {
       "ApiKeyAuth": {
         "type": "apiKey",
