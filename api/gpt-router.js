@@ -259,6 +259,12 @@ export default async function handler(req, res) {
       case 'ops-crm-metrics-update':
       case 'crm-metrics-update':
         return await handleCrmMetricsUpdate(req, res);
+      case 'ops-payment-request':
+        return await handlePaymentRequest(req, res);
+      case 'ops-whatsapp-link':
+        return await handleWhatsAppLink(req, res);
+      case 'ops-reports':
+        return await handleReports(req, res);
 
       // --- BOT 2: FİNANS & PATRON (/finans) ---
       case 'finance-summary':
