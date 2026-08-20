@@ -144,12 +144,48 @@ export default function App() {
     if (showLoading) setIsLoading(true);
     setError(null);
     try {
-      // 1. Fetch active clients
+      // 1. Fetch active clients & auto-sync from /admin brands table
       try {
         const { data: clientsData } = await supabase
           .from('active_clients')
           .select('*')
           .order('name', { ascending: true });
+
+        // Auto-sync missing brands from admin DB if available
+        try {
+          const { data: adminBrands } = await supabase
+            .from('brands')
+            .select('*');
+
+          if (adminBrands && adminBrands.length > 0 && Array.isArray(clientsData)) {
+            for (const b of adminBrands) {
+              const bName = (b.name || '').trim();
+              if (!bName) continue;
+              const exists = clientsData.some(c => c.name.toLowerCase() === bName.toLowerCase() || c.name.toLowerCase().includes(bName.toLowerCase()) || bName.toLowerCase().includes(c.name.toLowerCase()));
+              if (!exists) {
+                const count = clientsData.length + 1;
+                const newCode = `M${String(count).padStart(3, '0')}`;
+                const { data: insertedClient } = await supabase.from('active_clients').insert([{
+                  name: bName,
+                  package: 'Sosyal Medya Yönetimi',
+                  monthly_fee: 0,
+                  payment_day: 1,
+                  yetkili_kisi: b.contact_person,
+                  telefon: b.phone,
+                  email: b.email,
+                  durum: b.status === 'active' ? 'aktif' : 'pasif',
+                  client_code: newCode,
+                  commission_rate: 10,
+                  exempt_from_commission: false
+                }]).select();
+                if (insertedClient && insertedClient.length > 0) {
+                  clientsData.push(insertedClient[0]);
+                }
+              }
+            }
+          }
+        } catch (bErr) {}
+
         const mappedClients = (clientsData || []).map(c => ({
           ...c,
           client_code: c.client_code || (c.metrics && c.metrics.client_code) || '',
