@@ -198,7 +198,7 @@ function About() {
           <p style={{ color: '#aaa', maxWidth: '600px', margin: '0 auto 40px', fontSize: '1.2rem', lineHeight: '1.7' }}>
             Markanızın dijital dünyadaki potansiyelini keşfetmek ve sinematik bir başarı hikayesi kurgulamak için uzman ekibimiz hazır.
           </p>
-          <a href="/#funnel" className="btn btn-primary" style={{ padding: '18px 45px', fontSize: '1.1rem' }}>
+          <a href="/iletisim" className="btn btn-primary" style={{ padding: '18px 45px', fontSize: '1.1rem' }}>
             Ekibimizle Toplantı Planlayın <ArrowRight size={22} style={{ marginLeft: '10px' }} />
           </a>
         </div>

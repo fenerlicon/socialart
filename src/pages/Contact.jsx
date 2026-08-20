@@ -3,6 +3,16 @@ import { Phone, Mail, MessageSquare, MapPin } from 'lucide-react';
 import AnalysisForm from '../components/AnalysisForm';
 
 function Contact() {
+  React.useEffect(() => {
+    // Smooth scroll to form container if requested or hashed
+    const formElement = document.getElementById('analiz-formu');
+    if (formElement && (window.location.hash || window.location.pathname === '/iletisim')) {
+      setTimeout(() => {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, []);
+
   return (
     <>
       <style>
@@ -178,7 +188,7 @@ function Contact() {
             </div>
 
             {/* Right Column: Dynamic Appointment Booking Calendar Form */}
-            <div>
+            <div id="analiz-formu" id="toplantı-formu">
               <AnalysisForm />
             </div>
           </div>

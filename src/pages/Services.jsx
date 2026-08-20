@@ -320,7 +320,7 @@ function Services() {
           <p style={{ color: '#888', maxWidth: '560px', margin: '0 auto 40px', fontSize: '1.05rem', lineHeight: '1.7' }}>
             İletişime geçin, ihtiyaçlarınızı birlikte değerlendirelim. Markanıza özel yaratıcı çözümler üretelim.
           </p>
-          <a href="/#funnel" className="btn btn-primary" style={{ fontSize: '1rem', padding: '16px 40px', display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: '#fff', borderRadius: '50px', fontWeight: '700', textDecoration: 'none' }}>
+          <a href="/iletisim" className="btn btn-primary" style={{ fontSize: '1rem', padding: '16px 40px', display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: '#fff', borderRadius: '50px', fontWeight: '700', textDecoration: 'none' }}>
             Ekibimizle Toplantı Planlayın <ArrowRight size={20} />
           </a>
         </div>
