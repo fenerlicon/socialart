@@ -44,6 +44,33 @@ try {
   console.log('--- Copying Next.js static build to public/admin... ---');
   copyDirSync(panelOutDir, publicAdminDir);
 
+  // 3.5. Ensure Clean URL fallback files for Vercel dynamic routing
+  console.log('--- Creating Clean URL fallback files for Vercel... ---');
+  try {
+    const brandsTempHtml = path.join(publicAdminDir, 'brands/temp.html');
+    const brandsTempClean = path.join(publicAdminDir, 'brands/temp');
+    if (fs.existsSync(brandsTempHtml)) {
+      fs.copyFileSync(brandsTempHtml, brandsTempClean);
+      console.log('  -> Copied brands/temp.html to brands/temp');
+    }
+
+    const employeesTempHtml = path.join(publicAdminDir, 'employees/temp.html');
+    const employeesTempClean = path.join(publicAdminDir, 'employees/temp');
+    if (fs.existsSync(employeesTempHtml)) {
+      fs.copyFileSync(employeesTempHtml, employeesTempClean);
+      console.log('  -> Copied employees/temp.html to employees/temp');
+    }
+
+    const employeesTempEditHtml = path.join(publicAdminDir, 'employees/temp/edit.html');
+    const employeesTempEditClean = path.join(publicAdminDir, 'employees/temp/edit');
+    if (fs.existsSync(employeesTempEditHtml)) {
+      fs.copyFileSync(employeesTempEditHtml, employeesTempEditClean);
+      console.log('  -> Copied employees/temp/edit.html to employees/temp/edit');
+    }
+  } catch (err) {
+    console.warn('Notice creating clean URL fallback files:', err.message);
+  }
+
   // 4. Build Vite app
   console.log('--- Building main Vite application... ---');
   execSync(`${npxCmd} vite build`, { stdio: 'inherit' });
