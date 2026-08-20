@@ -21,11 +21,12 @@ import { cn } from '@/lib/utils'
 interface BrandCardProps {
   brand: Brand
   managerName: string
+  progressPercentage?: number
   onEdit: () => void
   onDelete: () => void
 }
 
-export function BrandCard({ brand, managerName, onEdit, onDelete }: BrandCardProps) {
+export function BrandCard({ brand, managerName, progressPercentage, onEdit, onDelete }: BrandCardProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -45,26 +46,30 @@ export function BrandCard({ brand, managerName, onEdit, onDelete }: BrandCardPro
     }
   }, [menuOpen])
 
-  // Calculated overall metrics (excluding cancelled items)
+  // Calculated overall metrics (including live workflow progress)
   const stats = useMemo(() => {
     const plan = brand.operationPlan || []
+    const activeItemsCount = plan.filter(i => i.status !== 'cancelled').length
+
+    if (typeof progressPercentage === 'number') {
+      return { totalProgress: Math.min(100, Math.max(0, progressPercentage)), activeItemsCount }
+    }
+
     if (!plan.length) return { totalProgress: 0, activeItemsCount: 0 }
     
     let totalTarget = 0
     let totalCompleted = 0
-    let activeItemsCount = 0
     
     plan.forEach((item) => {
       if (item.status !== 'cancelled') {
         totalTarget += item.target
         totalCompleted += Math.min(item.target, item.completed)
-        activeItemsCount++
       }
     })
 
     const totalProgress = totalTarget > 0 ? Math.round((totalCompleted / totalTarget) * 100) : 0
     return { totalProgress, activeItemsCount }
-  }, [brand.operationPlan])
+  }, [brand.operationPlan, progressPercentage])
 
   const teamCount = brand.brandAssignments?.length || 0
 

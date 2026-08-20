@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getStoredBrands, deleteBrand, saveBrand } from '@/lib/storage/local-brand-store'
+import { getStoredWorkflowInstances } from '@/lib/storage/local-workflow-instance-store'
+import type { WorkflowInstance } from '@/types/domain'
 import { getStoredEmployees } from '@/lib/storage/local-employee-store'
 import type { Brand, Employee } from '@/types/domain'
 import { BrandCard } from './brand-card'
@@ -28,6 +30,7 @@ export function BrandListPage() {
   // Storage data
   const [brands, setBrands] = useState<Brand[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [workflows, setWorkflows] = useState<WorkflowInstance[]>([])
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('')
@@ -60,6 +63,8 @@ export function BrandListPage() {
 
       const storedBrands = await getStoredBrands()
       setBrands(storedBrands)
+      const storedWorkflows = await getStoredWorkflowInstances()
+      setWorkflows(storedWorkflows)
     }
     loadData()
   }, [])
@@ -75,19 +80,42 @@ export function BrandListPage() {
     return effective.grantedKeys.has('brand.manage')
   }, [activeEmployee])
 
-  // Helper to compute progress for a brand (used for sorting)
-  const getBrandProgress = (b: Brand) => {
-    const plan = b.operationPlan || []
-    if (!plan.length) return 0
-    let totalTarget = 0
-    let totalCompleted = 0
+  // Helper to compute live progress for a brand from workflow instances and operation plan
+  const getBrandProgress = (b: Brand, brandWorkflows?: WorkflowInstance[]) => {
+    const wfs = brandWorkflows || workflows.filter(w => w.brandId === b.id);
+    if (wfs && wfs.length > 0) {
+      const activeOrCompleted = wfs.filter(w => w.status !== 'cancelled');
+      if (activeOrCompleted.length > 0) {
+        let totalPoints = 0;
+        let completedPoints = 0;
+        activeOrCompleted.forEach(w => {
+          if (w.targetCount && w.targetCount > 1) {
+            totalPoints += w.targetCount;
+            completedPoints += Math.min(w.targetCount, w.progressCount || (w.status === 'completed' ? w.targetCount : 0));
+          } else {
+            totalPoints += 1;
+            if (w.status === 'completed') {
+              completedPoints += 1;
+            }
+          }
+        });
+        if (totalPoints > 0) {
+          return Math.round((completedPoints / totalPoints) * 100);
+        }
+      }
+    }
+
+    const plan = b.operationPlan || [];
+    if (!plan.length) return 0;
+    let totalTarget = 0;
+    let totalCompleted = 0;
     plan.forEach((item) => {
       if (item.status !== 'cancelled') {
-        totalTarget += item.target
-        totalCompleted += Math.min(item.target, item.completed)
+        totalTarget += item.target;
+        totalCompleted += Math.min(item.target, item.completed);
       }
-    })
-    return totalTarget > 0 ? Math.round((totalCompleted / totalTarget) * 100) : 0
+    });
+    return totalTarget > 0 ? Math.round((totalCompleted / totalTarget) * 100) : 0;
   }
 
   // Handle deletion confirmation
