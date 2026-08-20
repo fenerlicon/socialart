@@ -140,8 +140,8 @@ export default function App() {
   const [error, setError] = useState(null);
 
   // Fetch all data for the active period
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setError(null);
     try {
       // 1. Fetch active clients
@@ -342,7 +342,39 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
+
+    // 1. Listen for custom event 'finance_data_changed'
+    const handleDataChange = () => {
+      fetchData(false);
+    };
+    window.addEventListener('finance_data_changed', handleDataChange);
+
+    // 2. Listen for window focus event
+    const handleWindowFocus = () => {
+      fetchData(false);
+    };
+    window.addEventListener('focus', handleWindowFocus);
+
+    // 3. Supabase Realtime Subscriptions for Instant Data Sync
+    let channel;
+    try {
+      channel = supabase.channel('finance-realtime-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_client_payments' }, () => fetchData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_expenses' }, () => fetchData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_staff_payments' }, () => fetchData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_production_projects' }, () => fetchData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'active_clients' }, () => fetchData(false))
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime subscription error:', e);
+    }
+
+    return () => {
+      window.removeEventListener('finance_data_changed', handleDataChange);
+      window.removeEventListener('focus', handleWindowFocus);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [selectedPeriod]);
 
   // HELPER: Log to activity_log

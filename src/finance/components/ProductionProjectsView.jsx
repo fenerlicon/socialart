@@ -104,6 +104,7 @@ export default function ProductionProjectsView({
     setProjectTitle('');
     setClientName('');
     setProjectBudget('');
+    try { window.dispatchEvent(new CustomEvent('finance_data_changed')); } catch(e){}
   };
 
   // Handle Add Cost to Project
@@ -156,6 +157,7 @@ export default function ProductionProjectsView({
     setSelectedProject(null);
     setCostTitle('');
     setCostAmount('');
+    try { window.dispatchEvent(new CustomEvent('finance_data_changed')); } catch(e){}
   };
 
   // Delete Project
@@ -170,6 +172,7 @@ export default function ProductionProjectsView({
     } catch (err) {
       console.warn('Delete project warning:', err);
     }
+    try { window.dispatchEvent(new CustomEvent('finance_data_changed')); } catch(e){}
   };
 
   // Calculate Summary Stats
