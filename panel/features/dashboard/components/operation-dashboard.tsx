@@ -54,13 +54,25 @@ export function OperationDashboard() {
     const totalEmployees = employees.length
     const activeEmployees = employees.filter((e) => e.employeeStatus === 'active').length
 
-    // Operations progress - based on actual workflow steps
+    // Operations progress - based on actual workflow steps & counter targets across all brands
     const activeInstances = instances.filter(i => i.status !== 'cancelled')
-    const activeInstanceIds = new Set(activeInstances.map(i => i.id))
-    const relevantSteps = steps.filter(s => activeInstanceIds.has(s.workflowInstanceId))
     
-    const totalTarget = relevantSteps.length
-    const totalCompleted = relevantSteps.filter(s => s.status === 'completed' || s.status === 'skipped').length
+    let totalTarget = 0
+    let totalCompleted = 0
+
+    activeInstances.forEach((w) => {
+      const wSteps = steps.filter((s) => s.workflowInstanceId === w.id)
+      if (w.targetCount && w.targetCount > 1) {
+        totalTarget += w.targetCount
+        totalCompleted += Math.min(w.targetCount, w.progressCount || (w.status === 'completed' ? w.targetCount : 0))
+      } else if (wSteps.length > 0) {
+        totalTarget += wSteps.length
+        totalCompleted += wSteps.filter((s) => s.status === 'completed' || s.status === 'skipped').length
+      } else {
+        totalTarget += 1
+        if (w.status === 'completed') totalCompleted += 1
+      }
+    })
 
     return {
       totalBrands,
