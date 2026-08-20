@@ -3357,10 +3357,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </div>
 
             <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800' }}>
-                <Briefcase size={20} /> Kariyer / İş Başvuruları
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.2rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: 0 }}>
+                  <Briefcase size={20} /> Kariyer / İş Başvuruları ({jobApps.length})
+                </h3>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
                 {jobApps.map(app => (
                   <div 
                     key={app.id} 
@@ -3368,12 +3371,13 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     style={{ 
                       padding: '24px', 
                       borderRadius: '20px', 
-                      border: '1px solid rgba(255, 255, 255, 0.05)', 
-                      background: 'rgba(15, 15, 20, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)', 
+                      background: 'rgba(15, 15, 20, 0.6)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '12px',
-                      transition: 'transform 0.2s'
+                      gap: '14px',
+                      transition: 'transform 0.2s',
+                      position: 'relative'
                     }}
                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                     onMouseLeave={e => e.currentTarget.style.transform = 'none'}
@@ -3381,27 +3385,53 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', margin: 0 }}>{app.full_name}</h4>
-                        <span style={{ display: 'inline-block', color: 'var(--accent)', fontWeight: '800', fontSize: '0.7rem', background: 'rgba(0,229,255,0.08)', padding: '2px 6px', borderRadius: '4px', marginTop: '6px' }}>
-                          {app.position}
+                        <span style={{ display: 'inline-block', color: '#c084fc', fontWeight: '800', fontSize: '0.75rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '3px 8px', borderRadius: '6px', marginTop: '6px' }}>
+                          {app.position || 'İş Başvurusu'}
                         </span>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</span>
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm(`${app.full_name} başvurusunu silmek istediğinize emin misiniz?`)) {
+                              await supabase.from('job_applications').delete().eq('id', app.id);
+                              setJobApps(prev => prev.filter(j => j.id !== app.id));
+                            }
+                          }}
+                          style={{ background: 'rgba(255,23,68,0.12)', color: '#ff1744', border: '1px solid rgba(255,23,68,0.25)', padding: '6px 8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Başvuruyu Sil"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
 
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.8rem', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div>📞 {app.phone}</div>
-                      <div style={{ opacity: 0.6 }}>✉ {app.email}</div>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '12px', fontSize: '0.82rem', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ fontWeight: '700', color: '#fff' }}>📞 {app.phone || 'Belirtilmedi'}</div>
+                      <div style={{ opacity: 0.8 }}>✉ {app.email || 'Belirtilmedi'}</div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                    {/* Neden Sizinle Çalışmalıyız? / Ön Yazı Bloğu */}
+                    {app.about && (
+                      <div style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.25)', padding: '12px 14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          💡 Neden Sizinle Çalışmalıyız? / Ön Yazı:
+                        </span>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#f4f4f5', lineHeight: '1.45', whiteSpace: 'pre-wrap', fontWeight: '500' }}>
+                          {app.about}
+                        </p>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
                       {app.portfolio_url && (
                         <a 
-                          href={app.portfolio_url} 
+                          href={app.portfolio_url.startsWith('http') ? app.portfolio_url : `https://${app.portfolio_url}`} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', color: '#fff', textDecoration: 'none' }}
+                          style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '10px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800', color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                         >
-                          Portfolyo
+                          🔗 Portfolyo
                         </a>
                       )}
                       {app.resume_url && (
@@ -3409,19 +3439,19 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                           href={app.resume_url} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          style={{ flex: 1, textAlign: 'center', background: 'var(--primary)', padding: '8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', color: '#fff', textDecoration: 'none' }}
+                          style={{ flex: 1, textAlign: 'center', background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)', padding: '10px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800', color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}
                         >
-                          CV Dosyası
+                          📄 CV Dosyası (PDF)
                         </a>
                       )}
                       {!app.portfolio_url && !app.resume_url && (
-                        <span style={{ color: '#555', fontSize: '0.8rem' }}>Dosya / Portfolyo Yok</span>
+                        <span style={{ color: '#666', fontSize: '0.8rem', padding: '8px' }}>Dosya / Portfolyo Eklenmedi</span>
                       )}
                     </div>
                   </div>
                 ))}
                 {jobApps.length === 0 && (
-                  <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center', color: '#666' }}>Henüz başvuru yok.</div>
+                  <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center', color: '#666' }}>Henüz kayıtlı başvuru bulunmuyor.</div>
                 )}
               </div>
             </div>
