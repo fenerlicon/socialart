@@ -3,8 +3,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getStoredBrands, deleteBrand, saveBrand } from '@/lib/storage/local-brand-store'
-import { getStoredWorkflowInstances } from '@/lib/storage/local-workflow-instance-store'
-import type { WorkflowInstance } from '@/types/domain'
+import { getStoredWorkflowInstances, getStoredWorkflowSteps } from '@/lib/storage/local-workflow-instance-store'
+import type { WorkflowInstance, WorkflowStepInstance } from '@/types/domain'
 import { getStoredEmployees } from '@/lib/storage/local-employee-store'
 import type { Brand, Employee } from '@/types/domain'
 import { BrandCard } from './brand-card'
@@ -31,6 +31,7 @@ export function BrandListPage() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [workflows, setWorkflows] = useState<WorkflowInstance[]>([])
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStepInstance[]>([])
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('')
@@ -65,6 +66,8 @@ export function BrandListPage() {
       setBrands(storedBrands)
       const storedWorkflows = await getStoredWorkflowInstances()
       setWorkflows(storedWorkflows)
+      const storedSteps = await getStoredWorkflowSteps()
+      setWorkflowSteps(storedSteps)
     }
     loadData()
   }, [])
@@ -80,29 +83,30 @@ export function BrandListPage() {
     return effective.grantedKeys.has('brand.manage')
   }, [activeEmployee])
 
-  // Helper to compute live progress for a brand from workflow instances and operation plan
+  // Helper to compute live progress for a brand from workflow steps and operation plan
   const getBrandProgress = (b: Brand) => {
     let wfProgress = 0;
-    const wfs = workflows.filter(w => w.brandId === b.id);
-    if (wfs && wfs.length > 0) {
-      const activeOrCompleted = wfs.filter(w => w.status !== 'cancelled');
-      if (activeOrCompleted.length > 0) {
-        let totalPoints = 0;
-        let completedPoints = 0;
-        activeOrCompleted.forEach(w => {
-          if (w.targetCount && w.targetCount > 1) {
-            totalPoints += w.targetCount;
-            completedPoints += Math.min(w.targetCount, w.progressCount || (w.status === 'completed' ? w.targetCount : 0));
-          } else {
-            totalPoints += 1;
-            if (w.status === 'completed') {
-              completedPoints += 1;
-            }
-          }
-        });
-        if (totalPoints > 0) {
-          wfProgress = Math.round((completedPoints / totalPoints) * 100);
+    const brandWfs = workflows.filter(w => w.brandId === b.id && w.status !== 'cancelled');
+    if (brandWfs && brandWfs.length > 0) {
+      let totalPoints = 0;
+      let completedPoints = 0;
+
+      brandWfs.forEach(w => {
+        const wSteps = workflowSteps.filter(s => s.workflowInstanceId === w.id);
+        if (w.targetCount && w.targetCount > 1) {
+          totalPoints += w.targetCount;
+          completedPoints += Math.min(w.targetCount, (w.progressCount || (w.status === 'completed' ? w.targetCount : 0)));
+        } else if (wSteps.length > 0) {
+          totalPoints += wSteps.length;
+          completedPoints += wSteps.filter(s => s.status === 'completed' || s.status === 'skipped').length;
+        } else {
+          totalPoints += 1;
+          if (w.status === 'completed') completedPoints += 1;
         }
+      });
+
+      if (totalPoints > 0) {
+        wfProgress = Math.round((completedPoints / totalPoints) * 100);
       }
     }
 
