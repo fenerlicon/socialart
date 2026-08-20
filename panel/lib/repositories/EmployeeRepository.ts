@@ -44,7 +44,7 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     id: 'emp-furkan',
     fullName: 'Furkan',
     email: 'furkan@socialart.internal',
-    title: 'Kreatif Direktör',
+    title: 'Dijital Pazarlama Uzmanı',
     rolePackageId: 'kreatif-direktor',
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
