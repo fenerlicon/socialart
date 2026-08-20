@@ -313,23 +313,47 @@ export default function App() {
         }
       } catch (e) {}
 
-      // 10. Check for any CRM leads moved to 'kazanildi' that need auto-syncing to Finance
+      // 10. Check for CRM won leads (stage = 'WON' / status = 'Kazanıldı') -> Sync expected revenue to Gelirler & Prodüksiyon
       try {
-        const { data: crmWonDeals } = await supabase
-          .from('crm_leads')
-          .select('*')
-          .or('status.eq.kazanildi,status.eq.Kazanıldı,status.eq.won,status.eq.KAZANILDI')
-          .or('synced_to_finance.is.null,synced_to_finance.eq.false');
+        let crmWonDeals = [];
+
+        // Check leads table in piffaggeshfrubyjkhej
+        try {
+          const { data: pifLeads } = await supabase
+            .from('leads')
+            .select('*')
+            .or('status.eq.kazanildi,status.eq.Kazanıldı,status.eq.won,status.eq.KAZANILDI,stage.eq.WON,stage.eq.won')
+            .or('synced_to_finance.is.null,synced_to_finance.eq.false');
+          if (pifLeads && pifLeads.length > 0) {
+            crmWonDeals.push(...pifLeads);
+          }
+        } catch (lErr) {}
+
+        // Check crm_leads table in osuwytug
+        try {
+          const { data: osuLeads } = await supabase
+            .from('crm_leads')
+            .select('*')
+            .or('stage.eq.WON,stage.eq.won,stage.eq.KAZANILDI,status.eq.kazanildi,status.eq.Kazanıldı')
+            .or('synced_to_finance.is.null,synced_to_finance.eq.false');
+          if (osuLeads && osuLeads.length > 0) {
+            crmWonDeals.push(...osuLeads);
+          }
+        } catch (cErr) {}
 
         if (crmWonDeals && crmWonDeals.length > 0) {
           for (const deal of crmWonDeals) {
-            const amountVal = parseFloat(deal.amount) || parseFloat(deal.revenue) || parseFloat(deal.value) || 0;
+            // Extract expected budget / revenue amount written in CRM lead
+            const amountVal = parseFloat(deal.budget) || parseFloat(deal.amount) || parseFloat(deal.revenue) || parseFloat(deal.value) || 0;
+            const dealTitle = deal.title || deal.name || 'CRM Kazanılan Proje';
+            const dealClientName = deal.client_name || deal.name || deal.title || 'CRM Müşteri';
+
             if (amountVal > 0) {
               const digerClient = (clientsData || []).find(c => c.client_code === 'DIGER' || c.name.includes('Diğer'));
               const targetClientId = digerClient ? digerClient.id : 99999;
               const kdvAmount = Math.round((amountVal * (20 / 120)) * 100) / 100;
 
-              // Insert into finance_client_payments
+              // 1. Insert into finance_client_payments (Gelirler)
               const { data: pData } = await supabase
                 .from('finance_client_payments')
                 .insert([{
@@ -338,7 +362,7 @@ export default function App() {
                   payment_date: deal.date || new Date().toISOString().split('T')[0],
                   payment_type: 'Havale',
                   period: selectedPeriod,
-                  notes: `[CRM Prodüksiyon Kazanıldı] ${deal.title || 'CRM Projesi'} (${deal.client_name || 'Müşteri'})`,
+                  notes: `[CRM Kazanıldı] ${dealTitle} (${dealClientName})`,
                   kdv_rate: 20,
                   kdv_amount: kdvAmount
                 }])
@@ -348,22 +372,32 @@ export default function App() {
                 setClientPayments(prev => [...prev, pData[0]]);
               }
 
-              // Insert into finance_production_projects
+              // 2. Insert into finance_production_projects (Prodüksiyon Projeleri)
               await supabase.from('finance_production_projects').insert([{
-                title: deal.title || 'CRM Prodüksiyon Çekimi',
-                client_name: deal.client_name || deal.title || 'CRM Müşteri',
+                title: `${dealTitle} (${dealClientName})`,
+                client_name: dealClientName,
                 budget: amountVal,
                 status: 'ongoing',
-                date: deal.date || new Date().toISOString().split('T')[0]
+                date: deal.date || new Date().toISOString().split('T')[0],
+                costs: []
               }]);
 
-              // Update synced status in CRM table
-              await supabase
-                .from('crm_leads')
-                .update({ synced_to_finance: true })
-                .eq('id', deal.id);
+              // Update synced status in leads / crm_leads table
+              try {
+                await supabase
+                  .from('leads')
+                  .update({ synced_to_finance: true })
+                  .eq('id', deal.id);
+              } catch (e) {}
 
-              logActivity('CRM Entegrasyonu', `${deal.title || 'Proje'} CRM'de 'Kazanıldı' seçildiği için ₺${amountVal} Prodüksiyon Geliri kaydedildi.`);
+              try {
+                await supabase
+                  .from('crm_leads')
+                  .update({ synced_to_finance: true })
+                  .eq('id', deal.id);
+              } catch (e) {}
+
+              logActivity('CRM Entegrasyonu', `${dealTitle} (${dealClientName}) CRM'de 'Kazanıldı' seçildiği için ₺${amountVal.toLocaleString('tr-TR')} Beklenen Gelir hem Gelirlere hem Prodüksiyon Projelerine kaydedildi.`);
             }
           }
         }
