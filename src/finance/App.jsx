@@ -34,7 +34,9 @@ import {
   BarChart2,
   Lock,
   LogOut,
-  KeyRound
+  KeyRound,
+  Rocket,
+  Home
 } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {
@@ -1483,97 +1485,102 @@ export default function App() {
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
-        {/* Header */}
-        <div className="header-container">
+        {/* Header Bar */}
+        <div className="header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div className="header-title-group">
-            <h1>Ön Muhasebe Yönetim Paneli</h1>
-            <p>SocialArt Ajans cari takibi, otomatik prim hesapları ve banka kasa entegrasyonu.</p>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.5px' }}>Ön Muhasebe Yönetim Paneli</h1>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>SocialArt Ajans cari takibi, otomatik prim hesapları ve banka kasa entegrasyonu.</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Dönem Pill */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid var(--border-light)', padding: '0 12px', height: '36px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1' }}>
+              <Calendar size={14} style={{ color: '#06b6d4' }} />
+              <span>Dönem: {getPeriodOptions().find(o => o.value === selectedPeriod)?.label || selectedPeriod}</span>
+            </div>
+
             {/* Quick Switch Links */}
             <a 
               href="/admin/crm"
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: 'rgba(99, 102, 241, 0.15)',
-                border: '1px solid rgba(99, 102, 241, 0.4)',
-                padding: '0.5rem 0.85rem',
+                background: 'rgba(99, 102, 241, 0.12)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                padding: '0 12px',
+                height: '36px',
                 borderRadius: '8px',
                 color: '#a5b4fc',
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 fontWeight: 700,
                 textDecoration: 'none',
                 transition: 'all 0.2s ease'
               }}
             >
-              🚀 CRM Paneli
+              <Rocket size={14} /> CRM Paneli
             </a>
 
             <a 
               href="/admin/dashboard"
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: 'rgba(255, 255, 255, 0.05)',
+                background: 'rgba(255, 255, 255, 0.04)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                padding: '0.5rem 0.85rem',
+                padding: '0 12px',
+                height: '36px',
                 borderRadius: '8px',
                 color: '#e2e8f0',
-                fontSize: '0.82rem',
-                fontWeight: 700,
+                fontSize: '0.8rem',
+                fontWeight: 600,
                 textDecoration: 'none',
                 transition: 'all 0.2s ease'
               }}
             >
-              🏠 Admin Paneli
+              <Home size={14} /> Admin Paneli
             </a>
 
             {/* Logged in User Badge */}
             <div style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               background: 'rgba(168, 85, 247, 0.12)',
               border: '1px solid rgba(168, 85, 247, 0.3)',
-              padding: '0.5rem 0.85rem',
+              padding: '0 12px',
+              height: '36px',
               borderRadius: '8px',
               color: '#c084fc',
-              fontSize: '0.82rem',
+              fontSize: '0.8rem',
               fontWeight: 600
             }}>
-              <Users size={15} />
+              <Users size={14} />
               <span>{authUser?.displayName || authUser?.username || 'Yönetici'}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-              <Calendar size={16} className="text-secondary" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                Dönem: {getPeriodOptions().find(o => o.value === selectedPeriod)?.label || selectedPeriod}
-              </span>
-            </div>
-
+            {/* Action Buttons */}
             <button 
               onClick={() => setShowChangePasswordModal(true)}
               style={{
-                background: 'rgba(99, 102, 241, 0.12)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                background: 'rgba(99, 102, 241, 0.1)',
+                border: '1px solid rgba(99, 102, 241, 0.25)',
                 color: '#818cf8',
-                padding: '0.5rem 0.85rem',
+                padding: '0 12px',
+                height: '36px',
                 borderRadius: '8px',
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'all 0.2s ease'
               }}
               title="Şifrenizi Değiştirin"
             >
-              <KeyRound size={15} />
+              <KeyRound size={14} />
               <span>Şifre Değiştir</span>
             </button>
 
@@ -1583,19 +1590,20 @@ export default function App() {
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.25)',
                 color: '#f87171',
-                padding: '0.5rem 0.85rem',
+                padding: '0 12px',
+                height: '36px',
                 borderRadius: '8px',
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'all 0.2s ease'
               }}
               title="Güvenli Çıkış Yap"
             >
-              <LogOut size={15} />
+              <LogOut size={14} />
               <span>Çıkış Yap</span>
             </button>
           </div>
