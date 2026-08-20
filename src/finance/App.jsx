@@ -15,6 +15,8 @@ import LoginLockScreen from './components/LoginLockScreen';
 import ChangePasswordModal from './components/ChangePasswordModal';
 
 import { 
+  Menu, 
+  X, 
   DollarSign, 
   LayoutDashboard, 
   Users, 
@@ -78,6 +80,7 @@ export default function App() {
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
     localStorage.setItem('socialart_active_tab', tab);
+    setIsMobileMenuOpen(false);
   };
   
   // Date period state (Format: YYYY-MM)
@@ -128,6 +131,7 @@ export default function App() {
     ajansercan26: localStorage.getItem('socialart_pass_ajansercan26') || '1234'
   }));
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // UI States
   const [isLoading, setIsLoading] = useState(true);
@@ -1319,7 +1323,7 @@ export default function App() {
   return (
     <div className="app-container">
       {/* Sidebar Navigation (8 Pages) */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="logo-container">
           <div className="logo-icon">S</div>
           <div>
@@ -1414,7 +1418,40 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
+      
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="mobile-sidebar-backdrop" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
       <main className="main-content">
+        {/* Mobile Top Header */}
+        <div className="mobile-top-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="logo-icon" style={{ width: '32px', height: '32px', fontSize: '1rem' }}>S</div>
+            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#fff' }}>SocialArt Finance</span>
+          </div>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid var(--border-light)',
+              color: '#fff',
+              padding: '0.4rem 0.6rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
         {/* Header */}
         <div className="header-container">
           <div className="header-title-group">
