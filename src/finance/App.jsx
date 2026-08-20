@@ -143,12 +143,15 @@ export default function App() {
     setError(null);
     try {
       // 1. Fetch active clients
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('active_clients')
-        .select('*')
-        .order('client_code', { ascending: true });
-      if (clientsError) throw clientsError;
-      setClients(clientsData || []);
+      try {
+        const { data: clientsData } = await supabase
+          .from('active_clients')
+          .select('*')
+          .order('name', { ascending: true });
+        setClients(clientsData || []);
+      } catch (cErr) {
+        console.warn('Active clients fetch warning:', cErr);
+      }
 
       // 2. Fetch staff members
       const { data: staffData, error: staffError } = await supabase
