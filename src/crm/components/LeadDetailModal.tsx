@@ -568,6 +568,50 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               </div>
             )}
 
+            {/* CV & Portfolyo Bağlantıları */}
+            {(lead.resumeUrl || lead.portfolioUrl || lead.instagramUrl) && (
+              <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                <span className="text-[11px] font-black text-indigo-300 uppercase tracking-wider block">
+                  📎 Aday Ekleri & Portfolyo Bağlantıları
+                </span>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {lead.resumeUrl && (
+                    <a
+                      href={lead.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>📄 Özgeçmiş (CV) İndir / Aç</span>
+                    </a>
+                  )}
+                  {lead.portfolioUrl && (
+                    <a
+                      href={lead.portfolioUrl.startsWith('http') ? lead.portfolioUrl : `https://${lead.portfolioUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>🔗 Portfolyo Linkini Gör</span>
+                    </a>
+                  )}
+                  {lead.instagramUrl && (
+                    <a
+                      href={lead.instagramUrl.startsWith('http') ? lead.instagramUrl : `https://instagram.com/${lead.instagramUrl.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>📸 Instagram Profili (@{lead.instagramUrl.replace('@', '')})</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {lead.metaCampaignName && (
               <div className="pt-2 border-t border-slate-800 text-xs">
                 <span className="text-slate-400 font-bold block mb-0.5">REKLAM KAMPANYASI:</span>

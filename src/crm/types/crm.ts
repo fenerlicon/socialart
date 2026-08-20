@@ -74,8 +74,13 @@ export interface Lead {
   productionDetails?: ProductionDetails;
   socialMediaDetails?: SocialMediaDetails;
   
-  // General info
+  // General info & Application fields
   whyUs?: string;
+  resumeUrl?: string;
+  portfolioUrl?: string;
+  instagramUrl?: string;
+  category?: string;
+  position?: string;
   lossReason?: string;
   retargetingDate?: string;
   retargetingNote?: string;
