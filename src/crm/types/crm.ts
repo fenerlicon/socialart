@@ -75,6 +75,7 @@ export interface Lead {
   socialMediaDetails?: SocialMediaDetails;
   
   // General info
+  whyUs?: string;
   lossReason?: string;
   retargetingDate?: string;
   retargetingNote?: string;

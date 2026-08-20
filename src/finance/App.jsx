@@ -75,9 +75,7 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function App() {
-  const [activeTab, setActiveTabState] = useState(() => {
-    return localStorage.getItem('socialart_active_tab') || 'dashboard';
-  });
+  const [activeTab, setActiveTabState] = useState('dashboard');
 
   const setActiveTab = (tab) => {
     setActiveTabState(tab);

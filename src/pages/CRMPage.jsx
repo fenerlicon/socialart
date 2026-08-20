@@ -435,6 +435,7 @@ function mapDbRowToLead(row) {
       monthlyReelsCount: 0,
       industry: service,
     } : undefined,
+    whyUs: row.about || row.reaction || row.why_us || row.neden_biz || row.about_text || '',
     retargetingDate: row.retargeting_date || undefined,
     retargetingNote: row.retargeting_note || undefined,
     isQualified: Boolean(row.is_qualified || (Array.isArray(row.tags) && row.tags.includes('kaliteli'))),

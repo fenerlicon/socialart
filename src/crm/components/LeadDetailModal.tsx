@@ -556,6 +556,18 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               </div>
             </div>
 
+            {/* Neden Sizinle Çalışmalıyız? / Aday Açıklaması */}
+            {lead.whyUs && (
+              <div className="bg-indigo-950/40 p-3.5 rounded-xl border border-indigo-500/30 space-y-1">
+                <span className="text-[11px] font-black text-indigo-300 uppercase tracking-wider block">
+                  💡 Neden Sizinle Çalışmalıyız? / Başvuru Açıklaması
+                </span>
+                <p className="text-xs text-slate-200 leading-relaxed font-medium whitespace-pre-wrap">
+                  {lead.whyUs}
+                </p>
+              </div>
+            )}
+
             {lead.metaCampaignName && (
               <div className="pt-2 border-t border-slate-800 text-xs">
                 <span className="text-slate-400 font-bold block mb-0.5">REKLAM KAMPANYASI:</span>
