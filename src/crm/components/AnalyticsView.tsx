@@ -96,6 +96,8 @@ const ACTIVE_META_ADS = new Set([
   '120250627774720048'
 ]);
 
+export type DatePreset = 'TODAY' | 'WEEK' | 'MONTH' | 'ALL';
+
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   leads,
   currentPipeline,
@@ -107,6 +109,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const [tableSearch, setTableSearch] = useState<string>('');
   const [activeAdsOnly, setActiveAdsOnly] = useState<boolean>(true);
   const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
+  const [datePresetFilter, setDatePresetFilter] = useState<DatePreset>('MONTH');
 
   // Meta Canlı Harcama Durumu
   const [metaSpend, setMetaSpend] = useState<MetaSpendData>({
@@ -136,10 +139,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const [isRefreshingSpend, setIsRefreshingSpend] = useState<boolean>(false);
 
   // Güvenli Backend API'den canlı harcama çekme (Frontend'de token ifşa edilmez)
-  const fetchLiveMetaSpend = async () => {
+  const fetchLiveMetaSpend = async (preset: DatePreset = datePresetFilter) => {
     setIsRefreshingSpend(true);
     try {
-      const res = await fetch('/api/meta-insights?date_preset=this_month');
+      let metaPreset = 'this_month';
+      if (preset === 'TODAY') metaPreset = 'today';
+      else if (preset === 'WEEK') metaPreset = 'last_7d';
+      else if (preset === 'MONTH') metaPreset = 'this_month';
+      else if (preset === 'ALL') metaPreset = 'maximum';
+
+      const res = await fetch(`/api/meta-insights?date_preset=${metaPreset}`);
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
@@ -165,8 +174,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   };
 
   useEffect(() => {
-    // Ilk yuklemede aninda cek
-    fetchLiveMetaSpend();
+    fetchLiveMetaSpend(datePresetFilter);
 
     // Her 30 saniyede bir otomatik anlik guncelle
     const interval = setInterval(() => {
@@ -183,9 +191,40 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [datePresetFilter]);
 
-  const pipelineLeads = leads.filter(l => l.pipeline === currentPipeline);
+  const dateFilteredLeads = useMemo(() => {
+    return leads.filter(l => {
+      if (datePresetFilter === 'ALL') return true;
+      const leadDateStr = l.createdAt || (l as any).created_at || (l as any).date;
+      if (!leadDateStr) return true;
+      const leadDate = new Date(leadDateStr);
+      if (isNaN(leadDate.getTime())) return true;
+      const now = new Date();
+      if (datePresetFilter === 'TODAY') {
+        return (
+          leadDate.getFullYear() === now.getFullYear() &&
+          leadDate.getMonth() === now.getMonth() &&
+          leadDate.getDate() === now.getDate()
+        );
+      }
+      if (datePresetFilter === 'WEEK') {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return leadDate >= sevenDaysAgo;
+      }
+      if (datePresetFilter === 'MONTH') {
+        return (
+          leadDate.getFullYear() === now.getFullYear() &&
+          leadDate.getMonth() === now.getMonth()
+        );
+      }
+      return true;
+    });
+  }, [leads, datePresetFilter]);
+
+  const pipelineLeads = useMemo(() => {
+    return dateFilteredLeads.filter(l => l.pipeline === currentPipeline);
+  }, [dateFilteredLeads, currentPipeline]);
 
   // Financial calculations
   const getLeadNumericBudget = (l: Lead) => {
@@ -225,8 +264,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const manualWon = manualLeads.filter(l => l.stage === 'WON').length;
 
   const metaQualified = metaLeads.filter(l => l.isQualified).length;
-  const overallCpl = metaCount > 0 ? (metaSpend.totalSpend / metaCount) : 0;
-  const overallCpql = metaQualified > 0 ? (metaSpend.totalSpend / metaQualified) : 0;
+  const activePeriodSpend = datePresetFilter === 'TODAY' ? (metaSpend.todaySpend || metaSpend.totalSpend) : metaSpend.totalSpend;
+  const overallCpl = metaCount > 0 ? (activePeriodSpend / metaCount) : 0;
+  const overallCpql = metaQualified > 0 ? (activePeriodSpend / metaQualified) : 0;
 
   // Clean Campaign / Ad Set / Ad breakdown computation
   const breakdownRows: BreakdownRow[] = useMemo(() => {
@@ -391,6 +431,62 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   return (
     <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
+      {/* Date Filter Bar */}
+      <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-extrabold text-white">Raporlama Tarih Filtresi</h4>
+            <p className="text-xs text-slate-400">Tüm metrikleri, dönüşüm hunisini ve harcamaları seçilen zaman dilimine göre filtreleyin.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800/80 w-full sm:w-auto overflow-x-auto">
+          <button
+            onClick={() => setDatePresetFilter('TODAY')}
+            className={`px-3.5 py-1.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+              datePresetFilter === 'TODAY'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <span>📅 Bugün</span>
+          </button>
+          <button
+            onClick={() => setDatePresetFilter('WEEK')}
+            className={`px-3.5 py-1.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+              datePresetFilter === 'WEEK'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <span>🗓️ Bu Hafta (7 Gün)</span>
+          </button>
+          <button
+            onClick={() => setDatePresetFilter('MONTH')}
+            className={`px-3.5 py-1.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+              datePresetFilter === 'MONTH'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <span>📊 Bu Ay</span>
+          </button>
+          <button
+            onClick={() => setDatePresetFilter('ALL')}
+            className={`px-3.5 py-1.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+              datePresetFilter === 'ALL'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <span>♾️ Tüm Zamanlar</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Section: Meta Live Spend & Performance Dashboard */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 p-5 rounded-2xl shadow-2xl relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-indigo-500/20">
