@@ -1125,9 +1125,23 @@ export default function App() {
       const card = creditCards.find(c => c.id === cardId);
       await supabase.from('finance_credit_cards').delete().eq('id', cardId);
       setCreditCards(prev => prev.filter(c => c.id !== cardId));
+
       if (card) {
-        await logActivity('Kart Silindi', `${card.card_name} kredi kartı kaydı silindi.`);
+        // Also auto-delete associated expense records for this card
+        const cardNameClean = (card.card_name || '').toLowerCase();
+        const matchingExpenses = expenses.filter(e => 
+          e.payment_method === 'Kredi Kartı' && 
+          e.description.toLowerCase().includes(cardNameClean)
+        );
+
+        for (const exp of matchingExpenses) {
+          await supabase.from('finance_expenses').delete().eq('id', exp.id);
+        }
+
+        setExpenses(prev => prev.filter(e => !matchingExpenses.some(m => m.id === e.id)));
+        await logActivity('Kart Silindi', `${card.card_name} kredi kartı ve bağlı harcama kayıtları silindi.`);
       }
+      try { window.dispatchEvent(new CustomEvent('finance_data_changed')); } catch(e){}
     } catch (err) {
       alert("Kart silinemedi: " + err.message);
     }
