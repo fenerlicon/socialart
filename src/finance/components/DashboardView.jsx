@@ -58,8 +58,17 @@ export default function DashboardView({
   const activeClients = (clients || []).filter(c => c.durum === 'aktif' || !c.durum);
   const totalClientBilling = activeClients.reduce((acc, c) => acc + (parseFloat(c.monthly_fee) || 0), 0);
   
-  // Gelirler (Tahsil Edilen)
-  const totalReceived = (clientPayments || []).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+  // Net Prodüksiyon Kârı (Bütçe - Tedarikçi Masrafları)
+  const totalProductionBudget = (productionProjects || []).reduce((acc, p) => acc + (parseFloat(p.budget) || 0), 0);
+  const totalProductionExpense = (productionProjects || []).reduce((acc, p) => {
+    const expList = Array.isArray(p.costs) ? p.costs : (Array.isArray(p.expenses) ? p.expenses : []);
+    return acc + expList.reduce((eAcc, e) => eAcc + (parseFloat(e.amount) || 0), 0);
+  }, 0);
+  const netProductionProfit = Math.max(0, totalProductionBudget - totalProductionExpense);
+
+  // Gelirler (Tahsil Edilen Müşteri Ödemeleri + Net Prodüksiyon Kârı)
+  const totalReceivedPayments = (clientPayments || []).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+  const totalReceived = totalReceivedPayments + netProductionProfit;
 
   const goalProgress = Math.min(100, Math.round((totalReceived / monthlyGoal) * 100));
   const remainingGoal = Math.max(0, monthlyGoal - totalReceived);
@@ -73,16 +82,8 @@ export default function DashboardView({
   
   const totalExpenses = totalDirectExpenses + totalStaffPaid;
 
-  // Net Prodüksiyon Kârı (Bütçe - Masraf)
-  const totalProductionBudget = (productionProjects || []).reduce((acc, p) => acc + (parseFloat(p.budget) || 0), 0);
-  const totalProductionExpense = (productionProjects || []).reduce((acc, p) => {
-    const expList = Array.isArray(p.costs) ? p.costs : (Array.isArray(p.expenses) ? p.expenses : []);
-    return acc + expList.reduce((eAcc, e) => eAcc + (parseFloat(e.amount) || 0), 0);
-  }, 0);
-  const netProductionProfit = totalProductionBudget - totalProductionExpense;
-
   // Net Nakit Durumu (Tahsilat + Prodüksiyon Kârı - Gider)
-  const netCashStatus = totalReceived + netProductionProfit - totalExpenses;
+  const netCashStatus = totalReceived - totalExpenses;
 
   // Personel Net Maaş Yükü
   const totalNetSalaries = staff.reduce((acc, s) => {

@@ -1663,6 +1663,7 @@ export default function App() {
             <GelirlerView 
               clients={clients}
               clientPayments={clientPayments}
+              productionProjects={productionProjects}
               period={selectedPeriod}
               onRecordPayment={handleRecordClientPayment}
               onDeletePayment={handleDeleteClientPayment}

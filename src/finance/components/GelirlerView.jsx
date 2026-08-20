@@ -6,6 +6,7 @@ import { exportToCSV } from '../utils/exportUtils';
 export default function GelirlerView({ 
   clients, 
   clientPayments, 
+  productionProjects = [], 
   period, 
   onRecordPayment, 
   onDeletePayment, 
@@ -56,16 +57,55 @@ export default function GelirlerView({
     return { fee, totalPaid, remaining };
   })();
 
-  // Total collected income
-  const totalRevenues = clientPayments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+  // Calculate production profit
+  const totalProductionNetProfit = (productionProjects || []).reduce((acc, p) => {
+    const budget = parseFloat(p.budget) || 0;
+    const expList = Array.isArray(p.costs) ? p.costs : (Array.isArray(p.expenses) ? p.expenses : []);
+    const totalExp = expList.reduce((eAcc, e) => eAcc + (parseFloat(e.amount) || 0), 0);
+    return acc + Math.max(0, budget - totalExp);
+  }, 0);
 
-  // Filter payments
+  // Total collected income (Client Payments + Net Production Profit)
+  const clientPaymentsTotal = (clientPayments || []).reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+  const totalRevenues = clientPaymentsTotal + totalProductionNetProfit;
+
+  // Filter regular payments
   const filteredPayments = (clientPayments || []).filter(payment => {
     const client = clients.find(c => c.id === payment.client_id);
     return (client && client.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
            (payment.notes && payment.notes.toLowerCase().includes(searchTerm.toLowerCase())) ||
            (payment.payment_type && payment.payment_type.toLowerCase().includes(searchTerm.toLowerCase()));
-  }).sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+  });
+
+  // Map production projects as direct revenue line items
+  const productionRevenues = (productionProjects || []).map(proj => {
+    const budget = parseFloat(proj.budget) || 0;
+    const expList = Array.isArray(proj.costs) ? proj.costs : (Array.isArray(proj.expenses) ? proj.expenses : []);
+    const totalExp = expList.reduce((eAcc, e) => eAcc + (parseFloat(e.amount) || 0), 0);
+    const netProfit = Math.max(0, budget - totalExp);
+
+    return {
+      id: `prod-${proj.id}`,
+      isProductionProject: true,
+      payment_date: proj.date || new Date().toISOString().split('T')[0],
+      client_name: proj.client_name || 'Prodüksiyon Müşterisi',
+      notes: `[Prodüksiyon Projesi] ${proj.title} (Bütçe: ${budget.toLocaleString('tr-TR')} ₺ - Masraflar: ${totalExp.toLocaleString('tr-TR')} ₺)`,
+      payment_type: 'Prodüksiyon Projesi',
+      amount: netProfit > 0 ? netProfit : budget,
+      budget,
+      totalExp,
+      netProfit
+    };
+  }).filter(p => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return p.client_name.toLowerCase().includes(term) || p.notes.toLowerCase().includes(term);
+  });
+
+  // Combine both list sources
+  const allRevenuesCombined = [...filteredPayments, ...productionRevenues].sort(
+    (a, b) => new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at)
+  );
 
   // Handle submit
   const handleSubmit = (e) => {
@@ -162,7 +202,7 @@ export default function GelirlerView({
             <div className="spinner"></div>
             <span>Yükleniyor...</span>
           </div>
-        ) : filteredPayments.length === 0 ? (
+        ) : allRevenuesCombined.length === 0 ? (
           <div className="empty-state">
             <DollarSign size={48} style={{ color: 'var(--text-muted)' }} />
             <h4 className="empty-state-title">Gelir Bulunamadı</h4>
@@ -182,23 +222,39 @@ export default function GelirlerView({
                 </tr>
               </thead>
               <tbody>
-                {filteredPayments.map(p => {
+                {allRevenuesCombined.map(p => {
                   const client = clients.find(c => c.id === p.client_id);
+                  const isProd = p.isProductionProject;
                   return (
-                    <tr key={p.id}>
+                    <tr key={p.id} style={isProd ? { background: 'rgba(139, 92, 246, 0.04)' } : {}}>
                       <td style={{ color: 'var(--text-secondary)' }}>
-                        {new Date(p.payment_date).toLocaleDateString('tr-TR')}
+                        {p.payment_date ? new Date(p.payment_date).toLocaleDateString('tr-TR') : '-'}
                       </td>
-                      <td style={{ fontWeight: 600 }}>{client ? client.name : (p.client_id === 99999 ? 'Diğer (Harici Gelir)' : 'Bilinmeyen Müşteri')}</td>
-                      <td>{p.notes || 'Hizmet Bedeli'}</td>
+                      <td style={{ fontWeight: 600 }}>
+                        {isProd ? p.client_name : (client ? client.name : (p.client_id === 99999 ? 'Diğer (Harici Gelir)' : 'Bilinmeyen Müşteri'))}
+                      </td>
+                      <td>
+                        {isProd ? (
+                          <span style={{ color: '#c084fc', fontWeight: 600 }}>{p.notes}</span>
+                        ) : (
+                          p.notes || 'Hizmet Bedeli'
+                        )}
+                      </td>
                       <td style={{ fontSize: '0.85rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Landmark size={12} className="text-secondary" />
-                          {p.payment_type || 'Havale'}
-                        </span>
+                        {isProd ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(139, 92, 246, 0.15)', color: '#c084fc', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                            🎬 Prodüksiyon
+                          </span>
+                        ) : (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Landmark size={12} className="text-secondary" />
+                            {p.payment_type || 'Havale'}
+                          </span>
+                        )}
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--color-success)' }}>
                         {parseFloat(p.amount).toLocaleString('tr-TR')} ₺
+                        {isProd && <div style={{ fontSize: '0.7rem', color: '#c084fc', fontWeight: 500 }}>[Net Kâr]</div>}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
