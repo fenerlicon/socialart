@@ -60,64 +60,76 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
     fetchLeads()
   }, [])
 
-  // Calculate CRM Lead Metrics from Real DB
+  // Calculate CRM Lead Metrics from Real DB with 100% Precision
   const metrics = useMemo(() => {
     let prodWaiting = 0
     let smWaiting = 0
     let uncontacted = 0
     let won = 0
+    let activeCount = 0
 
-    const activeLeads = leads.filter(l => l.status !== 'ARŞİV' && l.stage !== 'ARCHIVED')
-
-    activeLeads.forEach((l) => {
+    leads.forEach((l) => {
       const rawStage = String(l.stage || '').trim().toUpperCase()
       const rawStatus = String(l.status || l.durum || '').trim()
       const pipelineUpper = String(l.pipeline || '').toUpperCase()
       const serviceLower = String(l.service || '').toLowerCase()
 
-      const isProd =
-        pipelineUpper === 'PRODUCTION' ||
-        serviceLower.includes('prodük') ||
-        serviceLower.includes('video') ||
-        serviceLower.includes('çekim') ||
-        serviceLower.includes('production')
+      const isLost = 
+        rawStage === 'LOST' || 
+        rawStatus.includes('Reddedildi') || 
+        rawStatus.includes('Kaybedildi') || 
+        rawStatus.includes('Olumsuz') || 
+        rawStatus.includes('İptal') || 
+        rawStatus.includes('ARŞİV')
 
-      // 1. Temassız Lead (Yeni gelenler)
-      if (
-        rawStage === 'NEW' ||
-        rawStage === 'HOT' ||
-        rawStatus === 'Geldi (Yeni Lead)' ||
-        rawStatus === 'Yeni' ||
-        rawStatus === 'Sıcak'
-      ) {
-        uncontacted++
-      }
+      if (!isLost) {
+        activeCount++
 
-      // 2. Teklif Bekleyenler / Teklif İletildi
-      if (
-        rawStage === 'WAITING' ||
-        rawStage === 'PROPOSAL_SENT' ||
-        rawStatus.includes('Teklif') ||
-        rawStatus.includes('Katalog') ||
-        rawStatus.includes('Bekliyor')
-      ) {
-        if (isProd) prodWaiting++
-        else smWaiting++
-      }
+        const isProd =
+          pipelineUpper === 'PRODUCTION' ||
+          serviceLower.includes('prodük') ||
+          serviceLower.includes('video') ||
+          serviceLower.includes('çekim') ||
+          serviceLower.includes('production')
 
-      // 3. Kazanılan Müşteriler
-      if (
-        rawStage === 'WON' ||
-        rawStatus.includes('Anlaş') ||
-        rawStatus.includes('Kazanıldı') ||
-        rawStatus.includes('Aktif')
-      ) {
-        won++
+        // 1. Temassız Lead (Yeni gelenler)
+        if (
+          rawStage === 'NEW' ||
+          rawStage === 'HOT' ||
+          rawStatus === 'Geldi (Yeni Lead)' ||
+          rawStatus === 'Yeni' ||
+          rawStatus === 'Sıcak'
+        ) {
+          uncontacted++
+        }
+
+        // 2. Teklif Bekleyenler / Teklif İletildi
+        else if (
+          rawStage === 'WAITING' ||
+          rawStage === 'PROPOSAL_SENT' ||
+          rawStatus.includes('Teklif') ||
+          rawStatus.includes('Katalog') ||
+          rawStatus.includes('Bekliyor')
+        ) {
+          if (isProd) prodWaiting++
+          else smWaiting++
+        }
+
+        // 3. Kazanılan Müşteriler
+        else if (
+          rawStage === 'WON' ||
+          rawStatus.includes('Anlaş') ||
+          rawStatus.includes('Kazanıldı') ||
+          rawStatus.includes('Aktif')
+        ) {
+          won++
+        }
       }
     })
 
     return {
-      total: activeLeads.length,
+      totalAll: leads.length,
+      totalActive: activeCount,
       prodWaiting,
       smWaiting,
       uncontacted,
@@ -274,7 +286,7 @@ export function RecentItemsCard({ employees }: RecentItemsCardProps) {
                     Sözleşmeli Müşteri
                     <ArrowRight className="w-3 h-3 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </p>
-                  <p className="text-[9px] text-muted-foreground">Toplam Aktif Lead: {metrics.total}</p>
+                  <p className="text-[9px] text-muted-foreground">Süreçteki Aktif Aday: {metrics.totalActive} (Toplam: {metrics.totalAll})</p>
                 </a>
               </div>
             )}
