@@ -41,3 +41,11 @@ Bu dosya, projede geliştirme yapan tüm yapay zeka ajanları ve geliştiriciler
   1. `panel/` -> Next.js 14 App Router (Static Export)
   2. `src/` -> React + Vite Single Page Application
 - **Zorunluluk:** Herhangi bir değişiklikten sonra `node scripts/build-all.cjs` çalıştırılarak hem Next.js panelinin (`public/admin/`) hem de Vite uygulamasının (`dist/`) sıfır hata ile derlendiği doğrulanmalıdır.
+
+---
+
+## 6. Veritabanı Haritası ve Çift Supabase Kuralı (Dual Database Topology Rule)
+- **Kural:** Projede kullanılan 2 ayrı Supabase Postgres veritabanının tablo yerleşimi **KESİNLİKLE SABİTTİR** ve karıştırılamaz:
+  1. **DB1 (`piffaggeshfrubyjkhej` - Leads/Finance DB):** `leads`, `active_clients`, `employees`, `tasks`, `appointments`, `blocked_slots`, `finance_expenses`, `finance_credit_cards`, `finance_production_projects`, `payment_requests`, `job_applications`, `ugc_applications`.
+  2. **DB2 (`osuwytugjscwhcxxkhfa` - Big Panel DB):** `workflow_step_instances`, `personal_todos`, `calendar_events`, `notifications`.
+- **Yasak:** DB2'deki `workflow_step_instances` veya `personal_todos` tabloları asla yalnız DB1 üzerinden sorgulanamaz! Her zaman `supabaseSecondary` veya çift DB istemcisi kullanılacaktır.
