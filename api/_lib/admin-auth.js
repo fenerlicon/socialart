@@ -166,9 +166,8 @@ export function getSessionExpiry(durationHours = 24) {
 /**
  * Creates a secure Set-Cookie header string for session management
  */
-export function createSessionCookie(rawToken, isProduction = process.env.NODE_ENV === 'production') {
+export function createSessionCookie(rawToken, isProduction = process.env.NODE_ENV === 'production', maxAge = 86400) {
   const cookieName = 'socialart_admin_session';
-  const maxAge = 86400; // 24 hours in seconds
   let cookie = `${cookieName}=${encodeURIComponent(rawToken)}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Strict`;
   
   if (isProduction) {

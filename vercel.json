@@ -119,6 +119,22 @@
       "destination": "/admin/:path*"
     },
     {
+      "source": "/api/auth-login",
+      "destination": "/api/auth-router?route=login"
+    },
+    {
+      "source": "/api/auth-me",
+      "destination": "/api/auth-router?route=me"
+    },
+    {
+      "source": "/api/auth-logout",
+      "destination": "/api/auth-router?route=logout"
+    },
+    {
+      "source": "/api/auth-change-password",
+      "destination": "/api/auth-router?route=change-password"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },

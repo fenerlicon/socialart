@@ -1,7 +1,7 @@
-import { hashSessionToken, generateSessionToken, getSessionExpiry, createSessionCookie, verifyPassword } from './_lib/admin-auth.js';
-import { getAdminSupabase } from './_lib/admin-db.js';
-import { resolveServerPermissions } from './_lib/admin-permissions.js';
-import { normalizeIdentifier, getTrustedClientIp, deriveRateLimitHmac, checkRateLimit, recordRateLimitFailure, recordRateLimitSuccess } from './_lib/admin-rate-limit.js';
+import { hashSessionToken, generateSessionToken, getSessionExpiry, createSessionCookie, verifyPassword } from './admin-auth.js';
+import { getAdminSupabase } from './admin-db.js';
+import { resolveServerPermissions } from './admin-permissions.js';
+import { normalizeIdentifier, getTrustedClientIp, deriveRateLimitHmac, checkRateLimit, recordRateLimitFailure, recordRateLimitSuccess } from './admin-rate-limit.js';
 
 /**
  * POST /api/auth-login
