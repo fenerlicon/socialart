@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Content-Type must be application/json' });
   }
 
-  const authState = await requireAdminSession(req);
+  const authState = await requireAdminSession(req, { allowMustChangePassword: true });
   if (!authState) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }

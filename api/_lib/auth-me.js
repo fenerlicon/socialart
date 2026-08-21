@@ -7,7 +7,8 @@ import { resolveServerPermissions } from './admin-permissions.js';
  * Session validation & current employee profile retrieval
  */
 
-export async function requireAdminSession(req) {
+export async function requireAdminSession(req, options = {}) {
+  const allowMustChangePassword = typeof options === 'boolean' ? options : (options?.allowMustChangePassword === true);
   const token = parseSessionCookie(req);
   if (!token) return null;
 
@@ -38,13 +39,19 @@ export async function requireAdminSession(req) {
     .eq('employee_id', employee.id)
     .maybeSingle();
 
+  const mustChange = creds?.must_change_password === true;
+
+  if (!allowMustChangePassword && mustChange) {
+    return null;
+  }
+
   const effectivePermissions = resolveServerPermissions(employee.role_package_id, employee.permission_overrides);
 
   return {
     session,
     employee,
     permissions: effectivePermissions,
-    mustChangePassword: creds?.must_change_password === true
+    mustChangePassword: mustChange
   };
 }
 
@@ -54,7 +61,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const authState = await requireAdminSession(req);
+  const authState = await requireAdminSession(req, { allowMustChangePassword: true });
   if (!authState) {
     return res.status(401).json({ authenticated: false, error: 'Unauthenticated' });
   }
@@ -64,7 +71,9 @@ export default async function handler(req, res) {
     employee: {
       id: authState.employee.id,
       fullName: authState.employee.full_name,
-      title: authState.employee.title
+      email: authState.employee.email,
+      title: authState.employee.title,
+      rolePackageId: authState.employee.role_package_id
     },
     permissions: authState.permissions,
     mustChangePassword: authState.mustChangePassword
