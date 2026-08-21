@@ -985,6 +985,7 @@ function Admin() {
   const [aktifMusteriler, setAktifMusteriler] = useState([]);
   const [ugcApps, setUgcApps] = useState([]);
   const [jobApps, setJobApps] = useState([]);
+  const [jobAppFilter, setJobAppFilter] = useState('ALL');
   const [isTakip, setIsTakip] = useState([]);
 
   // Social Art Base CRM States
@@ -3361,10 +3362,39 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                 <h3 style={{ fontSize: '1.2rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: 0 }}>
                   <Briefcase size={20} /> Kariyer / İş Başvuruları ({jobApps.length})
                 </h3>
+
+                {/* Candidate Status Evaluation Filter Tabs */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'ALL', label: 'Tümü' },
+                    { id: 'Bekliyor', label: '📄 İncelemede' },
+                    { id: 'Öne Çıkan', label: '🌟 Mülakat / Öne Çıkan' },
+                    { id: 'Yedek Havuz', label: '📁 Yedek Havuz' },
+                    { id: 'Reddedildi', label: '⛔ Pasif / Uymadı' }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setJobAppFilter(tab.id)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        background: jobAppFilter === tab.id ? 'rgba(139, 92, 246, 0.3)' : 'rgba(255, 255, 255, 0.05)',
+                        color: jobAppFilter === tab.id ? '#fff' : '#a1a1aa',
+                        border: `1px solid ${jobAppFilter === tab.id ? 'rgba(139, 92, 246, 0.6)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
-                {jobApps.map(app => (
+                {jobApps.filter(app => jobAppFilter === 'ALL' || (app.status || 'Bekliyor') === jobAppFilter).map(app => (
                   <div 
                     key={app.id} 
                     className="glass" 

@@ -29,12 +29,13 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title"],
                 "properties": {
-                  "title": { "type": "string", "example": "Örnek Şirket" },
+                  "name": { "type": "string", "example": "Mustafa Budak" },
+                  "title": { "type": "string", "example": "Budak Ltd" },
                   "contactName": { "type": "string" },
                   "phone": { "type": "string" },
                   "email": { "type": "string" },
+                  "service": { "type": "string", "example": "Sunuculu Video Reklam" },
                   "pipeline": { "type": "string", "enum": ["PRODUCTION", "SOCIAL_MEDIA"] },
                   "budget": { "type": "number" },
                   "notes": { "type": "string" }
@@ -51,7 +52,8 @@
         "summary": "Bir Müşterinin Geçmiş Notlarını ve İletişim Geçmişini Görüntüle",
         "operationId": "getLeadHistory",
         "parameters": [
-          { "name": "lead_id", "in": "query", "required": true, "schema": { "type": "string" } }
+          { "name": "lead_id", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Müşteri ID'si veya Müşteri / Temsilci Adı (Örn: Mustafa Budak veya 123)" },
+          { "name": "name", "in": "query", "required": false, "schema": { "type": "string" } }
         ],
         "responses": { "200": { "description": "Müşteri geçmişi" } }
       }
@@ -66,9 +68,11 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["lead_id", "note"],
+                "required": ["note"],
                 "properties": {
-                  "lead_id": { "type": "string" },
+                  "lead_id": { "type": "string", "description": "Müşteri ID'si veya Müşteri Adı (Örn: Mustafa Budak)" },
+                  "lead_name": { "type": "string" },
+                  "name": { "type": "string" },
                   "note": { "type": "string" },
                   "author": { "type": "string" }
                 }
@@ -89,9 +93,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["client_name", "amount"],
+                "required": ["amount"],
                 "properties": {
                   "client_name": { "type": "string" },
+                  "name": { "type": "string" },
+                  "title": { "type": "string" },
+                  "payment_title": { "type": "string" },
                   "amount": { "type": "number" },
                   "description": { "type": "string" }
                 }
@@ -149,7 +156,8 @@
                 "required": ["title"],
                 "properties": {
                   "title": { "type": "string" },
-                  "type": { "type": "string", "enum": ["cekim", "toplanti", "yayin", "deadline", "kampanya", "izin", "tatil", "operasyon"] },
+                  "type": { "type": "string", "enum": ["shoot", "meeting", "publish", "deadline", "campaign", "leave", "holiday", "operation_cycle", "cekim", "toplanti", "yayin", "kampanya", "izin", "tatil", "operasyon"] },
+                  "event_type": { "type": "string" },
                   "date": { "type": "string" },
                   "time": { "type": "string" },
                   "description": { "type": "string" }
@@ -293,28 +301,6 @@
           }
         },
         "responses": { "200": { "description": "Başvuru güncellendi" } }
-      }
-    },
-    "/api/gpt/ops/delete-application": {
-      "post": {
-        "summary": "İş veya UGC Başvurusunu Sil",
-        "operationId": "deleteApplication",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["id"],
-                "properties": {
-                  "id": { "type": "string" },
-                  "type": { "type": "string", "enum": ["job", "ugc"] }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Başvuru silindi" } }
       }
     },
     "/api/gpt/ops/staff-kpi": {
