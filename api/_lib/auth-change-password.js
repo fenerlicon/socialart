@@ -81,7 +81,9 @@ export default async function handler(req, res) {
     p_new_password_hash: newHash
   });
 
-  if (rpcErr || !rpcRes || rpcRes.changed !== true) {
+  const commitResult = Array.isArray(rpcRes) ? rpcRes[0] : rpcRes;
+
+  if (rpcErr || !commitResult || commitResult.changed !== true) {
     return res.status(409).json({ error: 'Password change failed or version mismatch. Please retry.' });
   }
 
