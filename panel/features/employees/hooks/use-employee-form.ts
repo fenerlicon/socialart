@@ -199,19 +199,25 @@ export function useEmployeeForm(
           }
         }
 
-        // 2. Identity & Status Update (email, username, employeeStatus)
+        // 2. Identity & Status & Auth-Metadata Update (email, username, employeeStatus, teamIds, hasAdvancedCalendarAccess)
         const initialEmail = (initialEmployee?.email || '').trim().toLowerCase()
         const newEmail = (values.email || '').trim().toLowerCase()
         const initialUsername = (initialEmployee?.username || '').trim().toLowerCase()
         const newUsername = (values.username || '').trim().toLowerCase()
         const initialStatus = initialEmployee?.employeeStatus || 'active'
         const newStatus = values.employeeStatus || 'active'
+        const initialTeams = JSON.stringify(initialEmployee?.teamIds || [])
+        const newTeams = JSON.stringify(values.teamIds || [])
+        const initialCalendar = Boolean(initialEmployee?.hasAdvancedCalendarAccess)
+        const newCalendar = Boolean(values.hasAdvancedCalendarAccess)
 
         const identityChanged =
           !initialEmployee ||
           newEmail !== initialEmail ||
           newUsername !== initialUsername ||
-          newStatus !== initialStatus
+          newStatus !== initialStatus ||
+          newTeams !== initialTeams ||
+          newCalendar !== initialCalendar
 
         if (identityChanged) {
           try {
@@ -223,11 +229,13 @@ export function useEmployeeForm(
                 email: newEmail,
                 username: newUsername,
                 employeeStatus: newStatus,
+                teamIds: values.teamIds,
+                hasAdvancedCalendarAccess: newCalendar,
               }),
             })
             if (!idRes.ok) {
               const idData = await idRes.json().catch(() => ({}))
-              toast.error('Kimlik/durum bilgileri sunucuda güncellenemedi', {
+              toast.error('Kimlik/yetki bilgileri sunucuda güncellenemedi', {
                 description: idData.error || 'Kimlik güncellemesi için yetki gereklidir.',
               })
             }

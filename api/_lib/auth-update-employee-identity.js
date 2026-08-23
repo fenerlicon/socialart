@@ -124,6 +124,19 @@ export default async function handler(req, res) {
     updateFields.employee_status = cleanStatus;
   }
 
+  // 8. Validate and prepare teamIds if provided
+  if (teamIds !== undefined) {
+    if (!Array.isArray(teamIds) || !teamIds.every(t => typeof t === 'string')) {
+      return res.status(400).json({ error: 'Invalid teamIds: must be an array of strings' });
+    }
+    updateFields.team_ids = teamIds;
+  }
+
+  // 9. Validate and prepare hasAdvancedCalendarAccess if provided
+  if (hasAdvancedCalendarAccess !== undefined) {
+    updateFields.has_advanced_calendar_access = Boolean(hasAdvancedCalendarAccess);
+  }
+
   if (overridesModified) {
     updateFields.permission_overrides = currentOverrides;
   }
