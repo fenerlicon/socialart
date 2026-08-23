@@ -152,7 +152,12 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     // Team (Ekip)
-    if (hasPermission('team.manage')) {
+    if (
+      hasPermission('team.manage') ||
+      hasPermission('employees.manage') ||
+      hasPermission('employees.view') ||
+      hasPermission('system.admin')
+    ) {
       menuItems.push({ label: 'Ekip Üyeleri', icon: '👥', href: '/employees' })
     }
 

@@ -22,14 +22,14 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  // 2. Authorize operator with exact team.manage permission
+  // 2. Authorize operator with exact employees.manage or system.admin permission
   const hasPermission = authState.permissions && (
-    authState.permissions.includes('team.manage') ||
+    authState.permissions.includes('employees.manage') ||
     authState.permissions.includes('system.admin')
   );
 
   if (!hasPermission) {
-    return res.status(403).json({ error: 'Unauthorized: team.manage permission required' });
+    return res.status(403).json({ error: 'Unauthorized: employees.manage permission required' });
   }
 
   const supabase = getAdminSupabase();

@@ -116,7 +116,12 @@ export function EmployeeCreatePage() {
       teamIds: activeEmployee.teamIds,
       permissionOverrides: activeEmployee.permissionOverrides || {},
     })
-    return effective.grantedKeys.has('team.manage')
+    return (
+      effective.grantedKeys.has('employees.create') ||
+      effective.grantedKeys.has('employees.manage') ||
+      effective.grantedKeys.has('system.admin') ||
+      effective.grantedKeys.has('team.manage')
+    )
   }, [activeEmployee, employeeCount])
 
   if (isLoadingAuth) {

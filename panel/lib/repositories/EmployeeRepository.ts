@@ -144,28 +144,39 @@ export const EmployeeRepository = {
   },
 
   // Map TypeScript Employee to Supabase snake_case insert/update object
+  // SECURITY: Authorization-sensitive and identity fields are stripped from direct anon browser save payloads.
+  // Sensitive fields (role_package_id, employee_status, email, username, and sensitive permission keys)
+  // must be updated exclusively through protected server endpoints (/api/auth-update-*).
   mapEmployeeToRow(employee: Partial<Employee>) {
     const row: any = {}
     if (employee.id !== undefined) row.id = employee.id
     if (employee.fullName !== undefined) row.full_name = employee.fullName
-    if (employee.email !== undefined) row.email = employee.email
+    // email is protected — updated via /api/auth-update-employee-identity
+    // role_package_id is protected — updated via /api/auth-update-employee-role
+    // employee_status is protected — updated via /api/auth-update-employee-identity
     if (employee.title !== undefined) row.title = employee.title
-    if (employee.rolePackageId !== undefined) row.role_package_id = employee.rolePackageId
     if (employee.teamIds !== undefined) row.team_ids = employee.teamIds
     
-    if (employee.permissionOverrides !== undefined || employee.username !== undefined) {
-      const baseOverrides = { ...(employee.permissionOverrides || {}) }
-      // SECURITY: Strip team.manage from direct browser/anon save payload.
-      // team.manage must only be modified through protected server endpoint (/api/auth-update-team-manage).
-      delete (baseOverrides as any)['team.manage']
-
-      row.permission_overrides = {
-        ...baseOverrides,
-        username: employee.username !== undefined ? employee.username : (baseOverrides as any).username,
+    if (employee.permissionOverrides !== undefined) {
+      const safeOverrides = { ...(employee.permissionOverrides || {}) }
+      // SECURITY: Strip all sensitive authorization keys and username from direct browser save
+      const sensitiveKeys = [
+        'team.manage',
+        'employees.manage',
+        'employees.create',
+        'system.permissions',
+        'system.admin',
+        'settings.manage',
+        'system.settings',
+        'username',
+      ]
+      for (const key of sensitiveKeys) {
+        delete (safeOverrides as any)[key]
       }
+
+      row.permission_overrides = safeOverrides
     }
     
-    if (employee.employeeStatus !== undefined) row.employee_status = employee.employeeStatus
     if (employee.workLocationStatus !== undefined) row.work_location_status = employee.workLocationStatus
     if (employee.avatarUrl !== undefined) row.avatar_url = employee.avatarUrl
     if (employee.hasAdvancedCalendarAccess !== undefined) row.has_advanced_calendar_access = employee.hasAdvancedCalendarAccess

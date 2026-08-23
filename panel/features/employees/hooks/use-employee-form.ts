@@ -176,28 +176,99 @@ export function useEmployeeForm(
         setValues(defaultEmployeeFormValues)
       }
 
-      // Check if team.manage override was explicitly set or changed
-      const initialTeamManage = initialEmployee?.permissionOverrides?.['team.manage'] === true
-      const newTeamManage = values.permissionOverrides?.['team.manage'] === true
-      const teamManageSpecified = Object.prototype.hasOwnProperty.call(values.permissionOverrides || {}, 'team.manage')
-
-      if (targetEmployeeId && teamManageSpecified && newTeamManage !== initialTeamManage) {
-        try {
-          const tmRes = await fetch('/api/auth-update-team-manage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ employeeId: targetEmployeeId, grant: newTeamManage }),
-          })
-          if (!tmRes.ok) {
-            const tmData = await tmRes.json().catch(() => ({}))
-            toast.error('team.manage yetkisi sunucuda güncellenemedi', {
-              description: tmData.error || 'Bu yetkiyi güncellemek için yönetici yetkisi gereklidir.',
+      // Orchestrate protected server updates for authorization-sensitive fields:
+      if (targetEmployeeId) {
+        // 1. Role Package Update
+        const initialRole = initialEmployee?.rolePackageId || null
+        const newRole = values.rolePackageId || null
+        if (!initialEmployee || newRole !== initialRole) {
+          try {
+            const roleRes = await fetch('/api/auth-update-employee-role', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ employeeId: targetEmployeeId, rolePackageId: newRole }),
             })
+            if (!roleRes.ok) {
+              const rData = await roleRes.json().catch(() => ({}))
+              toast.error('Rol paketi sunucuda güncellenemedi', {
+                description: rData.error || 'Rol güncellemesi için yönetici yetkisi gereklidir.',
+              })
+            }
+          } catch (e: any) {
+            toast.error('Rol paketi sunucu bağlantı hatası', { description: e.message })
           }
-        } catch (e: any) {
-          toast.error('team.manage sunucu bağlantı hatası', {
-            description: e.message,
-          })
+        }
+
+        // 2. Identity & Status Update (email, username, employeeStatus)
+        const initialEmail = (initialEmployee?.email || '').trim().toLowerCase()
+        const newEmail = (values.email || '').trim().toLowerCase()
+        const initialUsername = (initialEmployee?.username || '').trim().toLowerCase()
+        const newUsername = (values.username || '').trim().toLowerCase()
+        const initialStatus = initialEmployee?.employeeStatus || 'active'
+        const newStatus = values.employeeStatus || 'active'
+
+        const identityChanged =
+          !initialEmployee ||
+          newEmail !== initialEmail ||
+          newUsername !== initialUsername ||
+          newStatus !== initialStatus
+
+        if (identityChanged) {
+          try {
+            const idRes = await fetch('/api/auth-update-employee-identity', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                employeeId: targetEmployeeId,
+                email: newEmail,
+                username: newUsername,
+                employeeStatus: newStatus,
+              }),
+            })
+            if (!idRes.ok) {
+              const idData = await idRes.json().catch(() => ({}))
+              toast.error('Kimlik/durum bilgileri sunucuda güncellenemedi', {
+                description: idData.error || 'Kimlik güncellemesi için yetki gereklidir.',
+              })
+            }
+          } catch (e: any) {
+            toast.error('Kimlik güncellemesi sunucu bağlantı hatası', { description: e.message })
+          }
+        }
+
+        // 3. Sensitive Permission Overrides Update
+        const sensitiveKeys = [
+          'team.manage',
+          'employees.manage',
+          'employees.create',
+          'system.permissions',
+          'system.admin',
+          'settings.manage',
+          'system.settings',
+        ]
+
+        for (const key of sensitiveKeys) {
+          const initialVal = initialEmployee?.permissionOverrides?.[key] === true
+          const newVal = values.permissionOverrides?.[key] === true
+          const keySpecified = Object.prototype.hasOwnProperty.call(values.permissionOverrides || {}, key)
+
+          if (keySpecified && newVal !== initialVal) {
+            try {
+              const permRes = await fetch('/api/auth-update-permission-override', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employeeId: targetEmployeeId, permissionKey: key, grant: newVal }),
+              })
+              if (!permRes.ok) {
+                const pData = await permRes.json().catch(() => ({}))
+                toast.error(`"${key}" yetkisi sunucuda güncellenemedi`, {
+                  description: pData.error || 'Yetki delegasyonu için system.permissions/admin yetkisi gereklidir.',
+                })
+              }
+            } catch (e: any) {
+              toast.error(`"${key}" sunucu bağlantı hatası`, { description: e.message })
+            }
+          }
         }
       }
 

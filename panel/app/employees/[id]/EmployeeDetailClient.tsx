@@ -136,7 +136,13 @@ export default function EmployeeDetailPage() {
       teamIds: activeEmployee.teamIds,
       permissionOverrides: activeEmployee.permissionOverrides || {},
     })
-    return effective.grantedKeys.has('team.manage') || effective.grantedKeys.has('task.manage')
+    return (
+      effective.grantedKeys.has('employees.manage') ||
+      effective.grantedKeys.has('employees.view') ||
+      effective.grantedKeys.has('system.admin') ||
+      effective.grantedKeys.has('team.manage') ||
+      effective.grantedKeys.has('task.manage')
+    )
   }, [activeEmployee])
 
   // Check if they share teams

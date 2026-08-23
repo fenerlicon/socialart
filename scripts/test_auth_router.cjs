@@ -86,7 +86,10 @@ async function runAuthRouterTestSuite() {
       '/api/auth-logout': '/api/auth-router?route=logout',
       '/api/auth-change-password': '/api/auth-router?route=change-password',
       '/api/auth-provision-credential': '/api/auth-router?route=provision-credential',
-      '/api/auth-update-team-manage': '/api/auth-router?route=update-team-manage'
+      '/api/auth-update-team-manage': '/api/auth-router?route=update-team-manage',
+      '/api/auth-update-permission-override': '/api/auth-router?route=update-permission-override',
+      '/api/auth-update-employee-role': '/api/auth-router?route=update-employee-role',
+      '/api/auth-update-employee-identity': '/api/auth-router?route=update-employee-identity',
     };
 
     Object.entries(expectedRewrites).forEach(([source, expectedDest]) => {
@@ -127,8 +130,20 @@ async function runAuthRouterTestSuite() {
     assert.strictEqual(res._getStatus(), 405);
   });
 
-  await runAsyncTest("UPDATE-TEAM-MANAGE ROUTE: GET -> 405", async () => {
-    const { req, res } = createMockReqRes('GET', {}, {}, {}, '/api/auth-router?route=update-team-manage');
+  await runAsyncTest("UPDATE-PERMISSION-OVERRIDE ROUTE: GET -> 405", async () => {
+    const { req, res } = createMockReqRes('GET', {}, {}, {}, '/api/auth-router?route=update-permission-override');
+    await authRouterHandler(req, res);
+    assert.strictEqual(res._getStatus(), 405);
+  });
+
+  await runAsyncTest("UPDATE-EMPLOYEE-ROLE ROUTE: GET -> 405", async () => {
+    const { req, res } = createMockReqRes('GET', {}, {}, {}, '/api/auth-router?route=update-employee-role');
+    await authRouterHandler(req, res);
+    assert.strictEqual(res._getStatus(), 405);
+  });
+
+  await runAsyncTest("UPDATE-EMPLOYEE-IDENTITY ROUTE: GET -> 405", async () => {
+    const { req, res } = createMockReqRes('GET', {}, {}, {}, '/api/auth-router?route=update-employee-identity');
     await authRouterHandler(req, res);
     assert.strictEqual(res._getStatus(), 405);
   });

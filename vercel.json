@@ -143,6 +143,18 @@
       "destination": "/api/auth-router?route=update-team-manage"
     },
     {
+      "source": "/api/auth-update-permission-override",
+      "destination": "/api/auth-router?route=update-permission-override"
+    },
+    {
+      "source": "/api/auth-update-employee-role",
+      "destination": "/api/auth-router?route=update-employee-role"
+    },
+    {
+      "source": "/api/auth-update-employee-identity",
+      "destination": "/api/auth-router?route=update-employee-identity"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },
