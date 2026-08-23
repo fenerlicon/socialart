@@ -86,7 +86,6 @@ async function runAuthRouterTestSuite() {
       '/api/auth-logout': '/api/auth-router?route=logout',
       '/api/auth-change-password': '/api/auth-router?route=change-password',
       '/api/auth-provision-credential': '/api/auth-router?route=provision-credential',
-      '/api/auth-update-team-manage': '/api/auth-router?route=update-team-manage',
       '/api/auth-update-permission-override': '/api/auth-router?route=update-permission-override',
       '/api/auth-update-employee-role': '/api/auth-router?route=update-employee-role',
       '/api/auth-update-employee-identity': '/api/auth-router?route=update-employee-identity',
