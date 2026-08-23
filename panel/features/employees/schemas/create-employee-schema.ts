@@ -22,10 +22,6 @@ export const createEmployeeSchema = z.object({
     .string()
     .min(3, 'Kullanıcı adı en az 3 karakter olmalıdır')
     .max(50, 'Kullanıcı adı en fazla 50 karakter olabilir'),
-  password: z
-    .string()
-    .min(3, 'Şifre en az 3 karakter olmalıdır')
-    .max(50, 'Şifre en fazla 50 karakter olabilir'),
   title: z
     .string()
     .min(1, 'Unvan zorunludur')
@@ -47,7 +43,6 @@ export const defaultEmployeeFormValues: CreateEmployeeFormValues = {
   fullName: '',
   email: '',
   username: '',
-  password: '',
   title: '',
   avatarUrl: '',
   employeeStatus: 'active',

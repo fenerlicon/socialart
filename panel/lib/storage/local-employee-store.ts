@@ -10,7 +10,6 @@ export function mapFormToCreateInput(
     fullName: values.fullName.trim(),
     email: values.email.trim().toLowerCase(),
     username: values.username?.trim().toLowerCase(),
-    password: values.password?.trim(),
     title: values.title.trim(),
     avatarUrl: values.avatarUrl?.trim() || undefined,
     employeeStatus: values.employeeStatus,

@@ -18,8 +18,60 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { KeyRound } from 'lucide-react'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+import {
+  CredentialProvisionDialog,
+  type ProvisionedCredentialData,
+} from '@/features/employees/components/credential-provision-dialog'
+
 export function EmployeeCreatePage() {
-  const form = useEmployeeForm()
+  const router = useRouter()
+  const [givePanelAccess, setGivePanelAccess] = useState(false)
+  const [provisionedData, setProvisionedData] = useState<ProvisionedCredentialData | null>(null)
+  const [showProvisionDialog, setShowProvisionDialog] = useState(false)
+
+  const form = useEmployeeForm(undefined, {
+    onEmployeeCreated: async (newEmp: Employee) => {
+      if (!givePanelAccess) {
+        router.push('/employees')
+        return
+      }
+
+      try {
+        const res = await fetch('/api/auth-provision-credential', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ employeeId: newEmp.id }),
+        })
+
+        const data = await res.json()
+
+        if (res.ok && data.ok) {
+          setProvisionedData({
+            id: data.employee.id,
+            fullName: data.employee.fullName,
+            identifier: data.employee.identifier,
+            temporaryPassword: data.temporaryPassword,
+          })
+          setShowProvisionDialog(true)
+        } else {
+          toast.error('Çalışan oluşturuldu ancak panel erişimi verilemedi.', {
+            description: data.error || 'Daha sonra çalışan düzenleme ekranından panel erişimi oluşturabilirsiniz.',
+          })
+          router.push('/employees')
+        }
+      } catch (err: any) {
+        toast.error('Çalışan oluşturuldu ancak panel erişimi bağlantı hatası verdi.', {
+          description: err.message || 'Daha sonra çalışan düzenleme ekranından panel erişimi oluşturabilirsiniz.',
+        })
+        router.push('/employees')
+      }
+    },
+  })
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -90,6 +142,25 @@ export function EmployeeCreatePage() {
       </header>
 
       <div className="space-y-6">
+        {/* Panel Giriş Erişimi Seçeneği */}
+        <div className="flex items-center justify-between rounded-xl border border-neutral-800 bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400">
+              <KeyRound className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-base font-semibold text-foreground">Panel Erişimi Ver</Label>
+              <p className="text-xs text-muted-foreground">
+                Açıldığında sunucu tarafında tek kullanımlık geçici bir giriş şifresi üretilir.
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={givePanelAccess}
+            onCheckedChange={setGivePanelAccess}
+          />
+        </div>
+
         <Accordion
           type="single"
           collapsible
@@ -172,6 +243,17 @@ export function EmployeeCreatePage() {
         {/* Form Aksiyonları */}
         <EmployeeFormActions form={form} />
       </div>
+
+      {/* Tek Seferlik Geçici Şifre Modalı */}
+      <CredentialProvisionDialog
+        open={showProvisionDialog}
+        data={provisionedData}
+        onClose={() => {
+          setShowProvisionDialog(false)
+          setProvisionedData(null)
+          router.push('/employees')
+        }}
+      />
     </div>
   )
 }

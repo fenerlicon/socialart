@@ -16,7 +16,10 @@ import type { RolePackageId, TeamId, Employee } from '@/types/domain'
 import { setPermissionOverride } from '@/lib/permissions/permission-form-utils'
 import { buildDefaultPermissionSet } from '@/lib/permissions/resolve-permissions'
 
-export function useEmployeeForm(initialEmployee?: Employee) {
+export function useEmployeeForm(
+  initialEmployee?: Employee,
+  options?: { onEmployeeCreated?: (employee: Employee) => Promise<void> | void }
+) {
   const router = useRouter()
   const [values, setValues] = useState<CreateEmployeeFormValues>(
     defaultEmployeeFormValues,
@@ -30,7 +33,6 @@ export function useEmployeeForm(initialEmployee?: Employee) {
         fullName: initialEmployee.fullName,
         email: initialEmployee.email,
         username: initialEmployee.username || '',
-        password: initialEmployee.password || '',
         title: initialEmployee.title,
         avatarUrl: initialEmployee.avatarUrl || '',
         employeeStatus: initialEmployee.employeeStatus,
@@ -160,6 +162,7 @@ export function useEmployeeForm(initialEmployee?: Employee) {
         toast.success('Çalışan güncellendi', {
           description: `"${updated?.fullName || values.fullName}" başarıyla güncellendi.`,
         })
+        router.push('/employees')
       } else {
         const employee = await createAndStoreEmployee(input)
         console.log('Kaydedilen çalışan:', employee)
@@ -168,9 +171,13 @@ export function useEmployeeForm(initialEmployee?: Employee) {
           description: `${employee.fullName} başarıyla oluşturuldu.`,
         })
         setValues(defaultEmployeeFormValues)
-      }
 
-      router.push('/employees')
+        if (options?.onEmployeeCreated) {
+          await options.onEmployeeCreated(employee)
+        } else {
+          router.push('/employees')
+        }
+      }
     } catch (err: any) {
       console.error('Error saving employee:', err)
       toast.error('Çalışan kaydedilemedi', {
@@ -179,7 +186,7 @@ export function useEmployeeForm(initialEmployee?: Employee) {
     } finally {
       setIsSubmitting(false)
     }
-  }, [values, router, initialEmployee])
+  }, [values, router, initialEmployee, options])
 
   const formState = useMemo(
     () => ({

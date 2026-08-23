@@ -135,6 +135,10 @@
       "destination": "/api/auth-router?route=change-password"
     },
     {
+      "source": "/api/auth-provision-credential",
+      "destination": "/api/auth-router?route=provision-credential"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },

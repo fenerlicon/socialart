@@ -153,12 +153,11 @@ export const EmployeeRepository = {
     if (employee.rolePackageId !== undefined) row.role_package_id = employee.rolePackageId
     if (employee.teamIds !== undefined) row.team_ids = employee.teamIds
     
-    if (employee.permissionOverrides !== undefined || employee.username !== undefined || employee.password !== undefined) {
+    if (employee.permissionOverrides !== undefined || employee.username !== undefined) {
       const baseOverrides = employee.permissionOverrides || {}
       row.permission_overrides = {
         ...baseOverrides,
         username: employee.username !== undefined ? employee.username : (baseOverrides as any).username,
-        password: employee.password !== undefined ? employee.password : (baseOverrides as any).password,
       }
     }
     

@@ -66,8 +66,8 @@ export function EmployeeBasicInfoSection({ form }: { form: EmployeeFormApi }) {
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="username">Kullanıcı Adı</Label>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="username">Kullanıcı Adı (Giriş Kimliği)</Label>
           <Input
             id="username"
             placeholder="Örn: ayse"
@@ -76,21 +76,9 @@ export function EmployeeBasicInfoSection({ form }: { form: EmployeeFormApi }) {
           />
           {errors.username ? (
             <p className="text-sm text-destructive">{errors.username}</p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="password">Şifre</Label>
-          <Input
-            id="password"
-            type="text"
-            placeholder="Şifre belirleyin..."
-            value={values.password ?? ''}
-            onChange={(e) => updateField('password', e.target.value)}
-          />
-          {errors.password ? (
-            <p className="text-sm text-destructive">{errors.password}</p>
-          ) : null}
+          ) : (
+            <p className="text-xs text-muted-foreground">Panel girişi ve bildirimlerde kullanılacak benzersiz kullanıcı adı.</p>
+          )}
         </div>
 
         <div className="space-y-2 sm:col-span-2">
