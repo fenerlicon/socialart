@@ -2,123 +2,215 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getStoredEmployees, setActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import type { Employee } from '@/types/domain'
+import { setActiveEmployeeId } from '@/lib/storage/local-employee-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { ShieldCheck, User, Lock, LogIn } from 'lucide-react'
+import { ShieldCheck, User, Lock, LogIn, KeyRound, ArrowRight } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [usernameInput, setUsernameInput] = useState('')
+  const [identifierInput, setIdentifierInput] = useState('')
   const [passwordInput, setPasswordInput] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+
+  // Forced First-Login Password Change State
+  const [isForcedPasswordChange, setIsForcedPasswordChange] = useState(false)
+  const [tempLoginPassword, setTempLoginPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   useEffect(() => {
-    async function loadEmployees() {
+    async function checkExistingSession() {
       try {
-        const list = await getStoredEmployees()
-        
-        // Auto-heal usernames & passwords for seeded employees in Supabase if missing
-        let hasUpdates = false
-        const updatedList = await Promise.all(
-          list.map(async (emp) => {
-            if (!emp.username || !emp.password) {
-              let username = ''
-              let password = '123'
-              
-              const emailLower = emp.email.toLowerCase()
-              if (emp.id === 'emp-celal' || emailLower.includes('celal') || emailLower.includes('hello')) {
-                username = 'celal'
-              } else if (emailLower.includes('ercan')) {
-                username = 'ercan'
-              } else if (emailLower.includes('furkan')) {
-                username = 'furkan'
-              } else if (emailLower.includes('betul')) {
-                username = 'betul'
-              } else if (emailLower.includes('tugba')) {
-                username = 'tugba'
-              } else {
-                username = emp.fullName.split(' ')[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
-              }
-              
-              if (username) {
-                const updatedEmp = {
-                  ...emp,
-                  username,
-                  password,
-                }
-                const { EmployeeRepository } = await import('@/lib/repositories/EmployeeRepository')
-                await EmployeeRepository.save(updatedEmp)
-                hasUpdates = true
-                return updatedEmp
-              }
-            }
-            return emp
-          })
-        )
+        const res = await fetch('/api/auth-me', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
 
-        setEmployees(hasUpdates ? updatedList : list)
+        if (res.ok) {
+          const data = await res.json()
+          if (data && data.authenticated && data.employee) {
+            if (data.mustChangePassword) {
+              // Active session requires password change, but temp password is not in memory after refresh.
+              // Clear session safely so user can re-login with temporary password and complete change.
+              await fetch('/api/auth-logout', {
+                method: 'POST',
+                credentials: 'include',
+              })
+              if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('social-art-base:active-employee-id')
+                window.localStorage.removeItem('social-art-base:credentials')
+                window.localStorage.removeItem('ajans_user')
+                window.localStorage.removeItem('socialart_user')
+              }
+            } else {
+              // Reconstruct presentation compatibility context
+              const emp = data.employee
+              setActiveEmployeeId(emp.id)
+              if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('social-art-base:credentials')
+                const userObj = {
+                  id: emp.id,
+                  name: emp.fullName,
+                  role: emp.title || 'Ekip Üyesi',
+                  email: emp.email,
+                  class: 'A-Class',
+                  permissions: 'all',
+                  can_add_client: true,
+                }
+                window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
+                window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
+              }
+              router.replace('/dashboard')
+              return
+            }
+          }
+        }
       } catch (err) {
-        console.error('Failed to load employees:', err)
+        // Network errors or offline on mount are ignored
       } finally {
         setIsLoading(false)
       }
     }
-    loadEmployees()
-  }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
+    checkExistingSession()
+  }, [router])
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!usernameInput.trim() || !passwordInput.trim()) return
+    setErrorMessage('')
+    setSuccessMessage('')
 
-    const cleanInput = usernameInput.trim().toLowerCase()
+    const cleanUser = identifierInput.trim()
     const cleanPass = passwordInput.trim()
 
-    const target = employees.find(
-      (emp) => {
-        const empUser = (emp.username || emp.email.split('@')[0] || '').toLowerCase()
-        const empEmail = emp.email.toLowerCase()
-        const empName = emp.fullName.toLowerCase()
-        const isMatchUser = empUser === cleanInput || empEmail === cleanInput || empName === cleanInput
-        const isMatchPass = emp.password ? (emp.password === cleanPass) : (cleanPass === '123')
-        return isMatchUser && isMatchPass
-      }
-    )
+    if (!cleanUser || !cleanPass) {
+      setErrorMessage('Kullanıcı adı ve şifre gereklidir.')
+      return
+    }
 
-    if (target) {
-      setActiveEmployeeId(target.id)
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/auth-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ identifier: cleanUser, password: cleanPass }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.error || 'Kullanıcı adı veya şifre hatalı.')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Purge any legacy plaintext credentials in localStorage
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('social-art-base:credentials', JSON.stringify({
-          username: target.username || cleanInput,
-          password: cleanPass
-        }))
+        window.localStorage.removeItem('social-art-base:credentials')
+      }
+
+      if (data.mustChangePassword) {
+        // Hold temp password in memory ONLY for the upcoming change-password request
+        setTempLoginPassword(cleanPass)
+        setIsForcedPasswordChange(true)
+        setIsSubmitting(false)
+        return
+      }
+
+      // Reconstruct presentation compatibility context
+      const emp = data.employee
+      setActiveEmployeeId(emp.id)
+      if (typeof window !== 'undefined') {
         const userObj = {
-          name: target.fullName,
-          id: target.id,
-          role: target.title || 'Ekip Üyesi',
+          id: emp.id,
+          name: emp.fullName,
+          role: emp.title || 'Ekip Üyesi',
+          email: emp.email,
           class: 'A-Class',
           permissions: 'all',
           can_add_client: true,
-          email: target.email
         }
         window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
         window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
       }
+
       toast.success('Giriş Başarılı', {
-        description: `Hoş geldiniz, ${target.fullName}!`,
+        description: `Hoş geldiniz, ${emp.fullName}!`,
       })
       router.push('/dashboard')
-    } else {
-      toast.error('Giriş Başarısız', {
-        description: 'Hatalı kullanıcı adı veya şifre girdiniz.',
-      })
+    } catch (err) {
+      console.error('Login Error:', err)
+      setErrorMessage('Giriş yapılırken bir bağlantı hatası oluştu.')
+      setIsSubmitting(false)
     }
   }
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMessage('')
+    setSuccessMessage('')
 
+    if (!newPassword || newPassword.length < 12) {
+      setErrorMessage('Yeni şifre en az 12 karakter olmalıdır.')
+      return
+    }
+
+    if (newPassword.length > 128) {
+      setErrorMessage('Yeni şifre en fazla 128 karakter olabilir.')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Yeni şifreler eşleşmiyor.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/auth-change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          currentPassword: tempLoginPassword,
+          newPassword: newPassword,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.error || 'Şifre değiştirme başarısız oldu. Lütfen tekrar deneyin.')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Clear all password variables from memory
+      setTempLoginPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setIsForcedPasswordChange(false)
+      setPasswordInput('')
+      setSuccessMessage('Şifreniz güncellendi. Yeni şifrenizle tekrar giriş yapabilirsiniz.')
+      toast.success('Şifre Güncellendi', {
+        description: 'Yeni şifrenizle giriş yapabilirsiniz.',
+      })
+      setIsSubmitting(false)
+    } catch (err) {
+      console.error('Change Password Error:', err)
+      setErrorMessage('Şifre değiştirilirken bir bağlantı hatası oluştu.')
+      setIsSubmitting(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -141,53 +233,138 @@ export default function LoginPage() {
             SA
           </div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white">Social Art Base</h2>
-          <p className="text-xs text-muted-foreground">Devam etmek için hesabınıza giriş yapın</p>
+          <p className="text-xs text-muted-foreground">
+            {isForcedPasswordChange
+              ? 'İlk giriş için lütfen yeni kalıcı şifrenizi belirleyin'
+              : 'Devam etmek için hesabınıza giriş yapın'}
+          </p>
         </div>
 
         {/* Card Panel */}
         <div className="rounded-3xl border border-neutral-900 bg-neutral-950/40 backdrop-blur-xl p-6 shadow-2xl space-y-6">
-          {/* Username & Password Login Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">Kullanıcı Adı</label>
-              <div className="relative">
-                <User className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
-                <Input
-                  placeholder="Kullanıcı adınızı girin..."
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-850"
-                  required
-                />
-              </div>
+          {errorMessage && (
+            <div className="p-3 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 text-xs font-medium text-center">
+              {errorMessage}
             </div>
+          )}
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">Şifre</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
-                <Input
-                  type="password"
-                  placeholder="Şifrenizi girin..."
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-850"
-                  required
-                />
-              </div>
+          {successMessage && (
+            <div className="p-3 rounded-xl border border-green-500/20 bg-green-500/10 text-green-400 text-xs font-medium text-center">
+              {successMessage}
             </div>
+          )}
 
-            <Button
-              type="submit"
-              className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-500/15 flex items-center justify-center gap-1.5 transition-all"
-            >
-              <LogIn className="h-4 w-4" /> Giriş Yap
-            </Button>
-          </form>
+          {isForcedPasswordChange ? (
+            /* Forced First-Login Password Change Form */
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="p-3 rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300 text-xs flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-purple-400" />
+                <span>Geçici şifreniz doğrulandı. Lütfen kalıcı şifrenizi oluşturun.</span>
+              </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">
+                  Yeni Şifre (En az 12 karakter)
+                </label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
+                  <Input
+                    type="password"
+                    placeholder="Yeni güçlü şifreniz..."
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-800 text-white placeholder:text-neutral-600"
+                    required
+                    minLength={12}
+                    maxLength={128}
+                  />
+                </div>
+              </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">
+                  Yeni Şifre Tekrar
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
+                  <Input
+                    type="password"
+                    placeholder="Yeni şifrenizi tekrar girin..."
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-800 text-white placeholder:text-neutral-600"
+                    required
+                    minLength={12}
+                    maxLength={128}
+                  />
+                </div>
+              </div>
 
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-500/15 flex items-center justify-center gap-1.5 transition-all"
+              >
+                {isSubmitting ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <>
+                    <KeyRound className="h-4 w-4" /> Şifreyi Kaydet ve Tamamla
+                  </>
+                )}
+              </Button>
+            </form>
+          ) : (
+            /* Username & Password Login Form */
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">
+                  Kullanıcı Adı, Ad Soyad veya E-Posta
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
+                  <Input
+                    placeholder="Kullanıcı adı, isim veya e-posta..."
+                    value={identifierInput}
+                    onChange={(e) => setIdentifierInput(e.target.value)}
+                    className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-800 text-white placeholder:text-neutral-600"
+                    required
+                  />
+                </div>
+              </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">
+                  Şifre
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
+                  <Input
+                    type="password"
+                    placeholder="Şifrenizi girin..."
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-800 text-white placeholder:text-neutral-600"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-500/15 flex items-center justify-center gap-1.5 transition-all"
+              >
+                {isSubmitting ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4" /> Giriş Yap
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
         </div>
 
         {/* Footer Info */}

@@ -17,7 +17,6 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     teamIds: ['merkezi-operasyon'],
     permissionOverrides: {},
     username: 'celal',
-    password: '123',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -33,7 +32,6 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'ercan',
-    password: '123',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -49,7 +47,6 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'furkan',
-    password: '123',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -65,7 +62,6 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'betul',
-    password: '123',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -81,7 +77,6 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'tugba',
-    password: '123',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -97,7 +92,6 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'samet',
-    password: '123',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -111,9 +105,8 @@ export const EmployeeRepository = {
   mapRowToEmployee(row: any): Employee {
     const overrides = { ...(row.permission_overrides || {}) }
     const username = overrides.username || ''
-    const password = overrides.password || ''
     
-    // Remove credentials from overrides to prevent permission key validation errors
+    // Remove credentials/username from overrides to prevent permission key validation errors
     delete overrides.username
     delete overrides.password
 

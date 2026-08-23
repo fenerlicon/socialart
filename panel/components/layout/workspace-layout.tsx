@@ -38,14 +38,24 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       }
 
       try {
-        const list = await getStoredEmployees()
-        setEmployees(list)
+        // GÜVENLİK KORUMASI: Next.js paneli doğrudan girişlerde sunucu oturumunu (/api/auth-me) doğrulamak zorundadır!
+        const res = await fetch('/api/auth-me', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
 
-        let savedId = getActiveEmployeeId()
-        if (savedId && list.some((e) => e.id === savedId)) {
-          setCurrentEmployeeId(savedId)
-        } else {
-          // GÜVENLİK KORUMASI: Oturumu olmayan kullanıcı asla varsayılan kullanıcı olarak içeri alınamaz!
+        if (!res.ok) {
+          throw new Error('UNAUTHENTICATED')
+        }
+
+        const authData = await res.json()
+        if (!authData || !authData.authenticated || !authData.employee) {
+          throw new Error('UNAUTHENTICATED')
+        }
+
+        // Eğer kullanıcının geçici şifresi varsa (/mustChangePassword), panel içeriği açılamaz; şifre değişimine yönlendirilir
+        if (authData.mustChangePassword) {
           setActiveEmployeeId('')
           setCurrentEmployeeId('')
           if (typeof window !== 'undefined') {
@@ -57,6 +67,27 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           setIsLoadingAuth(false)
           router.replace('/login')
           return
+        }
+
+        const authenticatedEmployeeId = String(authData.employee.id)
+        const list = await getStoredEmployees()
+        setEmployees(list)
+        setCurrentEmployeeId(authenticatedEmployeeId)
+        setActiveEmployeeId(authenticatedEmployeeId)
+
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('social-art-base:credentials')
+          const userObj = {
+            id: authData.employee.id,
+            name: authData.employee.fullName,
+            role: authData.employee.title || 'Ekip Üyesi',
+            email: authData.employee.email,
+            class: 'A-Class',
+            permissions: 'all',
+            can_add_client: true,
+          }
+          window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
+          window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
         }
 
         // Her ayın 5'ine kadar oluşturulmayan dönemlerin otomatik marka şablonuyla başlatılması kontrolü
@@ -75,7 +106,16 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           console.warn('Check missing reports notice:', err)
         }
       } catch (err) {
-        console.error('WorkspaceLayout loadData error:', err)
+        // Oturumu doğrulanmayan kullanıcı asla panelde tutulamaz
+        setActiveEmployeeId('')
+        setCurrentEmployeeId('')
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('social-art-base:active-employee-id')
+          window.localStorage.removeItem('social-art-base:credentials')
+          window.localStorage.removeItem('ajans_user')
+          window.localStorage.removeItem('socialart_user')
+        }
+        router.replace('/login')
       } finally {
         setIsLoadingAuth(false)
       }
@@ -87,12 +127,23 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     return employees.find((e) => e.id === currentEmployeeId)
   }, [employees, currentEmployeeId])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth-logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch (e) {
+      console.warn('Logout network error:', e)
+    }
+
     setActiveEmployeeId('')
     setCurrentEmployeeId('')
     if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('social-art-base:active-employee-id')
       window.localStorage.removeItem('social-art-base:credentials')
       window.localStorage.removeItem('ajans_user')
+      window.localStorage.removeItem('socialart_user')
     }
     toast.success('Çıkış Yapıldı', {
       description: 'Oturumunuz güvenli bir şekilde kapatıldı.',

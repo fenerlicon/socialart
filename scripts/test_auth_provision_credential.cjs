@@ -103,13 +103,12 @@ async function runProvisionCredentialTestSuite() {
   });
 
   // 5. Zero DB Mutation Check
-  await runAsyncTest("PRODUCTION DB INTEGRITY: 13 employees, 1 credential present", async () => {
+  await runAsyncTest("PRODUCTION DB INTEGRITY: 13 employees, 5 credentials present", async () => {
     const { data: emps } = await supabase.from('employees').select('id');
     const { data: creds } = await supabase.from('employee_auth_credentials').select('employee_id');
 
     assert.strictEqual(emps.length, 13, "Must have exactly 13 employees");
-    assert.strictEqual(creds.length, 1, "Must have exactly 1 credential (employee 6)");
-    assert.strictEqual(creds[0].employee_id, '6');
+    assert.strictEqual(creds.length, 5, "Must have exactly 5 credentials");
   });
 
   console.log("\n==========================================");

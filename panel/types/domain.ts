@@ -135,7 +135,6 @@ export interface Employee {
   avatarUrl?: string
   hasAdvancedCalendarAccess?: boolean
   username?: string
-  password?: string
   createdAt: string
   updatedAt: string
 }
@@ -152,7 +151,6 @@ export interface CreateEmployeeInput {
   avatarUrl?: string
   hasAdvancedCalendarAccess?: boolean
   username?: string
-  password?: string
 }
 
 // ---------------------------------------------------------------------------
