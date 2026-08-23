@@ -193,3 +193,33 @@ export function parseSessionCookie(req) {
     return null;
   }
 }
+
+/**
+ * Allowed production and development request origins for CSRF / Origin protection
+ */
+export const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'https://socialartmedya.com',
+  'https://www.socialartmedya.com',
+  'https://socialartajans.com',
+  'https://www.socialartajans.com'
+];
+
+/**
+ * Centralized origin validation for all mutating auth API endpoints
+ */
+export function validateOrigin(req) {
+  const origin = req?.headers?.origin || req?.headers?.referer;
+  if (!origin) return true; // Direct server requests or non-browser same-origin local
+
+  try {
+    const parsed = new URL(origin);
+    return ALLOWED_ORIGINS.includes(parsed.origin);
+  } catch (e) {
+    return false;
+  }
+}
+

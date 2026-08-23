@@ -1,4 +1,4 @@
-import { hashPassword, verifyPassword, validatePasswordPolicy, createSessionCookie } from './admin-auth.js';
+import { hashPassword, verifyPassword, validatePasswordPolicy, createSessionCookie, validateOrigin } from './admin-auth.js';
 import { getAdminSupabase } from './admin-db.js';
 import { requireAdminSession } from './auth-me.js';
 
@@ -6,26 +6,6 @@ import { requireAdminSession } from './auth-me.js';
  * POST /api/auth-change-password
  * Serverless Admin Password Change Endpoint
  */
-
-function validateOrigin(req) {
-  const origin = req.headers.origin || req.headers.referer;
-  if (!origin) return true;
-
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:5173',
-    'https://socialartajans.com'
-  ];
-
-  try {
-    const parsed = new URL(origin);
-    return allowedOrigins.includes(parsed.origin);
-  } catch (e) {
-    return false;
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

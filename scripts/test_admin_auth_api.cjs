@@ -143,6 +143,15 @@ async function runComprehensiveApiTests() {
   const sec1 = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
   await loginHandler(sec1.req, sec1.res);
   assert(sec1.res._getStatus() === 403, "REQUEST SECURITY: disallowed Origin -> reject");
+  console.log(" ✅ PASSED: REQUEST SECURITY: disallowed Origin -> reject");
+
+  const { validateOrigin } = await import('../api/_lib/admin-auth.js');
+  assert(validateOrigin({ headers: { origin: 'https://socialartmedya.com' } }) === true, "socialartmedya.com must be allowed");
+  assert(validateOrigin({ headers: { origin: 'https://www.socialartmedya.com' } }) === true, "www.socialartmedya.com must be allowed");
+  assert(validateOrigin({ headers: { origin: 'https://socialartajans.com' } }) === true, "socialartajans.com must be allowed");
+  assert(validateOrigin({ headers: { origin: 'https://www.socialartajans.com' } }) === true, "www.socialartajans.com must be allowed");
+  assert(validateOrigin({ headers: { origin: 'https://evil-attacker.com' } }) === false, "unauthorized origin must be rejected");
+  console.log(" ✅ PASSED: REQUEST SECURITY: official production domains allowed & cross-site rejected");
 
   // --- 6. REAL PRODUCTION DB MUTATION CHECK ---
   console.log("\n--- 6. PRODUCTION DB MUTATION CHECK ---");

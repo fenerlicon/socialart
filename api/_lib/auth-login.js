@@ -1,4 +1,4 @@
-import { hashSessionToken, generateSessionToken, getSessionExpiry, createSessionCookie, verifyPassword } from './admin-auth.js';
+import { hashSessionToken, generateSessionToken, getSessionExpiry, createSessionCookie, verifyPassword, validateOrigin } from './admin-auth.js';
 import { getAdminSupabase } from './admin-db.js';
 import { resolveServerPermissions } from './admin-permissions.js';
 import { normalizeIdentifier, getTrustedClientIp, deriveRateLimitHmac, checkRateLimit, recordRateLimitFailure, recordRateLimitSuccess } from './admin-rate-limit.js';
@@ -7,26 +7,6 @@ import { normalizeIdentifier, getTrustedClientIp, deriveRateLimitHmac, checkRate
  * POST /api/auth-login
  * Serverless Auth Login Endpoint with Persistent Rate Limiting
  */
-
-function validateOrigin(req) {
-  const origin = req.headers.origin || req.headers.referer;
-  if (!origin) return true; // Direct server requests or same-origin local
-
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:5173',
-    'https://socialartajans.com'
-  ];
-
-  try {
-    const parsed = new URL(origin);
-    return allowedOrigins.includes(parsed.origin);
-  } catch (e) {
-    return false;
-  }
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
