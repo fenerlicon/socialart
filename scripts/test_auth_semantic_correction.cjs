@@ -12,7 +12,7 @@ function createMockReqRes({ method = 'POST', body = {}, cookieToken = null, head
     url,
     headers: {
       'content-type': 'application/json',
-      origin: 'https://socialartajans.com',
+      origin: 'https://socialartmedya.com',
       ...headers,
     },
     body,

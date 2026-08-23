@@ -203,9 +203,7 @@ export const ALLOWED_ORIGINS = [
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
   'https://socialartmedya.com',
-  'https://www.socialartmedya.com',
-  'https://socialartajans.com',
-  'https://www.socialartajans.com'
+  'https://www.socialartmedya.com'
 ];
 
 /**

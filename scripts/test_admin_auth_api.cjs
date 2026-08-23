@@ -140,18 +140,47 @@ async function runComprehensiveApiTests() {
 
   // --- 5. REQUEST SECURITY TESTS ---
   console.log("\n--- 5. REQUEST SECURITY TESTS ---");
-  const sec1 = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
-  await loginHandler(sec1.req, sec1.res);
-  assert(sec1.res._getStatus() === 403, "REQUEST SECURITY: disallowed Origin -> reject");
-  console.log(" ✅ PASSED: REQUEST SECURITY: disallowed Origin -> reject");
-
   const { validateOrigin } = await import('../api/_lib/admin-auth.js');
   assert(validateOrigin({ headers: { origin: 'https://socialartmedya.com' } }) === true, "socialartmedya.com must be allowed");
   assert(validateOrigin({ headers: { origin: 'https://www.socialartmedya.com' } }) === true, "www.socialartmedya.com must be allowed");
-  assert(validateOrigin({ headers: { origin: 'https://socialartajans.com' } }) === true, "socialartajans.com must be allowed");
-  assert(validateOrigin({ headers: { origin: 'https://www.socialartajans.com' } }) === true, "www.socialartajans.com must be allowed");
+  assert(validateOrigin({ headers: { origin: 'https://socialartajans.com' } }) === false, "socialartajans.com must be rejected");
+  assert(validateOrigin({ headers: { origin: 'https://www.socialartajans.com' } }) === false, "www.socialartajans.com must be rejected");
   assert(validateOrigin({ headers: { origin: 'https://evil-attacker.com' } }) === false, "unauthorized origin must be rejected");
-  console.log(" ✅ PASSED: REQUEST SECURITY: official production domains allowed & cross-site rejected");
+  console.log(" ✅ PASSED: REQUEST SECURITY: official production domains allowed & external/cross-site rejected");
+
+  const secLogin = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await loginHandler(secLogin.req, secLogin.res);
+  assert(secLogin.res._getStatus() === 403, "POST /api/auth-login: disallowed Origin -> reject 403");
+
+  const secLogout = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await logoutHandler(secLogout.req, secLogout.res);
+  assert(secLogout.res._getStatus() === 403, "POST /api/auth-logout: disallowed Origin -> reject 403");
+
+  const changePasswordHandler = (await import('../api/_lib/auth-change-password.js')).default;
+  const secChange = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await changePasswordHandler(secChange.req, secChange.res);
+  assert(secChange.res._getStatus() === 403, "POST /api/auth-change-password: disallowed Origin -> reject 403");
+
+  const provisionHandler = (await import('../api/_lib/auth-provision-credential.js')).default;
+  const secProvision = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await provisionHandler(secProvision.req, secProvision.res);
+  assert(secProvision.res._getStatus() === 403, "POST /api/auth-provision-credential: disallowed Origin -> reject 403");
+
+  const updatePermHandler = (await import('../api/_lib/auth-update-permission-override.js')).default;
+  const secPerm = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await updatePermHandler(secPerm.req, secPerm.res);
+  assert(secPerm.res._getStatus() === 403, "POST /api/auth-update-permission-override: disallowed Origin -> reject 403");
+
+  const updateRoleHandler = (await import('../api/_lib/auth-update-employee-role.js')).default;
+  const secRole = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await updateRoleHandler(secRole.req, secRole.res);
+  assert(secRole.res._getStatus() === 403, "POST /api/auth-update-employee-role: disallowed Origin -> reject 403");
+
+  const updateIdentHandler = (await import('../api/_lib/auth-update-employee-identity.js')).default;
+  const secIdent = createMockReqRes('POST', {}, { origin: 'https://evil-hacker-site.com' });
+  await updateIdentHandler(secIdent.req, secIdent.res);
+  assert(secIdent.res._getStatus() === 403, "POST /api/auth-update-employee-identity: disallowed Origin -> reject 403");
+  console.log(" ✅ PASSED: ALL 7 mutating auth routes enforce origin validation (403 Forbidden Origin)");
 
   // --- 6. REAL PRODUCTION DB MUTATION CHECK ---
   console.log("\n--- 6. PRODUCTION DB MUTATION CHECK ---");

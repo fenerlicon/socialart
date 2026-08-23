@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { hashPassword } from './admin-auth.js';
+import { hashPassword, validateOrigin } from './admin-auth.js';
 import { getAdminSupabase } from './admin-db.js';
 import { requireAdminSession } from './auth-me.js';
 
@@ -14,6 +14,10 @@ export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  if (req.method === 'POST' && !validateOrigin(req)) {
+    return res.status(403).json({ error: 'Forbidden Origin' });
   }
 
   // 1. Authenticate operator session (mustChangePassword sessions fail-closed by default)

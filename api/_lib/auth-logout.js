@@ -1,4 +1,4 @@
-import { hashSessionToken, parseSessionCookie, createSessionCookie } from './admin-auth.js';
+import { hashSessionToken, parseSessionCookie, createSessionCookie, validateOrigin } from './admin-auth.js';
 import { getAdminSupabase } from './admin-db.js';
 
 /**
@@ -10,6 +10,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  if (!validateOrigin(req)) {
+    return res.status(403).json({ error: 'Forbidden Origin' });
   }
 
   const token = parseSessionCookie(req);

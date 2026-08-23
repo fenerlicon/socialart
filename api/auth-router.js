@@ -6,6 +6,7 @@ import provisionCredentialHandler from './_lib/auth-provision-credential.js';
 import updatePermissionOverrideHandler from './_lib/auth-update-permission-override.js';
 import updateEmployeeRoleHandler from './_lib/auth-update-employee-role.js';
 import updateEmployeeIdentityHandler from './_lib/auth-update-employee-identity.js';
+import { validateOrigin } from './_lib/admin-auth.js';
 
 const ALLOWED_ROUTES = new Set([
   'login',
@@ -53,7 +54,12 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: 'Auth route not found' });
   }
 
-  // 4. Dispatch to handler within Error Boundary
+  // 4. CSRF / Origin Guard: Reject unauthorized origins on mutating requests
+  if (req.method !== 'GET' && !validateOrigin(req)) {
+    return res.status(403).json({ error: 'Forbidden Origin' });
+  }
+
+  // 5. Dispatch to handler within Error Boundary
   try {
     if (route === 'login') return await loginHandler(req, res);
     if (route === 'me') return await meHandler(req, res);
