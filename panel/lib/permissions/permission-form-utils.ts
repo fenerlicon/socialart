@@ -17,16 +17,16 @@ export interface PermissionRowState {
 }
 
 export function getPermissionRowStates(input: {
-  rolePackageId: RolePackageId
-  teamIds: TeamId[]
-  permissionOverrides: PermissionOverrideMap
+  rolePackageId?: RolePackageId | null
+  teamIds?: TeamId[] | null
+  permissionOverrides?: PermissionOverrideMap | null
   permissionKeys: PermissionKey[]
 }): PermissionRowState[] {
   const defaults = buildDefaultPermissionSet({
     rolePackageId: input.rolePackageId,
   })
 
-  const teams = getTeamsByIds(input.teamIds)
+  const teams = getTeamsByIds(input.teamIds || [])
   const recommendedKeys = new Set<PermissionKey>()
   for (const team of teams) {
     for (const key of team.teamPermissions) {
@@ -34,15 +34,17 @@ export function getPermissionRowStates(input: {
     }
   }
 
+  const overrides = input.permissionOverrides || {}
+
   return input.permissionKeys.map((key) => {
     const defaultGranted = defaults.has(key)
     const isRecommendedByTeam = recommendedKeys.has(key)
     const isOverridden = Object.prototype.hasOwnProperty.call(
-      input.permissionOverrides,
+      overrides,
       key,
     )
     const granted = isOverridden
-      ? input.permissionOverrides[key] === true
+      ? overrides[key] === true
       : defaultGranted
 
     const displaySources: PermissionSource[] = []

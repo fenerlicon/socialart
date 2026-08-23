@@ -155,25 +155,59 @@ export function useEmployeeForm(
     try {
       const input = mapFormToCreateInput(parsed.data)
 
+      let targetEmployeeId: string | null = null
+
       if (initialEmployee) {
+        targetEmployeeId = initialEmployee.id
         const updated = await updateEmployee(initialEmployee.id, input)
         console.log('Güncellenen çalışan:', updated)
 
         toast.success('Çalışan güncellendi', {
           description: `"${updated?.fullName || values.fullName}" başarıyla güncellendi.`,
         })
-        router.push('/employees')
       } else {
         const employee = await createAndStoreEmployee(input)
+        targetEmployeeId = employee.id
         console.log('Kaydedilen çalışan:', employee)
 
         toast.success('Çalışan kaydedildi', {
           description: `${employee.fullName} başarıyla oluşturuldu.`,
         })
         setValues(defaultEmployeeFormValues)
+      }
 
+      // Check if team.manage override was explicitly set or changed
+      const initialTeamManage = initialEmployee?.permissionOverrides?.['team.manage'] === true
+      const newTeamManage = values.permissionOverrides?.['team.manage'] === true
+      const teamManageSpecified = Object.prototype.hasOwnProperty.call(values.permissionOverrides || {}, 'team.manage')
+
+      if (targetEmployeeId && teamManageSpecified && newTeamManage !== initialTeamManage) {
+        try {
+          const tmRes = await fetch('/api/auth-update-team-manage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employeeId: targetEmployeeId, grant: newTeamManage }),
+          })
+          if (!tmRes.ok) {
+            const tmData = await tmRes.json().catch(() => ({}))
+            toast.error('team.manage yetkisi sunucuda güncellenemedi', {
+              description: tmData.error || 'Bu yetkiyi güncellemek için yönetici yetkisi gereklidir.',
+            })
+          }
+        } catch (e: any) {
+          toast.error('team.manage sunucu bağlantı hatası', {
+            description: e.message,
+          })
+        }
+      }
+
+      if (initialEmployee) {
+        router.push('/employees')
+      } else {
         if (options?.onEmployeeCreated) {
-          await options.onEmployeeCreated(employee)
+          // targetEmployeeId already exists
+          const createdEmp = await EmployeeRepository.getById(targetEmployeeId!)
+          await options.onEmployeeCreated(createdEmp || ({ ...input, id: targetEmployeeId! } as Employee))
         } else {
           router.push('/employees')
         }

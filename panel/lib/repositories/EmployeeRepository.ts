@@ -154,7 +154,11 @@ export const EmployeeRepository = {
     if (employee.teamIds !== undefined) row.team_ids = employee.teamIds
     
     if (employee.permissionOverrides !== undefined || employee.username !== undefined) {
-      const baseOverrides = employee.permissionOverrides || {}
+      const baseOverrides = { ...(employee.permissionOverrides || {}) }
+      // SECURITY: Strip team.manage from direct browser/anon save payload.
+      // team.manage must only be modified through protected server endpoint (/api/auth-update-team-manage).
+      delete (baseOverrides as any)['team.manage']
+
       row.permission_overrides = {
         ...baseOverrides,
         username: employee.username !== undefined ? employee.username : (baseOverrides as any).username,

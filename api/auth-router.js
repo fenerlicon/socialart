@@ -3,8 +3,9 @@ import meHandler from './_lib/auth-me.js';
 import logoutHandler from './_lib/auth-logout.js';
 import changePasswordHandler from './_lib/auth-change-password.js';
 import provisionCredentialHandler from './_lib/auth-provision-credential.js';
+import updateTeamManageHandler from './_lib/auth-update-team-manage.js';
 
-const ALLOWED_ROUTES = new Set(['login', 'me', 'logout', 'change-password', 'provision-credential']);
+const ALLOWED_ROUTES = new Set(['login', 'me', 'logout', 'change-password', 'provision-credential', 'update-team-manage']);
 
 export default async function handler(req, res) {
   const rawUrl = req.url || '';
@@ -31,6 +32,7 @@ export default async function handler(req, res) {
     else if (rawUrl.includes('/api/auth-logout')) route = 'logout';
     else if (rawUrl.includes('/api/auth-change-password')) route = 'change-password';
     else if (rawUrl.includes('/api/auth-provision-credential')) route = 'provision-credential';
+    else if (rawUrl.includes('/api/auth-update-team-manage')) route = 'update-team-manage';
   }
 
   // 3. Strict Allowlist Guard: Reject path traversal, arbitrary modules, malformed objects/arrays
@@ -45,6 +47,7 @@ export default async function handler(req, res) {
     if (route === 'logout') return await logoutHandler(req, res);
     if (route === 'change-password') return await changePasswordHandler(req, res);
     if (route === 'provision-credential') return await provisionCredentialHandler(req, res);
+    if (route === 'update-team-manage') return await updateTeamManageHandler(req, res);
   } catch (err) {
     if (!res.headersSent && typeof res.status === 'function') {
       return res.status(500).json({ error: 'Internal server error' });

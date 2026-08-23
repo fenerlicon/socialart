@@ -24,12 +24,19 @@ function uniqueKeys(keys: PermissionKey[]): PermissionKey[] {
  * Takımlar ve Override uygulanmaz.
  */
 export function buildDefaultPermissionSet(input: {
-  rolePackageId: RolePackageId
+  rolePackageId?: RolePackageId | null
   teamIds?: TeamId[]
 }): Map<PermissionKey, PermissionSource[]> {
-  const rolePackage = getRolePackageById(input.rolePackageId)
-
   const map = new Map<PermissionKey, PermissionSource[]>()
+
+  if (!input.rolePackageId) {
+    return map
+  }
+
+  const rolePackage = ROLE_PACKAGES_BY_ID[input.rolePackageId]
+  if (!rolePackage) {
+    return map
+  }
 
   for (const key of rolePackage.defaultPermissions) {
     map.set(key, ['role_package'])
@@ -43,10 +50,11 @@ export function buildDefaultPermissionSet(input: {
  * Takım yetkileri otomatik dahil edilmez, sadece öneri olarak kalır.
  */
 export function resolveEffectivePermissions(input: {
-  rolePackageId: RolePackageId
+  rolePackageId?: RolePackageId | null
   teamIds?: TeamId[]
-  permissionOverrides: PermissionOverrideMap
+  permissionOverrides?: PermissionOverrideMap | null
 }): EffectivePermissions {
+  const overrides = input.permissionOverrides || {}
   const defaults = buildDefaultPermissionSet({
     rolePackageId: input.rolePackageId,
   })
@@ -54,17 +62,17 @@ export function resolveEffectivePermissions(input: {
   const allCandidateKeys = uniqueKeys([
     ...PERMISSION_KEYS,
     ...defaults.keys(),
-    ...(Object.keys(input.permissionOverrides) as PermissionKey[]),
+    ...(Object.keys(overrides) as PermissionKey[]),
   ])
 
   const permissions: ResolvedPermission[] = allCandidateKeys.map((key) => {
     const hasOverride = Object.prototype.hasOwnProperty.call(
-      input.permissionOverrides,
+      overrides,
       key,
     )
 
     if (hasOverride) {
-      const granted = input.permissionOverrides[key] === true
+      const granted = overrides[key] === true
       return {
         key,
         moduleId: getModuleIdFromPermissionKey(key),
@@ -90,7 +98,7 @@ export function resolveEffectivePermissions(input: {
   if (input.rolePackageId === 'operasyon-yonetimi' || input.rolePackageId === 'kreatif-yonetim') {
     grantedKeys.add('kpi.evaluate')
     grantedKeys.add('kpi.manage')
-  } else {
+  } else if (input.rolePackageId) {
     grantedKeys.add('kpi.view')
   }
 

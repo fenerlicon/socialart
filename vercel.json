@@ -139,6 +139,10 @@
       "destination": "/api/auth-router?route=provision-credential"
     },
     {
+      "source": "/api/auth-update-team-manage",
+      "destination": "/api/auth-router?route=update-team-manage"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },

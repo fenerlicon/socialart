@@ -85,7 +85,8 @@ async function runAuthRouterTestSuite() {
       '/api/auth-me': '/api/auth-router?route=me',
       '/api/auth-logout': '/api/auth-router?route=logout',
       '/api/auth-change-password': '/api/auth-router?route=change-password',
-      '/api/auth-provision-credential': '/api/auth-router?route=provision-credential'
+      '/api/auth-provision-credential': '/api/auth-router?route=provision-credential',
+      '/api/auth-update-team-manage': '/api/auth-router?route=update-team-manage'
     };
 
     Object.entries(expectedRewrites).forEach(([source, expectedDest]) => {
@@ -122,6 +123,12 @@ async function runAuthRouterTestSuite() {
 
   await runAsyncTest("PROVISION-CREDENTIAL ROUTE: PUT -> 405", async () => {
     const { req, res } = createMockReqRes('PUT', {}, {}, {}, '/api/auth-router?route=provision-credential');
+    await authRouterHandler(req, res);
+    assert.strictEqual(res._getStatus(), 405);
+  });
+
+  await runAsyncTest("UPDATE-TEAM-MANAGE ROUTE: GET -> 405", async () => {
+    const { req, res } = createMockReqRes('GET', {}, {}, {}, '/api/auth-router?route=update-team-manage');
     await authRouterHandler(req, res);
     assert.strictEqual(res._getStatus(), 405);
   });
