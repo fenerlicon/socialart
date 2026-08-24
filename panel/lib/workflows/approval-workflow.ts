@@ -73,15 +73,26 @@ export async function requestApproval(params: {
   let approverEmployeeId: string | undefined = undefined
 
   if (approvalType === 'internal') {
-    const brand = await getBrandById(instance.brandId)
-    if (brand && brand.operationManagerId) {
-      approverEmployeeId = brand.operationManagerId
-    } else {
-      // operation-management rol paketine sahip ilk çalışan
+    if (step.reviewerEmployeeId) {
+      // 1. Explicit Reviewer Routing (Highest Priority)
       const employees = await getStoredEmployees()
-      const opManager = employees.find((e) => e.rolePackageId === 'operasyon-yonetimi')
-      if (opManager) {
-        approverEmployeeId = opManager.id
+      const reviewer = employees.find((e) => e.id === step.reviewerEmployeeId)
+      if (!reviewer) {
+        throw new Error(`Belirtilen onaylayıcı (reviewerEmployeeId: ${step.reviewerEmployeeId}) sistemde bulunamadı.`)
+      }
+      approverEmployeeId = step.reviewerEmployeeId
+    } else {
+      // 2. Brand Operation Manager
+      const brand = await getBrandById(instance.brandId)
+      if (brand && brand.operationManagerId) {
+        approverEmployeeId = brand.operationManagerId
+      } else {
+        // 3. Fallback: First employee with operasyon-yonetimi role package
+        const employees = await getStoredEmployees()
+        const opManager = employees.find((e) => e.rolePackageId === 'operasyon-yonetimi')
+        if (opManager) {
+          approverEmployeeId = opManager.id
+        }
       }
     }
   }
