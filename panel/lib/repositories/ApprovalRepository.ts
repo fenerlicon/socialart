@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import type { WorkflowApproval } from '@/types/domain'
+import type { WorkflowApproval, ApprovalPurpose } from '@/types/domain'
 
 export const ApprovalRepository = {
   mapRowToApproval(row: any): WorkflowApproval {
@@ -10,6 +10,7 @@ export const ApprovalRepository = {
       requestedByEmployeeId: row.requested_by_employee_id,
       approverEmployeeId: row.approver_employee_id || undefined,
       approvalType: row.approval_type,
+      approvalPurpose: (row.approval_purpose as ApprovalPurpose) || 'general',
       status: row.status,
       note: row.note || undefined,
       revisionNote: row.revision_note || undefined,
@@ -28,6 +29,10 @@ export const ApprovalRepository = {
     if (approval.requestedByEmployeeId !== undefined) row.requested_by_employee_id = approval.requestedByEmployeeId
     if (approval.approverEmployeeId !== undefined) row.approver_employee_id = approval.approverEmployeeId
     if (approval.approvalType !== undefined) row.approval_type = approval.approvalType
+    if (approval.approvalPurpose !== undefined) {
+      const validPurposes: ApprovalPurpose[] = ['general', 'intermediate', 'final_creative', 'client']
+      row.approval_purpose = validPurposes.includes(approval.approvalPurpose) ? approval.approvalPurpose : 'general'
+    }
     if (approval.status !== undefined) row.status = approval.status
     if (approval.note !== undefined) row.note = approval.note
     if (approval.revisionNote !== undefined) row.revision_note = approval.revisionNote

@@ -5,6 +5,7 @@ import type {
   WorkflowInstance,
   WorkflowHistory,
   ApprovalType,
+  ApprovalPurpose,
 } from '@/types/domain'
 import {
   saveApproval,
@@ -98,6 +99,7 @@ export async function requestApproval(params: {
   }
 
   // 3. Onay Talebi (WorkflowApproval) Oluştur
+  const approvalPurpose: ApprovalPurpose = step.approvalPurpose || 'general'
   const approvalId = uuidv4()
   const approval: WorkflowApproval = {
     id: approvalId,
@@ -106,6 +108,7 @@ export async function requestApproval(params: {
     requestedByEmployeeId,
     approverEmployeeId,
     approvalType,
+    approvalPurpose,
     status: 'pending',
     note,
     createdAt: now,
@@ -480,6 +483,7 @@ export async function requestDeadlineExtension(params: {
     requestedByEmployeeId,
     approverEmployeeId,
     approvalType: 'deadline_extension',
+    approvalPurpose: 'general',
     status: 'pending',
     note: JSON.stringify({ requestedDate, reason }),
     createdAt: now,

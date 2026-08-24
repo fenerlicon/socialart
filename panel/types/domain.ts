@@ -286,6 +286,7 @@ export interface WorkflowStep {
   order: number
   requiresApproval: boolean
   isFinalStep: boolean
+  approvalPurpose?: ApprovalPurpose
   defaultAssigneeRolePackageId?: string
   estimatedDuration?: number // in hours or days
 }
@@ -436,6 +437,7 @@ export interface WorkflowStepInstance {
   status: WorkflowStepInstanceStatus
   requiresApproval: boolean
   isFinalStep: boolean
+  approvalPurpose?: ApprovalPurpose
   assigneeEmployeeId?: string
   assignedEmployeeId?: string
   responsibilityRole?: ResponsibilityRole
@@ -547,6 +549,8 @@ export interface Notification {
 
 export type ApprovalType = 'internal' | 'client' | 'deadline_extension'
 
+export type ApprovalPurpose = 'general' | 'intermediate' | 'final_creative' | 'client'
+
 export type ApprovalStatus =
   | 'pending'
   | 'approved'
@@ -561,6 +565,7 @@ export interface WorkflowApproval {
   requestedByEmployeeId: string
   approverEmployeeId?: string
   approvalType: ApprovalType
+  approvalPurpose: ApprovalPurpose
   status: ApprovalStatus
   note?: string
   revisionNote?: string

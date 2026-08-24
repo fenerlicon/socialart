@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import type { WorkflowInstance, WorkflowStepInstance, WorkflowHistory } from '@/types/domain'
+import type { WorkflowInstance, WorkflowStepInstance, WorkflowHistory, ApprovalPurpose } from '@/types/domain'
 import { handleOnboardingMeetingDateChange } from '@/lib/workflows/onboarding-workflow'
 
 export const WorkflowRepository = {
@@ -56,6 +56,7 @@ export const WorkflowRepository = {
       status: row.status,
       requiresApproval: row.requires_approval,
       isFinalStep: row.is_final_step,
+      approvalPurpose: (row.approval_purpose as ApprovalPurpose) || 'general',
       assigneeEmployeeId: row.assignee_employee_id || undefined,
       assignedEmployeeId: row.assigned_employee_id || undefined,
       responsibilityRole: row.responsibility_role || undefined,
@@ -89,6 +90,10 @@ export const WorkflowRepository = {
     if (step.status !== undefined) row.status = step.status
     if (step.requiresApproval !== undefined) row.requires_approval = step.requiresApproval
     if (step.isFinalStep !== undefined) row.is_final_step = step.isFinalStep
+    if (step.approvalPurpose !== undefined) {
+      const validPurposes: ApprovalPurpose[] = ['general', 'intermediate', 'final_creative', 'client']
+      row.approval_purpose = validPurposes.includes(step.approvalPurpose) ? step.approvalPurpose : 'general'
+    }
     const effectiveAssignee = step.assignedEmployeeId !== undefined ? step.assignedEmployeeId : step.assigneeEmployeeId
     if (effectiveAssignee !== undefined) {
       row.assigned_employee_id = effectiveAssignee
