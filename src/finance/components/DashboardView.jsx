@@ -73,8 +73,15 @@ export default function DashboardView({
   const goalProgress = Math.min(100, Math.round((totalReceived / monthlyGoal) * 100));
   const remainingGoal = Math.max(0, monthlyGoal - totalReceived);
   
-  // Toplam Müşteri Alacak
-  const totalClientReceivables = Math.max(0, totalClientBilling - totalReceived);
+  // Toplam Müşteri Alacak (Per-client remaining receivable sum for current selected period)
+  const totalClientReceivables = activeClients.reduce((acc, client) => {
+    const clientPaymentsSum = (clientPayments || [])
+      .filter(p => String(p.client_id) === String(client.id))
+      .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const fee = parseFloat(client.monthly_fee) || 0;
+    const remaining = Math.max(0, fee - clientPaymentsSum);
+    return acc + remaining;
+  }, 0);
 
   // Bu Ay Gider (Expenses + Staff Paid)
   const totalDirectExpenses = expenses.reduce((acc, e) => acc + (parseFloat(e.amount) || 0), 0);

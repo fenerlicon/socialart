@@ -186,13 +186,12 @@ export default function App() {
 
         const mappedClients = (clientsData || []).map(c => ({
           ...c,
-          client_code: c.client_code || (c.metrics && c.metrics.client_code) || '',
-          monthly_fee: c.monthly_fee || (c.metrics && c.metrics.monthly_fee) || 0,
-          payment_day: c.payment_day || (c.metrics && c.metrics.payment_day) || 1,
-          commission_rate: c.commission_rate || (c.metrics && c.metrics.commission_rate) || 0,
-          exempt_from_commission: c.exempt_from_commission || (c.metrics && c.metrics.exempt_from_commission) || false,
-          assigned_staff_ids: c.assigned_staff_ids || (c.metrics && c.metrics.assigned_staff_ids) || [],
-          ...(c.metrics || {})
+          client_code: c.client_code || '',
+          monthly_fee: typeof c.monthly_fee === 'number' ? c.monthly_fee : (parseFloat(c.monthly_fee) || 0),
+          payment_day: parseInt(c.payment_day) || 1,
+          commission_rate: typeof c.commission_rate === 'number' ? c.commission_rate : (parseFloat(c.commission_rate) || 0),
+          exempt_from_commission: Boolean(c.exempt_from_commission),
+          assigned_staff_ids: Array.isArray(c.assigned_staff_ids) ? c.assigned_staff_ids : []
         }));
         setClients(mappedClients);
       } catch (cErr) {
@@ -674,30 +673,43 @@ export default function App() {
   // MUTATOR 3: Update client contract (monthly fee, payment day, commissions, exemptions)
   const handleUpdateClientContract = async (contractData) => {
     try {
-      const existingMetrics = contractData.metrics || {};
-      const updatedMetrics = {
-        ...existingMetrics,
-        monthly_fee: contractData.monthly_fee,
-        payment_day: contractData.payment_day,
-        client_code: contractData.client_code,
-        commission_rate: contractData.commission_rate,
-        exempt_from_commission: contractData.exempt_from_commission,
-        assigned_staff_ids: contractData.assigned_staff_ids
+      const normalizeMonthlyFee = (val) => {
+        if (typeof val === 'number') return isNaN(val) ? 0 : val;
+        if (!val) return 0;
+        let str = String(val).trim();
+        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(str)) {
+          str = str.replace(/\./g, '').replace(',', '.');
+        } else if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(str)) {
+          str = str.replace(/,/g, '');
+        } else {
+          str = str.replace(',', '.');
+        }
+        const parsed = parseFloat(str);
+        return isNaN(parsed) ? 0 : parsed;
       };
 
-      await supabase
+      const updatePayload = {
+        monthly_fee: normalizeMonthlyFee(contractData.monthly_fee),
+        payment_day: parseInt(contractData.payment_day) || 1,
+        client_code: contractData.client_code || null,
+        commission_rate: typeof contractData.commission_rate === 'number' ? contractData.commission_rate : (parseFloat(contractData.commission_rate) || 0),
+        exempt_from_commission: Boolean(contractData.exempt_from_commission),
+        assigned_staff_ids: Array.isArray(contractData.assigned_staff_ids) ? contractData.assigned_staff_ids : []
+      };
+
+      const { error } = await supabase
         .from('active_clients')
-        .update({ 
-          metrics: updatedMetrics
-        })
+        .update(updatePayload)
         .eq('id', contractData.id);
+
+      if (error) throw error;
       
       // Update locally
       setClients(prev => prev.map(c => 
         c.id === contractData.id 
           ? { 
               ...c, 
-              ...updatedMetrics
+              ...updatePayload
             }
           : c
       ));
@@ -1320,32 +1332,45 @@ export default function App() {
   // MUTATOR 17: Add new client
   const handleAddClient = async (clientData) => {
     try {
-      const metricsObj = {
-        client_code: clientData.client_code,
-        package: clientData.package,
-        monthly_fee: clientData.monthly_fee,
-        payment_day: clientData.payment_day,
-        exempt_from_commission: clientData.exempt_from_commission,
-        commission_rate: clientData.commission_rate,
-        assigned_staff_ids: clientData.assigned_staff_ids,
-        durum: 'aktif'
+      const normalizeMonthlyFee = (val) => {
+        if (typeof val === 'number') return isNaN(val) ? 0 : val;
+        if (!val) return 0;
+        let str = String(val).trim();
+        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(str)) {
+          str = str.replace(/\./g, '').replace(',', '.');
+        } else if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(str)) {
+          str = str.replace(/,/g, '');
+        } else {
+          str = str.replace(',', '.');
+        }
+        const parsed = parseFloat(str);
+        return isNaN(parsed) ? 0 : parsed;
       };
 
       const payload = {
         name: clientData.name,
-        metrics: metricsObj
+        client_code: clientData.client_code || null,
+        package: clientData.package || null,
+        monthly_fee: normalizeMonthlyFee(clientData.monthly_fee),
+        payment_day: parseInt(clientData.payment_day) || 1,
+        exempt_from_commission: Boolean(clientData.exempt_from_commission),
+        commission_rate: typeof clientData.commission_rate === 'number' ? clientData.commission_rate : (parseFloat(clientData.commission_rate) || 0),
+        assigned_staff_ids: Array.isArray(clientData.assigned_staff_ids) ? clientData.assigned_staff_ids : [],
+        durum: 'aktif'
       };
 
-      let { data } = await supabase
+      let { data, error } = await supabase
         .from('active_clients')
         .insert([payload])
         .select();
 
-      const createdObj = (data && data[0]) ? { ...data[0], ...metricsObj } : { id: 'c_' + Date.now(), name: clientData.name, ...metricsObj };
+      if (error) throw error;
+
+      const createdObj = (data && data[0]) ? data[0] : { id: 'c_' + Date.now(), ...payload };
       setClients(prev => [...prev, createdObj]);
       await logActivity(
         'Müşteri Eklendi', 
-        `${clientData.name} (${clientData.client_code}) firması yeni cari olarak sisteme tanımlandı.`,
+        `${clientData.name} (${clientData.client_code || '-'}) firması yeni cari olarak sisteme tanımlandı.`,
         clientData.name
       );
     } catch (err) {
