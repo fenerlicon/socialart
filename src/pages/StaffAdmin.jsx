@@ -419,7 +419,7 @@ function Admin() {
         }
 
         const permissions = data.permissions || [];
-        const hasCrmView = permissions.includes('crm.view') || permissions.includes('system.admin');
+        const hasCrmView = permissions.includes('crm.view');
 
         if (!hasCrmView) {
           if (isMounted) {
