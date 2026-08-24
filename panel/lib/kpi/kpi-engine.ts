@@ -44,7 +44,7 @@ export function computeMetrics(params: {
   // Çalışanın tamamladığı adımlar
   const mySteps = steps.filter(
     (s) =>
-      (s.assignedEmployeeId === employeeId || s.assigneeEmployeeId === employeeId) &&
+      s.assignedEmployeeId === employeeId &&
       s.status === 'completed' &&
       inPeriod(s.completedAt)
   )
@@ -174,7 +174,7 @@ export function initializeDeductions(params: {
   // Çalışanın tamamladığı adımlar
   const mySteps = steps.filter(
     (s) =>
-      (s.assignedEmployeeId === employeeId || s.assigneeEmployeeId === employeeId) &&
+      s.assignedEmployeeId === employeeId &&
       s.status === 'completed' &&
       inPeriod(s.completedAt)
   )
@@ -308,7 +308,7 @@ export function initializeDeductions(params: {
     // Yeni Otomatik Tespitler:
     // 1. İçerik takvimi hiç hazırlanmadı
     const hasCalendarStep = steps.some(s => 
-      (s.assignedEmployeeId === employeeId || s.assigneeEmployeeId === employeeId) && 
+      s.assignedEmployeeId === employeeId && 
       (s.id.includes('calendar') || s.id.includes('takvim') || s.id.includes('plan'))
     )
     const hasCompletedCalendar = mySteps.some(s => 
@@ -318,7 +318,7 @@ export function initializeDeductions(params: {
 
     // 2. Günlük story kontrolü yapılmadı
     const hasStorySteps = steps.some(s => 
-      (s.assignedEmployeeId === employeeId || s.assigneeEmployeeId === employeeId) && 
+      s.assignedEmployeeId === employeeId && 
       s.id.includes('story')
     )
     const hasCompletedStory = mySteps.some(s => s.id.includes('story'))

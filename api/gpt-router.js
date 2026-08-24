@@ -812,7 +812,7 @@ async function handleStaffKpiAnalysis(req, res) {
     const { data: db1Tasks } = await supabaseDb1.from('tasks').select('*');
 
     const staffReport = (staff || []).map(emp => {
-      const empDb2Tasks = (steps || []).filter(s => s.assignee_employee_id === emp.id || s.assigned_employee_id === emp.id);
+      const empDb2Tasks = (steps || []).filter(s => s.assigned_employee_id === emp.id);
       const empDb1Tasks = (db1Tasks || []).filter(t => t.assigned_to === emp.id);
       const empTodos = (todos || []).filter(t => t.employee_id === emp.id && !t.is_completed);
 

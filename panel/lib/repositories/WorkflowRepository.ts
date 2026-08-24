@@ -89,8 +89,11 @@ export const WorkflowRepository = {
     if (step.status !== undefined) row.status = step.status
     if (step.requiresApproval !== undefined) row.requires_approval = step.requiresApproval
     if (step.isFinalStep !== undefined) row.is_final_step = step.isFinalStep
-    if (step.assigneeEmployeeId !== undefined) row.assignee_employee_id = step.assigneeEmployeeId
-    if (step.assignedEmployeeId !== undefined) row.assigned_employee_id = step.assignedEmployeeId
+    const effectiveAssignee = step.assignedEmployeeId !== undefined ? step.assignedEmployeeId : step.assigneeEmployeeId
+    if (effectiveAssignee !== undefined) {
+      row.assigned_employee_id = effectiveAssignee
+      row.assignee_employee_id = effectiveAssignee
+    }
     if (step.responsibilityRole !== undefined) row.responsibility_role = step.responsibilityRole
     if (step.startedAt !== undefined) row.started_at = step.startedAt
     if (step.completedAt !== undefined) row.completed_at = step.completedAt
