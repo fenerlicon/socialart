@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS workflow_step_instances (
   requires_approval BOOLEAN NOT NULL DEFAULT false,
   is_final_step BOOLEAN NOT NULL DEFAULT false,
   approval_purpose TEXT NOT NULL DEFAULT 'general',
+  creative_count INTEGER DEFAULT NULL,
   assignee_employee_id TEXT REFERENCES employees(id) ON DELETE SET NULL,
   assigned_employee_id TEXT REFERENCES employees(id) ON DELETE SET NULL,
   responsibility_role TEXT,

@@ -57,6 +57,7 @@ export const WorkflowRepository = {
       requiresApproval: row.requires_approval,
       isFinalStep: row.is_final_step,
       approvalPurpose: (row.approval_purpose as ApprovalPurpose) || 'general',
+      creativeCount: row.creative_count !== null && row.creative_count !== undefined ? Number(row.creative_count) : null,
       assigneeEmployeeId: row.assignee_employee_id || undefined,
       assignedEmployeeId: row.assigned_employee_id || undefined,
       responsibilityRole: row.responsibility_role || undefined,
@@ -93,6 +94,15 @@ export const WorkflowRepository = {
     if (step.approvalPurpose !== undefined) {
       const validPurposes: ApprovalPurpose[] = ['general', 'intermediate', 'final_creative', 'client']
       row.approval_purpose = validPurposes.includes(step.approvalPurpose) ? step.approvalPurpose : 'general'
+    }
+    if (step.creativeCount !== undefined) {
+      if (step.creativeCount === null) {
+        row.creative_count = null
+      } else if (Number.isInteger(step.creativeCount) && step.creativeCount >= 1) {
+        row.creative_count = step.creativeCount
+      } else {
+        throw new Error('creativeCount must be null or a positive integer >= 1')
+      }
     }
     const effectiveAssignee = step.assignedEmployeeId !== undefined ? step.assignedEmployeeId : step.assigneeEmployeeId
     if (effectiveAssignee !== undefined) {

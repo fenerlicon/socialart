@@ -267,6 +267,7 @@ export async function generateWorkflowInstancesForCycle(params: {
           requiresApproval: step.requiresApproval,
           isFinalStep: step.isFinalStep,
           approvalPurpose: step.approvalPurpose || 'general',
+          creativeCount: step.creativeCount ?? null,
           responsibilityRole: resolvedRole,
           assigneeEmployeeId: assigneeId,
           assignedEmployeeId: assigneeId,

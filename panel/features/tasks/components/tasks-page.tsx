@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Employee, WorkflowStepInstance, WorkflowInstance, Brand, ResponsibilityRole, BrandOperationCycle } from '@/types/domain'
+import { isCreativeProductionResponsibility } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { getWorkflowStepInstances, updateWorkflowStepInstance, getStoredWorkflowInstances, saveWorkflowInstances, saveWorkflowSteps } from '@/lib/storage/local-workflow-instance-store'
+import { getWorkflowStepInstances, updateWorkflowStepInstance, getStoredWorkflowInstances, saveWorkflowInstances, saveWorkflowSteps, saveWorkflowHistory } from '@/lib/storage/local-workflow-instance-store'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredCycles } from '@/lib/storage/local-cycle-store'
 import { supabase } from '@/lib/supabase/client'
@@ -155,6 +156,7 @@ export function TasksPage() {
 
   // Form Fields
   const [assigneeId, setAssigneeId] = useState('')
+  const [assigneeCreativeCount, setAssigneeCreativeCount] = useState<number | null>(null)
   const [dueDateText, setDueDateText] = useState('')
   const [reviewerId, setReviewerId] = useState('')
   const [selectedSupportIds, setSelectedSupportIds] = useState<string[]>([])
@@ -352,6 +354,7 @@ export function TasksPage() {
   const openAssignModal = (step: WorkflowStepInstance) => {
     setSelectedStep(step)
     setAssigneeId(step.assignedEmployeeId || '')
+    setAssigneeCreativeCount(step.creativeCount ?? null)
     setActiveModal('assign')
   }
 
@@ -375,9 +378,36 @@ export function TasksPage() {
 
   const handleSaveAssignment = async () => {
     if (!selectedStep) return
+
+    let updatedCreativeCount = selectedStep.creativeCount ?? null
+    const isCreative = isCreativeProductionResponsibility(selectedStep.responsibilityRole)
+
+    if (isCreative && assigneeCreativeCount !== null && assigneeCreativeCount !== undefined) {
+      if (!Number.isInteger(assigneeCreativeCount) || assigneeCreativeCount < 1) {
+        toast.error('Kreatif adedi en az 1 tam sayı olmalıdır.')
+        return
+      }
+      if (selectedStep.creativeCount !== assigneeCreativeCount) {
+        updatedCreativeCount = assigneeCreativeCount
+        const currentEmployeeId = activeEmployee?.id || 'system'
+        await saveWorkflowHistory({
+          id: 'hist-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          workflowInstanceId: selectedStep.workflowInstanceId,
+          workflowStepInstanceId: selectedStep.id,
+          actorEmployeeId: currentEmployeeId,
+          action: 'creative_count_updated',
+          fromStatus: selectedStep.status,
+          toStatus: selectedStep.status,
+          note: `Kreatif adedi güncellendi: ${selectedStep.creativeCount || 'Belirtilmemiş'} ➔ ${assigneeCreativeCount}`,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    }
+
     const updated: WorkflowStepInstance = {
       ...selectedStep,
       assignedEmployeeId: assigneeId || undefined,
+      creativeCount: updatedCreativeCount,
     }
     await updateWorkflowStepInstance(updated)
     toast.success('Görev Atandı', {
@@ -1006,6 +1036,26 @@ export function TasksPage() {
                 </SelectContent>
               </Select>
             </div>
+            {isCreativeProductionResponsibility(selectedStep.responsibilityRole) && (
+              <div className="space-y-1.5 bg-purple-950/20 border border-purple-800/40 rounded-xl p-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Kreatif Adedi</span>
+                </div>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Örn: 8"
+                  value={assigneeCreativeCount ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value ? parseInt(e.target.value, 10) : null
+                    setAssigneeCreativeCount(val)
+                  }}
+                  className="h-9 text-xs bg-muted/10 border-purple-700/50 font-bold text-purple-200"
+                />
+                <p className="text-[9px] text-purple-400/80">Bu kreatif üretim görevinin kapsadığı adet miktarı.</p>
+              </div>
+            )}
             <div className="flex items-center justify-end gap-2 pt-2">
               <Button onClick={() => setActiveModal(null)} variant="outline" className="h-9 text-xs rounded-xl">İptal</Button>
               <Button onClick={handleSaveAssignment} className="h-9 text-xs bg-blue-650 hover:bg-blue-700 text-white rounded-xl">Atamayı Kaydet</Button>

@@ -7,6 +7,7 @@ import type {
   ApprovalType,
   ApprovalPurpose,
 } from '@/types/domain'
+import { isCreativeProductionResponsibility } from '@/types/domain'
 import {
   saveApproval,
   getStoredApprovals,
@@ -100,6 +101,11 @@ export async function requestApproval(params: {
 
   // 3. Onay Talebi (WorkflowApproval) Oluştur
   const approvalPurpose: ApprovalPurpose = step.approvalPurpose || 'general'
+  if (approvalPurpose === 'final_creative' && isCreativeProductionResponsibility(step.responsibilityRole)) {
+    if (step.creativeCount === undefined || step.creativeCount === null || !Number.isInteger(step.creativeCount) || step.creativeCount < 1) {
+      throw new Error('Final kreatif onayı gerektiren kreatif üretim adımında geçerli bir kreatif adedi (en az 1 tam sayı) tanımlanmalıdır.')
+    }
+  }
   const approvalId = uuidv4()
   const approval: WorkflowApproval = {
     id: approvalId,
@@ -172,6 +178,12 @@ export async function approveApproval(approvalId: string, approverEmployeeId: st
   const step = allSteps.find((s) => s.id === approval.workflowStepInstanceId)
   if (!step) {
     throw new Error(`Onay adımı bulunamadı: ${approval.workflowStepInstanceId}`)
+  }
+
+  if (approval.approvalPurpose === 'final_creative' && isCreativeProductionResponsibility(step.responsibilityRole)) {
+    if (step.creativeCount === undefined || step.creativeCount === null || !Number.isInteger(step.creativeCount) || step.creativeCount < 1) {
+      throw new Error('Final kreatif onayı verilemez: Geçerli bir kreatif adedi (en az 1 tam sayı) tanımlanmamış.')
+    }
   }
 
   const allInstances = await getStoredWorkflowInstances()

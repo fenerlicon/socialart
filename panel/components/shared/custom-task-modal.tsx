@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import type { Employee, Brand, WorkflowInstance, WorkflowStepInstance, ResponsibilityRole } from '@/types/domain'
+import { isCreativeProductionResponsibility } from '@/types/domain'
 import { saveWorkflowSteps, saveWorkflowInstances, getStoredWorkflowInstances } from '@/lib/storage/local-workflow-instance-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,7 +35,9 @@ import {
   Flame,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckCircle2,
+  Zap
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -63,6 +66,7 @@ export interface TaskDraft {
   dueDate: string // YYYY-MM-DD
   dueTime: string // HH:MM
   responsibilityRole: ResponsibilityRole
+  creativeCount?: number | null
   detail: string
   links: TaskRefLink[]
   files: TaskFileAttachment[]
@@ -103,6 +107,7 @@ export function CustomTaskModal({
       dueDate: today,
       dueTime: '18:00',
       responsibilityRole: 'custom',
+      creativeCount: null,
       detail: '',
       links: [],
       files: [],
@@ -304,6 +309,13 @@ export function CustomTaskModal({
         toast.error('Görev #' + (i + 1) + ' için lütfen bir başlık giriniz.')
         return
       }
+      if (isCreativeProductionResponsibility(tasks[i].responsibilityRole)) {
+        const count = tasks[i].creativeCount
+        if (count === undefined || count === null || !Number.isInteger(count) || count < 1) {
+          toast.error(`Görev #${i + 1} için lütfen geçerli bir kreatif adedi (en az 1 tam sayı) giriniz.`)
+          return
+        }
+      }
     }
 
     setIsSubmitting(true)
@@ -417,6 +429,7 @@ export function CustomTaskModal({
           requiresApproval: false,
           isFinalStep: false,
           responsibilityRole: task.responsibilityRole,
+          creativeCount: isCreativeProductionResponsibility(task.responsibilityRole) ? task.creativeCount : null,
           assignedEmployeeId: targetEmployeeId,
           dueDate: dueDateTime,
           assignedAt: new Date().toISOString(),
@@ -648,6 +661,29 @@ export function CustomTaskModal({
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Kreatif Adedi (Kreatif Üretim Sorumlulukları İçin) */}
+                  {isCreativeProductionResponsibility(task.responsibilityRole) && (
+                    <div className="space-y-1 sm:col-span-2 bg-purple-950/20 border border-purple-800/40 rounded-xl p-2.5">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Zap className="h-3.5 w-3.5 text-purple-400" />
+                        <label className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Kreatif Adedi (Zorunlu)</label>
+                      </div>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="Örn: 8"
+                        value={task.creativeCount ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value ? parseInt(e.target.value, 10) : null
+                          updateTask(index, { creativeCount: val })
+                        }}
+                        className="h-9 text-xs bg-neutral-950 border-purple-700/50 font-bold text-purple-200"
+                      />
+                      <p className="text-[9px] text-purple-400/80 mt-1">Bu kreatif üretim görevinin kapsadığı adet miktarını girin.</p>
+                    </div>
+                  )}
 
                   {/* Son Teslim Tarihi (Deadline) */}
                   <div className="space-y-1">

@@ -287,6 +287,7 @@ export interface WorkflowStep {
   requiresApproval: boolean
   isFinalStep: boolean
   approvalPurpose?: ApprovalPurpose
+  creativeCount?: number | null
   defaultAssigneeRolePackageId?: string
   estimatedDuration?: number // in hours or days
 }
@@ -351,6 +352,17 @@ export type ResponsibilityRole =
   | 'videography'
   | 'reporting'
   | 'custom'
+
+export const CREATIVE_PRODUCTION_RESPONSIBILITIES: readonly ResponsibilityRole[] = [
+  'graphic_design',
+  'video_editing',
+  'photography',
+  'videography',
+] as const
+
+export function isCreativeProductionResponsibility(role?: ResponsibilityRole | string): boolean {
+  return typeof role === 'string' && (CREATIVE_PRODUCTION_RESPONSIBILITIES as readonly string[]).includes(role)
+}
 
 export interface OperationScheduleRule {
   id: string
@@ -438,6 +450,7 @@ export interface WorkflowStepInstance {
   requiresApproval: boolean
   isFinalStep: boolean
   approvalPurpose?: ApprovalPurpose
+  creativeCount?: number | null
   assigneeEmployeeId?: string
   assignedEmployeeId?: string
   responsibilityRole?: ResponsibilityRole
