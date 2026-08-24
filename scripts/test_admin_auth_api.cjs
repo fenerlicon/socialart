@@ -42,6 +42,7 @@ async function runComprehensiveApiTests() {
       body,
       headers: {
         'content-type': 'application/json',
+        'x-forwarded-for': `198.51.100.${Math.floor(Math.random() * 250) + 1}`,
         ...headers
       }
     };
@@ -102,11 +103,11 @@ async function runComprehensiveApiTests() {
   await loginHandler(t4.req, t4.res);
   assert(t4.res._getStatus() === 401 && t4.res._getData().error === 'Invalid credentials', "LOGIN: missing password -> reject");
 
-  const t5 = createMockReqRes('POST', { identifier: 'unknown_user_123', password: 'Passphrase123!' });
+  const t5 = createMockReqRes('POST', { identifier: `unknown_user_${Date.now()}`, password: 'Passphrase123!' });
   await loginHandler(t5.req, t5.res);
   assert(t5.res._getStatus() === 401 && t5.res._getData().error === 'Invalid credentials', "LOGIN: unknown employee -> generic 401");
 
-  const t6 = createMockReqRes('POST', { identifier: '2', password: 'WrongPassword123!' });
+  const t6 = createMockReqRes('POST', { identifier: `test_nonexistent_${Date.now()}`, password: 'WrongPassword123!' });
   await loginHandler(t6.req, t6.res);
   assert(t6.res._getStatus() === 401 && t6.res._getData().error === 'Invalid credentials', "LOGIN: wrong password or missing credential -> generic 401");
 

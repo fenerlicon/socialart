@@ -4,7 +4,10 @@ import {
   type PermissionKey,
 } from '@/config/permissions'
 import { getModuleIdFromPermissionKey } from '@/config/modules'
-import { getRolePackageById } from '@/features/role-packages/data/role-package-seeds'
+import {
+  ROLE_PACKAGES_BY_ID,
+  getRolePackageById,
+} from '@/features/role-packages/data/role-package-seeds'
 import { getTeamsByIds } from '@/features/teams/data/team-seeds'
 import type {
   EffectivePermissions,
