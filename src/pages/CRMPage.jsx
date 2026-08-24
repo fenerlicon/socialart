@@ -631,87 +631,6 @@ export default function CRMPage({ embedded = false }) {
           .map(mapDbRowToLead);
       }
 
-      // 2. Fetch Job Applications (İş Başvuruları)
-      try {
-        const { data: jobApps } = await supabaseLeads
-          .from('job_applications')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (jobApps && jobApps.length > 0) {
-          const deletedIds = new Set(JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]').map(String));
-          const jobMapped = jobApps
-            .filter(j => !deletedIds.has(String(`job-${j.id}`)) && !deletedIds.has(String(j.id)))
-            .map(j => ({
-              id: `job-${j.id}`,
-              dbId: j.id,
-              table: 'job_applications',
-              pipeline: 'PRODUCTION',
-              title: `${j.full_name} (${j.position || 'İş Başvurusu'})`,
-              contactName: j.full_name,
-              email: j.email || '',
-              phone: j.phone || '',
-              city: 'İstanbul',
-              service: `İş Başvurusu: ${j.position || 'Genel'}`,
-              source: 'WEBSITE',
-              platform: 'İş Başvuru Formu',
-              stage: j.status === 'Öne Çıkan' ? 'WON' : (j.status === 'Reddedildi' ? 'LOST' : 'NEW'),
-              assignedTo: 'Celal',
-              createdAt: j.created_at || new Date().toISOString(),
-              updatedAt: j.created_at || new Date().toISOString(),
-              whyUs: j.about || '',
-              resumeUrl: j.resume_url || null,
-              portfolioUrl: j.portfolio_url || null,
-              category: 'JOB_APPLICATION',
-              position: j.position || 'Genel',
-              notes: [],
-              activities: [],
-              priority: 'HIGH'
-            }));
-          loadedLeads.push(...jobMapped);
-        }
-      } catch (jErr) {}
-
-      // 3. Fetch UGC Applications (İçerik Üreticisi Başvuruları)
-      try {
-        const { data: ugcApps } = await supabaseLeads
-          .from('ugc_applications')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (ugcApps && ugcApps.length > 0) {
-          const deletedIds = new Set(JSON.parse(localStorage.getItem('socialart_crm_deleted_lead_ids') || '[]').map(String));
-          const ugcMapped = ugcApps
-            .filter(u => !deletedIds.has(String(`ugc-${u.id}`)) && !deletedIds.has(String(u.id)))
-            .map(u => ({
-              id: `ugc-${u.id}`,
-              dbId: u.id,
-              table: 'ugc_applications',
-              pipeline: 'SOCIAL_MEDIA',
-              title: `${u.full_name} (@${u.instagram_url || 'UGC'})`,
-              contactName: u.full_name,
-              email: u.email || '',
-              phone: u.phone || '',
-              city: u.city || 'İstanbul',
-              service: 'UGC & Influencer Başvurusu',
-              source: 'WEBSITE',
-              platform: 'UGC Başvuru Formu',
-              stage: u.status === 'Öne Çıkan' ? 'WON' : (u.status === 'Reddedildi' ? 'LOST' : 'NEW'),
-              assignedTo: 'Celal',
-              createdAt: u.created_at || new Date().toISOString(),
-              updatedAt: u.created_at || new Date().toISOString(),
-              whyUs: u.about || '',
-              portfolioUrl: u.portfolio_url || null,
-              instagramUrl: u.instagram_url || null,
-              category: 'UGC_APPLICATION',
-              notes: [],
-              activities: [],
-              priority: 'HIGH'
-            }));
-          loadedLeads.push(...ugcMapped);
-        }
-      } catch (uErr) {}
-
       setLeads(loadedLeads);
     } catch (err) {
       console.error('Error fetching leads:', err);
@@ -1194,22 +1113,15 @@ export default function CRMPage({ embedded = false }) {
     // 3. Real SQL DELETE Execution in Supabase Database
     try {
       const targetLead = leads.find(l => String(l.id) === String(leadId));
-      const leadDisplayName = targetLead?.title || targetLead?.contactName || 'Başvuru';
-      const cleanId = String(leadId).replace('job-', '').replace('ugc-', '');
-      const numericId = Number(cleanId);
-      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : cleanId;
+      const leadDisplayName = targetLead?.title || targetLead?.contactName || 'Lead';
+      const numericId = Number(leadId);
+      const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
 
-      if (targetLead?.table === 'job_applications' || String(leadId).startsWith('job-')) {
-        await supabaseLeads.from('job_applications').delete().eq('id', queryId);
-      } else if (targetLead?.table === 'ugc_applications' || String(leadId).startsWith('ugc-')) {
-        await supabaseLeads.from('ugc_applications').delete().eq('id', queryId);
-      } else {
-        await supabaseLeads.from('leads').delete().eq('id', queryId);
-        try { await supabase.from('crm_leads').delete().eq('id', queryId); } catch (e) {}
-      }
+      await supabaseLeads.from('leads').delete().eq('id', queryId);
+      try { await supabase.from('crm_leads').delete().eq('id', queryId); } catch (e) {}
 
-      logActivity('Başvuru Silindi', `"${leadDisplayName}" başvurusu veritabanından kalıcı olarak silindi.`, leadDisplayName);
-      showToast('Başvuru kaydı veritabanından silindi.');
+      logActivity('Lead Silindi', `"${leadDisplayName}" kaydı veritabanından kalıcı olarak silindi.`, leadDisplayName);
+      showToast('Lead kaydı veritabanından silindi.');
     } catch (e) {
       console.error('Supabase delete exception:', e);
       showToast('Silme işlemi başarısız: ' + (e.message || 'Bilinmeyen hata'), 'error');
