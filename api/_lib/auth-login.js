@@ -129,6 +129,7 @@ export default async function handler(req, res) {
     const effectivePermissions = resolveServerPermissions(targetEmp.role_package_id, targetEmp.permission_overrides);
 
     return res.status(200).json({
+      success: true,
       authenticated: true,
       employee: {
         id: targetEmp.id,

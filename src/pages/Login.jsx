@@ -98,13 +98,21 @@ function Login({ onLoginSuccess }) {
         body: JSON.stringify({ identifier: cleanUser, password: cleanPass })
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Kullanıcı adı veya şifre hatalı.');
-        setLoading(false);
-        return;
-      }
+       if (!response.ok || !data.authenticated) {
+         if (response.status === 429) {
+           setError('Çok fazla başarısız deneme yapıldı. Lütfen 15 dakika sonra tekrar deneyin.');
+         } else if (response.status === 403) {
+           setError('Yetkisiz erişim kaynağı (Forbidden Origin).');
+         } else if (response.status >= 500) {
+           setError('Sunucu kimlik doğrulama servisine ulaşılamadı.');
+         } else {
+           setError(data.error || 'Kullanıcı adı veya şifre hatalı.');
+         }
+         setLoading(false);
+         return;
+       }
 
       // Purge any legacy plaintext credentials in localStorage
       localStorage.removeItem('social-art-base:credentials');

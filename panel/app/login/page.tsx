@@ -104,10 +104,18 @@ export default function LoginPage() {
         body: JSON.stringify({ identifier: cleanUser, password: cleanPass }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || !data.success) {
-        setErrorMessage(data.error || 'Kullanıcı adı veya şifre hatalı.')
+      if (!response.ok || !data.authenticated) {
+        if (response.status === 429) {
+          setErrorMessage('Çok fazla başarısız deneme yapıldı. Lütfen 15 dakika sonra tekrar deneyin.')
+        } else if (response.status === 403) {
+          setErrorMessage('Yetkisiz erişim kaynağı (Forbidden Origin).')
+        } else if (response.status >= 500) {
+          setErrorMessage('Sunucu kimlik doğrulama servisine ulaşılamadı.')
+        } else {
+          setErrorMessage(data.error || 'Kullanıcı adı veya şifre hatalı.')
+        }
         setIsSubmitting(false)
         return
       }

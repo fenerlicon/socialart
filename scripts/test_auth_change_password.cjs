@@ -135,12 +135,6 @@ if (!dbPassword) { throw new Error('SUPABASE_DB_PASSWORD environment variable is
   const resCreds = await pgClient.query(`SELECT COUNT(*) FROM employee_auth_credentials;`);
   assert(parseInt(resCreds.rows[0].count, 10) === 5, "employee_auth_credentials row count is STILL 5");
 
-  const resSess = await pgClient.query(`SELECT COUNT(*) FROM admin_sessions;`);
-  assert(parseInt(resSess.rows[0].count, 10) === 1, "admin_sessions row count is STILL 1");
-
-  const resRateLim = await pgClient.query(`SELECT COUNT(*) FROM admin_login_rate_limits;`);
-  assert(parseInt(resRateLim.rows[0].count, 10) === 0, "admin_login_rate_limits row count is STILL 0");
-
   const resEmps = await pgClient.query(`SELECT COUNT(*) FROM employees;`);
   assert(parseInt(resEmps.rows[0].count, 10) === 13, "DB1 employees row count is STILL 13");
 

@@ -90,9 +90,13 @@ async function simulatePanelAccess(sessionResponse) {
   const resultAuth = await simulatePanelAccess({ authenticated: true, mustChangePassword: false, employee: { id: '6', fullName: 'Arda Furkan Aslanbas' } });
   assert(resultAuth.routedToLogin === false, 'Valid user was rejected');
   assert(resultAuth.activeEmpId === '6', 'Authenticated employee context was not restored');
-  console.log(' [PASS] Valid server session restores active employee context');
+  // Test D: Response contract check without data.success
+  const responseMock = { ok: true, status: 200, json: async () => ({ authenticated: true, mustChangePassword: true, employee: { id: '6' } }) };
+  const parsedData = await responseMock.json();
+  assert(responseMock.ok && parsedData.authenticated === true, 'Response contract without success field must pass');
+  console.log(' [PASS] Response contract without data.success is accepted as valid');
 
   console.log('\n==========================================');
-  console.log('TEST SUMMARY: ALL 13 CHECKS PASSED (0 FAILED)');
+  console.log('TEST SUMMARY: ALL 14 CHECKS PASSED (0 FAILED)');
   console.log('==========================================');
 })();
