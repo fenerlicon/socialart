@@ -960,7 +960,11 @@ function Admin() {
   const [aktifMusteriler, setAktifMusteriler] = useState([]);
   const [ugcApps, setUgcApps] = useState([]);
   const [jobApps, setJobApps] = useState([]);
-  const [jobAppFilter, setJobAppFilter] = useState('ALL');
+  const [appSearch, setAppSearch] = useState('');
+  const [appTypeFilter, setAppTypeFilter] = useState('ALL'); // 'ALL' | 'JOB' | 'UGC'
+  const [appStatusFilter, setAppStatusFilter] = useState('ALL'); // 'ALL' | 'Bekliyor' | 'Öne Çıkan' | 'Yedek Havuz' | 'Reddedildi'
+  const [appPositionFilter, setAppPositionFilter] = useState('ALL');
+  const [appDateFilter, setAppDateFilter] = useState('ALL'); // 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS'
   const [isTakip, setIsTakip] = useState([]);
 
   // Social Art Base CRM States
@@ -972,6 +976,159 @@ function Admin() {
   ]);
   const [isAddProposalOpen, setIsAddProposalOpen] = useState(false);
   const [proposalForm, setProposalForm] = useState({ title: '', value: '', details: '' });
+
+  // Application Normalization & Filter Logic
+  const allNormalizedApps = React.useMemo(() => {
+    const jobItems = (jobApps || []).map(j => ({
+      id: j.id,
+      applicationType: 'JOB',
+      sourceTable: 'job_applications',
+      fullName: j.full_name || 'İsimsiz Aday',
+      email: j.email || '',
+      phone: j.phone || '',
+      position: j.position || 'Genel Başvuru',
+      status: j.status || 'Bekliyor',
+      createdAt: j.created_at,
+      portfolioUrl: j.portfolio_url || null,
+      resumeUrl: j.resume_url || null,
+      about: j.about || '',
+      city: null,
+      instagramUrl: null,
+      raw: j
+    }));
+
+    const ugcItems = (ugcApps || []).map(u => ({
+      id: u.id,
+      applicationType: 'UGC',
+      sourceTable: 'ugc_applications',
+      fullName: u.full_name || 'İsimsiz İçerik Üreticisi',
+      email: u.email || '',
+      phone: u.phone || '',
+      position: 'UGC & İçerik Üreticisi',
+      status: u.status || 'Bekliyor',
+      createdAt: u.created_at,
+      portfolioUrl: u.portfolio_url || null,
+      resumeUrl: null,
+      about: u.about || '',
+      city: u.city || 'İstanbul',
+      instagramUrl: u.instagram_url || null,
+      raw: u
+    }));
+
+    return [...jobItems, ...ugcItems].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }, [jobApps, ugcApps]);
+
+  const availablePositions = React.useMemo(() => {
+    const positions = new Set();
+    (jobApps || []).forEach(j => {
+      if (j.position && j.position.trim()) {
+        positions.add(j.position.trim());
+      }
+    });
+    return Array.from(positions);
+  }, [jobApps]);
+
+  const filteredApps = React.useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const q = appSearch.trim().toLowerCase();
+
+    return allNormalizedApps.filter(app => {
+      // 1. Type filter
+      if (appTypeFilter !== 'ALL' && app.applicationType !== appTypeFilter) {
+        return false;
+      }
+
+      // 2. Status filter
+      if (appStatusFilter !== 'ALL' && app.status !== appStatusFilter) {
+        return false;
+      }
+
+      // 3. Position filter
+      if (appPositionFilter !== 'ALL') {
+        if (app.applicationType === 'JOB' && app.position !== appPositionFilter) {
+          return false;
+        }
+        if (app.applicationType === 'UGC') {
+          return false;
+        }
+      }
+
+      // 4. Date filter
+      if (appDateFilter !== 'ALL') {
+        const appTime = new Date(app.createdAt).getTime();
+        if (isNaN(appTime)) return false;
+        if (appDateFilter === 'TODAY' && appTime < todayStart) {
+          return false;
+        }
+        if (appDateFilter === 'LAST_7_DAYS' && appTime < sevenDaysAgo) {
+          return false;
+        }
+        if (appDateFilter === 'LAST_30_DAYS' && appTime < thirtyDaysAgo) {
+          return false;
+        }
+      }
+
+      // 5. Search filter
+      if (q) {
+        const matchName = (app.fullName || '').toLowerCase().includes(q);
+        const matchEmail = (app.email || '').toLowerCase().includes(q);
+        const matchPhone = (app.phone || '').toLowerCase().includes(q);
+        const matchPosition = (app.position || '').toLowerCase().includes(q);
+        const matchCity = app.city ? app.city.toLowerCase().includes(q) : false;
+        const matchIg = app.instagramUrl ? app.instagramUrl.toLowerCase().includes(q) : false;
+
+        if (!matchName && !matchEmail && !matchPhone && !matchPosition && !matchCity && !matchIg) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allNormalizedApps, appSearch, appTypeFilter, appStatusFilter, appPositionFilter, appDateFilter]);
+
+  const handleResetAppFilters = () => {
+    setAppSearch('');
+    setAppTypeFilter('ALL');
+    setAppStatusFilter('ALL');
+    setAppPositionFilter('ALL');
+    setAppDateFilter('ALL');
+  };
+
+  const isAppFilterActive = appSearch !== '' || appTypeFilter !== 'ALL' || appStatusFilter !== 'ALL' || appPositionFilter !== 'ALL' || appDateFilter !== 'ALL';
+
+  const handleUpdateAppStatus = async (app, newStatus) => {
+    try {
+      await supabase.from(app.sourceTable).update({ status: newStatus }).eq('id', app.id);
+      if (app.sourceTable === 'job_applications') {
+        setJobApps(prev => prev.map(j => j.id === app.id ? { ...j, status: newStatus } : j));
+      } else {
+        setUgcApps(prev => prev.map(u => u.id === app.id ? { ...u, status: newStatus } : u));
+      }
+      triggerToast('Başvuru durumu güncellendi', `"${app.fullName}" durumu "${newStatus}" yapıldı.`);
+    } catch (e) {
+      console.error('Update status error:', e);
+    }
+  };
+
+  const handleDeleteApp = async (app) => {
+    if (!window.confirm(`${app.fullName} başvurusunu silmek istediğinize emin misiniz?`)) {
+      return;
+    }
+    try {
+      await supabase.from(app.sourceTable).delete().eq('id', app.id);
+      if (app.sourceTable === 'job_applications') {
+        setJobApps(prev => prev.filter(j => j.id !== app.id));
+      } else {
+        setUgcApps(prev => prev.filter(u => u.id !== app.id));
+      }
+      triggerToast('Başvuru silindi', `"${app.fullName}" kaydı sistemden kaldırıldı.`);
+    } catch (e) {
+      console.error('Delete app error:', e);
+    }
+  };
 
   // Custom Payment Requests States
   const [paymentRequests, setPaymentRequests] = useState([]);
@@ -3286,268 +3443,464 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
                     }
                   }}
                   style={{ 
-                    cursor: (isBucketFilter || isLeadFilter) ? 'pointer' : 'default',
-                    transition: 'all 0.2s',
-                    border: isActive ? `1px solid var(--primary)` : '1px solid rgba(255,255,255,0.05)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    borderRadius: '16px',
-                    padding: '20px',
-                    background: 'rgba(15, 15, 20, 0.4)',
-                    backdropFilter: 'blur(12px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '120px',
-                    boxShadow: isActive ? '0 0 15px rgba(139, 92, 246, 0.08)' : 'none'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                      {stat.title}
-                    </span>
-                    <div style={{ color: stat.color || 'var(--primary)' }}>
-                      {stat.icon}
+                      cursor: (isBucketFilter || isLeadFilter) ? 'pointer' : 'default',
+                      transition: 'all 0.2s',
+                      border: isActive ? `1px solid var(--primary)` : '1px solid rgba(255,255,255,0.05)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      background: 'rgba(15, 15, 20, 0.4)',
+                      backdropFilter: 'blur(12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '120px',
+                      boxShadow: isActive ? '0 0 15px rgba(139, 92, 246, 0.08)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '700', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        {stat.title}
+                      </span>
+                      <div style={{ color: stat.color || 'var(--primary)' }}>
+                        {stat.icon}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: '700', color: '#fff', lineHeight: '1.2' }}>{stat.value}</div>
+                      <p style={{ fontSize: '9px', color: '#71717a', marginTop: '4px', margin: 0, fontWeight: '500' }}>
+                        {stat.title === 'Toplam Potansiyel Lead' ? 'Sistemdeki tüm aktif adaylar' : 
+                         stat.title === 'Sıcak (Olumlu) Potansiyel' ? 'Sıcak ve olumlu görüşmeler' : 
+                         stat.title === 'Teklif Bekleyen' ? 'Teklif bekleyen nitelikliler' : 
+                         stat.title === 'Teklif İletildi' ? 'Teklifi iletilen adaylar' : 
+                         stat.title === 'Katalog İletildi' ? 'Kataloğu iletilen adaylar' : 'Social Art CRM Metriği'}
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: '700', color: '#fff', lineHeight: '1.2' }}>{stat.value}</div>
-                    <p style={{ fontSize: '9px', color: '#71717a', marginTop: '4px', margin: 0, fontWeight: '500' }}>
-                      {stat.title === 'Toplam Potansiyel Lead' ? 'Sistemdeki tüm aktif adaylar' : 
-                       stat.title === 'Sıcak (Olumlu) Potansiyel' ? 'Sıcak ve olumlu görüşmeler' : 
-                       stat.title === 'Teklif Bekleyen' ? 'Teklif bekleyen nitelikliler' : 
-                       stat.title === 'Teklif İletildi' ? 'Teklifi iletilen adaylar' : 
-                       stat.title === 'Katalog İletildi' ? 'Kataloğu iletilen adaylar' : 'Social Art CRM Metriği'}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
 
         {/* Tab: BAŞVURULAR */}
         {activeTab === 'basvurular' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '35px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Gelen Başvurular</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            {/* Header & Counters */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.5px', margin: 0 }}>Gelen Başvurular</h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#a1a1aa' }}>
+                  Toplam <strong style={{ color: '#fff' }}>{allNormalizedApps.length}</strong> başvurudan <strong style={{ color: 'var(--primary)' }}>{filteredApps.length}</strong> sonuç gösteriliyor
+                </p>
+              </div>
+
+              {isAppFilterActive && (
+                <button
+                  onClick={handleResetAppFilters}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#f87171',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <RefreshCw size={14} /> Filtreleri Temizle
+                </button>
+              )}
             </div>
-            
-            <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800' }}>
-                <Camera size={20} /> UGC & Influencer Başvuruları
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-                {ugcApps.map(app => (
-                  <div 
-                    key={app.id} 
-                    className="glass" 
-                    style={{ 
-                      padding: '24px', 
-                      borderRadius: '20px', 
-                      border: '1px solid rgba(255, 255, 255, 0.05)', 
-                      background: 'rgba(15, 15, 20, 0.4)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      transition: 'transform 0.2s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff' }}>{app.full_name}</h4>
-                      <span style={{ fontSize: '0.75rem', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</span>
-                    </div>
-                    
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.8rem', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div>📞 {app.phone}</div>
-                      <div style={{ opacity: 0.6 }}>✉ {app.email}</div>
+
+            {/* Filter Control Bar */}
+            <div 
+              className="glass"
+              style={{
+                padding: '16px 20px',
+                borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(15, 15, 20, 0.5)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '12px',
+                alignItems: 'center'
+              }}
+            >
+              {/* 1. Search */}
+              <div style={{ position: 'relative', minWidth: '180px' }}>
+                <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#71717a' }} />
+                <input
+                  type="text"
+                  placeholder="İsim, email, tel, pozisyon ara..."
+                  value={appSearch}
+                  onChange={e => setAppSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px 9px 34px',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* 2. Type Filter */}
+              <div>
+                <select
+                  value={appTypeFilter}
+                  onChange={e => setAppTypeFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background: '#18181b',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: appTypeFilter !== 'ALL' ? '#c084fc' : '#e4e4e7',
+                    fontSize: '0.82rem',
+                    fontWeight: '600',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="ALL">Tüm Başvuru Türleri</option>
+                  <option value="JOB">💼 Kariyer / İş Başvurusu ({jobApps.length})</option>
+                  <option value="UGC">📸 UGC & İçerik Üreticisi ({ugcApps.length})</option>
+                </select>
+              </div>
+
+              {/* 3. Status Filter */}
+              <div>
+                <select
+                  value={appStatusFilter}
+                  onChange={e => setAppStatusFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background: '#18181b',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: appStatusFilter !== 'ALL' ? '#fde047' : '#e4e4e7',
+                    fontSize: '0.82rem',
+                    fontWeight: '600',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="ALL">Tüm Durumlar</option>
+                  <option value="Bekliyor">📄 İnceleme Bekliyor</option>
+                  <option value="Öne Çıkan">🌟 Mülakat / Öne Çıkan</option>
+                  <option value="Yedek Havuz">📁 Yedek Havuz</option>
+                  <option value="Reddedildi">⛔ Pasif / Uymadı</option>
+                </select>
+              </div>
+
+              {/* 4. Position Filter */}
+              <div>
+                <select
+                  value={appPositionFilter}
+                  onChange={e => setAppPositionFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background: '#18181b',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: appPositionFilter !== 'ALL' ? '#38bdf8' : '#e4e4e7',
+                    fontSize: '0.82rem',
+                    fontWeight: '600',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="ALL">Tüm Pozisyonlar</option>
+                  {availablePositions.map(pos => (
+                    <option key={pos} value={pos}>{pos}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 5. Date Filter */}
+              <div>
+                <select
+                  value={appDateFilter}
+                  onChange={e => setAppDateFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background: '#18181b',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: appDateFilter !== 'ALL' ? '#4ade80' : '#e4e4e7',
+                    fontSize: '0.82rem',
+                    fontWeight: '600',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="ALL">Tüm Tarihler</option>
+                  <option value="TODAY">📅 Bugün</option>
+                  <option value="LAST_7_DAYS">📅 Son 7 Gün</option>
+                  <option value="LAST_30_DAYS">📅 Son 30 Gün</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Applications Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+              {filteredApps.map(app => (
+                <div 
+                  key={`${app.sourceTable}-${app.id}`} 
+                  className="glass" 
+                  style={{ 
+                    padding: '22px', 
+                    borderRadius: '18px', 
+                    border: app.applicationType === 'JOB' ? '1px solid rgba(139, 92, 246, 0.2)' : '1px solid rgba(236, 72, 153, 0.2)', 
+                    background: 'rgba(15, 15, 20, 0.55)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    transition: 'transform 0.2s',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                >
+                  {/* Card Header: Type Badge, Name, Status, Date & Delete */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                        {app.applicationType === 'JOB' ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#c084fc', fontWeight: '800', fontSize: '0.72rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '2px 8px', borderRadius: '6px' }}>
+                            <Briefcase size={12} /> {app.position}
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#f472b6', fontWeight: '800', fontSize: '0.72rem', background: 'linear-gradient(45deg, rgba(240, 148, 51, 0.15), rgba(188, 24, 136, 0.15))', border: '1px solid rgba(236, 72, 153, 0.3)', padding: '2px 8px', borderRadius: '6px' }}>
+                            <Camera size={12} /> UGC & İçerik
+                          </span>
+                        )}
+                        
+                        {/* Status Selector */}
+                        <select
+                          value={app.status || 'Bekliyor'}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            await handleUpdateAppStatus(app, newStatus);
+                          }}
+                          style={{
+                            background: app.status === 'Öne Çıkan' ? 'rgba(234, 179, 8, 0.2)' : (app.status === 'Yedek Havuz' ? 'rgba(168, 85, 247, 0.2)' : (app.status === 'Reddedildi' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)')),
+                            color: app.status === 'Öne Çıkan' ? '#fde047' : (app.status === 'Yedek Havuz' ? '#c084fc' : (app.status === 'Reddedildi' ? '#fca5a5' : '#93c5fd')),
+                            border: `1px solid ${app.status === 'Öne Çıkan' ? 'rgba(234, 179, 8, 0.4)' : (app.status === 'Yedek Havuz' ? 'rgba(168, 85, 247, 0.4)' : (app.status === 'Reddedildi' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)'))}`,
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            outline: 'none'
+                          }}
+                        >
+                          <option value="Bekliyor" style={{ background: '#09090b', color: '#fff' }}>📄 İncelemede</option>
+                          <option value="Öne Çıkan" style={{ background: '#09090b', color: '#fde047' }}>🌟 Mülakat / Öne Çıkan</option>
+                          <option value="Yedek Havuz" style={{ background: '#09090b', color: '#c084fc' }}>📁 Yedek Havuz</option>
+                          <option value="Reddedildi" style={{ background: '#09090b', color: '#fca5a5' }}>⛔ Pasif / Uymadı</option>
+                        </select>
+                      </div>
+
+                      <h4 style={{ fontSize: '1.08rem', fontWeight: '800', color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {app.fullName}
+                      </h4>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700' }}>📍 {app.city}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '10px' }}>
+                      <span style={{ fontSize: '0.73rem', color: '#71717a', whiteSpace: 'nowrap' }}>
+                        {app.createdAt ? new Date(app.createdAt).toLocaleDateString('tr-TR') : '-'}
+                      </span>
+                      <button 
+                        onClick={() => handleDeleteApp(app)}
+                        style={{ 
+                          background: 'rgba(255,23,68,0.12)', 
+                          color: '#ff1744', 
+                          border: '1px solid rgba(255,23,68,0.25)', 
+                          padding: '5px 7px', 
+                          borderRadius: '8px', 
+                          cursor: 'pointer', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center' 
+                        }}
+                        title="Başvuruyu Sil"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contact Info Box */}
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '10px', fontSize: '0.8rem', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '4px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ fontWeight: '700', color: '#fff' }}>📞 {app.phone || 'Belirtilmedi'}</div>
+                    <div style={{ opacity: 0.85 }}>✉ {app.email || 'Belirtilmedi'}</div>
+                    {app.city && (
+                      <div style={{ color: 'var(--primary)', fontWeight: '600' }}>📍 {app.city}</div>
+                    )}
+                  </div>
+
+                  {/* Ön Yazı / Neden Sizinle Çalışmalıyız? */}
+                  {app.about && (
+                    <div style={{ background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '10px 12px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        💡 Ön Yazı / Açıklama:
+                      </span>
+                      <p style={{ margin: 0, fontSize: '0.78rem', color: '#f4f4f5', lineHeight: '1.4', whiteSpace: 'pre-wrap', fontWeight: '500' }}>
+                        {app.about}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Links / Action Bar */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '4px', flexWrap: 'wrap' }}>
+                    {app.instagramUrl && (
                       <a 
-                        href={`https://instagram.com/${app.instagram_url?.replace('@', '')}`} 
+                        href={`https://instagram.com/${app.instagramUrl.replace('@', '')}`} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         style={{ 
+                          flex: 1, 
+                          textAlign: 'center', 
                           background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', 
-                          color: '#fff', 
-                          padding: '6px 12px', 
+                          padding: '8px 10px', 
                           borderRadius: '8px', 
-                          fontSize: '0.75rem', 
-                          fontWeight: '700',
-                          textDecoration: 'none'
+                          fontSize: '0.78rem', 
+                          fontWeight: '800', 
+                          color: '#fff', 
+                          textDecoration: 'none', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '6px' 
                         }}
                       >
-                        Instagram Profile
+                        Instagram
                       </a>
-                    </div>
-                  </div>
-                ))}
-                {ugcApps.length === 0 && (
-                  <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center', color: '#666' }}>Henüz başvuru yok.</div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.2rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '800', margin: 0 }}>
-                  <Briefcase size={20} /> Kariyer / İş Başvuruları ({jobApps.length})
-                </h3>
-
-                {/* Candidate Status Evaluation Filter Tabs */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {[
-                    { id: 'ALL', label: 'Tümü' },
-                    { id: 'Bekliyor', label: '📄 İncelemede' },
-                    { id: 'Öne Çıkan', label: '🌟 Mülakat / Öne Çıkan' },
-                    { id: 'Yedek Havuz', label: '📁 Yedek Havuz' },
-                    { id: 'Reddedildi', label: '⛔ Pasif / Uymadı' }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setJobAppFilter(tab.id)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        fontSize: '0.78rem',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        background: jobAppFilter === tab.id ? 'rgba(139, 92, 246, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                        color: jobAppFilter === tab.id ? '#fff' : '#a1a1aa',
-                        border: `1px solid ${jobAppFilter === tab.id ? 'rgba(139, 92, 246, 0.6)' : 'rgba(255, 255, 255, 0.1)'}`,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
-                {jobApps.filter(app => jobAppFilter === 'ALL' || (app.status || 'Bekliyor') === jobAppFilter).map(app => (
-                  <div 
-                    key={app.id} 
-                    className="glass" 
-                    style={{ 
-                      padding: '24px', 
-                      borderRadius: '20px', 
-                      border: '1px solid rgba(255, 255, 255, 0.08)', 
-                      background: 'rgba(15, 15, 20, 0.6)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '14px',
-                      transition: 'transform 0.2s',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', margin: 0 }}>{app.full_name}</h4>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                          <span style={{ display: 'inline-block', color: '#c084fc', fontWeight: '800', fontSize: '0.75rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '3px 8px', borderRadius: '6px' }}>
-                            {app.position || 'İş Başvurusu'}
-                          </span>
-                          
-                          {/* Aday Değerlendirme Durumu Seçici */}
-                          <select
-                            value={app.status || 'Bekliyor'}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-                              await supabase.from('job_applications').update({ status: newStatus }).eq('id', app.id);
-                              setJobApps(prev => prev.map(j => j.id === app.id ? { ...j, status: newStatus } : j));
-                            }}
-                            style={{
-                              background: app.status === 'Öne Çıkan' ? 'rgba(234, 179, 8, 0.2)' : (app.status === 'Yedek Havuz' ? 'rgba(168, 85, 247, 0.2)' : (app.status === 'Reddedildi' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)')),
-                              color: app.status === 'Öne Çıkan' ? '#fde047' : (app.status === 'Yedek Havuz' ? '#c084fc' : (app.status === 'Reddedildi' ? '#fca5a5' : '#93c5fd')),
-                              border: `1px solid ${app.status === 'Öne Çıkan' ? 'rgba(234, 179, 8, 0.4)' : (app.status === 'Yedek Havuz' ? 'rgba(168, 85, 247, 0.4)' : (app.status === 'Reddedildi' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)'))}`,
-                              padding: '2px 6px',
-                              borderRadius: '6px',
-                              fontSize: '0.72rem',
-                              fontWeight: '800',
-                              cursor: 'pointer',
-                              outline: 'none'
-                            }}
-                          >
-                            <option value="Bekliyor" style={{ background: '#09090b', color: '#fff' }}>📄 İnceleme Bekliyor</option>
-                            <option value="Öne Çıkan" style={{ background: '#09090b', color: '#fde047' }}>🌟 Mülakat / Öne Çıkan</option>
-                            <option value="Yedek Havuz" style={{ background: '#09090b', color: '#c084fc' }}>📁 Yedek Havuz</option>
-                            <option value="Reddedildi" style={{ background: '#09090b', color: '#fca5a5' }}>⛔ Pasif / Uymadı</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#888' }}>{new Date(app.created_at).toLocaleDateString('tr-TR')}</span>
-                        <button 
-                          onClick={async () => {
-                            if (window.confirm(`${app.full_name} başvurusunu silmek istediğinize emin misiniz?`)) {
-                              await supabase.from('job_applications').delete().eq('id', app.id);
-                              setJobApps(prev => prev.filter(j => j.id !== app.id));
-                            }
-                          }}
-                          style={{ background: 'rgba(255,23,68,0.12)', color: '#ff1744', border: '1px solid rgba(255,23,68,0.25)', padding: '6px 8px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title="Başvuruyu Sil"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '12px', fontSize: '0.82rem', color: '#ccc', display: 'flex', flexDirection: 'column', gap: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ fontWeight: '700', color: '#fff' }}>📞 {app.phone || 'Belirtilmedi'}</div>
-                      <div style={{ opacity: 0.8 }}>✉ {app.email || 'Belirtilmedi'}</div>
-                    </div>
-
-                    {/* Neden Sizinle Çalışmalıyız? / Ön Yazı Bloğu */}
-                    {app.about && (
-                      <div style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.25)', padding: '12px 14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          💡 Neden Sizinle Çalışmalıyız? / Ön Yazı:
-                        </span>
-                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#f4f4f5', lineHeight: '1.45', whiteSpace: 'pre-wrap', fontWeight: '500' }}>
-                          {app.about}
-                        </p>
-                      </div>
                     )}
-
-                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
-                      {app.portfolio_url && (
-                        <a 
-                          href={app.portfolio_url.startsWith('http') ? app.portfolio_url : `https://${app.portfolio_url}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '10px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800', color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                        >
-                          🔗 Portfolyo
-                        </a>
-                      )}
-                      {app.resume_url && (
-                        <a 
-                          href={app.resume_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          style={{ flex: 1, textAlign: 'center', background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)', padding: '10px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800', color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}
-                        >
-                          📄 CV Dosyası (PDF)
-                        </a>
-                      )}
-                      {!app.portfolio_url && !app.resume_url && (
-                        <span style={{ color: '#666', fontSize: '0.8rem', padding: '8px' }}>Dosya / Portfolyo Eklenmedi</span>
-                      )}
-                    </div>
+                    {app.portfolioUrl && (
+                      <a 
+                        href={app.portfolioUrl.startsWith('http') ? app.portfolioUrl : `https://${app.portfolioUrl}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={{ 
+                          flex: 1, 
+                          textAlign: 'center', 
+                          background: 'rgba(255,255,255,0.06)', 
+                          border: '1px solid rgba(255,255,255,0.12)', 
+                          padding: '8px 10px', 
+                          borderRadius: '8px', 
+                          fontSize: '0.78rem', 
+                          fontWeight: '800', 
+                          color: '#fff', 
+                          textDecoration: 'none', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '6px' 
+                        }}
+                      >
+                        🔗 Portfolyo
+                      </a>
+                    )}
+                    {app.resumeUrl && (
+                      <a 
+                        href={app.resumeUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={{ 
+                          flex: 1, 
+                          textAlign: 'center', 
+                          background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)', 
+                          padding: '8px 10px', 
+                          borderRadius: '8px', 
+                          fontSize: '0.78rem', 
+                          fontWeight: '800', 
+                          color: '#fff', 
+                          textDecoration: 'none', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '6px', 
+                          boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' 
+                        }}
+                      >
+                        📄 CV (PDF)
+                      </a>
+                    )}
+                    {!app.instagramUrl && !app.portfolioUrl && !app.resumeUrl && (
+                      <span style={{ color: '#71717a', fontSize: '0.75rem', padding: '6px' }}>Ek dosya veya link yok</span>
+                    )}
                   </div>
-                ))}
-                {jobApps.length === 0 && (
-                  <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center', color: '#666' }}>Henüz kayıtlı başvuru bulunmuyor.</div>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
+
+            {/* Empty States */}
+            {allNormalizedApps.length === 0 && (
+              <div style={{ padding: '60px 20px', textAlign: 'center', color: '#71717a' }}>
+                Henüz sistemde kayıtlı başvuru bulunmuyor.
+              </div>
+            )}
+
+            {allNormalizedApps.length > 0 && filteredApps.length === 0 && (
+              <div 
+                className="glass"
+                style={{ 
+                  padding: '50px 20px', 
+                  textAlign: 'center', 
+                  borderRadius: '16px',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: 'rgba(15, 15, 20, 0.3)',
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: '14px' 
+                }}
+              >
+                <AlertCircle size={32} style={{ color: '#eab308' }} />
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: '700' }}>Bu filtrelere uygun başvuru bulunamadı</h4>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#a1a1aa' }}>Arama kriterlerinizi değiştirin veya tüm filtreleri sıfırlayın.</p>
+                </div>
+                <button 
+                  onClick={handleResetAppFilters} 
+                  style={{ 
+                    marginTop: '6px',
+                    padding: '8px 16px', 
+                    borderRadius: '10px', 
+                    background: 'rgba(139, 92, 246, 0.2)', 
+                    border: '1px solid rgba(139, 92, 246, 0.4)', 
+                    color: '#c084fc', 
+                    fontWeight: '700', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.82rem'
+                  }}
+                >
+                  <RefreshCw size={14} /> Filtreleri Temizle
+                </button>
+              </div>
+            )}
           </div>
         )}
 
