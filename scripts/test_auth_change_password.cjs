@@ -88,12 +88,19 @@ async function runAuthChangePasswordTests() {
   assert(t5.res._getStatus() === 401, "invalid/malformed session cookie -> 401");
 
   // --- 3. INPUT VALIDATION TESTS ---
-  console.log("\n--- 3. INPUT VALIDATION TESTS ---");
+  console.log("\n--- 3. INPUT VALIDATION & POLICY TESTS ---");
   const tempOldPass = "CurrentOldPassword123!";
   const tempOldHash = authCore.hashPassword(tempOldPass);
 
-  assert(authCore.validatePasswordPolicy("123").valid === false, "newPassword = '123' -> reject 400");
-  assert(authCore.validatePasswordPolicy("short").valid === false, "invalid/weak newPassword -> reject 400");
+  assert(authCore.validatePasswordPolicy("123").valid === false, "newPassword = '123' -> reject");
+  assert(authCore.validatePasswordPolicy("1234567").valid === false, "7-character password -> reject");
+  assert(authCore.validatePasswordPolicy("12345678").valid === false, "banned '12345678' -> reject");
+  assert(authCore.validatePasswordPolicy("validPass8").valid === true, "8-character valid password -> accept");
+  assert(authCore.validatePasswordPolicy("validPass123456").valid === true, "12+ character valid password -> accept");
+  assert(authCore.validatePasswordPolicy("socialart2026").valid === false, "banned common password -> reject");
+  assert(authCore.validatePasswordPolicy("a".repeat(128)).valid === true, "128 character password -> accept");
+  assert(authCore.validatePasswordPolicy("a".repeat(129)).valid === false, "129 character password -> reject");
+  console.log(" ✅ PASSED: Password policy accurately enforces min 8, max 128, and bans common passwords");
 
   // --- 4. MUST-CHANGE-PASSWORD FLOW VERIFICATION ---
   console.log("\n--- 4. MUST-CHANGE-PASSWORD FLOW VERIFICATION ---");

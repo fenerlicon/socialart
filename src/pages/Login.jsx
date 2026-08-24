@@ -157,8 +157,8 @@ function Login({ onLoginSuccess }) {
     setLoading(true);
     setError('');
 
-    if (!newPassword || newPassword.length < 12) {
-      setError('Yeni şifre en az 12 karakter olmalıdır.');
+    if (!newPassword || newPassword.length < 8) {
+      setError('Yeni şifre en az 8 karakter olmalıdır.');
       setLoading(false);
       return;
     }
@@ -251,7 +251,7 @@ function Login({ onLoginSuccess }) {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Yeni Şifre (En az 12 karakter)" 
+                  placeholder="Yeni Şifre (En az 8 karakter)" 
                   style={{ width: '100%', padding: '16px 16px 16px 45px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--surface-border)', borderRadius: '12px', color: '#fff', fontSize: '0.95rem', outline: 'none', transition: 'border 0.3s' }}
                   onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--surface-border)'}

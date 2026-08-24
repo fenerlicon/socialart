@@ -32,8 +32,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'currentPassword and newPassword are required' });
   }
 
-  if (!validatePasswordPolicy(newPassword)) {
-    return res.status(400).json({ error: 'New password does not meet security requirements. Must be at least 12 characters.' });
+  const policy = validatePasswordPolicy(newPassword);
+  if (!policy.valid) {
+    return res.status(400).json({ error: policy.error || 'New password does not meet security requirements. Must be at least 8 characters.' });
   }
 
   const supabase = getAdminSupabase();

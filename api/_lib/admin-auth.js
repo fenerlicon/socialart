@@ -23,8 +23,12 @@ const BANNED_PASSWORDS = new Set([
   '1234',
   '12345',
   '123456',
+  '12345678',
+  '123456789',
   'password',
+  'password1',
   'admin',
+  'admin123',
   'socialart',
   'socialart123',
   'socialart2026',
@@ -44,8 +48,8 @@ export function validatePasswordPolicy(password) {
     return { valid: false, error: 'Şifre boş bırakılamaz.' };
   }
 
-  if (trimmed.length < 12) {
-    return { valid: false, error: 'Şifre en az 12 karakter olmalıdır.' };
+  if (trimmed.length < 8) {
+    return { valid: false, error: 'Şifre en az 8 karakter olmalıdır.' };
   }
 
   if (trimmed.length > 128) {

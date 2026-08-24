@@ -166,8 +166,8 @@ export default function LoginPage() {
     setErrorMessage('')
     setSuccessMessage('')
 
-    if (!newPassword || newPassword.length < 12) {
-      setErrorMessage('Yeni şifre en az 12 karakter olmalıdır.')
+    if (!newPassword || newPassword.length < 8) {
+      setErrorMessage('Yeni şifre en az 8 karakter olmalıdır.')
       return
     }
 
@@ -272,7 +272,7 @@ export default function LoginPage() {
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-0.5">
-                  Yeni Şifre (En az 12 karakter)
+                  Yeni Şifre (En az 8 karakter)
                 </label>
                 <div className="relative">
                   <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-neutral-500" />
@@ -283,7 +283,7 @@ export default function LoginPage() {
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-800 text-white placeholder:text-neutral-600"
                     required
-                    minLength={12}
+                    minLength={8}
                     maxLength={128}
                   />
                 </div>
@@ -302,7 +302,7 @@ export default function LoginPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pl-9 h-10 text-xs bg-neutral-950/20 border-neutral-800 text-white placeholder:text-neutral-600"
                     required
-                    minLength={12}
+                    minLength={8}
                     maxLength={128}
                   />
                 </div>
