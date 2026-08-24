@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   }
 
   // 3. Validate request payload
-  const { employeeId, email, username, employeeStatus } = req.body || {};
+  const { employeeId, email, username, employeeStatus, teamIds, hasAdvancedCalendarAccess } = req.body || {};
   if (!employeeId || typeof employeeId !== 'string') {
     return res.status(400).json({ error: 'Invalid payload: employeeId (string) is required' });
   }
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   // 4. Fetch target employee from DB1
   const { data: targetEmp, error: fetchErr } = await supabaseAdmin
     .from('employees')
-    .select('id, full_name, email, permission_overrides, employee_status')
+    .select('id, full_name, email, permission_overrides, employee_status, team_ids, has_advanced_calendar_access')
     .eq('id', cleanEmployeeId)
     .maybeSingle();
 
@@ -139,7 +139,10 @@ export default async function handler(req, res) {
 
   // 9. Validate and prepare hasAdvancedCalendarAccess if provided
   if (hasAdvancedCalendarAccess !== undefined) {
-    updateFields.has_advanced_calendar_access = Boolean(hasAdvancedCalendarAccess);
+    if (typeof hasAdvancedCalendarAccess !== 'boolean') {
+      return res.status(400).json({ error: 'Invalid hasAdvancedCalendarAccess: must be a boolean' });
+    }
+    updateFields.has_advanced_calendar_access = hasAdvancedCalendarAccess;
   }
 
   if (overridesModified) {
@@ -154,7 +157,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // 8. Execute update in DB1
+  // 10. Execute update in DB1
   const { error: updateErr } = await supabaseAdmin
     .from('employees')
     .update(updateFields)
@@ -172,5 +175,7 @@ export default async function handler(req, res) {
     email: updateFields.email || targetEmp.email,
     username: currentOverrides.username || null,
     employeeStatus: updateFields.employee_status || targetEmp.employee_status,
+    teamIds: updateFields.team_ids !== undefined ? updateFields.team_ids : targetEmp.team_ids,
+    hasAdvancedCalendarAccess: updateFields.has_advanced_calendar_access !== undefined ? updateFields.has_advanced_calendar_access : targetEmp.has_advanced_calendar_access,
   });
 }
