@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import type { Employee } from '@/types/domain'
-import { getStoredEmployees, getActiveEmployeeId, setActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { getStoredEmployees, getActiveEmployeeId, setActiveEmployeeId, resolveOperationalEmployee } from '@/lib/storage/local-employee-store'
 import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -73,11 +73,18 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
         const authenticatedEmployeeId = String(authData.employee.id)
         setServerEmployee(authData.employee)
-        setCurrentEmployeeId(authenticatedEmployeeId)
-        setActiveEmployeeId(authenticatedEmployeeId)
 
         const list = await getStoredEmployees()
         setEmployees(list)
+
+        const operationalEmp = resolveOperationalEmployee(authenticatedEmployeeId, list)
+        if (operationalEmp) {
+          setCurrentEmployeeId(operationalEmp.id)
+          setActiveEmployeeId(operationalEmp.id)
+        } else {
+          setCurrentEmployeeId(authenticatedEmployeeId)
+          setActiveEmployeeId(authenticatedEmployeeId)
+        }
 
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('social-art-base:credentials')
@@ -129,26 +136,27 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   }, [pathname, router])
 
   const activeEmployee = useMemo<Employee | undefined>(() => {
-    const found = employees.find((e) => String(e.id) === String(currentEmployeeId))
-    if (found) return found
-    if (serverEmployee && String(serverEmployee.id) === String(currentEmployeeId)) {
-      return {
-        id: String(serverEmployee.id),
-        fullName: serverEmployee.fullName,
-        email: serverEmployee.email || '',
-        title: serverEmployee.title || 'Ekip Üyesi',
-        rolePackageId: serverEmployee.rolePackageId || null,
-        teamIds: serverEmployee.teamIds || [],
-        permissionOverrides: serverEmployee.permissionOverrides || {},
-        employeeStatus: 'active',
-        workLocationStatus: 'office',
-        hasAdvancedCalendarAccess: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as Employee
-    }
-    return undefined
-  }, [employees, currentEmployeeId, serverEmployee])
+    if (!serverEmployee) return undefined
+
+    const operationalEmp = resolveOperationalEmployee(serverEmployee.id, employees)
+
+    return {
+      id: operationalEmp ? operationalEmp.id : String(serverEmployee.id),
+      db1EmployeeId: String(serverEmployee.id),
+      fullName: serverEmployee.fullName,
+      email: serverEmployee.email || '',
+      title: serverEmployee.title || (operationalEmp ? operationalEmp.title : 'Ekip Üyesi'),
+      rolePackageId: serverEmployee.rolePackageId || null,
+      teamIds: operationalEmp?.teamIds?.length ? operationalEmp.teamIds : (serverEmployee.teamIds || []),
+      permissionOverrides: serverEmployee.permissionOverrides || {},
+      employeeStatus: 'active',
+      workLocationStatus: operationalEmp ? operationalEmp.workLocationStatus : 'office',
+      avatarUrl: operationalEmp?.avatarUrl || undefined,
+      hasAdvancedCalendarAccess: operationalEmp?.hasAdvancedCalendarAccess || false,
+      createdAt: operationalEmp?.createdAt || new Date().toISOString(),
+      updatedAt: operationalEmp?.updatedAt || new Date().toISOString(),
+    } as Employee
+  }, [employees, serverEmployee])
 
   const handleLogout = async () => {
     try {

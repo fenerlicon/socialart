@@ -73,3 +73,10 @@ export function getActiveEmployeeId(): string | null {
 export function setActiveEmployeeId(id: string): void {
   EmployeeRepository.setActiveId(id)
 }
+
+export function resolveOperationalEmployee(
+  authEmployeeId: string | number | undefined | null,
+  db2Employees: Employee[]
+): Employee | null {
+  return EmployeeRepository.resolveOperationalEmployee(authEmployeeId, db2Employees)
+}

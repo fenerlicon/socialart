@@ -112,6 +112,7 @@ export const EmployeeRepository = {
 
     return {
       id: row.id,
+      db1EmployeeId: row.db1_employee_id || null,
       fullName: row.full_name,
       email: row.email,
       title: row.title,
@@ -256,5 +257,23 @@ export const EmployeeRepository = {
   setActiveId(id: string): void {
     if (!isBrowser()) return
     window.localStorage.setItem(ACTIVE_EMPLOYEE_KEY, id)
+  },
+
+  resolveOperationalEmployee(
+    authEmployeeId: string | number | undefined | null,
+    db2Employees: Employee[]
+  ): Employee | null {
+    if (!authEmployeeId || !Array.isArray(db2Employees)) return null
+    const authIdStr = String(authEmployeeId)
+    return db2Employees.find(
+      (e) => e.db1EmployeeId && String(e.db1EmployeeId) === authIdStr
+    ) || null
   }
+}
+
+export function resolveOperationalEmployee(
+  authEmployeeId: string | number | undefined | null,
+  db2Employees: Employee[]
+): Employee | null {
+  return EmployeeRepository.resolveOperationalEmployee(authEmployeeId, db2Employees)
 }

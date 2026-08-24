@@ -123,6 +123,7 @@ export interface Team {
 
 export interface Employee {
   id: string
+  db1EmployeeId?: string | null
   fullName: string
   email: string
   /** Unvan — yalnızca görünen isim; yetki veya modül etkilemez */
@@ -141,6 +142,7 @@ export interface Employee {
 
 export interface CreateEmployeeInput {
   fullName: string
+  db1EmployeeId?: string | null
   email: string
   title: string
   rolePackageId: RolePackageId
