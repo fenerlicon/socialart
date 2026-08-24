@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client'
+import { supabaseLeads } from '@/lib/supabase/client'
 import type { Employee } from '@/types/domain'
 
 const ACTIVE_EMPLOYEE_KEY = 'social-art-base:active-employee-id'
@@ -9,10 +9,25 @@ function isBrowser(): boolean {
 
 const FALLBACK_EMPLOYEES: Employee[] = [
   {
-    id: 'emp-celal',
-    fullName: 'Celal',
-    email: 'celal@socialart.internal',
-    title: 'Kurucu / Yönetici',
+    id: '1',
+    fullName: 'Tuğba Özdemir',
+    email: 'tugba@socialartmedya.com',
+    title: 'Sosyal Medya Yöneticisi',
+    rolePackageId: 'sosyal-medya-yonetimi',
+    teamIds: ['merkezi-operasyon'],
+    permissionOverrides: {},
+    username: 'tugba',
+    employeeStatus: 'active',
+    workLocationStatus: 'office',
+    hasAdvancedCalendarAccess: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: '2',
+    fullName: 'Celal Ünlü',
+    email: 'celal@socialartmedya.com',
+    title: 'Operasyon Yöneticisi',
     rolePackageId: 'operasyon-yonetimi',
     teamIds: ['merkezi-operasyon'],
     permissionOverrides: {},
@@ -24,11 +39,11 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: 'emp-ercan',
-    fullName: 'Ercan',
-    email: 'ercan@socialart.internal',
-    title: 'Kreatif Direktör',
-    rolePackageId: 'kreatif-direktor',
+    id: '3',
+    fullName: 'Ercan Özdemir',
+    email: 'ercan@socialartmedya.com',
+    title: 'Kreatif Yönetici',
+    rolePackageId: 'kreatif-yonetim',
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'ercan',
@@ -39,26 +54,11 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: 'emp-furkan',
-    fullName: 'Furkan',
-    email: 'furkan@socialart.internal',
-    title: 'Dijital Pazarlama Uzmanı',
-    rolePackageId: 'kreatif-direktor',
-    teamIds: ['kreatif-koordinasyon'],
-    permissionOverrides: {},
-    username: 'furkan',
-    employeeStatus: 'active',
-    workLocationStatus: 'office',
-    hasAdvancedCalendarAccess: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'emp-betul',
-    fullName: 'Betül',
-    email: 'betul@socialart.internal',
-    title: 'ART Direktör',
-    rolePackageId: 'kreatif-direktor',
+    id: '4',
+    fullName: 'Betül Ünlü',
+    email: 'betul@socialartmedya.com',
+    title: 'Grafik Tasarım',
+    rolePackageId: 'grafik-tasarim',
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
     username: 'betul',
@@ -69,29 +69,14 @@ const FALLBACK_EMPLOYEES: Employee[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: 'emp-tugba',
-    fullName: 'Tuğba',
-    email: 'tugba@socialart.internal',
-    title: 'Sosyal Medya Specialist',
-    rolePackageId: 'ekip-uyesi',
+    id: '6',
+    fullName: 'Arda Furkan Aslanbaş',
+    email: 'furkan@socialartmedya.com',
+    title: 'Dijital Pazarlama Uzmanı',
+    rolePackageId: 'dijital',
     teamIds: ['kreatif-koordinasyon'],
     permissionOverrides: {},
-    username: 'tugba',
-    employeeStatus: 'active',
-    workLocationStatus: 'office',
-    hasAdvancedCalendarAccess: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'emp-samet',
-    fullName: 'Samet',
-    email: 'samet@socialart.internal',
-    title: 'Kurgu',
-    rolePackageId: 'ekip-uyesi',
-    teamIds: ['kreatif-koordinasyon'],
-    permissionOverrides: {},
-    username: 'samet',
+    username: 'furkan',
     employeeStatus: 'active',
     workLocationStatus: 'office',
     hasAdvancedCalendarAccess: true,
@@ -180,7 +165,7 @@ export const EmployeeRepository = {
 
   async getAll(): Promise<Employee[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseLeads
         .from('employees')
         .select('*')
         .order('full_name', { ascending: true })
@@ -199,7 +184,7 @@ export const EmployeeRepository = {
 
   async getById(id: string): Promise<Employee | null> {
     if (!id) return null
-    const { data, error } = await supabase
+    const { data, error } = await supabaseLeads
       .from('employees')
       .select('*')
       .eq('id', id)
@@ -215,7 +200,7 @@ export const EmployeeRepository = {
 
   async save(employee: Employee): Promise<Employee> {
     const row = this.mapEmployeeToRow(employee)
-    const { error } = await supabase
+    const { error } = await supabaseLeads
       .from('employees')
       .upsert(row)
 
@@ -232,7 +217,7 @@ export const EmployeeRepository = {
     row.updated_at = new Date().toISOString()
     if (actorId) row.updated_by = actorId
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseLeads
       .from('employees')
       .update(row)
       .eq('id', id)
@@ -248,7 +233,7 @@ export const EmployeeRepository = {
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
+    const { error } = await supabaseLeads
       .from('employees')
       .delete()
       .eq('id', id)

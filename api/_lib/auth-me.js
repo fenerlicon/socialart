@@ -73,7 +73,8 @@ export default async function handler(req, res) {
       fullName: authState.employee.full_name,
       email: authState.employee.email,
       title: authState.employee.title,
-      rolePackageId: authState.employee.role_package_id
+      rolePackageId: authState.employee.role_package_id,
+      permissionOverrides: authState.employee.permission_overrides || {}
     },
     permissions: authState.permissions,
     mustChangePassword: authState.mustChangePassword

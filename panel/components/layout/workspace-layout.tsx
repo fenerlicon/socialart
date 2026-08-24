@@ -26,6 +26,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const pathname = usePathname()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
+  const [serverEmployee, setServerEmployee] = useState<any>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
@@ -58,6 +59,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         if (authData.mustChangePassword) {
           setActiveEmployeeId('')
           setCurrentEmployeeId('')
+          setServerEmployee(null)
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('social-art-base:active-employee-id')
             window.localStorage.removeItem('social-art-base:credentials')
@@ -70,10 +72,12 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         }
 
         const authenticatedEmployeeId = String(authData.employee.id)
-        const list = await getStoredEmployees()
-        setEmployees(list)
+        setServerEmployee(authData.employee)
         setCurrentEmployeeId(authenticatedEmployeeId)
         setActiveEmployeeId(authenticatedEmployeeId)
+
+        const list = await getStoredEmployees()
+        setEmployees(list)
 
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('social-art-base:credentials')
@@ -109,6 +113,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         // Oturumu doğrulanmayan kullanıcı asla panelde tutulamaz
         setActiveEmployeeId('')
         setCurrentEmployeeId('')
+        setServerEmployee(null)
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('social-art-base:active-employee-id')
           window.localStorage.removeItem('social-art-base:credentials')
@@ -123,9 +128,27 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     loadData()
   }, [pathname, router])
 
-  const activeEmployee = useMemo(() => {
-    return employees.find((e) => e.id === currentEmployeeId)
-  }, [employees, currentEmployeeId])
+  const activeEmployee = useMemo<Employee | undefined>(() => {
+    const found = employees.find((e) => String(e.id) === String(currentEmployeeId))
+    if (found) return found
+    if (serverEmployee && String(serverEmployee.id) === String(currentEmployeeId)) {
+      return {
+        id: String(serverEmployee.id),
+        fullName: serverEmployee.fullName,
+        email: serverEmployee.email || '',
+        title: serverEmployee.title || 'Ekip Üyesi',
+        rolePackageId: serverEmployee.rolePackageId || null,
+        teamIds: serverEmployee.teamIds || [],
+        permissionOverrides: serverEmployee.permissionOverrides || {},
+        employeeStatus: 'active',
+        workLocationStatus: 'office',
+        hasAdvancedCalendarAccess: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as Employee
+    }
+    return undefined
+  }, [employees, currentEmployeeId, serverEmployee])
 
   const handleLogout = async () => {
     try {
