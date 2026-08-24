@@ -28,6 +28,28 @@ function loadTsModule(filePath) {
       if (fs.existsSync(targetTs)) return loadTsModule(targetTs);
       if (fs.existsSync(targetTsx)) return loadTsModule(targetTsx);
     }
+    if (reqPath.startsWith('.')) {
+      const resolved = path.resolve(path.dirname(filePath), reqPath);
+      if (fs.existsSync(resolved)) {
+        if (resolved.endsWith('.ts') || resolved.endsWith('.tsx')) {
+          return loadTsModule(resolved);
+        }
+        if (resolved.endsWith('.js')) {
+          const jsContent = fs.readFileSync(resolved, 'utf8');
+          const transpiledJs = ts.transpileModule(jsContent, {
+            compilerOptions: {
+              module: ts.ModuleKind.CommonJS,
+              target: ts.ScriptTarget.ES2020,
+              esModuleInterop: true,
+            }
+          });
+          const jsM = { exports: {} };
+          const jsFn = new Function('module', 'exports', 'require', '__dirname', '__filename', transpiledJs.outputText);
+          jsFn(jsM, jsM.exports, customRequire, path.dirname(resolved), resolved);
+          return jsM.exports;
+        }
+      }
+    }
     return require(reqPath);
   };
 

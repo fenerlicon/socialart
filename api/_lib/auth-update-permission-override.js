@@ -88,12 +88,7 @@ export default async function handler(req, res) {
 
   // 5. Compute updated permission_overrides preserving all other keys
   const currentOverrides = { ...(targetEmp.permission_overrides || {}) };
-
-  if (grant) {
-    currentOverrides[cleanKey] = true;
-  } else {
-    delete currentOverrides[cleanKey];
-  }
+  currentOverrides[cleanKey] = Boolean(grant);
 
   // 6. Update target employee permission_overrides in DB1
   const { error: updateErr } = await supabaseAdmin

@@ -1,8 +1,4 @@
-/**
- * Server-Side Canonical Permission Resolver Helper
- * Enforces canonical module.action permissions and purges legacy non-permission fields
- * (like permission_overrides.password or username).
- */
+import { ROLE_PACKAGES_BY_ID } from './role-package-seeds.js';
 
 export const PERMISSION_KEYS = [
   'tasks.view', 'tasks.create', 'tasks.assign', 'tasks.transfer', 'tasks.manage',
@@ -25,9 +21,14 @@ const VALID_PERMISSION_SET = new Set(PERMISSION_KEYS);
 export function resolveServerPermissions(rolePackageId, permissionOverrides = {}) {
   const granted = new Set();
 
-  // If role_package_id is operasyon-yonetimi, grant all canonical keys
-  if (rolePackageId === 'operasyon-yonetimi') {
-    VALID_PERMISSION_SET.forEach(key => granted.add(key));
+  // Load baseline permissions from canonical role package definitions
+  if (rolePackageId && ROLE_PACKAGES_BY_ID[rolePackageId]) {
+    const pkg = ROLE_PACKAGES_BY_ID[rolePackageId];
+    for (const key of pkg.defaultPermissions) {
+      if (VALID_PERMISSION_SET.has(key)) {
+        granted.add(key);
+      }
+    }
   }
 
   // Apply permission_overrides while strictly filtering out non-permission keys (password, username, etc.)

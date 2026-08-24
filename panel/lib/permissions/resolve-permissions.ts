@@ -97,14 +97,6 @@ export function resolveEffectivePermissions(input: {
     permissions.filter((p) => p.granted).map((p) => p.key),
   )
 
-  // Force KPI permissions: managers get evaluation, employees get view
-  if (input.rolePackageId === 'operasyon-yonetimi' || input.rolePackageId === 'kreatif-yonetim') {
-    grantedKeys.add('kpi.evaluate')
-    grantedKeys.add('kpi.manage')
-  } else if (input.rolePackageId) {
-    grantedKeys.add('kpi.view')
-  }
-
   return { permissions, grantedKeys }
 }
 
