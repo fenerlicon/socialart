@@ -2,8 +2,13 @@ import pkg from 'pg';
 const { Client } = pkg;
 import fs from 'fs';
 
-const oldConn = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.zpulnweiosxphibipxdp.supabase.co:5432/postgres';
-const newConn = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.piffaggeshfrubyjkhej.supabase.co:5432/postgres';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const oldDbPass = encodeURIComponent(process.env.LEGACY_SUPABASE_DB_PASSWORD || process.env.SUPABASE_DB_PASSWORD || '');
+const newDbPass = encodeURIComponent(process.env.DB1_SUPABASE_DB_PASSWORD || process.env.SUPABASE_DB_PASSWORD || '');
+const oldConn = `postgresql://postgres:${oldDbPass}@db.zpulnweiosxphibipxdp.supabase.co:5432/postgres`;
+const newConn = `postgresql://postgres:${newDbPass}@db.piffaggeshfrubyjkhej.supabase.co:5432/postgres`;
 
 async function migrate() {
   const oldClient = new Client({ connectionString: oldConn });

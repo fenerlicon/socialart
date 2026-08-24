@@ -1,7 +1,11 @@
 import pkg from 'pg';
 const { Client } = pkg;
 
-const connectionString = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.osuwytugjscwhcxxkhfa.supabase.co:5432/postgres';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const dbPass = encodeURIComponent(process.env.DB2_SUPABASE_DB_PASSWORD || '');
+const connectionString = `postgresql://postgres:${dbPass}@db.osuwytugjscwhcxxkhfa.supabase.co:5432/postgres`;
 const client = new Client({ connectionString });
 
 async function fix() {

@@ -4,7 +4,11 @@ import fs from 'fs';
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
 
-const oldConn = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.zpulnweiosxphibipxdp.supabase.co:5432/postgres';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const oldDbPass = encodeURIComponent(process.env.LEGACY_SUPABASE_DB_PASSWORD || process.env.SUPABASE_DB_PASSWORD || '');
+const oldConn = `postgresql://postgres:${oldDbPass}@db.zpulnweiosxphibipxdp.supabase.co:5432/postgres`;
 
 async function generateSql() {
   const oldClient = new Client({ connectionString: oldConn });

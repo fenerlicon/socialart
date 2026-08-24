@@ -1,8 +1,14 @@
 import pkg from 'pg';
 const { Client } = pkg;
 
-const PRIMARY_DB = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.osuwytugjscwhcxxkhfa.supabase.co:5432/postgres';
-const LEADS_DB = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.piffaggeshfrubyjkhej.supabase.co:5432/postgres';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const primaryDbPass = encodeURIComponent(process.env.DB2_SUPABASE_DB_PASSWORD || '');
+const leadsDbPass = encodeURIComponent(process.env.DB1_SUPABASE_DB_PASSWORD || process.env.SUPABASE_DB_PASSWORD || '');
+
+const PRIMARY_DB = `postgresql://postgres:${primaryDbPass}@db.osuwytugjscwhcxxkhfa.supabase.co:5432/postgres`;
+const LEADS_DB = `postgresql://postgres:${leadsDbPass}@db.piffaggeshfrubyjkhej.supabase.co:5432/postgres`;
 
 async function fixDatabase(name, connStr) {
   console.log(`\n==================================================`);

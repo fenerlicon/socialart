@@ -1,6 +1,8 @@
+require('dotenv').config();
 const { Client } = require('pg');
 
-const connectionString = 'postgresql://postgres:bvwW%2BQg7LS%26u3V%26@db.piffaggeshfrubyjkhej.supabase.co:5432/postgres';
+const dbPass = encodeURIComponent(process.env.DB1_SUPABASE_DB_PASSWORD || process.env.SUPABASE_DB_PASSWORD || '');
+const connectionString = `postgresql://postgres:${dbPass}@db.piffaggeshfrubyjkhej.supabase.co:5432/postgres`;
 const client = new Client({ connectionString });
 
 async function check() {
