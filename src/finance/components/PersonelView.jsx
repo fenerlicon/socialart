@@ -17,13 +17,6 @@ export default function PersonelView({
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Add Staff Form State
-  const [showAddStaffModal, setShowAddStaffModal] = useState(false);
-  const [newStaffName, setNewStaffName] = useState('');
-  const [newStaffRole, setNewStaffRole] = useState('');
-  const [newStaffClass, setNewStaffClass] = useState('Çalışan');
-  const [newStaffSalary, setNewStaffSalary] = useState('0');
-  
   // Modals State
   const [selectedStaffForPayment, setSelectedStaffForPayment] = useState(null);
   const [selectedStaffForSalaryUpdate, setSelectedStaffForSalaryUpdate] = useState(null);
@@ -172,31 +165,11 @@ export default function PersonelView({
 
     setSelectedStaffForSalaryUpdate(null);
   };
-  // Open Add Staff Modal
-  const openAddStaffModal = () => {
-    setNewStaffName('');
-    setNewStaffRole('');
-    setNewStaffClass('Çalışan');
-    setNewStaffSalary('0');
-    setShowAddStaffModal(true);
-  };
-
-  // Handle Add Staff Submit
-  const handleAddStaffSubmit = (e) => {
-    e.preventDefault();
-    if (!newStaffName) return;
-
-    onAddStaff({
-      display_name: newStaffName,
-      username: newStaffName.toLowerCase().replace(/\s+/g, ''),
-      role: newStaffRole || 'Çalışan',
-      class: newStaffClass,
-      base_salary: parseFloat(newStaffSalary || 0),
-      can_assign_task: false,
-      can_add_client: true
-    });
-
-    setShowAddStaffModal(false);
+  // Navigate to canonical employee creation flow
+  const handleNavigateToNewStaff = () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/employees/new';
+    }
   };
 
   return (
@@ -214,7 +187,12 @@ export default function PersonelView({
           />
         </div>
 
-        <button type="button" className="btn btn-primary" onClick={openAddStaffModal} style={{ padding: '0.5rem 1.2rem', borderRadius: '8px', height: '38px', fontSize: '0.85rem' }}>
+        <button 
+          type="button" 
+          className="btn btn-primary" 
+          onClick={handleNavigateToNewStaff} 
+          style={{ padding: '0.5rem 1.2rem', borderRadius: '8px', height: '38px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
           <Plus size={15} />
           <span>Yeni Personel Ekle</span>
         </button>
@@ -563,78 +541,6 @@ export default function PersonelView({
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setSelectedStaffForSalaryUpdate(null)}>İptal</button>
                 <button type="submit" className="btn btn-primary">Güncelle</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 4: ADD NEW STAFF */}
-      {showAddStaffModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Yeni Personel / Freelancer Ekle</h2>
-              <button className="modal-close" onClick={() => setShowAddStaffModal(false)}>×</button>
-            </div>
-            
-            <form onSubmit={handleAddStaffSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Adı Soyadı</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  required
-                  placeholder="Örn: Ahmet Yılmaz"
-                  value={newStaffName}
-                  onChange={(e) => setNewStaffName(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Görev / Rol</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  required
-                  placeholder="Örn: Grafiker, Editör, Videographer..."
-                  value={newStaffRole}
-                  onChange={(e) => setNewStaffRole(e.target.value)}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">Çalışma Tipi</label>
-                  <select 
-                    className="select-custom"
-                    value={newStaffClass}
-                    onChange={(e) => setNewStaffClass(e.target.value)}
-                  >
-                    <option value="Çalışan">Kadrolu (Çalışan)</option>
-                    <option value="Freelance">Freelancer / Proje Bazlı</option>
-                    <option value="Görevli">Görevli</option>
-                    <option value="Yönetici">Yönetici</option>
-                  </select>
-                </div>
-
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">Sabit Maaş / Taban (₺)</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    className="form-input" 
-                    required
-                    value={newStaffSalary}
-                    onChange={(e) => setNewStaffSalary(e.target.value)}
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAddStaffModal(false)}>İptal</button>
-                <button type="submit" className="btn btn-primary">Kaydet</button>
               </div>
             </form>
           </div>

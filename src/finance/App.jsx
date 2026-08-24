@@ -1379,44 +1379,10 @@ export default function App() {
     }
   };
 
-  // MUTATOR 18: Add new staff
-  const handleAddStaff = async (staffData) => {
-    try {
-      const payload = {
-        display_name: staffData.display_name,
-        username: staffData.username || staffData.display_name.toLowerCase().replace(/\s+/g, ''),
-        role: staffData.role,
-        class: staffData.class || 'Çalışan',
-        base_salary: staffData.base_salary || 0,
-        can_assign_task: staffData.can_assign_task ?? true,
-        can_add_client: staffData.can_add_client ?? false
-      };
-
-      let { data, error } = await supabase
-        .from('employees')
-        .insert([payload])
-        .select();
-
-      if (error && error.code === '23505') {
-        const nextId = staff.length > 0 ? Math.max(...staff.map(s => Number(s.id) || 0)) + 100 : 100;
-        const res = await supabase
-          .from('employees')
-          .insert([{ id: nextId, ...payload }])
-          .select();
-        data = res.data;
-        error = res.error;
-      }
-
-      if (error) throw error;
-
-      setStaff(prev => [...prev, data[0]]);
-      await logActivity(
-        'Personel Eklendi', 
-        `${staffData.display_name} personeli sisteme tanımlandı.`,
-        staffData.display_name
-      );
-    } catch (err) {
-      alert("Personel eklenemedi: " + err.message);
+  // MUTATOR 18: Add new staff - redirects to canonical /admin/employees/new
+  const handleAddStaff = async () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/employees/new';
     }
   };
 
