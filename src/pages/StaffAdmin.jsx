@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles, Menu, CreditCard } from 'lucide-react';
-import Login from './Login';
+import { Users, DollarSign, Activity, FileText, MoreVertical, Search, Filter, CheckCircle2, Clock, XCircle, AlertCircle, Trash2, Plus, X, LogOut, Briefcase, ClipboardList, UserCheck, MessageSquare, Target, CheckSquare, ListTodo, Send, MessageCircle, Zap, ShieldCheck, ShieldAlert, Mail, Phone, ExternalLink, Star, TrendingUp, Trophy, Award, Calendar, BarChart3, ChevronRight, ChevronLeft, Camera, Video, PlusCircle, Smartphone, Download, Bell, BellOff, Edit3, Bot, RefreshCw, Upload, Check, ArrowRight, ArrowLeft, FileCode, Layout, Layers, ArrowUpRight, FolderOpen, Flame, User, CheckCircle, Sparkles, Menu, CreditCard } from 'lucide-react';
 import { supabase, supabaseLeads } from '../lib/supabase';
 import TextareaAutosize from 'react-textarea-autosize';
 import ReactQuill from 'react-quill-new';
@@ -383,7 +382,7 @@ const renderAttachments = (url, name, accent = false) => {
 function Admin() {
   // const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
-  const [isChecking, setIsChecking] = useState(true);
+  const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'unauthenticated' | 'unauthorized' | 'authenticated'
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const currentUserRef = React.useRef(null);
 
@@ -392,105 +391,82 @@ function Admin() {
   }, [currentUser]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const initAuth = async () => {
       try {
-        const activeEmpId = localStorage.getItem('social-art-base:active-employee-id');
-        const credentialsJson = localStorage.getItem('social-art-base:credentials');
-        const storedAjansUser = localStorage.getItem('ajans_user') || localStorage.getItem('socialart_user');
+        const res = await fetch('/api/auth-me', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          credentials: 'include'
+        });
 
-        if (activeEmpId) {
-          try {
-            const { data: emp } = await supabase.from('employees').select('*').eq('id', activeEmpId).single();
-            if (emp) {
-              const userObj = {
-                name: emp.full_name,
-                id: emp.id,
-                role: emp.title || 'Ekip Üyesi',
-                class: 'A-Class',
-                permissions: 'all',
-                can_add_client: true,
-                email: emp.email
-              };
-              localStorage.setItem('ajans_user', JSON.stringify(userObj));
-              setCurrentUser(userObj);
-              fetchAllData(userObj);
-              return;
-            }
-          } catch (e) {
-            console.warn("Could not fetch active employee by ID:", e);
+        if (!res.ok) {
+          if (isMounted) {
+            setCurrentUser(null);
+            setAuthStatus('unauthenticated');
           }
+          return;
         }
 
-        if (storedAjansUser) {
-          try {
-            const parsed = JSON.parse(storedAjansUser);
-            if (parsed && (parsed.name || parsed.id)) {
-              setCurrentUser(parsed);
-              fetchAllData(parsed);
-              return;
-            }
-          } catch (e) {}
+        const data = await res.json();
+        if (!data || !data.authenticated || !data.employee || data.mustChangePassword) {
+          if (isMounted) {
+            setCurrentUser(null);
+            setAuthStatus('unauthenticated');
+          }
+          return;
         }
 
-        // Credentials varsa employees tablosundan eşle
-        if (credentialsJson) {
-          try {
-            const creds = JSON.parse(credentialsJson);
-            const { data: employees } = await supabase.from('employees').select('*');
-            const cleanUser = (creds.username || '').toLowerCase().trim();
-            const matched = employees?.find(e => {
-              const empUser = (e.permission_overrides?.username || e.email.split('@')[0] || '').toLowerCase().trim();
-              return empUser === cleanUser || (e.email || '').toLowerCase() === cleanUser;
-            });
-            if (matched) {
-              const userObj = {
-                name: matched.full_name,
-                id: matched.id,
-                role: matched.title || 'Ekip Üyesi',
-                class: 'A-Class',
-                permissions: 'all',
-                can_add_client: true,
-                email: matched.email
-              };
-              localStorage.setItem('social-art-base:active-employee-id', matched.id);
-              localStorage.setItem('ajans_user', JSON.stringify(userObj));
-              setCurrentUser(userObj);
-              fetchAllData(userObj);
-              return;
-            }
-          } catch (e) {}
+        const permissions = data.permissions || [];
+        const hasCrmView = permissions.includes('crm.view') || permissions.includes('system.admin');
+
+        if (!hasCrmView) {
+          if (isMounted) {
+            setCurrentUser(null);
+            setAuthStatus('unauthorized');
+          }
+          return;
         }
 
-        // Oturum yok
-        setCurrentUser(null);
+        const userObj = {
+          name: data.employee.fullName,
+          id: data.employee.id,
+          role: data.employee.title || 'Ekip Üyesi',
+          class: 'A-Class',
+          permissions: permissions.includes('system.admin') ? 'all' : permissions,
+          effectivePermissions: permissions,
+          can_add_client: true,
+          email: data.employee.email,
+          rolePackageId: data.employee.rolePackageId
+        };
+
+        try {
+          localStorage.setItem('social-art-base:active-employee-id', data.employee.id);
+          localStorage.setItem('ajans_user', JSON.stringify(userObj));
+          localStorage.setItem('socialart_user', JSON.stringify(userObj));
+          localStorage.removeItem('social-art-base:credentials');
+        } catch (e) {}
+
+        if (isMounted) {
+          setCurrentUser(userObj);
+          setAuthStatus('authenticated');
+          fetchAllData(userObj);
+        }
       } catch (e) {
         console.error("Auth init error:", e);
-        setCurrentUser(null);
-      } finally {
-        setIsChecking(false);
+        if (isMounted) {
+          setCurrentUser(null);
+          setAuthStatus('unauthenticated');
+        }
       }
     };
 
     initAuth();
+    return () => { isMounted = false; };
+  }, []);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && session.user) {
-        const metadata = session.user.user_metadata;
-        const userObj = { 
-          name: metadata.display_name, 
-          role: metadata.role,
-          class: metadata.class,
-          permissions: metadata.can_assign_task ? 'all' : 'limited',
-          can_add_client: metadata.can_add_client
-        };
-        localStorage.setItem('ajans_user', JSON.stringify(userObj));
-        setCurrentUser(userObj);
-      } else if (_event === 'SIGNED_OUT') {
-        localStorage.removeItem('ajans_user');
-        setCurrentUser(null);
-      }
-    });
-
+  useEffect(() => {
     // ⏱ Realtime: tasks tablosunu dinle
     const channel = supabase
       .channel('socialart-realtime-master')
@@ -555,7 +531,6 @@ function Admin() {
 
     return () => {
       supabase.removeChannel(channel);
-      subscription.unsubscribe();
       clearInterval(timer);
     };
   }, []);
@@ -2857,30 +2832,83 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
     );
   };
 
-  if (isChecking) {
+  if (authStatus === 'checking') {
     return (
       <div style={{ background: 'linear-gradient(to bottom right, #09090b, #111115, #1d113a)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0,229,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}></div>
-          <p style={{ color: '#fff', fontSize: '0.8rem', letterSpacing: '2px' }}>VERİLER YÜKLENİYOR...</p>
+          <p style={{ color: '#fff', fontSize: '0.8rem', letterSpacing: '2px' }}>OTURUM DOĞRULANIYOR...</p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
   }
 
-  if (!currentUser) {
-    return <Login onLoginSuccess={() => {
-      try {
-        const userJson = localStorage.getItem('ajans_user');
-        if (userJson) {
-          setCurrentUser(JSON.parse(userJson));
-          fetchAllData();
-        }
-      } catch (e) {
-        setIsChecking(false);
-      }
-    }} />;
+  if (authStatus === 'unauthorized') {
+    return (
+      <div style={{ background: 'linear-gradient(to bottom right, #09090b, #111115, #1d113a)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ background: 'rgba(20, 20, 25, 0.7)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '24px', padding: '40px', maxWidth: '440px', width: '100%', textAlign: 'center', backdropFilter: 'blur(20px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#f59e0b' }}>
+            <ShieldCheck size={32} />
+          </div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>Erişim Yetkiniz Yok (403)</h2>
+          <p style={{ fontSize: '0.85rem', color: '#a1a1aa', lineHeight: '1.6', marginBottom: '32px' }}>
+            Hesabınızda CRM modülünü görüntülemek için gerekli olan <code style={{ color: '#f59e0b' }}>crm.view</code> yetkisi bulunmamaktadır.
+          </p>
+          <button
+            onClick={() => { window.location.href = '/admin/dashboard'; }}
+            style={{
+              width: '100%',
+              padding: '14px 20px',
+              borderRadius: '14px',
+              background: '#27272a',
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              fontWeight: '700',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Panel Ana Sayfasına Dön
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (authStatus === 'unauthenticated' || !currentUser) {
+    return (
+      <div style={{ background: 'linear-gradient(to bottom right, #09090b, #111115, #1d113a)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ background: 'rgba(20, 20, 25, 0.7)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '24px', padding: '40px', maxWidth: '440px', width: '100%', textAlign: 'center', backdropFilter: 'blur(20px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#f43f5e' }}>
+            <ShieldAlert size={32} />
+          </div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>Oturum Açmanız Gerekiyor</h2>
+          <p style={{ fontSize: '0.85rem', color: '#a1a1aa', lineHeight: '1.6', marginBottom: '32px' }}>
+            CRM modülüne erişmek için geçerli bir <strong>/admin</strong> oturumunuzun olması gerekmektedir. Lütfen panel giriş sayfasına gidin.
+          </p>
+          <button
+            onClick={() => { window.location.href = '/admin/login'; }}
+            style={{
+              width: '100%',
+              padding: '14px 20px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: '700',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              boxShadow: '0 10px 25px rgba(139, 92, 246, 0.3)',
+              transition: 'all 0.2s'
+            }}
+          >
+            Panele Giriş Yap
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -3111,10 +3139,17 @@ Gereksiz nezaket cümlelerini geç, direkt sonuca odaklan.`;
             </button>
             
             <button
-              onClick={() => {
+              onClick={async () => {
+                try {
+                  await fetch('/api/auth-logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                  });
+                } catch (e) {}
                 localStorage.removeItem('social-art-base:active-employee-id');
                 localStorage.removeItem('social-art-base:credentials');
                 localStorage.removeItem('ajans_user');
+                localStorage.removeItem('socialart_user');
                 window.location.href = '/admin/login';
               }}
               style={{

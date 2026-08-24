@@ -481,18 +481,41 @@ export default function CRMPage({ embedded = false }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // 🔒 Security & Auth Guard: Verify active employee session
-  const [hasValidSession, setHasValidSession] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return true;
-      const activeId = localStorage.getItem('social-art-base:active-employee-id') ||
-                       localStorage.getItem('ajans_user') ||
-                       localStorage.getItem('socialart_user') ||
-                       localStorage.getItem('social-art-base:credentials');
-      return Boolean(activeId);
-    } catch {
-      return false;
-    }
-  });
+  const [authStatus, setAuthStatus] = useState(embedded ? 'authenticated' : 'checking');
+
+  useEffect(() => {
+    if (embedded) return;
+    let isMounted = true;
+    const verifyAuth = async () => {
+      try {
+        const res = await fetch('/api/auth-me', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          credentials: 'include'
+        });
+        if (!res.ok) {
+          if (isMounted) setAuthStatus('unauthenticated');
+          return;
+        }
+        const data = await res.json();
+        if (!data || !data.authenticated || !data.employee || data.mustChangePassword) {
+          if (isMounted) setAuthStatus('unauthenticated');
+          return;
+        }
+        const permissions = data.permissions || [];
+        const hasCrmView = permissions.includes('crm.view') || permissions.includes('system.admin');
+        if (!hasCrmView) {
+          if (isMounted) setAuthStatus('unauthorized');
+          return;
+        }
+        if (isMounted) setAuthStatus('authenticated');
+      } catch (err) {
+        if (isMounted) setAuthStatus('unauthenticated');
+      }
+    };
+    verifyAuth();
+    return () => { isMounted = false; };
+  }, [embedded]);
 
   const [currentPipeline, setCurrentPipeline] = useState(() => {
     try {
@@ -572,7 +595,7 @@ export default function CRMPage({ embedded = false }) {
 
   // Fetch leads from Supabase with Local Overrides Merge & Automatic DB Sync
   const fetchLeads = useCallback(async () => {
-    if (!hasValidSession && !embedded) {
+    if (authStatus !== 'authenticated') {
       setIsLoading(false);
       return;
     }
@@ -1866,32 +1889,72 @@ export default function CRMPage({ embedded = false }) {
     todayRetargetingCount,
     overdueRetargetingCount
   };
-  // 🔒 Security Guard: Render unauthorized screen if active employee session is missing
-  if (!hasValidSession && !embedded) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl">
-          <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto text-rose-400">
-            <Lock className="w-8 h-8" />
+  // 🔒 Security Guard: Render checking, unauthorized, or unauthenticated screens
+  if (!embedded) {
+    if (authStatus === 'checking') {
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-slate-400 font-medium tracking-wider uppercase">CRM Oturumu Doğrulanıyor...</p>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-black text-rose-400 uppercase tracking-wider">
-              <ShieldAlert className="w-4 h-4" /> CRM Güvenlik Duvarı Engeli
-            </div>
-            <h2 className="text-xl font-black text-white">Oturum Açmanız Gerekiyor</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Müşteri veritabanı ve CRM gizli bilgileri koruma altındadır. Lütfen yetkili ajans hesabınızla panele giriş yapın.
-            </p>
-          </div>
-          <button
-            onClick={() => { window.location.href = '/login'; }}
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
-          >
-            Panele Giriş Yap
-          </button>
         </div>
-      </div>
-    );
+      );
+    }
+
+    if (authStatus === 'unauthorized') {
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl">
+            <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mx-auto text-amber-400">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-black text-amber-400 uppercase tracking-wider">
+                <ShieldAlert className="w-4 h-4" /> CRM Yetki Sınırı (403)
+              </div>
+              <h2 className="text-xl font-black text-white">CRM Görüntüleme Yetkiniz Yok</h2>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Hesabınızda CRM modülünü görüntülemek için gerekli olan <code>crm.view</code> yetkisi tanımlı değildir.
+              </p>
+            </div>
+            <button
+              onClick={() => { window.location.href = '/admin/dashboard'; }}
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
+            >
+              Panel Ana Sayfasına Dön
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (authStatus === 'unauthenticated') {
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl">
+            <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto text-rose-400">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-black text-rose-400 uppercase tracking-wider">
+                <ShieldAlert className="w-4 h-4" /> CRM Güvenlik Duvarı Engeli
+              </div>
+              <h2 className="text-xl font-black text-white">Oturum Açmanız Gerekiyor</h2>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Müşteri veritabanı ve CRM gizli bilgileri koruma altındadır. Lütfen yetkili ajans hesabınızla panele giriş yapın.
+              </p>
+            </div>
+            <button
+              onClick={() => { window.location.href = '/admin/login'; }}
+              className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
+            >
+              Panele Giriş Yap
+            </button>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
