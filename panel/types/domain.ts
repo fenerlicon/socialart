@@ -57,6 +57,26 @@ export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Employment Type (Çalışma / İstihdam İlişkisi)
+// ---------------------------------------------------------------------------
+
+export const EMPLOYMENT_TYPES = [
+  'full_time',
+  'freelance',
+  'contractor',
+  'part_time',
+] as const
+
+export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number]
+
+export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
+  full_time: 'Tam Zamanlı (Bordrolu)',
+  freelance: 'Freelance',
+  contractor: 'Sözleşmeli / Dış Kaynak',
+  part_time: 'Yarı Zamanlı',
+}
+
+// ---------------------------------------------------------------------------
 // Work location status (çalışma konumu — günlük / anlık)
 // ---------------------------------------------------------------------------
 
@@ -136,6 +156,7 @@ export interface Employee {
   permissionOverrides: PermissionOverrideMap
   employeeStatus: EmployeeStatus
   workLocationStatus: WorkLocationStatus
+  employmentType?: EmploymentType | null
   avatarUrl?: string
   hasAdvancedCalendarAccess?: boolean
   username?: string
@@ -153,6 +174,7 @@ export interface CreateEmployeeInput {
   permissionOverrides: PermissionOverrideMap
   employeeStatus: EmployeeStatus
   workLocationStatus: WorkLocationStatus
+  employmentType?: EmploymentType | null
   avatarUrl?: string
   hasAdvancedCalendarAccess?: boolean
   username?: string

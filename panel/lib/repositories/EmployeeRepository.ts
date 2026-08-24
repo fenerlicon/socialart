@@ -110,6 +110,9 @@ export const EmployeeRepository = {
     delete overrides.username
     delete overrides.password
 
+    const validEmploymentTypes = ['full_time', 'freelance', 'contractor', 'part_time']
+    const employmentType = validEmploymentTypes.includes(row.employment_type) ? row.employment_type : null
+
     return {
       id: row.id,
       db1EmployeeId: row.db1_employee_id || null,
@@ -119,6 +122,7 @@ export const EmployeeRepository = {
       avatarUrl: row.avatar_url,
       employeeStatus: row.employee_status,
       workLocationStatus: row.work_location_status,
+      employmentType,
       rolePackageId: row.role_package_id,
       teamIds: row.team_ids || [],
       permissionOverrides: overrides,
@@ -140,6 +144,15 @@ export const EmployeeRepository = {
     // team_ids is protected — updated via /api/auth-update-employee-identity
     // has_advanced_calendar_access is protected — updated via /api/auth-update-employee-identity
     if (employee.title !== undefined) row.title = employee.title
+    if (employee.employmentType !== undefined) {
+      if (employee.employmentType === null) {
+        row.employment_type = null
+      } else if (['full_time', 'freelance', 'contractor', 'part_time'].includes(employee.employmentType)) {
+        row.employment_type = employee.employmentType
+      } else {
+        throw new Error('Invalid employmentType: must be full_time, freelance, contractor, part_time, or null')
+      }
+    }
     
     if (employee.permissionOverrides !== undefined) {
       const safeOverrides = { ...(employee.permissionOverrides || {}) }

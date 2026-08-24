@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS employees (
   permission_overrides JSONB NOT NULL DEFAULT '{}',
   employee_status TEXT NOT NULL,
   work_location_status TEXT NOT NULL,
+  employment_type TEXT DEFAULT NULL,
   avatar_url TEXT,
   has_advanced_calendar_access BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL,
