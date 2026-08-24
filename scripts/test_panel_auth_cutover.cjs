@@ -96,9 +96,9 @@ async function simulatePanelAccess(sessionResponse) {
   assert(responseMock.ok && parsedData.authenticated === true, 'Response contract without success field must pass');
   console.log(' [PASS] Response contract without data.success is accepted as valid');
 
-  // Test E: EmployeeRepository DB1 import verification
-  assert(repoCode.includes('supabaseLeads'), 'FAIL: EmployeeRepository does not use supabaseLeads (DB1)');
-  console.log(' [PASS] EmployeeRepository uses DB1 supabaseLeads client adhering to Rule 6');
+  // Test E: EmployeeRepository DB2 operational client preservation
+  assert(repoCode.includes("import { supabase } from '@/lib/supabase/client'"), 'FAIL: EmployeeRepository does not preserve DB2 supabase client');
+  console.log(' [PASS] EmployeeRepository preserves DB2 supabase client for operational assignee UUID semantics');
 
   // Test F: WorkspaceLayout serverEmployee hydration fallback verification
   assert(layoutCode.includes('serverEmployee'), 'FAIL: WorkspaceLayout does not retain serverEmployee state');
