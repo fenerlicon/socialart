@@ -1,24 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { requireAdminSession } from './auth-me.js';
 import { validateOrigin } from './admin-auth.js';
+import { ROLE_PACKAGE_DEFINITIONS } from './role-package-seeds.js';
 
 const DB1_URL = 'https://piffaggeshfrubyjkhej.supabase.co';
 const DB1_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = createClient(DB1_URL, DB1_SERVICE_ROLE);
 
-const VALID_ROLE_PACKAGES = new Set([
-  'operasyon-yonetimi',
-  'strateji-musteri-yonetimi',
-  'dijital-pazarlama',
-  'sosyal-medya-yonetimi',
-  'kreatif-yonetim',
-  'kreatif-direktor',
-  'grafik-tasarim',
-  'video-kurgu',
-  'fotograf-uretimi',
-  'video-uretimi',
-]);
+const VALID_ROLE_PACKAGES = new Set(ROLE_PACKAGE_DEFINITIONS.map((pkg) => pkg.id));
+
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

@@ -185,9 +185,57 @@ export const ROLE_PACKAGE_DEFINITIONS = [
       'reports.submit',
       'kpi.view'
     ]
+  },
+  {
+    id: 'coso',
+    name: 'Chief of Social (COSO)',
+    description: 'Strateji ve sosyal medya operasyon koordinasyonu, içerik akışı, iş dağıtımı ve süreç onayı.',
+    defaultPermissions: [
+      'tasks.view',
+      'tasks.create',
+      'tasks.assign',
+      'tasks.transfer',
+      'workflow.view',
+      'workflow.edit',
+      'brands.view',
+      'brands.edit',
+      'reports.view',
+      'reports.submit',
+      'reports.manage',
+      'operations.view',
+      'task.manage',
+      'team.manage',
+      'approval.review',
+      'calendar.view',
+      'calendar.manage',
+      'kpi.view',
+      'kpi.evaluate'
+    ]
+  },
+  {
+    id: 'art-director',
+    name: 'Art Director',
+    description: 'Kreatif üretim trafiği, görsel/video tasarım koordinasyonu, revizyon ve ön onay yönetimi.',
+    defaultPermissions: [
+      'tasks.view',
+      'tasks.create',
+      'tasks.assign',
+      'tasks.transfer',
+      'workflow.view',
+      'workflow.edit',
+      'approval.review',
+      'brands.view',
+      'calendar.view',
+      'calendar.manage',
+      'operations.view',
+      'task.manage',
+      'reports.view',
+      'reports.submit',
+      'kpi.view'
+    ]
   }
 ];
 
 export const ROLE_PACKAGES_BY_ID = Object.fromEntries(
   ROLE_PACKAGE_DEFINITIONS.map((pkg) => [pkg.id, pkg])
-);
+);

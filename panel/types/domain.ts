@@ -16,6 +16,9 @@ export type RolePackageId =
   | 'video-kurgu'
   | 'fotograf-uretimi'
   | 'video-uretimi'
+  | 'coso'
+  | 'art-director'
+
 
 export type TeamId =
   | 'merkezi-operasyon'

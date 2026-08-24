@@ -13,9 +13,9 @@ async function runTests() {
 
   console.log('--- 1. CANONICAL ARTIFACT INTEGRITY ---');
   assert.ok(Array.isArray(ROLE_PACKAGE_DEFINITIONS), 'ROLE_PACKAGE_DEFINITIONS must be an array');
-  assert.strictEqual(ROLE_PACKAGE_DEFINITIONS.length, 10, 'Must contain exactly 10 role packages');
+  assert.strictEqual(ROLE_PACKAGE_DEFINITIONS.length, 12, 'Must contain exactly 12 role packages');
   assert.strictEqual(PERMISSION_KEYS.length, 43, 'Must contain exactly 43 canonical permission keys');
-  console.log(` ✅ PASSED: 10 role packages and 43 permission keys validated in canonical authority`);
+  console.log(` ✅ PASSED: 12 role packages and 43 permission keys validated in canonical authority`);
 
   console.log('\n--- 2. ROLE PACKAGE BASELINE 100% PARITY TEST ---');
   for (const pkg of ROLE_PACKAGE_DEFINITIONS) {
