@@ -397,8 +397,8 @@ function mapDbRowToLead(row) {
   return {
     id: String(row.id),
     pipeline,
-    title: row.name || row.company || 'İsimsiz Lead',
-    contactName: row.rep || row.contact_name || '',
+    title: row.name || row.title || row.company || 'İsimsiz Lead',
+    contactName: row.contact_name || '',
     email: row.email || '',
     phone: row.phone || '',
     city: row.city || '',
@@ -559,21 +559,27 @@ export default function CRMPage({ embedded = false }) {
     try {
       // 1. Sync manual leads (like Diffea) to Supabase DB
       if (Array.isArray(manualLeads) && manualLeads.length > 0) {
-        const rowsToInsert = manualLeads.map(m => ({
-          title: m.title || m.contactName,
-          name: m.title || m.contactName,
-          rep: m.contactName || '',
-          phone: m.phone || '',
-          email: m.email || '',
-          city: m.city || 'İstanbul',
-          service: m.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya',
-          pipeline: m.pipeline || 'PRODUCTION',
-          stage: m.stage || 'NEW',
-          platform: m.source || 'MANUAL',
-          status: stageToStatus[m.stage] || 'Sıcak',
-          notes: m.notes || [],
-          created_at: m.createdAt || new Date().toISOString()
-        }));
+        const rowsToInsert = manualLeads.map(m => {
+          const canonicalName = m.title || m.name || 'İsimsiz Müşteri';
+          const canonicalContact = m.contactName || '';
+          const canonicalRep = m.assignedTo || '';
+          return {
+            name: canonicalName,
+            title: canonicalName,
+            contact_name: canonicalContact,
+            rep: canonicalRep,
+            phone: m.phone || '',
+            email: m.email || '',
+            city: m.city || 'İstanbul',
+            service: m.pipeline === 'PRODUCTION' ? 'Prodüksiyon' : 'Sosyal Medya',
+            pipeline: m.pipeline || 'PRODUCTION',
+            stage: m.stage || 'NEW',
+            platform: m.source || 'MANUAL',
+            status: stageToStatus[m.stage] || 'Sıcak',
+            notes: m.notes || [],
+            created_at: m.createdAt || new Date().toISOString()
+          };
+        });
         await supabaseLeads.from('leads').upsert(rowsToInsert, { ignoreDuplicates: true }).catch(() => {});
       }
 
@@ -1343,14 +1349,18 @@ export default function CRMPage({ embedded = false }) {
     try {
       const numericId = Number(leadId);
       const queryId = !isNaN(numericId) && numericId > 0 ? numericId : leadId;
+      const canonicalName = updatedData.title !== undefined ? updatedData.title : (currentLead?.title || currentLead?.name);
+      const canonicalContact = updatedData.contactName !== undefined ? updatedData.contactName : (currentLead?.contactName || '');
+
       await supabaseLeads
         .from('leads')
         .update({
-          title: updatedData.title,
-          name: updatedData.contactName,
-          phone: updatedData.phone,
-          email: updatedData.email,
-          city: updatedData.city,
+          name: canonicalName,
+          title: canonicalName,
+          contact_name: canonicalContact,
+          phone: updatedData.phone !== undefined ? updatedData.phone : (currentLead?.phone || ''),
+          email: updatedData.email !== undefined ? updatedData.email : (currentLead?.email || ''),
+          city: updatedData.city !== undefined ? updatedData.city : (currentLead?.city || ''),
           notes: updatedNotes,
           updated_at: nowIso
         })
@@ -1569,12 +1579,17 @@ export default function CRMPage({ embedded = false }) {
     // 3. Sync to Supabase in background
     try {
       const parsedBudget = Number(leadData.productionDetails?.budget || leadData.socialMediaDetails?.monthlyBudget) || null;
+      const canonicalName = leadData.title || leadData.contactName || 'İsimsiz Müşteri';
+      const canonicalContact = leadData.contactName || '';
+      const canonicalRep = leadData.assignedTo || 'Celal';
+
       const { data, error } = await supabaseLeads
         .from('leads')
         .insert({
-          title: leadData.title || leadData.contactName || 'İsimsiz Müşteri',
-          name: leadData.title || leadData.contactName || 'İsimsiz Müşteri',
-          rep: leadData.contactName || '',
+          name: canonicalName,
+          title: canonicalName,
+          contact_name: canonicalContact,
+          rep: canonicalRep,
           email: leadData.email || '',
           phone: leadData.phone || '',
           city: leadData.city || 'İstanbul',
