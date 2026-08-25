@@ -42,17 +42,29 @@ function loadTsModule(filePath) {
 const empRepoModule = loadTsModule(path.join(panelDir, 'lib/repositories/EmployeeRepository.ts'));
 const { EmployeeRepository } = empRepoModule;
 
-/**
- * Creates an in-memory mock Supabase client for testing two-phase mirror mutations
- */
 function createMockDbClient(initialRows = [], options = {}) {
   const rows = JSON.parse(JSON.stringify(initialRows));
   const writeLog = [];
+  const auditLogs = [];
 
   return {
     rows,
     writeLog,
+    auditLogs,
     from(table) {
+      if (table === 'employee_audit_logs') {
+        return {
+          insert(record) {
+            const inserted = Array.isArray(record) ? record : [record];
+            auditLogs.push(...inserted);
+            return {
+              select: () => ({
+                maybeSingle: async () => ({ data: { id: 'audit-mock-id', ...inserted[0] }, error: null })
+              })
+            };
+          }
+        };
+      }
       return {
         select(cols = '*') {
           return {
@@ -106,6 +118,7 @@ async function runTests() {
       employmentType: type,
       db1: mockDb1,
       db2: mockDb2,
+      actorEmployeeId: '2',
     });
     assert.strictEqual(res.success, true, `Expected success for valid type ${type}`);
     assert.strictEqual(res.employmentType, type);
@@ -123,6 +136,7 @@ async function runTests() {
       employmentType: null,
       db1: mockDb1,
       db2: mockDb2,
+      actorEmployeeId: '2',
     });
     assert.strictEqual(res.success, true);
     assert.strictEqual(res.employmentType, null);
@@ -136,6 +150,7 @@ async function runTests() {
     const res = await syncEmployeeEmploymentType({
       employeeId: '1',
       employmentType: badVal,
+      actorEmployeeId: '2',
     });
     assert.strictEqual(res.success, false);
     assert.strictEqual(res.status, 400);
@@ -172,7 +187,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([]); // empty DB1
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '99' }]);
-    const res = await syncEmployeeEmploymentType({ employeeId: '99', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '99', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, false);
     assert.strictEqual(res.status, 404);
   }
@@ -182,7 +197,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: null }]);
     const mockDb2 = createMockDbClient([]); // missing mirror in DB2
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, false);
     assert.strictEqual(res.status, 422);
     assert.strictEqual(mockDb1.writeLog.length, 0, 'DB1 must NOT be touched if DB2 mirror is missing');
@@ -197,7 +212,7 @@ async function runTests() {
       { id: 'uuid-1a', db1_employee_id: '1' },
       { id: 'uuid-1b', db1_employee_id: '1' }
     ]);
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, false);
     assert.strictEqual(res.status, 409);
     assert.strictEqual(mockDb1.writeLog.length, 0, 'DB1 must NOT be touched if DB2 mirror is ambiguous');
@@ -210,7 +225,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: null }]);
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: null }]);
-    await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(mockDb1.writeLog.length, 1);
     assert.strictEqual(mockDb2.writeLog.length, 1);
   }
@@ -220,7 +235,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: null }], { failUpdate: true });
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: null }]);
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, false);
     assert.strictEqual(mockDb2.writeLog.length, 0, 'DB2 must not be touched if DB1 update fails');
   }
@@ -230,7 +245,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: null }]);
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: null }]);
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'contractor', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'contractor', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, true);
     assert.strictEqual(mockDb1.rows[0].employment_type, 'contractor');
     assert.strictEqual(mockDb2.rows[0].employment_type, 'contractor');
@@ -241,7 +256,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: 'full_time' }]);
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: 'full_time' }], { failUpdate: true });
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, false);
     assert.strictEqual(res.rolledBack, true);
     assert.strictEqual(mockDb1.rows[0].employment_type, 'full_time', 'DB1 must be rolled back to exact snapshot before write');
@@ -277,7 +292,7 @@ async function runTests() {
       }
     };
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: null }], { failUpdate: true });
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: customDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: customDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, false);
     assert.strictEqual(res.criticalInconsistency, true);
     assert.match(res.error, /CRITICAL_SYNC_INCONSISTENCY/);
@@ -290,7 +305,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: 'freelance' }]);
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: 'freelance' }]);
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, true);
     assert.strictEqual(res.noop, true);
     assert.strictEqual(mockDb1.writeLog.length, 0, 'No-op must not execute writes');
@@ -302,7 +317,7 @@ async function runTests() {
   {
     const mockDb1 = createMockDbClient([{ id: '1', employment_type: 'freelance' }]);
     const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: 'full_time' }]);
-    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    const res = await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     assert.strictEqual(res.success, true);
     assert.strictEqual(mockDb2.rows[0].employment_type, 'freelance', 'DB2 mirror must be repaired to match DB1');
   }
@@ -331,7 +346,7 @@ async function runTests() {
     };
     const mockDb1 = createMockDbClient([initialEmp1]);
     const mockDb2 = createMockDbClient([initialEmp2]);
-    await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2 });
+    await syncEmployeeEmploymentType({ employeeId: '1', employmentType: 'freelance', db1: mockDb1, db2: mockDb2, actorEmployeeId: '2' });
     
     assert.strictEqual(mockDb1.rows[0].employee_status, 'active');
     assert.strictEqual(mockDb1.rows[0].role_package_id, 'grafik-tasarim');

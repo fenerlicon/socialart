@@ -38,6 +38,16 @@ export async function syncEmployeeEmploymentType({
     };
   }
 
+  // Actor ID is strictly required for auditable employment type mutations
+  const cleanActorId = actorEmployeeId !== undefined && actorEmployeeId !== null ? String(actorEmployeeId).trim() : '';
+  if (!cleanActorId) {
+    return {
+      success: false,
+      status: 400,
+      error: 'Authenticated actor employee ID is required for auditable employment type mutations',
+    };
+  }
+
   // Validate employmentType: must be null or in VALID_EMPLOYMENT_TYPES
   const targetEmploymentType = employmentType === undefined || employmentType === null ? null : employmentType;
   if (targetEmploymentType !== null && !VALID_EMPLOYMENT_TYPES.has(targetEmploymentType)) {
@@ -233,7 +243,100 @@ export async function syncEmployeeEmploymentType({
     }
   }
 
-  // 7. Final Verification of Parity
+  // Verify DB1 is still in parity
+  const { data: db1ParityCheck } = await db1
+    .from('employees')
+    .select('employment_type')
+    .eq('id', db1Emp.id)
+    .maybeSingle();
+
+  if (!db1ParityCheck || (db1ParityCheck.employment_type ?? null) !== targetEmploymentType) {
+    return {
+      success: false,
+      status: 500,
+      error: 'CRITICAL_SYNC_INCONSISTENCY: DB1 drifted during mirror update.',
+      criticalInconsistency: true,
+    };
+  }
+
+  // 7. Phase 3: Immutable Business Audit Logging
+  // Only write employment_type_changed if DB1 canonical value genuinely changed
+  let auditRecordId = null;
+  if (beforeDB1 !== targetEmploymentType) {
+    const auditPayload = {
+      employee_id: String(db1Emp.id),
+      event_type: 'employment_type_changed',
+      old_value: beforeDB1,
+      new_value: targetEmploymentType,
+      actor_employee_id: String(cleanActorId),
+      metadata: { source: 'employment_type_api' },
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: auditData, error: auditErr } = await db1
+      .from('employee_audit_logs')
+      .insert(auditPayload)
+      .select()
+      .maybeSingle();
+
+    if (auditErr || !auditData) {
+      // CRITICAL: Audit logging failed. Roll back BOTH databases!
+      // 1. Rollback DB2 mirror
+      const { error: rbDb2Err } = await db2
+        .from('employees')
+        .update({
+          employment_type: beforeDB2,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', db2Emp.id);
+
+      const { data: rbDb2Verify } = await db2
+        .from('employees')
+        .select('employment_type')
+        .eq('id', db2Emp.id)
+        .maybeSingle();
+
+      // 2. Rollback DB1 source
+      const { error: rbDb1Err } = await db1
+        .from('employees')
+        .update({
+          employment_type: beforeDB1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', db1Emp.id);
+
+      const { data: rbDb1Verify } = await db1
+        .from('employees')
+        .select('employment_type')
+        .eq('id', db1Emp.id)
+        .maybeSingle();
+
+      const db2RollbackOk = !rbDb2Err && rbDb2Verify && (rbDb2Verify.employment_type ?? null) === beforeDB2;
+      const db1RollbackOk = !rbDb1Err && rbDb1Verify && (rbDb1Verify.employment_type ?? null) === beforeDB1;
+
+      if (db2RollbackOk && db1RollbackOk) {
+        return {
+          success: false,
+          status: 500,
+          error: `EMPLOYMENT_AUDIT_WRITE_FAILED: Audit logging failed (${auditErr ? auditErr.message : 'insert failed'}). Both DB1 and DB2 were rolled back to prior state.`,
+          auditFailed: true,
+          rolledBack: true,
+          rollbackSuccess: true,
+        };
+      } else {
+        return {
+          success: false,
+          status: 500,
+          error: `CRITICAL_EMPLOYMENT_AUDIT_INCONSISTENCY: Audit logging failed (${auditErr ? auditErr.message : 'insert failed'}) and dual rollback could not be fully verified.`,
+          criticalInconsistency: true,
+        };
+      }
+    }
+
+    auditRecordId = auditData.id || null;
+  }
+
+  // 8. Final Verification of Parity
   return {
     success: true,
     status: 200,
@@ -244,7 +347,8 @@ export async function syncEmployeeEmploymentType({
     employmentType: targetEmploymentType,
     previousEmploymentType: beforeDB1,
     mirrored: true,
-    actorEmployeeId: actorEmployeeId || null,
+    actorEmployeeId: cleanActorId,
+    auditRecordId,
   };
 }
 
@@ -266,6 +370,10 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
+  if (!authState.employeeId) {
+    return res.status(401).json({ error: 'Authenticated session lacks valid operator employeeId' });
+  }
+
   // 2. Authorize operator with employees.manage or system.admin
   const operatorPermissions = authState.permissions || [];
   const hasPermission = operatorPermissions.includes('employees.manage') || operatorPermissions.includes('system.admin');
@@ -277,11 +385,11 @@ export default async function handler(req, res) {
   // 3. Extract payload
   const { employeeId, employmentType } = req.body || {};
 
-  // 4. Run sync mutation
+  // 4. Run sync mutation with session-derived actorEmployeeId
   const result = await syncEmployeeEmploymentType({
     employeeId,
     employmentType,
-    actorEmployeeId: authState.employeeId || null,
+    actorEmployeeId: authState.employeeId,
   });
 
   if (!result.success) {
