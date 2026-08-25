@@ -17,11 +17,17 @@ export const createEmployeeSchema = z.object({
     .string()
     .min(2, 'Ad soyad en az 2 karakter olmalıdır')
     .max(120, 'Ad soyad en fazla 120 karakter olabilir'),
-  email: z.string().email('Geçerli bir e-posta adresi girin'),
+  email: z
+    .string()
+    .email('Geçerli bir e-posta adresi girin')
+    .optional()
+    .or(z.literal('')),
   username: z
     .string()
     .min(3, 'Kullanıcı adı en az 3 karakter olmalıdır')
-    .max(50, 'Kullanıcı adı en fazla 50 karakter olabilir'),
+    .max(50, 'Kullanıcı adı en fazla 50 karakter olabilir')
+    .optional()
+    .or(z.literal('')),
   title: z
     .string()
     .min(1, 'Unvan zorunludur')
@@ -29,11 +35,15 @@ export const createEmployeeSchema = z.object({
   avatarUrl: z.string().url('Geçerli bir URL girin').optional().or(z.literal('')),
   employeeStatus: z.enum(EMPLOYEE_STATUSES),
   workLocationStatus: z.enum(WORK_LOCATION_STATUSES),
-  rolePackageId: z.enum(rolePackageIds, {
-    errorMap: () => ({ message: 'Rol paketi seçin' }),
-  }),
+  rolePackageId: z
+    .enum(rolePackageIds, {
+      errorMap: () => ({ message: 'Geçerli bir rol paketi seçin' }),
+    })
+    .nullable()
+    .optional()
+    .or(z.literal('')),
   teamIds: z.array(z.string()).default([]),
-  permissionOverrides: z.record(z.boolean()).default({}),
+  permissionOverrides: z.record(z.string(), z.boolean()).default({}),
   hasAdvancedCalendarAccess: z.boolean().default(false),
 })
 

@@ -148,10 +148,10 @@ export interface Employee {
   id: string
   db1EmployeeId?: string | null
   fullName: string
-  email: string
+  email?: string | null
   /** Unvan — yalnızca görünen isim; yetki veya modül etkilemez */
   title: string
-  rolePackageId: RolePackageId
+  rolePackageId?: RolePackageId | null
   teamIds: TeamId[]
   permissionOverrides: PermissionOverrideMap
   employeeStatus: EmployeeStatus
@@ -167,9 +167,9 @@ export interface Employee {
 export interface CreateEmployeeInput {
   fullName: string
   db1EmployeeId?: string | null
-  email: string
+  email?: string | null
   title: string
-  rolePackageId: RolePackageId
+  rolePackageId?: RolePackageId | null
   teamIds: TeamId[]
   permissionOverrides: PermissionOverrideMap
   employeeStatus: EmployeeStatus

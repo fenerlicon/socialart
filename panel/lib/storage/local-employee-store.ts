@@ -8,13 +8,13 @@ export function mapFormToCreateInput(
 ): CreateEmployeeInput {
   return {
     fullName: values.fullName.trim(),
-    email: values.email.trim().toLowerCase(),
-    username: values.username?.trim().toLowerCase(),
+    email: values.email ? values.email.trim().toLowerCase() : '',
+    username: values.username?.trim().toLowerCase() || undefined,
     title: values.title.trim(),
     avatarUrl: values.avatarUrl?.trim() || undefined,
     employeeStatus: values.employeeStatus,
     workLocationStatus: values.workLocationStatus,
-    rolePackageId: values.rolePackageId,
+    rolePackageId: values.rolePackageId || null,
     teamIds: values.teamIds as CreateEmployeeInput['teamIds'],
     permissionOverrides: values.permissionOverrides,
     hasAdvancedCalendarAccess: values.hasAdvancedCalendarAccess,

@@ -138,16 +138,18 @@ export function useEmployeeForm(
     const parsed = createEmployeeSchema.safeParse(values)
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {}
+      const fieldErrorDescriptions: string[] = []
       for (const issue of parsed.error.issues) {
         const path = issue.path.join('.')
         if (!fieldErrors[path]) {
           fieldErrors[path] = issue.message
+          fieldErrorDescriptions.push(`${issue.message}`)
         }
       }
       setErrors(fieldErrors)
       setIsSubmitting(false)
       toast.error('Formda hatalı alanlar var', {
-        description: 'Lütfen işaretli alanları kontrol edin.',
+        description: fieldErrorDescriptions.join(' • ') || 'Lütfen işaretli alanları kontrol edin.',
       })
       return
     }
@@ -181,7 +183,7 @@ export function useEmployeeForm(
         // 1. Role Package Update
         const initialRole = initialEmployee?.rolePackageId || null
         const newRole = values.rolePackageId || null
-        if (!initialEmployee || newRole !== initialRole) {
+        if (newRole && newRole !== initialRole) {
           try {
             const roleRes = await fetch('/api/auth-update-employee-role', {
               method: 'POST',
@@ -213,25 +215,27 @@ export function useEmployeeForm(
 
         const identityChanged =
           !initialEmployee ||
-          newEmail !== initialEmail ||
-          newUsername !== initialUsername ||
+          (newEmail && newEmail !== initialEmail) ||
+          (newUsername && newUsername !== initialUsername) ||
           newStatus !== initialStatus ||
           newTeams !== initialTeams ||
           newCalendar !== initialCalendar
 
         if (identityChanged) {
           try {
+            const payload: any = {
+              employeeId: targetEmployeeId,
+              employeeStatus: newStatus,
+              teamIds: values.teamIds,
+              hasAdvancedCalendarAccess: newCalendar,
+            }
+            if (newEmail) payload.email = newEmail
+            if (newUsername) payload.username = newUsername
+
             const idRes = await fetch('/api/auth-update-employee-identity', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                employeeId: targetEmployeeId,
-                email: newEmail,
-                username: newUsername,
-                employeeStatus: newStatus,
-                teamIds: values.teamIds,
-                hasAdvancedCalendarAccess: newCalendar,
-              }),
+              body: JSON.stringify(payload),
             })
             if (!idRes.ok) {
               const idData = await idRes.json().catch(() => ({}))

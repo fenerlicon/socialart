@@ -17,7 +17,7 @@ import {
 import type { EmployeeFormApi } from '@/features/employees/hooks/use-employee-form'
 
 export function EmployeeStatusSection({ form }: { form: EmployeeFormApi }) {
-  const { values, updateField } = form
+  const { values, errors, updateField } = form
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -43,6 +43,9 @@ export function EmployeeStatusSection({ form }: { form: EmployeeFormApi }) {
             ))}
           </SelectContent>
         </Select>
+        {errors.employeeStatus ? (
+          <p className="text-sm text-destructive">{errors.employeeStatus}</p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -67,6 +70,9 @@ export function EmployeeStatusSection({ form }: { form: EmployeeFormApi }) {
             ))}
           </SelectContent>
         </Select>
+        {errors.workLocationStatus ? (
+          <p className="text-sm text-destructive">{errors.workLocationStatus}</p>
+        ) : null}
       </div>
     </div>
   )

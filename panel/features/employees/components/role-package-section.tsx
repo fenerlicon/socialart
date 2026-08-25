@@ -46,7 +46,7 @@ export const ROLE_PACKAGE_DEFAULT_TEAMS: Record<RolePackageId, TeamId[]> = {
 }
 
 export function RolePackageSection({ form }: { form: EmployeeFormApi }) {
-  const { values, updateField, togglePermission, resetOverrides } = form
+  const { values, errors, updateField, togglePermission, resetOverrides } = form
 
   const selectedPackage = ROLE_PACKAGE_SEEDS.find(
     (pkg) => pkg.id === values.rolePackageId,
@@ -170,7 +170,7 @@ export function RolePackageSection({ form }: { form: EmployeeFormApi }) {
       <div className="space-y-2">
         <Label>Rol Paketi</Label>
         <Select
-          value={values.rolePackageId}
+          value={values.rolePackageId || ''}
           onValueChange={(value) => {
             const nextPkg = value as RolePackageId
             updateField('rolePackageId', nextPkg)
@@ -180,7 +180,7 @@ export function RolePackageSection({ form }: { form: EmployeeFormApi }) {
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Rol paketi seçin" />
+            <SelectValue placeholder="Rol paketi seçin (Tanımsız)" />
           </SelectTrigger>
           <SelectContent>
             {ROLE_PACKAGE_SEEDS.map((pkg) => (
@@ -190,6 +190,9 @@ export function RolePackageSection({ form }: { form: EmployeeFormApi }) {
             ))}
           </SelectContent>
         </Select>
+        {errors.rolePackageId ? (
+          <p className="text-sm text-destructive">{errors.rolePackageId}</p>
+        ) : null}
       </div>
 
       {/* Seçili Rol Paketi Bilgisi */}
