@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Employee, RolePackageId, TeamId, PermissionOverrideMap } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId, updateEmployee } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,7 @@ const ROLE_PACKAGE_LABELS: Record<string, string> = {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -64,14 +65,8 @@ export default function SettingsPage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('settings.manage')
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, 'settings.manage')
+  }, [principal, activeEmployee])
 
   // Filtered employees
   const filteredEmployees = useMemo(() => {

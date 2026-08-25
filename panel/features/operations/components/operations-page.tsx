@@ -9,7 +9,7 @@ import { getStoredWorkflowInstances, getWorkflowStepInstances } from '@/lib/stor
 import { getStoredApprovals } from '@/lib/storage/local-approval-store'
 import { getStoredHandoffs } from '@/lib/storage/local-handoff-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +44,7 @@ import {
 
 export function OperationsPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
   
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -143,51 +144,16 @@ export function OperationsPage() {
 
   // Resolve permissions
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('operations.view')
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, 'operations.view')
+  }, [principal, activeEmployee])
 
   const isManagerExposed = useMemo(() => {
-    if (!activeEmployee) return false
-    return activeEmployee.teamIds.includes('merkezi-operasyon') || activeEmployee.rolePackageId === 'operasyon-yonetimi'
-  }, [activeEmployee])
+    return isManagerOrAdmin(principal, activeEmployee)
+  }, [principal, activeEmployee])
 
   // Team-based visibility filter helper
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
-    if (isManagerExposed) return true
-    if (!activeEmployee) return false
-
-    const ROLE_TO_TEAM: Record<string, string> = {
-      social_media: 'sosyal-medya',
-      graphic_design: 'grafik-studyo',
-      video_editing: 'post-produksiyon',
-      photography: 'fotograf-studyo',
-      videography: 'video-produksiyon',
-      digital_marketing: 'dijital-pazarlama',
-      strategy: 'strateji-musteri',
-      operation: 'merkezi-operasyon'
-    }
-
-    if (step.responsibilityRole) {
-      const teamId = ROLE_TO_TEAM[step.responsibilityRole]
-      if (teamId && activeEmployee.teamIds.includes(teamId as any)) {
-        return true
-      }
-    }
-
-    if (step.assignedEmployeeId) {
-      const assignee = employees.find(e => e.id === step.assignedEmployeeId)
-      if (assignee && assignee.teamIds.some(tId => activeEmployee.teamIds.includes(tId))) {
-        return true
-      }
-    }
-
-    return false
+    return isStepInScope(principal, step, activeEmployee, employees)
   }
 
   // Filter lists based on manager's teams

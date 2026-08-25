@@ -9,7 +9,7 @@ import { getWorkflowStepInstances, updateWorkflowStepInstance, getStoredWorkflow
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredCycles } from '@/lib/storage/local-cycle-store'
 import { supabase } from '@/lib/supabase/client'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { TaskDetailDrawer } from '@/features/my-work/components/task-detail-drawer'
 import { CustomTaskModal } from '@/components/shared/custom-task-modal'
@@ -132,6 +132,7 @@ const parseStepDetails = (description: string) => {
 
 export function TasksPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -158,29 +159,35 @@ export function TasksPage() {
   const [assigneeId, setAssigneeId] = useState('')
   const [assigneeCreativeCount, setAssigneeCreativeCount] = useState<number | null>(null)
   const [dueDateText, setDueDateText] = useState('')
+  const [dueTimeText, setDueTimeText] = useState('')
   const [reviewerId, setReviewerId] = useState('')
-  const [selectedSupportIds, setSelectedSupportIds] = useState<string[]>([])
+  const [supportIds, setSupportIds] = useState<string[]>([])
+  const [supportRole, setSupportRole] = useState('')
 
-  // Bulk Assign States
-  const [showBulkAssign, setShowBulkAssign] = useState(false)
-  const [bulkBrandId, setBulkBrandId] = useState('')
-  const [bulkRoleFilter, setBulkRoleFilter] = useState('all')
-  const [bulkEmployeeId, setBulkEmployeeId] = useState('')
-
-  // Filter States
+  // Filters State
+  const [searchQuery, setSearchQuery] = useState('')
   const [brandFilter, setBrandFilter] = useState('all')
-  const [assigneeFilter, setAssigneeFilter] = useState('all')
+  const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
-  const [teamFilter, setTeamFilter] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [approvalFilter, setApprovalFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('deadline_asc')
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 12
+
+  // Bulk Selection State
+  const [selectedStepIds, setSelectedStepIds] = useState<string[]>([])
 
   const loadData = async () => {
-    const employeeList = await getStoredEmployees()
-    setEmployees(employeeList)
+    setIsLoadingAuth(true)
+    const storedEmps = await getStoredEmployees()
+    setEmployees(storedEmps)
 
     const activeId = getActiveEmployeeId()
-    const current = employeeList.find((e) => e.id === activeId)
+    const current = storedEmps.find((e) => e.id === activeId)
     if (current) {
       setActiveEmployee(current)
     }
@@ -188,10 +195,13 @@ export function TasksPage() {
 
     const storedSteps = await getWorkflowStepInstances()
     setSteps(storedSteps)
+
     const storedInstances = await getStoredWorkflowInstances()
     setInstances(storedInstances)
+
     const storedBrands = await getStoredBrands()
     setBrands(storedBrands)
+
     const storedCycles = await getStoredCycles()
     setCycles(storedCycles)
   }
@@ -202,63 +212,21 @@ export function TasksPage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('task.manage')
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, 'task.manage')
+  }, [principal, activeEmployee])
 
   // Central Operations or full admin check
   const isManagerExposed = useMemo(() => {
-    if (!activeEmployee) return false
-    return activeEmployee.teamIds.includes('merkezi-operasyon') || activeEmployee.rolePackageId === 'operasyon-yonetimi'
-  }, [activeEmployee])
+    return isManagerOrAdmin(principal, activeEmployee)
+  }, [principal, activeEmployee])
 
   // Can pass/reassign tasks to others (tasks.assign permission)
   const canPassTask = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('tasks.assign')
-  }, [activeEmployee])
-
-  // Map step responsibility to team
-  const ROLE_TO_TEAM: Record<string, string> = {
-    social_media: 'sosyal-medya',
-    graphic_design: 'grafik-studyo',
-    video_editing: 'post-produksiyon',
-    photography: 'fotograf-studyo',
-    videography: 'video-produksiyon',
-    digital_marketing: 'dijital-pazarlama',
-    strategy: 'strateji-musteri',
-    operation: 'merkezi-operasyon'
-  }
+    return resolvePanelAuthority(principal, activeEmployee, 'tasks.assign')
+  }, [principal, activeEmployee])
 
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
-    if (isManagerExposed) return true
-    if (!activeEmployee) return false
-
-    if (step.responsibilityRole) {
-      const teamId = ROLE_TO_TEAM[step.responsibilityRole]
-      if (teamId && activeEmployee.teamIds.includes(teamId as any)) {
-        return true
-      }
-    }
-
-    if (step.assignedEmployeeId) {
-      const assignee = employees.find(e => e.id === step.assignedEmployeeId)
-      if (assignee && assignee.teamIds.some(tId => activeEmployee.teamIds.includes(tId))) {
-        return true
-      }
-    }
-
-    return false
+    return isStepInScope(principal, step, activeEmployee, employees)
   }
 
   // Filter lists based on manager's teams
@@ -266,7 +234,7 @@ export function TasksPage() {
     return employees.filter(emp => {
       if (isManagerExposed) return true
       if (!activeEmployee) return false
-      return emp.teamIds.some(tId => activeEmployee.teamIds.includes(tId))
+      return emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
     })
   }, [employees, isManagerExposed, activeEmployee])
 

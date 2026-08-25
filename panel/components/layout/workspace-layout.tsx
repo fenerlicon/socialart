@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import type { Employee } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId, setActiveEmployeeId, resolveOperationalEmployee } from '@/lib/storage/local-employee-store'
 import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, WorkspaceAuthContext, ANONYMOUS_PRINCIPAL, type PanelPrincipal } from '@/lib/permissions/panel-authority'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
@@ -30,6 +31,7 @@ function isPublicAuthRoute(path: string | null): boolean {
 export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [principal, setPrincipal] = useState<PanelPrincipal>(ANONYMOUS_PRINCIPAL)
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
   const [serverEmployee, setServerEmployee] = useState<any>(null)
@@ -83,6 +85,14 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           const adminName = authData.admin?.displayName || 'Sistem Yöneticisi'
           const adminUsername = authData.admin?.username || 'admin'
 
+          setPrincipal({
+            principalType: 'admin',
+            isDedicatedAdmin: true,
+            adminId,
+            employeeId: null,
+            authResolved: true,
+          })
+
           setServerEmployee({
             id: adminId,
             fullName: adminName,
@@ -124,6 +134,15 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           }
         } else if (authData.employee) {
           const authenticatedEmployeeId = String(authData.employee.id)
+
+          setPrincipal({
+            principalType: 'employee',
+            isDedicatedAdmin: false,
+            adminId: null,
+            employeeId: authenticatedEmployeeId,
+            authResolved: true,
+          })
+
           setServerEmployee(authData.employee)
 
           const list = await getStoredEmployees()
@@ -173,6 +192,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         }
       } catch (err) {
         // Oturumu doğrulanmayan kullanıcı asla panelde tutulamaz
+        setPrincipal(ANONYMOUS_PRINCIPAL)
         setActiveEmployeeId('')
         setCurrentEmployeeId('')
         setServerEmployee(null)
@@ -238,15 +258,9 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   }
 
   const roleMenuItems = useMemo(() => {
-    if (!activeEmployee) return []
+    if (!activeEmployee && !principal.isDedicatedAdmin) return []
 
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-
-    const hasPermission = (key: string) => effective.grantedKeys.has(key as any)
+    const hasPermission = (key: string) => resolvePanelAuthority(principal, activeEmployee, key)
 
     const menuItems: { label: string; icon: string; href: string; isPlaceholder?: boolean }[] = [
       { label: 'Ana Panel', icon: '🏠', href: '/dashboard' },
@@ -258,7 +272,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     // Tasks (Görevler)
-    if (hasPermission('task.manage') && activeEmployee.rolePackageId !== 'kreatif-direktor' && activeEmployee.rolePackageId !== 'kreatif-yonetim') {
+    if (hasPermission('task.manage') && activeEmployee?.rolePackageId !== 'kreatif-direktor' && activeEmployee?.rolePackageId !== 'kreatif-yonetim') {
       menuItems.push({ label: 'Görevler', icon: '✅', href: '/tasks' })
     }
 
@@ -270,14 +284,14 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     // Takvim (Calendar)
     const canAccessCalendar =
-      activeEmployee.hasAdvancedCalendarAccess === true ||
+      activeEmployee?.hasAdvancedCalendarAccess === true ||
       hasPermission('calendar.view') ||
       hasPermission('calendar.manage') ||
-      activeEmployee.rolePackageId === 'operasyon-yonetimi' ||
-      activeEmployee.rolePackageId === 'kreatif-direktor' ||
-      activeEmployee.rolePackageId === 'kreatif-yonetim' ||
-      activeEmployee.permissionOverrides?.['calendar.view'] === true ||
-      activeEmployee.permissionOverrides?.['calendar.manage'] === true
+      activeEmployee?.rolePackageId === 'operasyon-yonetimi' ||
+      activeEmployee?.rolePackageId === 'kreatif-direktor' ||
+      activeEmployee?.rolePackageId === 'kreatif-yonetim' ||
+      activeEmployee?.permissionOverrides?.['calendar.view'] === true ||
+      activeEmployee?.permissionOverrides?.['calendar.manage'] === true
 
     if (canAccessCalendar) {
       menuItems.push({ label: 'Takvim', icon: '📅', href: '/calendar' })
@@ -309,15 +323,15 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     // KPI
-    if (hasPermission('kpi.evaluate') && activeEmployee.rolePackageId !== 'kreatif-yonetim' && activeEmployee.rolePackageId !== 'kreatif-direktor') {
+    if (hasPermission('kpi.evaluate') && activeEmployee?.rolePackageId !== 'kreatif-yonetim' && activeEmployee?.rolePackageId !== 'kreatif-direktor') {
       menuItems.push({ label: 'KPI Değerlendirme', icon: '📈', href: '/kpi' })
     }
-    if (hasPermission('kpi.view') && activeEmployee.rolePackageId !== 'operasyon-yonetimi' && activeEmployee.rolePackageId !== 'kreatif-yonetim' && activeEmployee.rolePackageId !== 'kreatif-direktor') {
+    if (hasPermission('kpi.view') && activeEmployee?.rolePackageId !== 'operasyon-yonetimi' && activeEmployee?.rolePackageId !== 'kreatif-yonetim' && activeEmployee?.rolePackageId !== 'kreatif-direktor') {
       menuItems.push({ label: 'Performans Karnem', icon: '🏅', href: '/my-kpi' })
     }
 
     // Tüm Raporlar (if reports.manage)
-    if (hasPermission('reports.manage') && activeEmployee.rolePackageId !== 'kreatif-direktor' && activeEmployee.rolePackageId !== 'kreatif-yonetim') {
+    if (hasPermission('reports.manage') && activeEmployee?.rolePackageId !== 'kreatif-direktor' && activeEmployee?.rolePackageId !== 'kreatif-yonetim') {
       menuItems.push({ label: 'Tüm Raporlar', icon: '📊', href: '/reports' })
     }
 
@@ -330,23 +344,17 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     return menuItems
-  }, [activeEmployee])
+  }, [activeEmployee, principal])
 
   const sharedMenuItems = useMemo(() => {
-    if (!activeEmployee) return []
+    if (!activeEmployee && !principal.isDedicatedAdmin) return []
     const list: { label: string; icon: string; href: string; isPlaceholder?: boolean }[] = [
       { label: 'DRİVE', icon: '📂', href: '/drive' },
       { label: 'Fikir Merkezi', icon: '💡', href: '/ideas' },
     ]
 
     // Standard Raporlar (if reports.manage is NOT present)
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-
-    if (!effective.grantedKeys.has('reports.manage') && activeEmployee.rolePackageId !== 'kreatif-direktor' && activeEmployee.rolePackageId !== 'kreatif-yonetim') {
+    if (!resolvePanelAuthority(principal, activeEmployee, 'reports.manage') && activeEmployee?.rolePackageId !== 'kreatif-direktor' && activeEmployee?.rolePackageId !== 'kreatif-yonetim') {
       list.push({ label: 'Raporlar', icon: '📊', href: '/reports' })
     }
 
@@ -355,7 +363,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     list.push({ label: 'Çıkış Yap', icon: '🚪', href: '#logout' })
 
     return list
-  }, [activeEmployee])
+  }, [activeEmployee, principal])
 
   const handleMenuClick = (item: { label: string; href: string; isPlaceholder?: boolean }) => {
     setIsMobileMenuOpen(false)
@@ -437,7 +445,15 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-gradient-to-br from-[#09090b] via-[#111115] to-[#1a112d] text-neutral-100 antialiased">
+    <WorkspaceAuthContext.Provider
+      value={{
+        principal,
+        activeEmployee: activeEmployee || null,
+        serverEmployee,
+        isLoadingAuth,
+      }}
+    >
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-[#09090b] via-[#111115] to-[#1a112d] text-neutral-100 antialiased">
       {/* 1. Masaüstü Sidebar */}
       <aside className="w-64 border-r border-neutral-900/60 bg-neutral-950/20 backdrop-blur-md hidden lg:flex flex-col justify-between shrink-0 p-5 min-h-screen sticky top-0">
         <div className="space-y-6">
@@ -612,5 +628,6 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         </main>
       </div>
     </div>
+    </WorkspaceAuthContext.Provider>
   )
 }

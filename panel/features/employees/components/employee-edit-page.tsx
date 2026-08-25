@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { getStoredEmployees, getActiveEmployeeId, getEmployeeById } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import type { Employee } from '@/types/domain'
 import { useEmployeeForm } from '@/features/employees/hooks/use-employee-form'
@@ -33,6 +33,7 @@ interface EmployeeEditPageProps {
 }
 
 export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
+  const { principal } = usePrincipal()
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null)
   const [isLoadingEmployee, setIsLoadingEmployee] = useState(true)
 
@@ -126,31 +127,19 @@ export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return (
-      effective.grantedKeys.has('employees.manage') ||
-      effective.grantedKeys.has('system.admin') ||
-      effective.grantedKeys.has('team.manage')
-    )
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, [
+      'employees.manage',
+      'system.admin',
+      'team.manage',
+    ])
+  }, [principal, activeEmployee])
 
   const canManageEmployment = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return (
-      effective.grantedKeys.has('employees.manage') ||
-      effective.grantedKeys.has('system.admin')
-    )
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, [
+      'employees.manage',
+      'system.admin',
+    ])
+  }, [principal, activeEmployee])
 
   if (isLoadingAuth || isLoadingEmployee) {
     return (

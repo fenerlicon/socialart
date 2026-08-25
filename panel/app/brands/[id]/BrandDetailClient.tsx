@@ -51,7 +51,7 @@ import { cn } from '@/lib/utils'
 import { BrandWorkflowSection } from '@/features/workflows/components/brand-workflow-section'
 
 import { getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { supabase } from '@/lib/supabase/client'
 import { deleteWorkflowInstancesByCycleId, getWorkflowInstancesByCycleId, updateWorkflowInstance } from '@/lib/storage/local-workflow-instance-store'
@@ -60,6 +60,7 @@ export default function BrandDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
+  const { principal } = usePrincipal()
 
   const [brand, setBrand] = useState<Brand | null>(null)
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -481,14 +482,8 @@ export default function BrandDetailPage() {
   }
 
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('brand.manage')
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, 'brand.manage')
+  }, [principal, activeEmployee])
 
   if (isLoadingAuth || isLoadingBrand) {
     return (

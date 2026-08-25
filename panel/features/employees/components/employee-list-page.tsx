@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getStoredEmployees, getActiveEmployeeId, deleteEmployee, updateEmployee } from '@/lib/storage/local-employee-store'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, isManagerOrAdmin, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import type { Employee, Brand } from '@/types/domain'
 import { EmployeeCard } from './employee-card'
@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 
 export function EmployeeListPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -62,26 +63,19 @@ export function EmployeeListPage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return (
-      effective.grantedKeys.has('employees.manage') ||
-      effective.grantedKeys.has('employees.view') ||
-      effective.grantedKeys.has('system.admin') ||
-      effective.grantedKeys.has('team.manage') ||
-      effective.grantedKeys.has('task.manage')
-    )
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, [
+      'employees.manage',
+      'employees.view',
+      'system.admin',
+      'team.manage',
+      'task.manage',
+    ])
+  }, [principal, activeEmployee])
 
   // Central Operations or full admin
   const isManagerExposed = useMemo(() => {
-    if (!activeEmployee) return false
-    return activeEmployee.teamIds.includes('merkezi-operasyon') || activeEmployee.rolePackageId === 'operasyon-yonetimi'
-  }, [activeEmployee])
+    return isManagerOrAdmin(principal, activeEmployee)
+  }, [principal, activeEmployee])
 
   // Filter employees list by team overlap
   const manageableEmployees = useMemo(() => {
@@ -91,7 +85,7 @@ export function EmployeeListPage() {
       // Self is always visible
       if (emp.id === activeEmployee.id) return true
       // Overlap of teamIds
-      return emp.teamIds.some(tId => activeEmployee.teamIds.includes(tId))
+      return emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
     })
   }, [employees, isManagerExposed, activeEmployee])
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import type { Employee } from '@/types/domain'
 import { useEmployeeForm } from '@/features/employees/hooks/use-employee-form'
@@ -30,6 +30,7 @@ import {
 
 export function EmployeeCreatePage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
   const [givePanelAccess, setGivePanelAccess] = useState(false)
   const [provisionedData, setProvisionedData] = useState<ProvisionedCredentialData | null>(null)
   const [showProvisionDialog, setShowProvisionDialog] = useState(false)
@@ -110,19 +111,13 @@ export function EmployeeCreatePage() {
   // Resolve permission guard
   const hasPermission = useMemo(() => {
     if (employeeCount === 0) return true
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return (
-      effective.grantedKeys.has('employees.create') ||
-      effective.grantedKeys.has('employees.manage') ||
-      effective.grantedKeys.has('system.admin') ||
-      effective.grantedKeys.has('team.manage')
-    )
-  }, [activeEmployee, employeeCount])
+    return resolvePanelAuthority(principal, activeEmployee, [
+      'employees.create',
+      'employees.manage',
+      'system.admin',
+      'team.manage',
+    ])
+  }, [principal, activeEmployee, employeeCount])
 
   if (isLoadingAuth) {
     return (

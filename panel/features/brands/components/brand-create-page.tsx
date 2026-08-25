@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import type { Employee } from '@/types/domain'
 import { useBrandForm } from '@/features/brands/hooks/use-brand-form'
@@ -22,6 +22,7 @@ import { AlertTriangle } from 'lucide-react'
 
 export function BrandCreatePage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
   const form = useBrandForm()
   const {
     isSubmitting,
@@ -51,14 +52,8 @@ export function BrandCreatePage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('brand.manage')
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, 'brand.manage')
+  }, [principal, activeEmployee])
 
   if (isLoadingAuth) {
     return (

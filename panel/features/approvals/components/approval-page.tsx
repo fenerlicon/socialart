@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Employee, WorkflowApproval, WorkflowInstance, WorkflowStepInstance, Brand, WorkflowHandoff, BrandOperationCycle } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { getStoredApprovals } from '@/lib/storage/local-approval-store'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
@@ -56,6 +56,7 @@ import { HandoffRequestCard } from '@/features/my-work/components/handoff-reques
 
 export function ApprovalPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
   const [approvals, setApprovals] = useState<WorkflowApproval[]>([])
@@ -157,18 +158,12 @@ export function ApprovalPage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return !!currentEmployee
-  }, [currentEmployee])
+    return resolvePanelAuthority(principal, currentEmployee, ['approval.review', 'tasks.assign', 'task.manage'])
+  }, [principal, currentEmployee])
 
   const hasReviewPermission = useMemo(() => {
-    if (!currentEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: currentEmployee.rolePackageId,
-      teamIds: currentEmployee.teamIds,
-      permissionOverrides: currentEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('approval.review')
-  }, [currentEmployee])
+    return resolvePanelAuthority(principal, currentEmployee, 'approval.review')
+  }, [principal, currentEmployee])
 
   // Set default tab for regular employees
   useEffect(() => {
@@ -179,41 +174,12 @@ export function ApprovalPage() {
 
   // Central operations or full admin
   const isManagerExposed = useMemo(() => {
-    if (!currentEmployee) return false
-    return currentEmployee.teamIds.includes('merkezi-operasyon') || currentEmployee.rolePackageId === 'operasyon-yonetimi' || currentEmployee.rolePackageId === 'kreatif-yonetim'
-  }, [currentEmployee])
+    return isManagerOrAdmin(principal, currentEmployee)
+  }, [principal, currentEmployee])
 
   // Check if step maps to manager's teams
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
-    if (isManagerExposed) return true
-    if (!currentEmployee) return false
-
-    const ROLE_TO_TEAM: Record<string, string> = {
-      social_media: 'sosyal-medya',
-      graphic_design: 'grafik-studyo',
-      video_editing: 'post-produksiyon',
-      photography: 'fotograf-studyo',
-      videography: 'video-produksiyon',
-      digital_marketing: 'dijital-pazarlama',
-      strategy: 'strateji-musteri',
-      operation: 'merkezi-operasyon'
-    }
-
-    if (step.responsibilityRole) {
-      const teamId = ROLE_TO_TEAM[step.responsibilityRole]
-      if (teamId && currentEmployee.teamIds.includes(teamId as any)) {
-        return true
-      }
-    }
-
-    if (step.assignedEmployeeId) {
-      const assignee = employees.find(e => e.id === step.assignedEmployeeId)
-      if (assignee && assignee.teamIds.some(tId => currentEmployee.teamIds.includes(tId))) {
-        return true
-      }
-    }
-
-    return false
+    return isStepInScope(principal, step, currentEmployee, employees)
   }
 
   // Filtreleme Kuralları:

@@ -55,13 +55,14 @@ const TEAM_LABELS: Record<string, string> = {
 }
 
 import { getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, isManagerOrAdmin, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 
 export default function EmployeeDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
+  const { principal } = usePrincipal()
 
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [brands, setBrands] = useState<Brand[]>([])
@@ -131,42 +132,29 @@ export default function EmployeeDetailPage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return (
-      effective.grantedKeys.has('employees.manage') ||
-      effective.grantedKeys.has('employees.view') ||
-      effective.grantedKeys.has('system.admin') ||
-      effective.grantedKeys.has('team.manage') ||
-      effective.grantedKeys.has('task.manage')
-    )
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, [
+      'employees.manage',
+      'employees.view',
+      'system.admin',
+      'team.manage',
+      'task.manage',
+    ])
+  }, [principal, activeEmployee])
 
   const canManageEmployment = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return (
-      effective.grantedKeys.has('employees.manage') ||
-      effective.grantedKeys.has('system.admin')
-    )
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, [
+      'employees.manage',
+      'system.admin',
+    ])
+  }, [principal, activeEmployee])
 
   // Check if they share teams
   const canViewDetail = useMemo(() => {
+    if (isManagerOrAdmin(principal, activeEmployee)) return true
     if (!activeEmployee || !employee) return false
-    const isManagerExposed = activeEmployee.teamIds.includes('merkezi-operasyon') || activeEmployee.rolePackageId === 'operasyon-yonetimi'
-    if (isManagerExposed) return true
     if (activeEmployee.id === employee.id) return true
-    return employee.teamIds.some((tId) => activeEmployee.teamIds.includes(tId))
-  }, [activeEmployee, employee])
+    return employee.teamIds?.some((tId) => activeEmployee.teamIds?.includes(tId))
+  }, [principal, activeEmployee, employee])
 
   // Get brands where employee is assigned
   const assignedBrands = useMemo(() => {

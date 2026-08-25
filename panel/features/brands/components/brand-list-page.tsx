@@ -17,11 +17,12 @@ import { Plus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolveEffectivePermissions } from '@/lib/permissions/resolve-permissions'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 
 export function BrandListPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -74,14 +75,8 @@ export function BrandListPage() {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    if (!activeEmployee) return false
-    const effective = resolveEffectivePermissions({
-      rolePackageId: activeEmployee.rolePackageId,
-      teamIds: activeEmployee.teamIds,
-      permissionOverrides: activeEmployee.permissionOverrides || {},
-    })
-    return effective.grantedKeys.has('brand.manage')
-  }, [activeEmployee])
+    return resolvePanelAuthority(principal, activeEmployee, 'brand.manage')
+  }, [principal, activeEmployee])
 
   // Helper to compute live progress for a brand from workflow steps and operation plan
   const getBrandProgress = (b: Brand) => {

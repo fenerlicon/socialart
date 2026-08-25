@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Brand, Employee } from '@/types/domain'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { getStoredCalendarEvents, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, type CalendarEvent, type CalendarEventType } from '@/lib/storage/local-calendar-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -49,6 +50,7 @@ const DAY_NAMES = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 
 export function CalendarPage() {
   const router = useRouter()
+  const { principal } = usePrincipal()
 
   // Base Data States
   const [brands, setBrands] = useState<Brand[]>([])
@@ -182,12 +184,17 @@ export function CalendarPage() {
     loadData()
   }, [])
 
-  // 1. Yetki Kontrolü (hasAdvancedCalendarAccess)
+  // 1. Yetki Kontrolü (hasAdvancedCalendarAccess or calendar permission)
+  const hasPermission = useMemo(() => {
+    if (activeEmployee?.hasAdvancedCalendarAccess === true) return true
+    return resolvePanelAuthority(principal, activeEmployee, ['calendar.view', 'calendar.manage'])
+  }, [principal, activeEmployee])
+
   if (loading) {
     return <div className="p-12 text-center text-xs text-muted-foreground">Yükleniyor...</div>
   }
 
-  if (!activeEmployee) {
+  if (!hasPermission) {
     return <AccessDenied />
   }
 
