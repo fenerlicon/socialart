@@ -21,6 +21,12 @@ interface WorkspaceLayoutProps {
   children: ReactNode
 }
 
+function isPublicAuthRoute(path: string | null): boolean {
+  if (!path) return true
+  const clean = path.replace(/\/+$/, '')
+  return clean === '/login' || clean === '/admin-login' || clean.endsWith('/login') || clean.endsWith('/admin-login') || clean.includes('login')
+}
+
 export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -30,9 +36,10 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
+  const isAuthPage = isPublicAuthRoute(pathname)
+
   useEffect(() => {
     async function loadData() {
-      const isAuthPage = !pathname || pathname === '/login' || pathname === '/login/' || pathname.endsWith('/login') || pathname.includes('login');
       if (isAuthPage) {
         setIsLoadingAuth(false)
         return
@@ -416,7 +423,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     return segments
   }, [pathname])
 
-  if (pathname === '/login' || pathname === '/login/' || pathname?.endsWith('/login')) {
+  if (isAuthPage) {
     return <div className="animate-in fade-in duration-300">{children}</div>
   }
 

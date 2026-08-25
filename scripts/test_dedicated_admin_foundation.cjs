@@ -171,7 +171,22 @@ async function runTests() {
     workspaceLayout.includes('system.admin\': true'),
     'Workspace layout must configure system.admin for Admin principal'
   );
-  console.log(' ✅ PASSED: workspace-layout.tsx grants Ekip Üyeleri visibility to dedicated Admin principal');
+  assert.ok(
+    workspaceLayout.includes('isPublicAuthRoute'),
+    'Workspace layout must define isPublicAuthRoute'
+  );
+  assert.ok(
+    workspaceLayout.includes('clean === \'/admin-login\''),
+    'Workspace layout isPublicAuthRoute must include /admin-login'
+  );
+  console.log(' ✅ PASSED: workspace-layout.tsx supports public /admin-login without infinite loading loop');
+
+  const vercelConfig = fs.readFileSync(path.resolve(__dirname, '../vercel.json'), 'utf8');
+  assert.ok(
+    vercelConfig.includes('/api/auth-admin-login'),
+    'vercel.json must rewrite /api/auth-admin-login to /api/auth-router?route=admin-login'
+  );
+  console.log(' ✅ PASSED: vercel.json rewrites /api/auth-admin-login to auth router');
 
   console.log('\n===============================================================');
   console.log('ALL DEDICATED ADMIN PRINCIPAL FOUNDATION & BLOCKER TESTS PASSED');

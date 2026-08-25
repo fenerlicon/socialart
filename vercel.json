@@ -123,6 +123,10 @@
       "destination": "/api/auth-router?route=login"
     },
     {
+      "source": "/api/auth-admin-login",
+      "destination": "/api/auth-router?route=admin-login"
+    },
+    {
       "source": "/api/auth-me",
       "destination": "/api/auth-router?route=me"
     },
