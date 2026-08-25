@@ -155,6 +155,10 @@
       "destination": "/api/auth-router?route=update-employee-employment-type"
     },
     {
+      "source": "/api/auth-mirror-employee",
+      "destination": "/api/auth-router?route=mirror-employee"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },

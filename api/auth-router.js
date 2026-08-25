@@ -7,6 +7,7 @@ import updatePermissionOverrideHandler from './_lib/auth-update-permission-overr
 import updateEmployeeRoleHandler from './_lib/auth-update-employee-role.js';
 import updateEmployeeIdentityHandler from './_lib/auth-update-employee-identity.js';
 import updateEmployeeEmploymentTypeHandler from './_lib/auth-update-employee-employment-type.js';
+import mirrorEmployeeHandler from './_lib/auth-mirror-employee.js';
 import { validateOrigin } from './_lib/admin-auth.js';
 
 const ALLOWED_ROUTES = new Set([
@@ -19,6 +20,7 @@ const ALLOWED_ROUTES = new Set([
   'update-employee-role',
   'update-employee-identity',
   'update-employee-employment-type',
+  'mirror-employee',
 ]);
 
 export default async function handler(req, res) {
@@ -50,6 +52,7 @@ export default async function handler(req, res) {
     else if (rawUrl.includes('/api/auth-update-employee-role')) route = 'update-employee-role';
     else if (rawUrl.includes('/api/auth-update-employee-identity')) route = 'update-employee-identity';
     else if (rawUrl.includes('/api/auth-update-employee-employment-type')) route = 'update-employee-employment-type';
+    else if (rawUrl.includes('/api/auth-mirror-employee')) route = 'mirror-employee';
   }
 
   // 3. Strict Allowlist Guard: Reject path traversal, arbitrary modules, malformed objects/arrays
@@ -73,6 +76,7 @@ export default async function handler(req, res) {
     if (route === 'update-employee-role') return await updateEmployeeRoleHandler(req, res);
     if (route === 'update-employee-identity') return await updateEmployeeIdentityHandler(req, res);
     if (route === 'update-employee-employment-type') return await updateEmployeeEmploymentTypeHandler(req, res);
+    if (route === 'mirror-employee') return await mirrorEmployeeHandler(req, res);
   } catch (err) {
     if (!res.headersSent && typeof res.status === 'function') {
       return res.status(500).json({ error: 'Internal server error' });
