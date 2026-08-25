@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { getAdminSupabase, getSecondaryAdminSupabase } from './admin-db.js';
 import { requireAdminSession } from './auth-me.js';
 import { validateOrigin } from './admin-auth.js';
@@ -102,17 +103,21 @@ export async function mirrorEmployeeToDb2({
   }
 
   // 3. Create DB2 mirror row from DB1 source attributes
+  const now = new Date().toISOString();
   const newDb2Payload = {
+    id: crypto.randomUUID(),
     db1_employee_id: String(db1Emp.id),
     full_name: db1Emp.full_name || db1Emp.display_name || 'Personel',
-    email: db1Emp.email || null,
-    title: db1Emp.title || null,
-    role_package_id: db1Emp.role_package_id || null,
-    team_ids: Array.isArray(db1Emp.team_ids) ? db1Emp.team_ids : null,
+    email: db1Emp.email ? db1Emp.email.trim().toLowerCase() : `worker-${db1Emp.id}@socialartajans.local`,
+    title: db1Emp.title || 'Ekip Üyesi',
+    role_package_id: db1Emp.role_package_id || '',
+    team_ids: Array.isArray(db1Emp.team_ids) ? db1Emp.team_ids : [],
     employee_status: db1Emp.employee_status || 'active',
     employment_type: db1Emp.employment_type || null,
     permission_overrides: db1Emp.permission_overrides || {},
     work_location_status: db1Emp.work_location_status || 'office',
+    created_at: now,
+    updated_at: now,
   };
 
   const { data: insertedRows, error: insertErr } = await db2

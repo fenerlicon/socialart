@@ -183,8 +183,8 @@ async function runTests() {
   });
   assert.strictEqual(resUnresolved.success, true);
   assert.strictEqual(resUnresolved.created, true);
-  assert.strictEqual(mockDb2Unresolved.rows[0].role_package_id, null);
-  assert.strictEqual(mockDb2Unresolved.rows[0].team_ids, null);
+  assert.strictEqual(mockDb2Unresolved.rows[0].role_package_id, '');
+  assert.deepStrictEqual(mockDb2Unresolved.rows[0].team_ids, []);
   console.log(' ✅ PASSED [Test I]: Unresolved role/team does NOT block mirror creation');
 
   console.log('\n--- 2. IDEMPOTENCY & CONFLICT SAFETY (J - L) ---');
