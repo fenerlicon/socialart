@@ -32,7 +32,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   useEffect(() => {
     async function loadData() {
-      const isAuthPage = !pathname || pathname === '/login' || pathname === '/login/' || pathname.endsWith('/login');
+      const isAuthPage = !pathname || pathname === '/login' || pathname === '/login/' || pathname.endsWith('/login') || pathname.includes('login');
       if (isAuthPage) {
         setIsLoadingAuth(false)
         return
@@ -51,7 +51,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         }
 
         const authData = await res.json()
-        if (!authData || !authData.authenticated || !authData.employee) {
+        if (!authData || !authData.authenticated) {
           throw new Error('UNAUTHENTICATED')
         }
 
@@ -71,34 +71,82 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           return
         }
 
-        const authenticatedEmployeeId = String(authData.employee.id)
-        setServerEmployee(authData.employee)
+        if (authData.principalType === 'admin' || authData.isAdmin) {
+          const adminId = String(authData.admin?.id || 'admin')
+          const adminName = authData.admin?.displayName || 'Sistem Yöneticisi'
+          const adminUsername = authData.admin?.username || 'admin'
 
-        const list = await getStoredEmployees()
-        setEmployees(list)
+          setServerEmployee({
+            id: adminId,
+            fullName: adminName,
+            email: adminUsername,
+            title: 'Sistem Yöneticisi',
+            rolePackageId: 'operasyon-yonetimi',
+            teamIds: ['merkezi-operasyon'],
+            permissionOverrides: {
+              'system.admin': true,
+              'employees.manage': true,
+              'employees.view': true,
+              'team.manage': true,
+              'operations.view': true,
+              'brand.manage': true,
+              'settings.manage': true,
+            },
+          })
 
-        const operationalEmp = resolveOperationalEmployee(authenticatedEmployeeId, list)
-        if (operationalEmp) {
-          setCurrentEmployeeId(operationalEmp.id)
-          setActiveEmployeeId(operationalEmp.id)
-        } else {
-          setCurrentEmployeeId(authenticatedEmployeeId)
-          setActiveEmployeeId(authenticatedEmployeeId)
-        }
+          const list = await getStoredEmployees()
+          setEmployees(list)
+          setCurrentEmployeeId(adminId)
+          setActiveEmployeeId(adminId)
 
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem('social-art-base:credentials')
-          const userObj = {
-            id: authData.employee.id,
-            name: authData.employee.fullName,
-            role: authData.employee.title || 'Ekip Üyesi',
-            email: authData.employee.email,
-            class: 'A-Class',
-            permissions: 'all',
-            can_add_client: true,
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('social-art-base:credentials')
+            const userObj = {
+              id: adminId,
+              name: adminName,
+              role: 'Sistem Yöneticisi',
+              email: adminUsername,
+              class: 'A-Class',
+              permissions: 'all',
+              can_add_client: true,
+              isAdmin: true,
+              principalType: 'admin',
+            }
+            window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
+            window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
           }
-          window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
-          window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
+        } else if (authData.employee) {
+          const authenticatedEmployeeId = String(authData.employee.id)
+          setServerEmployee(authData.employee)
+
+          const list = await getStoredEmployees()
+          setEmployees(list)
+
+          const operationalEmp = resolveOperationalEmployee(authenticatedEmployeeId, list)
+          if (operationalEmp) {
+            setCurrentEmployeeId(operationalEmp.id)
+            setActiveEmployeeId(operationalEmp.id)
+          } else {
+            setCurrentEmployeeId(authenticatedEmployeeId)
+            setActiveEmployeeId(authenticatedEmployeeId)
+          }
+
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('social-art-base:credentials')
+            const userObj = {
+              id: authData.employee.id,
+              name: authData.employee.fullName,
+              role: authData.employee.title || 'Ekip Üyesi',
+              email: authData.employee.email,
+              class: 'A-Class',
+              permissions: 'all',
+              can_add_client: true,
+            }
+            window.localStorage.setItem('ajans_user', JSON.stringify(userObj))
+            window.localStorage.setItem('socialart_user', JSON.stringify(userObj))
+          }
+        } else {
+          throw new Error('UNAUTHENTICATED')
         }
 
         // Her ayın 5'ine kadar oluşturulmayan dönemlerin otomatik marka şablonuyla başlatılması kontrolü

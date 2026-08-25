@@ -17,7 +17,7 @@ export async function requireAdminSession(req, options = {}) {
 
   const { data: session, error: sessErr } = await supabase
     .from('admin_sessions')
-    .select('id, employee_id, expires_at, revoked_at')
+    .select('id, employee_id, admin_id, principal_type, expires_at, revoked_at')
     .eq('token_hash', tokenHash)
     .maybeSingle();
 
@@ -25,6 +25,37 @@ export async function requireAdminSession(req, options = {}) {
 
   if (new Date(session.expires_at) < new Date()) return null;
 
+  // 1. Dedicated Admin Principal Session
+  if (session.principal_type === 'admin' || session.admin_id) {
+    const { data: admin, error: adminErr } = await supabase
+      .from('admin_auth_identities')
+      .select('id, username, display_name, is_active, must_change_password')
+      .eq('id', session.admin_id)
+      .maybeSingle();
+
+    if (adminErr || !admin || admin.is_active !== true) return null;
+
+    const mustChange = admin.must_change_password === true;
+    if (!allowMustChangePassword && mustChange) {
+      return null;
+    }
+
+    return {
+      session,
+      principalType: 'admin',
+      isAdmin: true,
+      admin: {
+        id: String(admin.id),
+        username: admin.username,
+        displayName: admin.display_name,
+        isActive: admin.is_active,
+      },
+      permissions: ['*'],
+      mustChangePassword: mustChange,
+    };
+  }
+
+  // 2. Standard Employee Principal Session
   const { data: employee, error: empErr } = await supabase
     .from('employees')
     .select('id, full_name, email, title, role_package_id, permission_overrides, employee_status')
@@ -49,6 +80,8 @@ export async function requireAdminSession(req, options = {}) {
 
   return {
     session,
+    principalType: 'employee',
+    isAdmin: false,
     employee,
     permissions: effectivePermissions,
     mustChangePassword: mustChange
@@ -66,8 +99,25 @@ export default async function handler(req, res) {
     return res.status(401).json({ authenticated: false, error: 'Unauthenticated' });
   }
 
+  if (authState.principalType === 'admin') {
+    return res.status(200).json({
+      authenticated: true,
+      principalType: 'admin',
+      isAdmin: true,
+      admin: {
+        id: authState.admin.id,
+        username: authState.admin.username,
+        displayName: authState.admin.displayName,
+      },
+      permissions: authState.permissions,
+      mustChangePassword: authState.mustChangePassword,
+    });
+  }
+
   return res.status(200).json({
     authenticated: true,
+    principalType: 'employee',
+    isAdmin: false,
     employee: {
       id: authState.employee.id,
       fullName: authState.employee.full_name,

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { requireAdminSession } from './auth-me.js';
 import { validateOrigin } from './admin-auth.js';
+import { requireAdministrativeAuthority } from './admin-permissions.js';
 
 const DB1_URL = 'https://piffaggeshfrubyjkhej.supabase.co';
 const DB1_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -27,12 +28,10 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  // 2. Authorize operator with employees.manage or system.admin
-  const operatorPermissions = authState.permissions || [];
-  const hasPermission = operatorPermissions.includes('employees.manage') || operatorPermissions.includes('system.admin');
-
-  if (!hasPermission) {
-    return res.status(403).json({ error: 'Unauthorized: employees.manage or system.admin permission required' });
+  // 2. Authorize operator with canonical administrative authority guard
+  const authCheck = requireAdministrativeAuthority(authState, 'employees.manage');
+  if (!authCheck.authorized) {
+    return res.status(authCheck.status || 403).json({ error: authCheck.error || 'Unauthorized' });
   }
 
   // 3. Validate request payload

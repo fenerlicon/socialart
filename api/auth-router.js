@@ -1,4 +1,5 @@
 import loginHandler from './_lib/auth-login.js';
+import adminLoginHandler from './_lib/auth-admin-login.js';
 import meHandler from './_lib/auth-me.js';
 import logoutHandler from './_lib/auth-logout.js';
 import changePasswordHandler from './_lib/auth-change-password.js';
@@ -12,6 +13,7 @@ import { validateOrigin } from './_lib/admin-auth.js';
 
 const ALLOWED_ROUTES = new Set([
   'login',
+  'admin-login',
   'me',
   'logout',
   'change-password',
@@ -43,7 +45,8 @@ export default async function handler(req, res) {
 
   // 2. Fallback to path matching if rewrite stripped query string
   if (!route) {
-    if (rawUrl.includes('/api/auth-login')) route = 'login';
+    if (rawUrl.includes('/api/auth-admin-login')) route = 'admin-login';
+    else if (rawUrl.includes('/api/auth-login')) route = 'login';
     else if (rawUrl.includes('/api/auth-me')) route = 'me';
     else if (rawUrl.includes('/api/auth-logout')) route = 'logout';
     else if (rawUrl.includes('/api/auth-change-password')) route = 'change-password';
@@ -67,6 +70,7 @@ export default async function handler(req, res) {
 
   // 5. Dispatch to handler within Error Boundary
   try {
+    if (route === 'admin-login') return await adminLoginHandler(req, res);
     if (route === 'login') return await loginHandler(req, res);
     if (route === 'me') return await meHandler(req, res);
     if (route === 'logout') return await logoutHandler(req, res);

@@ -1,6 +1,7 @@
 import { getAdminSupabase, getSecondaryAdminSupabase } from './admin-db.js';
 import { requireAdminSession } from './auth-me.js';
 import { validateOrigin } from './admin-auth.js';
+import { requireAdministrativeAuthority } from './admin-permissions.js';
 
 export const VALID_EMPLOYMENT_TYPES = new Set(['full_time', 'freelance', 'contractor', 'part_time']);
 
@@ -19,7 +20,9 @@ export async function syncEmployeeEmploymentType({
   employmentType,
   db1 = getAdminSupabase(),
   db2 = getSecondaryAdminSupabase(),
+  actorType = 'employee',
   actorEmployeeId = null,
+  actorAdminId = null,
 }) {
   if (!employeeId || (typeof employeeId !== 'string' && typeof employeeId !== 'number')) {
     return {
@@ -39,8 +42,19 @@ export async function syncEmployeeEmploymentType({
   }
 
   // Actor ID is strictly required for auditable employment type mutations
-  const cleanActorId = actorEmployeeId !== undefined && actorEmployeeId !== null ? String(actorEmployeeId).trim() : '';
-  if (!cleanActorId) {
+  const isActorAdmin = actorType === 'admin';
+  const cleanActorAdminId = actorAdminId !== undefined && actorAdminId !== null ? String(actorAdminId).trim() : '';
+  const cleanActorEmployeeId = actorEmployeeId !== undefined && actorEmployeeId !== null ? String(actorEmployeeId).trim() : '';
+
+  if (isActorAdmin && !cleanActorAdminId) {
+    return {
+      success: false,
+      status: 400,
+      error: 'Authenticated actor admin ID is required for admin auditable mutations',
+    };
+  }
+
+  if (!isActorAdmin && !cleanActorEmployeeId) {
     return {
       success: false,
       status: 400,
@@ -268,7 +282,9 @@ export async function syncEmployeeEmploymentType({
       event_type: 'employment_type_changed',
       old_value: beforeDB1,
       new_value: targetEmploymentType,
-      actor_employee_id: String(cleanActorId),
+      actor_type: isActorAdmin ? 'admin' : 'employee',
+      actor_admin_id: isActorAdmin ? String(cleanActorAdminId) : null,
+      actor_employee_id: isActorAdmin ? null : String(cleanActorEmployeeId),
       metadata: { source: 'employment_type_api' },
       created_at: new Date().toISOString(),
     };
@@ -347,7 +363,9 @@ export async function syncEmployeeEmploymentType({
     employmentType: targetEmploymentType,
     previousEmploymentType: beforeDB1,
     mirrored: true,
-    actorEmployeeId: cleanActorId,
+    actorType: isActorAdmin ? 'admin' : 'employee',
+    actorAdminId: isActorAdmin ? String(cleanActorAdminId) : null,
+    actorEmployeeId: isActorAdmin ? null : String(cleanActorEmployeeId),
     auditRecordId,
   };
 }
@@ -370,26 +388,22 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  if (!authState.employeeId) {
-    return res.status(401).json({ error: 'Authenticated session lacks valid operator employeeId' });
-  }
-
-  // 2. Authorize operator with employees.manage or system.admin
-  const operatorPermissions = authState.permissions || [];
-  const hasPermission = operatorPermissions.includes('employees.manage') || operatorPermissions.includes('system.admin');
-
-  if (!hasPermission) {
-    return res.status(403).json({ error: 'Unauthorized: employees.manage or system.admin permission required' });
+  // 2. Authorize operator with canonical administrative authority guard
+  const authCheck = requireAdministrativeAuthority(authState, 'employees.manage');
+  if (!authCheck.authorized) {
+    return res.status(authCheck.status || 403).json({ error: authCheck.error || 'Unauthorized' });
   }
 
   // 3. Extract payload
   const { employeeId, employmentType } = req.body || {};
 
-  // 4. Run sync mutation with session-derived actorEmployeeId
+  // 4. Run sync mutation with session-derived actor identity
   const result = await syncEmployeeEmploymentType({
     employeeId,
     employmentType,
-    actorEmployeeId: authState.employeeId,
+    actorType: authCheck.actorType,
+    actorAdminId: authCheck.actorAdminId,
+    actorEmployeeId: authCheck.actorEmployeeId,
   });
 
   if (!result.success) {

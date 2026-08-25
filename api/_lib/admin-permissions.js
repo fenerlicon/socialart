@@ -46,3 +46,53 @@ export function resolveServerPermissions(rolePackageId, permissionOverrides = {}
 
   return Array.from(granted).sort();
 }
+
+/**
+ * Canonical Server-Side Administrative Authority Guard
+ * Evaluates both dedicated Admin principals and authorized Employee principals.
+ *
+ * @param {object} authState - The session state resolved by requireAdminSession
+ * @param {string} requiredPermission - The permission key required if an employee principal is operating
+ * @returns {{ authorized: boolean, principalType?: 'admin'|'employee', actorType?: 'admin'|'employee', actorAdminId?: string|null, actorEmployeeId?: string|null, status?: number, error?: string }}
+ */
+export function requireAdministrativeAuthority(authState, requiredPermission = 'employees.manage') {
+  if (!authState) {
+    return { authorized: false, status: 401, error: 'Unauthenticated' };
+  }
+
+  // 1. Dedicated Admin Principal (Intrinsic administrative authority)
+  if (authState.principalType === 'admin' || authState.isAdmin === true) {
+    return {
+      authorized: true,
+      principalType: 'admin',
+      actorType: 'admin',
+      actorAdminId: authState.admin?.id || authState.adminId || null,
+      actorEmployeeId: null,
+    };
+  }
+
+  // 2. Employee Principal (Scoped permission authority)
+  if (authState.principalType === 'employee' || authState.employee) {
+    const permissions = authState.permissions || [];
+    const hasPermission = permissions.includes(requiredPermission) || permissions.includes('system.admin');
+
+    if (!hasPermission) {
+      return {
+        authorized: false,
+        status: 403,
+        error: `Unauthorized: ${requiredPermission} or system.admin permission required`,
+      };
+    }
+
+    return {
+      authorized: true,
+      principalType: 'employee',
+      actorType: 'employee',
+      actorEmployeeId: String(authState.employee.id),
+      actorAdminId: null,
+    };
+  }
+
+  return { authorized: false, status: 403, error: 'Unauthorized: Unknown principal type' };
+}
+
