@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import type { Employee } from '@/types/domain'
+import type { Employee, EmploymentType } from '@/types/domain'
 
 const ACTIVE_EMPLOYEE_KEY = 'social-art-base:active-employee-id'
 
@@ -143,16 +143,8 @@ export const EmployeeRepository = {
     // employee_status is protected — updated via /api/auth-update-employee-identity
     // team_ids is protected — updated via /api/auth-update-employee-identity
     // has_advanced_calendar_access is protected — updated via /api/auth-update-employee-identity
+    // employment_type is protected — updated via /api/auth-update-employee-employment-type
     if (employee.title !== undefined) row.title = employee.title
-    if (employee.employmentType !== undefined) {
-      if (employee.employmentType === null) {
-        row.employment_type = null
-      } else if (['full_time', 'freelance', 'contractor', 'part_time'].includes(employee.employmentType)) {
-        row.employment_type = employee.employmentType
-      } else {
-        throw new Error('Invalid employmentType: must be full_time, freelance, contractor, part_time, or null')
-      }
-    }
     
     if (employee.permissionOverrides !== undefined) {
       const safeOverrides = { ...(employee.permissionOverrides || {}) }
@@ -260,6 +252,24 @@ export const EmployeeRepository = {
       console.error(`Error deleting employee ${id}:`, error)
       throw error
     }
+  },
+
+  async updateEmploymentType(
+    employeeId: string,
+    employmentType: EmploymentType | null
+  ): Promise<boolean> {
+    const res = await fetch('/api/auth-update-employee-employment-type', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId, employmentType }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || 'Failed to update employee employment type')
+    }
+
+    return true
   },
 
   getActiveId(): string | null {

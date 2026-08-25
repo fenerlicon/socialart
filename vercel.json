@@ -151,6 +151,10 @@
       "destination": "/api/auth-router?route=update-employee-identity"
     },
     {
+      "source": "/api/auth-update-employee-employment-type",
+      "destination": "/api/auth-router?route=update-employee-employment-type"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },
