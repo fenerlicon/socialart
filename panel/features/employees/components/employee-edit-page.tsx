@@ -10,6 +10,7 @@ import { EmployeeBasicInfoSection } from '@/features/employees/components/employ
 import { EmployeeStatusSection } from '@/features/employees/components/employee-status-section'
 import { RolePackageSection } from '@/features/employees/components/role-package-section'
 import { TeamAssignmentSection } from '@/features/employees/components/team-assignment-section'
+import { EmploymentTypeSection } from '@/features/employees/components/employment-type-section'
 import { EmployeeFormActions } from '@/features/employees/components/employee-form-actions'
 import {
   Accordion,
@@ -135,6 +136,19 @@ export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
       effective.grantedKeys.has('employees.manage') ||
       effective.grantedKeys.has('system.admin') ||
       effective.grantedKeys.has('team.manage')
+    )
+  }, [activeEmployee])
+
+  const canManageEmployment = useMemo(() => {
+    if (!activeEmployee) return false
+    const effective = resolveEffectivePermissions({
+      rolePackageId: activeEmployee.rolePackageId,
+      teamIds: activeEmployee.teamIds,
+      permissionOverrides: activeEmployee.permissionOverrides || {},
+    })
+    return (
+      effective.grantedKeys.has('employees.manage') ||
+      effective.grantedKeys.has('system.admin')
     )
   }, [activeEmployee])
 
@@ -302,6 +316,30 @@ export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
             </AccordionTrigger>
             <AccordionContent className="pb-6 pt-2">
               <TeamAssignmentSection form={form} />
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 5. Çalışma Tipi (İstihdam İlişkisi) */}
+          <AccordionItem
+            value="employment-type"
+            className="border rounded-xl bg-card px-6 shadow-sm overflow-hidden"
+          >
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="text-left space-y-1">
+                <h3 className="text-base font-semibold tracking-tight text-foreground">5. Çalışma Tipi (İstihdam İlişkisi)</h3>
+                <p className="text-xs text-muted-foreground font-normal">
+                  Tam Zamanlı, Freelance, Sözleşmeli veya Yarı Zamanlı hakediş/istihdam sınıflandırması.
+                </p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-6 pt-2">
+              <EmploymentTypeSection
+                employee={employeeToEdit}
+                canManage={canManageEmployment}
+                onUpdated={(newType) => {
+                  setEmployeeToEdit((prev) => prev ? { ...prev, employmentType: newType } : null)
+                }}
+              />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

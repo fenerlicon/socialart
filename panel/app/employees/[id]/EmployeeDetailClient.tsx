@@ -11,6 +11,7 @@ import {
   EMPLOYEE_STATUS_LABELS,
   WORK_LOCATION_STATUS_LABELS,
 } from '@/types/domain'
+import { EmploymentTypeSection, formatEmploymentTypeLabel } from '@/features/employees/components/employment-type-section'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -142,6 +143,19 @@ export default function EmployeeDetailPage() {
       effective.grantedKeys.has('system.admin') ||
       effective.grantedKeys.has('team.manage') ||
       effective.grantedKeys.has('task.manage')
+    )
+  }, [activeEmployee])
+
+  const canManageEmployment = useMemo(() => {
+    if (!activeEmployee) return false
+    const effective = resolveEffectivePermissions({
+      rolePackageId: activeEmployee.rolePackageId,
+      teamIds: activeEmployee.teamIds,
+      permissionOverrides: activeEmployee.permissionOverrides || {},
+    })
+    return (
+      effective.grantedKeys.has('employees.manage') ||
+      effective.grantedKeys.has('system.admin')
     )
   }, [activeEmployee])
 
@@ -308,6 +322,17 @@ export default function EmployeeDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Çalışma Tipi / İstihdam İlişkisi */}
+          <div className="rounded-2xl border bg-card/40 p-6 space-y-4 shadow-sm backdrop-blur-md">
+            <EmploymentTypeSection
+              employee={employee}
+              canManage={canManageEmployment}
+              onUpdated={(newType) => {
+                setEmployee((prev) => prev ? { ...prev, employmentType: newType } : null)
+              }}
+            />
           </div>
 
           {/* Sorumluluk Alanları (Takımlar) */}
