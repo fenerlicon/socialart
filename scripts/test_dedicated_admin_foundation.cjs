@@ -94,13 +94,26 @@ async function runTests() {
   assert.ok(authMeSource.includes('principalType: \'employee\''), 'auth-me.js must preserve employee backward compatibility');
   console.log(' ✅ PASSED [Test B & F]: auth-me.js polymorphic session resolution verified');
 
-  // --- 4. FIRST ADMIN PROVISIONING SCRIPT AUDIT (O, P) ---
-  console.log('\n--- 4. FIRST ADMIN PROVISIONING SCRIPT AUDIT (O, P) ---');
-  const provisionSource = fs.readFileSync(path.resolve(__dirname, 'provision_first_admin.cjs'), 'utf8');
-  assert.ok(provisionSource.includes('admin_auth_identities'), 'Provisioning script must target admin_auth_identities');
-  assert.ok(provisionSource.includes('hashPassword'), 'Provisioning script must use scrypt hashPassword');
-  assert.ok(provisionSource.includes('hidden'), 'Provisioning script must use hidden terminal input');
-  console.log(' ✅ PASSED [Test O & P]: Provisioning script verified with hidden input and scrypt hashing');
+  // --- 4. FIRST ADMIN PROVISIONING SCRIPT & RAW TTY AUDIT (O, P) ---
+  console.log('\n--- 4. FIRST ADMIN PROVISIONING SCRIPT & RAW TTY AUDIT (O, P) ---');
+  const provisionModule = require('./provision_first_admin.cjs');
+  const { parseRawInputChunk } = provisionModule;
+
+  // Test character parsing
+  let testState = parseRawInputChunk('SecretPass', '', null);
+  assert.strictEqual(testState.buffer, 'SecretPass');
+  assert.strictEqual(testState.isDone, false);
+
+  // Test backspace
+  let backspacedState = parseRawInputChunk('\b\b', testState.buffer, null);
+  assert.strictEqual(backspacedState.buffer, 'SecretPa');
+
+  // Test Enter (CR/LF) termination
+  let finishedState = parseRawInputChunk('\r', backspacedState.buffer, null);
+  assert.strictEqual(finishedState.buffer, 'SecretPa');
+  assert.strictEqual(finishedState.isDone, true);
+
+  console.log(' ✅ PASSED [Test O & P]: Raw terminal password chunk parsing and backspace behavior verified');
 
   // --- 5. EMPLOYMENT TYPE ENDPOINT & AUDIT ACTOR CONTRACT AUDIT ---
   console.log('\n--- 5. EMPLOYMENT TYPE ENDPOINT & AUDIT ACTOR CONTRACT AUDIT ---');

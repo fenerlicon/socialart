@@ -2,50 +2,101 @@ const readline = require('readline');
 const { hashPassword, validatePasswordPolicy } = require('../api/_lib/admin-auth.js');
 const { getAdminSupabase } = require('../api/_lib/admin-db.js');
 
-function askQuestion(query, hidden = false) {
+/**
+ * Reads standard visible text input using readline
+ */
+function askVisibleQuestion(query) {
   return new Promise((resolve) => {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
     });
 
-    if (!hidden) {
-      rl.question(query, (ans) => {
-        rl.close();
-        resolve(ans.trim());
-      });
-    } else {
-      // Hidden input masking
-      process.stdout.write(query);
-      let input = '';
-      process.stdin.resume();
-      process.stdin.setRawMode?.(true);
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans.trim());
+    });
+  });
+}
 
-      const onData = (char) => {
-        const str = char.toString('utf8');
-        if (str === '\n' || str === '\r' || str === '\u0004') {
-          process.stdin.setRawMode?.(false);
-          process.stdin.pause();
-          process.stdin.removeListener('data', onData);
-          process.stdout.write('\n');
-          rl.close();
-          resolve(input.trim());
-        } else if (str === '\u0003') {
-          // Ctrl+C
-          process.exit(1);
-        } else if (str === '\b' || str === '\x7f') {
-          if (input.length > 0) {
-            input = input.slice(0, -1);
-            process.stdout.write('\b \b');
-          }
-        } else {
-          input += str;
-          process.stdout.write('*');
-        }
-      };
+/**
+ * Pure parser for raw terminal chunks supporting Backspace, Ctrl+C, and CR/LF
+ */
+function parseRawInputChunk(chunk, currentBuffer, onCharCallback) {
+  let buf = currentBuffer;
+  let isDone = false;
 
-      process.stdin.on('data', onData);
+  for (let i = 0; i < chunk.length; i++) {
+    const char = chunk[i];
+    if (char === '\r' || char === '\n' || char === '\u0004') {
+      isDone = true;
+      break;
+    } else if (char === '\u0003') {
+      process.exit(1);
+    } else if (char === '\b' || char === '\x7f') {
+      if (buf.length > 0) {
+        buf = buf.slice(0, -1);
+        if (onCharCallback) onCharCallback('backspace');
+      }
+    } else if (char >= ' ') {
+      buf += char;
+      if (onCharCallback) onCharCallback('char');
     }
+  }
+
+  return { buffer: buf, isDone };
+}
+
+/**
+ * Securely reads hidden password from stdin with raw-mode mask '*' (Zero readline interference)
+ */
+function askHiddenPassword(query) {
+  return new Promise((resolve) => {
+    process.stdout.write(query);
+    let buffer = '';
+
+    const isRawSupported = Boolean(process.stdin.setRawMode);
+    if (isRawSupported) {
+      try {
+        process.stdin.setRawMode(true);
+      } catch (e) {}
+    }
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+
+    const cleanup = () => {
+      if (isRawSupported) {
+        try {
+          process.stdin.setRawMode(false);
+        } catch (e) {}
+      }
+      process.stdin.pause();
+      process.stdin.removeListener('data', onData);
+    };
+
+    const onData = (chunk) => {
+      const { buffer: newBuffer, isDone } = parseRawInputChunk(
+        chunk,
+        buffer,
+        (action) => {
+          if (action === 'backspace') {
+            process.stdout.write('\b \b');
+          } else if (action === 'char') {
+            process.stdout.write('*');
+          }
+        }
+      );
+
+      buffer = newBuffer;
+
+      if (isDone) {
+        cleanup();
+        process.stdout.write('\n');
+        resolve(buffer.trim());
+      }
+    };
+
+    process.stdin.on('data', onData);
   });
 }
 
@@ -54,21 +105,21 @@ async function runProvisioning() {
   console.log('DEDICATED ADMIN PRINCIPAL — SECURE PROVISIONING TOOL');
   console.log('===============================================================\n');
 
-  const username = await askQuestion('Admin Username (e.g. admin): ', false);
+  const username = await askVisibleQuestion('Admin Username (e.g. admin): ');
   if (!username || username.length < 3) {
     console.error(' ❌ Error: Username must be at least 3 characters.');
     process.exit(1);
   }
 
-  const displayName = await askQuestion('Display Name (default: System Administrator): ', false) || 'System Administrator';
+  const displayName = (await askVisibleQuestion('Display Name (default: System Administrator): ')) || 'System Administrator';
 
-  const password = await askQuestion('Admin Password (min 12 chars): ', true);
+  const password = await askHiddenPassword('Admin Password (min 12 chars): ');
   if (!password || password.length < 12) {
     console.error(' ❌ Error: Password must be at least 12 characters.');
     process.exit(1);
   }
 
-  const confirmPassword = await askQuestion('Confirm Admin Password: ', true);
+  const confirmPassword = await askHiddenPassword('Confirm Admin Password: ');
   if (password !== confirmPassword) {
     console.error(' ❌ Error: Passwords do not match.');
     process.exit(1);
@@ -131,5 +182,6 @@ if (require.main === module) {
   });
 }
 
-module.exports = { runProvisioning };
+module.exports = { runProvisioning, parseRawInputChunk };
+
 
