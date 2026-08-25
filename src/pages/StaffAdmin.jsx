@@ -410,7 +410,50 @@ function Admin() {
         }
 
         const data = await res.json();
-        if (!data || !data.authenticated || !data.employee || data.mustChangePassword) {
+        if (!data || !data.authenticated || data.mustChangePassword) {
+          if (isMounted) {
+            setCurrentUser(null);
+            setAuthStatus('unauthenticated');
+          }
+          return;
+        }
+
+        const isDedicatedAdmin = data.principalType === 'admin' || data.isAdmin === true;
+        if (isDedicatedAdmin) {
+          const adminId = String(data.admin?.id || 'admin');
+          const adminName = data.admin?.displayName || 'Sistem Yöneticisi';
+          const adminUsername = data.admin?.username || 'admin';
+
+          const userObj = {
+            name: adminName,
+            id: adminId,
+            role: 'Sistem Yöneticisi',
+            class: 'A-Class',
+            permissions: 'all',
+            effectivePermissions: ['all'],
+            can_add_client: true,
+            email: adminUsername,
+            rolePackageId: null,
+            isDedicatedAdmin: true,
+            principalType: 'admin'
+          };
+
+          try {
+            localStorage.setItem('social-art-base:active-employee-id', adminId);
+            localStorage.setItem('ajans_user', JSON.stringify(userObj));
+            localStorage.setItem('socialart_user', JSON.stringify(userObj));
+            localStorage.removeItem('social-art-base:credentials');
+          } catch (e) {}
+
+          if (isMounted) {
+            setCurrentUser(userObj);
+            setAuthStatus('authenticated');
+            fetchAllData(userObj);
+          }
+          return;
+        }
+
+        if (!data.employee) {
           if (isMounted) {
             setCurrentUser(null);
             setAuthStatus('unauthenticated');
@@ -419,7 +462,7 @@ function Admin() {
         }
 
         const permissions = data.permissions || [];
-        const hasCrmView = permissions.includes('crm.view');
+        const hasCrmView = permissions.includes('crm.view') || permissions.includes('system.admin');
 
         if (!hasCrmView) {
           if (isMounted) {
@@ -438,7 +481,9 @@ function Admin() {
           effectivePermissions: permissions,
           can_add_client: true,
           email: data.employee.email,
-          rolePackageId: data.employee.rolePackageId
+          rolePackageId: data.employee.rolePackageId,
+          isDedicatedAdmin: false,
+          principalType: 'employee'
         };
 
         try {
@@ -929,11 +974,18 @@ function Admin() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await fetch('/api/auth-logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {}
     localStorage.removeItem('ajans_user');
+    localStorage.removeItem('socialart_user');
     localStorage.removeItem('social-art-base:active-employee-id');
     localStorage.removeItem('social-art-base:credentials');
     setCurrentUser(null);
+    setAuthStatus('unauthenticated');
     window.location.href = '/admin/login';
   };
 

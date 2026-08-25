@@ -168,11 +168,18 @@ export function TasksPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [brandFilter, setBrandFilter] = useState('all')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [assigneeFilter, setAssigneeFilter] = useState('all')
+  const [teamFilter, setTeamFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [approvalFilter, setApprovalFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('all')
   const [sortBy, setSortBy] = useState('deadline_asc')
+
+  // Bulk Operations State
+  const [bulkBrandId, setBulkBrandId] = useState('')
+  const [bulkRoleFilter, setBulkRoleFilter] = useState('all')
+  const [bulkEmployeeId, setBulkEmployeeId] = useState('')
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)

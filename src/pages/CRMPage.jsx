@@ -498,12 +498,20 @@ export default function CRMPage({ embedded = false }) {
           return;
         }
         const data = await res.json();
-        if (!data || !data.authenticated || !data.employee || data.mustChangePassword) {
+        if (!data || !data.authenticated || data.mustChangePassword) {
+          if (isMounted) setAuthStatus('unauthenticated');
+          return;
+        }
+        if (data.principalType === 'admin' || data.isAdmin === true) {
+          if (isMounted) setAuthStatus('authenticated');
+          return;
+        }
+        if (!data.employee) {
           if (isMounted) setAuthStatus('unauthenticated');
           return;
         }
         const permissions = data.permissions || [];
-        const hasCrmView = permissions.includes('crm.view');
+        const hasCrmView = permissions.includes('crm.view') || permissions.includes('system.admin');
         if (!hasCrmView) {
           if (isMounted) setAuthStatus('unauthorized');
           return;
