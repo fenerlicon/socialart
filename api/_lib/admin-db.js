@@ -15,8 +15,6 @@ let cachedClient = null;
 let cachedSecondaryClient = null;
 
 const DB2_URL = 'https://osuwytugjscwhcxxkhfa.supabase.co';
-const DB2_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdXd5dHVnanNjd2hjeHhraGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1OTMzOTcsImV4cCI6MjA5OTE2OTM5N30.h6UXEdEq8O0zIyrjPqS_zcJKBtziPBcKo6yPsBo4QCU';
-const DB2_SERVICE_ROLE = process.env.SUPABASE_SECONDARY_SERVICE_ROLE_KEY || DB2_KEY;
 
 export function getAdminSupabase() {
   if (!cachedClient) {
@@ -31,8 +29,13 @@ export function getAdminSupabase() {
 }
 
 export function getSecondaryAdminSupabase() {
+  const secondaryServiceRoleKey = process.env.SUPABASE_SECONDARY_SERVICE_ROLE_KEY;
+  if (!secondaryServiceRoleKey || typeof secondaryServiceRoleKey !== 'string' || !secondaryServiceRoleKey.trim()) {
+    throw new Error('SECONDARY_ADMIN_SERVICE_ROLE_REQUIRED: Secondary database service role key is not configured.');
+  }
+
   if (!cachedSecondaryClient) {
-    cachedSecondaryClient = createClient(DB2_URL, DB2_SERVICE_ROLE, {
+    cachedSecondaryClient = createClient(DB2_URL, secondaryServiceRoleKey.trim(), {
       auth: {
         persistSession: false,
         autoRefreshToken: false

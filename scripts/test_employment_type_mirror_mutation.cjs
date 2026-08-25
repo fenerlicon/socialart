@@ -146,15 +146,21 @@ async function runTests() {
   console.log(' ✅ PASSED [Test B]: NULL accepted and correctly sets employment_type = null');
 
   // Test C: invalid values rejected
-  for (const badVal of ['freelancer', 'employee', 'active', 123, {}]) {
-    const res = await syncEmployeeEmploymentType({
-      employeeId: '1',
-      employmentType: badVal,
-      actorEmployeeId: '2',
-    });
-    assert.strictEqual(res.success, false);
-    assert.strictEqual(res.status, 400);
-    assert.match(res.error, /Invalid employmentType/);
+  {
+    const mockDb1 = createMockDbClient([{ id: '1', employment_type: 'freelance', full_name: 'Test' }]);
+    const mockDb2 = createMockDbClient([{ id: 'uuid-1', db1_employee_id: '1', employment_type: 'freelance' }]);
+    for (const badVal of ['freelancer', 'employee', 'active', 123, {}]) {
+      const res = await syncEmployeeEmploymentType({
+        employeeId: '1',
+        employmentType: badVal,
+        actorEmployeeId: '2',
+        db1: mockDb1,
+        db2: mockDb2,
+      });
+      assert.strictEqual(res.success, false);
+      assert.strictEqual(res.status, 400);
+      assert.match(res.error, /Invalid employmentType/);
+    }
   }
   console.log(' ✅ PASSED [Test C]: Invalid values (freelancer, employee, active, numbers, objects) rejected with 400');
 
