@@ -9,7 +9,6 @@ import { createClient } from '@supabase/supabase-js';
  */
 
 const DB1_URL = 'https://piffaggeshfrubyjkhej.supabase.co';
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpZmZhZ2dlc2hmcnVieWpraGVqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc2OTMzMSwiZXhwIjoyMDk0MzQ1MzMxfQ.placeholder';
 
 let cachedClient = null;
 let cachedSecondaryClient = null;
@@ -17,8 +16,13 @@ let cachedSecondaryClient = null;
 const DB2_URL = 'https://osuwytugjscwhcxxkhfa.supabase.co';
 
 export function getAdminSupabase() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey || typeof serviceRoleKey !== 'string' || !serviceRoleKey.trim()) {
+    throw new Error('ADMIN_SERVICE_ROLE_REQUIRED: Primary database service role key is not configured.');
+  }
+
   if (!cachedClient) {
-    cachedClient = createClient(DB1_URL, SERVICE_ROLE_KEY, {
+    cachedClient = createClient(DB1_URL, serviceRoleKey.trim(), {
       auth: {
         persistSession: false,
         autoRefreshToken: false

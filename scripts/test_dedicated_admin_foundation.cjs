@@ -96,24 +96,37 @@ async function runTests() {
 
   // --- 4. FIRST ADMIN PROVISIONING SCRIPT & RAW TTY AUDIT (O, P) ---
   console.log('\n--- 4. FIRST ADMIN PROVISIONING SCRIPT & RAW TTY AUDIT (O, P) ---');
+  const provisionSource = fs.readFileSync(path.resolve(__dirname, 'provision_first_admin.cjs'), 'utf8');
+  assert.ok(provisionSource.indexOf('dotenv') < provisionSource.indexOf('admin-db.js'), 'dotenv must be loaded before admin-db.js is required');
+  assert.ok(!provisionSource.includes('readline.createInterface'), 'provision_first_admin must not create conflicting readline interfaces');
+
+  const adminDbSource = fs.readFileSync(path.resolve(__dirname, '../api/_lib/admin-db.js'), 'utf8');
+  assert.ok(adminDbSource.includes('ADMIN_SERVICE_ROLE_REQUIRED'), 'getAdminSupabase must fail closed if service role key missing');
+  assert.ok(!adminDbSource.includes('.placeholder'), 'admin-db.js must not contain static placeholder fallback');
+
   const provisionModule = require('./provision_first_admin.cjs');
   const { parseRawInputChunk } = provisionModule;
 
   // Test character parsing
-  let testState = parseRawInputChunk('SecretPass', '', null);
+  let testState = parseRawInputChunk('SecretPass', '', false, null);
   assert.strictEqual(testState.buffer, 'SecretPass');
   assert.strictEqual(testState.isDone, false);
+  assert.strictEqual(testState.isAborted, false);
 
   // Test backspace
-  let backspacedState = parseRawInputChunk('\b\b', testState.buffer, null);
+  let backspacedState = parseRawInputChunk('\b\b', testState.buffer, false, null);
   assert.strictEqual(backspacedState.buffer, 'SecretPa');
 
   // Test Enter (CR/LF) termination
-  let finishedState = parseRawInputChunk('\r', backspacedState.buffer, null);
+  let finishedState = parseRawInputChunk('\r', backspacedState.buffer, false, null);
   assert.strictEqual(finishedState.buffer, 'SecretPa');
   assert.strictEqual(finishedState.isDone, true);
 
-  console.log(' ✅ PASSED [Test O & P]: Raw terminal password chunk parsing and backspace behavior verified');
+  // Test Ctrl+C abort
+  let abortState = parseRawInputChunk('\u0003', '', false, null);
+  assert.strictEqual(abortState.isAborted, true);
+
+  console.log(' ✅ PASSED [Test O & P]: Raw terminal password chunk parsing, backspace, and abort behavior verified');
 
   // --- 5. EMPLOYMENT TYPE ENDPOINT & AUDIT ACTOR CONTRACT AUDIT ---
   console.log('\n--- 5. EMPLOYMENT TYPE ENDPOINT & AUDIT ACTOR CONTRACT AUDIT ---');
