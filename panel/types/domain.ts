@@ -435,7 +435,7 @@ export type WorkflowInstanceStatus =
 export interface WorkflowInstance {
   id: string
   brandId: string
-  cycleId: string
+  cycleId?: string | null
   operationPlanItemId: string
   operationTemplateId: string
   workflowTemplateId: string

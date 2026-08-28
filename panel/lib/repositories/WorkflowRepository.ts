@@ -28,7 +28,7 @@ export const WorkflowRepository = {
     const row: any = {}
     if (instance.id !== undefined) row.id = instance.id
     if (instance.brandId !== undefined) row.brand_id = instance.brandId
-    if (instance.cycleId !== undefined) row.cycle_id = instance.cycleId
+    row.cycle_id = instance.cycleId || null
     if (instance.operationPlanItemId !== undefined) row.operation_plan_item_id = instance.operationPlanItemId
     if (instance.operationTemplateId !== undefined) row.operation_template_id = instance.operationTemplateId
     if (instance.workflowTemplateId !== undefined) row.workflow_template_id = instance.workflowTemplateId
@@ -243,8 +243,28 @@ export const WorkflowRepository = {
     const isUpdate = incomingIds.every((id) => existingIdSet.has(id))
 
     if (!isUpdate) {
+      // Validate any non-null incomingCycleIds against cycles table
+      const incomingCycleIds = Array.from(
+        new Set(instances.map((i) => i.cycleId).filter((c): c is string => Boolean(c)))
+      )
+
+      if (incomingCycleIds.length > 0) {
+        const { data: validCycles, error: cycleErr } = await supabase
+          .from('cycles')
+          .select('id')
+          .in('id', incomingCycleIds)
+
+        if (cycleErr) throw cycleErr
+        const validCycleIdSet = new Set((validCycles || []).map((c: any) => c.id))
+
+        for (const cycleId of incomingCycleIds) {
+          if (!validCycleIdSet.has(cycleId)) {
+            throw new Error(`Geçersiz veya mevcut olmayan operasyon dönemi (cycle_id: ${cycleId})`)
+          }
+        }
+      }
+
       // Yeni instance'lar oluşturuluyor — cycleId bazlı duplicate kontrolü yap
-      const incomingCycleIds = Array.from(new Set(instances.map((i) => i.cycleId)))
       for (const cycleId of incomingCycleIds) {
         const { data: existing, error } = await supabase
           .from('workflow_instances')

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import type { Employee, Brand, WorkflowInstance, WorkflowStepInstance, ResponsibilityRole } from '@/types/domain'
 import { isCreativeProductionResponsibility } from '@/types/domain'
 import { saveWorkflowSteps, saveWorkflowInstances, getStoredWorkflowInstances } from '@/lib/storage/local-workflow-instance-store'
+import { getStoredCycles } from '@/lib/storage/local-cycle-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -321,6 +322,7 @@ export function CustomTaskModal({
     setIsSubmitting(true)
     try {
       const allStoredInstances = await getStoredWorkflowInstances()
+      const allCycles = await getStoredCycles()
       const newStepsToSave: WorkflowStepInstance[] = []
       const newInstancesToSave: WorkflowInstance[] = []
 
@@ -334,7 +336,7 @@ export function CustomTaskModal({
             generalInst = {
               id: 'inst-general-agency-tasks',
               brandId: brands[0]?.id || 'general-brand',
-              cycleId: 'cycle-general-tasks',
+              cycleId: undefined,
               operationPlanItemId: 'op-general-tasks',
               operationTemplateId: 'general-operation',
               workflowTemplateId: 'general-workflow',
@@ -351,10 +353,11 @@ export function CustomTaskModal({
           let brandInst = allStoredInstances.find(inst => inst.brandId === task.brandId && inst.status !== 'completed' && inst.status !== 'cancelled')
           if (!brandInst) {
             const selectedBrand = brands.find(b => b.id === task.brandId)
+            const brandCycle = allCycles.find(c => c.brandId === task.brandId && c.status === 'active') || allCycles.find(c => c.brandId === task.brandId)
             brandInst = {
               id: 'inst-custom-' + task.brandId + '-' + Date.now() + '-' + i,
               brandId: task.brandId,
-              cycleId: 'cycle-custom-' + task.brandId,
+              cycleId: brandCycle ? brandCycle.id : undefined,
               operationPlanItemId: 'op-custom',
               operationTemplateId: 'custom-operation',
               workflowTemplateId: 'custom-workflow',

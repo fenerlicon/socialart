@@ -274,6 +274,13 @@ export function TasksPage() {
     return steps.filter(s => s.status === 'active' && !s.assignedEmployeeId).length
   }, [steps])
 
+  const showUnassignedWarning = useMemo(() => {
+    if (unassignedCount <= 0) return false
+    if (!effectiveActiveEmployee) return false
+    const role = effectiveActiveEmployee.rolePackageId
+    return role === 'kreatif-direktor' || role === 'kreatif-yonetim' || role === 'operasyon-yonetimi'
+  }, [unassignedCount, effectiveActiveEmployee])
+
   const filteredSteps = useMemo(() => {
     return steps.filter((step) => {
       if (!isStepInManagerTeams(step)) return false
@@ -796,7 +803,7 @@ export function TasksPage() {
 
       {/* Görevler Listesi */}
       <div className="space-y-3">
-        {unassignedCount > 0 && (
+        {showUnassignedWarning && (
           <div className="rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-500/[0.05] to-amber-500/[0.05] p-4 text-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse shadow-lg ring-1 ring-red-500/10">
             <div className="flex items-center gap-3">
               <div className="bg-red-500/15 border border-red-500/25 p-2 rounded-xl text-red-400 shrink-0">
@@ -1232,7 +1239,7 @@ export function TasksPage() {
         const inst = instances.find(i => i.id === detailStep.workflowInstanceId) || {
           id: detailStep.workflowInstanceId,
           brandId: 'general-brand',
-          cycleId: 'general-cycle',
+          cycleId: undefined,
           operationPlanItemId: 'op-general',
           operationTemplateId: 'general-op',
           workflowTemplateId: 'general-wf',

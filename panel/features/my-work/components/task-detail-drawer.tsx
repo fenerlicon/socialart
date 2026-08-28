@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { WorkflowInstance, WorkflowStepInstance, Employee } from '@/types/domain'
+import { getStoredApprovals } from '@/lib/storage/local-approval-store'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,7 +27,8 @@ import {
   Flame,
   Download,
   CheckSquare,
-  Square
+  Square,
+  RotateCcw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -54,6 +56,30 @@ export function TaskDetailDrawer({
   currentEmployeeId,
 }: TaskDetailDrawerProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [latestRevisionNote, setLatestRevisionNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadRevision() {
+      if (step.approvalStatus === 'revision_requested') {
+        try {
+          const allApprovals = await getStoredApprovals()
+          const revApproval = allApprovals
+            .filter((a) => a.workflowStepInstanceId === step.id && a.revisionNote)
+            .sort(
+              (a, b) =>
+                new Date(b.revisedAt || b.createdAt).getTime() -
+                new Date(a.revisedAt || a.createdAt).getTime()
+            )[0]
+          if (revApproval && revApproval.revisionNote) {
+            setLatestRevisionNote(revApproval.revisionNote)
+          }
+        } catch (err) {
+          console.error('Failed to load revision note in drawer:', err)
+        }
+      }
+    }
+    loadRevision()
+  }, [step.id, step.approvalStatus])
 
   if (!isOpen) return null
 
@@ -73,6 +99,14 @@ export function TaskDetailDrawer({
   }
 
   const getStatusInfo = (status: WorkflowStepInstance['status']) => {
+    if (step.approvalStatus === 'revision_requested') {
+      return {
+        label: 'Revizyon Talep Edildi',
+        color: 'text-amber-400',
+        bg: 'bg-amber-500/15 border-amber-500/40',
+        icon: <RotateCcw className="h-4 w-4 text-amber-400 animate-spin" />,
+      }
+    }
     switch (status) {
       case 'completed':
         return { label: 'Tamamlandı', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/25', icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" /> }
@@ -399,6 +433,19 @@ export function TaskDetailDrawer({
 
         {/* Content */}
         <div className="px-6 py-5 space-y-6">
+
+          {/* Art Director Revizyon Notu Bannerı */}
+          {step.approvalStatus === 'revision_requested' && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-4 text-xs space-y-2 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 text-amber-300 font-extrabold">
+                <RotateCcw className="h-4 w-4 text-amber-400" />
+                <span>ART DIRECTOR REVİZYON NOTU</span>
+              </div>
+              <p className="text-amber-200/90 whitespace-pre-wrap leading-relaxed bg-neutral-950/50 p-3 rounded-lg border border-amber-900/40">
+                {latestRevisionNote || 'Revizyon talep edildi. Lütfen güncellemeleri tamamlayıp tekrar onaya gönderiniz.'}
+              </p>
+            </div>
+          )}
 
           {/* --- Aktif Görev & Sorumlu Bilgileri --- */}
           <section className="space-y-3">

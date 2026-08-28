@@ -121,7 +121,7 @@ export function MyWorkCard({
           const allApprovals = await getStoredApprovals()
           const revApproval = allApprovals
             .filter(a => a.workflowStepInstanceId === step.id && a.revisionNote)
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+            .sort((a, b) => new Date(b.revisedAt || b.createdAt).getTime() - new Date(a.revisedAt || a.createdAt).getTime())[0]
           if (revApproval && revApproval.revisionNote) {
             setLatestRevisionNote(revApproval.revisionNote)
           }
@@ -765,7 +765,7 @@ export function MyWorkCard({
                   onClick={handleSendToApproval}
                   className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs h-8 px-4 rounded-lg flex items-center gap-1 shadow"
                 >
-                  Onaya Gönder
+                  {step.approvalStatus === 'revision_requested' ? 'Tekrar Onaya Gönder' : 'Onaya Gönder'}
                 </Button>
               ) : (
                 <Button
