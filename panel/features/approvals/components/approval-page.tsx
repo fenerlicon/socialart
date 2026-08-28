@@ -534,13 +534,26 @@ export function ApprovalPage() {
                   </div>
 
                   {/* DETAY GRID: Kim istedi, ne zaman, hangi adımda */}
-                  <div className="grid gap-3 sm:grid-cols-3 bg-neutral-950/30 rounded-xl p-3 border border-neutral-900/60 text-xs">
+                  <div className="grid gap-3 sm:grid-cols-4 bg-neutral-950/30 rounded-xl p-3 border border-neutral-900/60 text-xs">
                     <div className="space-y-0.5">
-                      <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Talep Eden</span>
-                      <span className="font-semibold text-foreground flex items-center gap-1">
+                      <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Talep Eden (Tasarımcı)</span>
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground flex-wrap">
                         <User className="h-3 w-3 text-neutral-500" />
-                        {requesterName}
-                      </span>
+                        <span>{requesterName}</span>
+                        {(() => {
+                          const reqEmp = employees.find(e => e.id === app.requestedByEmployeeId)
+                          if (!reqEmp) return null
+                          return reqEmp.employmentType === 'freelance' ? (
+                            <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[9px] font-bold px-1.5 py-0">
+                              Freelance
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 text-[9px] font-bold px-1.5 py-0">
+                              Tam Zamanlı
+                            </Badge>
+                          )
+                        })()}
+                      </div>
                     </div>
                     <div className="space-y-0.5">
                       <span className="block text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Gönderilme Tarihi</span>
@@ -560,6 +573,14 @@ export function ApprovalPage() {
                                 reporting:'Raporlama', custom:'Özel' } as Record<string,string>)[step.responsibilityRole] || step.responsibilityRole
                             : 'Operasyon'}
                         </span>
+                      </div>
+                    )}
+                    {step && step.creativeCount !== undefined && step.creativeCount !== null && (
+                      <div className="space-y-0.5">
+                        <span className="block text-[9px] uppercase tracking-wider text-purple-400 font-bold">Kreatif Adedi</span>
+                        <Badge variant="outline" className="bg-purple-950/40 text-purple-300 border-purple-700/50 text-[10px] font-extrabold px-2 py-0.5">
+                          🎨 {step.creativeCount} Adet
+                        </Badge>
                       </div>
                     )}
                   </div>

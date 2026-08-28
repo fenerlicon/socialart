@@ -11,6 +11,7 @@ import { TaskDetailDrawer } from './task-detail-drawer'
 import { TaskDeliveryModal } from '@/components/shared/task-delivery-modal'
 import { TaskFailureExplanationModal } from '@/components/shared/task-failure-explanation-modal'
 import { getWorkflowStepInstances, updateWorkflowStepInstance, incrementInstanceProgress } from '@/lib/storage/local-workflow-instance-store'
+import { getStoredApprovals } from '@/lib/storage/local-approval-store'
 import { supabase } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import {
@@ -30,6 +31,7 @@ import {
   Loader2,
   Eye,
   FileText,
+  RotateCcw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -105,19 +107,31 @@ export function MyWorkCard({
   const [extensionReason, setExtensionReason] = useState('')
   const [isSubmittingExtension, setIsSubmittingExtension] = useState(false)
 
+  const [latestRevisionNote, setLatestRevisionNote] = useState<string | null>(null)
+
   useEffect(() => {
     setMounted(true)
-    async function loadSiblings() {
+    async function loadSiblingsAndRevision() {
       try {
         const allSteps = await getWorkflowStepInstances()
         const siblings = allSteps.filter(s => s.workflowInstanceId === instance.id)
         setSiblingSteps(siblings)
+
+        if (step.approvalStatus === 'revision_requested') {
+          const allApprovals = await getStoredApprovals()
+          const revApproval = allApprovals
+            .filter(a => a.workflowStepInstanceId === step.id && a.revisionNote)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+          if (revApproval && revApproval.revisionNote) {
+            setLatestRevisionNote(revApproval.revisionNote)
+          }
+        }
       } catch (err) {
         console.error('Failed to load sibling steps:', err)
       }
     }
-    loadSiblings()
-  }, [instance.id])
+    loadSiblingsAndRevision()
+  }, [instance.id, step.id, step.approvalStatus])
 
   const currentEmployee = employees.find(e => e.id === currentEmployeeId)
   const isManager = currentEmployee?.rolePackageId === 'operasyon-yonetimi' || currentEmployee?.rolePackageId === 'kreatif-yonetim' || currentEmployee?.teamIds.includes('merkezi-operasyon')
@@ -156,24 +170,32 @@ export function MyWorkCard({
 
   // 1. Durum stil eşleştirmeleri
   const getStatusStyles = (status: WorkflowStepInstance['status']) => {
+    if (step.approvalStatus === 'revision_requested') {
+      return {
+        badge: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+        label: 'REVİZYON TALEP EDİLDİ',
+        icon: <RotateCcw className="h-3.5 w-3.5 text-amber-400 animate-spin" />,
+      }
+    }
+
     switch (status) {
       case 'completed':
         return {
-          badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-          label: 'Tamamlandı',
-          icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />,
+          badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+          label: step.approvalPurpose === 'final_creative' ? 'FINAL ONAYLI' : 'Tamamlandı',
+          icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
         }
       case 'active':
         return {
-          badge: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
-          label: 'Yayında / Yapılıyor',
-          icon: <Play className="h-3.5 w-3.5 text-blue-500 animate-pulse" />,
+          badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+          label: step.assignedEmployeeId ? 'ÜRETİMDE' : 'ATANMIŞ',
+          icon: <Play className="h-3.5 w-3.5 text-blue-400 animate-pulse" />,
         }
       case 'waiting_approval':
         return {
-          badge: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-          label: 'Onay Bekliyor',
-          icon: <Clock className="h-3.5 w-3.5 text-purple-500 animate-pulse" />,
+          badge: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
+          label: 'REVIEW BEKLİYOR',
+          icon: <Clock className="h-3.5 w-3.5 text-purple-400 animate-pulse" />,
         }
       case 'skipped':
         return {
@@ -463,6 +485,24 @@ export function MyWorkCard({
             </Badge>
           ) : (
             <>
+              {step.creativeCount !== undefined && step.creativeCount !== null && (
+                <Badge variant="outline" className="bg-purple-950/40 text-purple-300 border-purple-700/50 text-[10px] font-bold">
+                  🎨 {step.creativeCount} Kreatif
+                </Badge>
+              )}
+              {currentEmployee && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'text-[9px] font-bold px-1.5 py-0',
+                    currentEmployee.employmentType === 'freelance'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                      : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                  )}
+                >
+                  {currentEmployee.employmentType === 'freelance' ? 'Freelance' : 'Tam Zamanlı'}
+                </Badge>
+              )}
               {step.handoffStatus === 'pending' && (
                 <Badge
                   variant="outline"
@@ -504,6 +544,19 @@ export function MyWorkCard({
           </span>
         </div>
       </div>
+
+      {/* Art Director Revizyon Notu Bannerı */}
+      {step.approvalStatus === 'revision_requested' && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-3.5 text-xs space-y-1.5 animate-in fade-in duration-300">
+          <div className="flex items-center gap-1.5 text-amber-300 font-extrabold">
+            <RotateCcw className="h-4 w-4 text-amber-400" />
+            <span>ART DIRECTOR REVİZYON NOTU</span>
+          </div>
+          <p className="text-amber-200/90 whitespace-pre-wrap leading-relaxed bg-neutral-950/50 p-2.5 rounded-lg border border-amber-900/40">
+            {latestRevisionNote || 'Revizyon talep edildi. Lütfen güncellemeleri tamamlayıp tekrar onaya gönderiniz.'}
+          </p>
+        </div>
+      )}
 
       {/* Vaktinde Tamamlanamama / Gecikme Açıklama Alanı */}
       {isOverdue && (

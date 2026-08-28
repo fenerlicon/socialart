@@ -1,4 +1,4 @@
-﻿import { resolveServerPermissions } from '../../../api/_lib/admin-permissions.js';
+import { resolveServerPermissions } from '../../../api/_lib/admin-permissions.js';
 
 export const ROLE_TO_TEAM = {
   social_media: 'sosyal-medya',
@@ -88,6 +88,12 @@ export function isStepInScope(principal, step, employee, allEmployees = []) {
   }
 
   const employeeTeams = employee.teamIds || [];
+
+  if (employee.rolePackageId === 'art-director') {
+    if (step.responsibilityRole === 'graphic_design' || employeeTeams.includes('grafik-studyo')) {
+      return true;
+    }
+  }
 
   if (step.responsibilityRole) {
     const teamId = ROLE_TO_TEAM[step.responsibilityRole];

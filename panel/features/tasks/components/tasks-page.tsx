@@ -241,6 +241,9 @@ export function TasksPage() {
     return employees.filter(emp => {
       if (isManagerExposed) return true
       if (!activeEmployee) return false
+      if (activeEmployee.rolePackageId === 'art-director' || activeEmployee.teamIds?.includes('grafik-studyo')) {
+        return emp.teamIds?.includes('grafik-studyo') || emp.rolePackageId === 'grafik-tasarim' || emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
+      }
       return emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
     })
   }, [employees, isManagerExposed, activeEmployee])
@@ -855,11 +858,16 @@ export function TasksPage() {
                           Saat: {details.dueTime}
                         </Badge>
                       )}
+                      {step.creativeCount !== undefined && step.creativeCount !== null && (
+                        <Badge variant="outline" className="bg-purple-950/40 text-purple-300 border-purple-700/50 text-[9px] font-bold flex items-center gap-1">
+                          🎨 {step.creativeCount} Kreatif
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Sorumlu, Onaylayıcı ve Destekler */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground pt-1">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <User className={cn("h-3.5 w-3.5", !step.assignedEmployeeId ? "text-red-500/80 animate-pulse" : "text-neutral-500")} />
                         <span className="text-[11px]">
                           Sorumlu:{' '}
@@ -869,7 +877,22 @@ export function TasksPage() {
                                 ⚠️ Atama Yapılmadı
                               </span>
                             ) : (
-                              getEmployeeName(step.assignedEmployeeId)
+                              <>
+                                {getEmployeeName(step.assignedEmployeeId)}
+                                {(() => {
+                                  const assignedEmp = employees.find(e => e.id === step.assignedEmployeeId)
+                                  if (!assignedEmp) return null
+                                  return assignedEmp.employmentType === 'freelance' ? (
+                                    <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[9px] font-bold px-1.5 py-0 ml-1">
+                                      Freelance
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 text-[9px] font-bold px-1.5 py-0 ml-1">
+                                      Tam Zamanlı
+                                    </Badge>
+                                  )
+                                })()}
+                              </>
                             )}
                           </strong>
                         </span>
