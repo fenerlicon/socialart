@@ -517,7 +517,7 @@ export interface WorkflowHandoff {
   workflowInstanceId: string
   workflowStepInstanceId: string
   fromEmployeeId: string
-  toEmployeeId: string
+  toEmployeeId?: string
   reason: string // Yoğunluk, Uzmanlık gerektiriyor vb.
   note?: string
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled'

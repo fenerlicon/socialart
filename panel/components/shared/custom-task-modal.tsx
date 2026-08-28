@@ -332,11 +332,11 @@ export function CustomTaskModal({
         let instanceId = ''
 
         if (task.brandId === 'general' || !task.brandId) {
-          let generalInst = allStoredInstances.find(inst => inst.id === 'inst-general-agency-tasks' || inst.title === 'Genel Ajans İşleri')
+          let generalInst = allStoredInstances.find(inst => inst.id === 'inst-general-agency-tasks' || inst.title === 'Genel Ajans & Özel Görevler' || inst.title === 'Genel Ajans İşleri')
           if (!generalInst) {
             generalInst = {
               id: 'inst-general-agency-tasks',
-              brandId: brands[0]?.id || 'general-brand',
+              brandId: 'general',
               cycleId: undefined,
               operationPlanItemId: 'op-general-tasks',
               operationTemplateId: 'general-operation',

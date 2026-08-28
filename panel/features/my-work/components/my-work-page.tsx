@@ -250,8 +250,9 @@ export function MyWorkPage() {
       if (!step) return false
 
       // Find brand
-      const brand = brands.find((b) => b.id === instance.brandId)
-      const brandName = brand ? brand.name : ''
+      const isGeneral = instance.id === 'inst-general-agency-tasks' || instance.brandId === 'general' || instance.brandId === 'general-agency' || instance.brandId === 'general-brand' || !instance.brandId || instance.title.includes('Genel Ajans')
+      const brand = isGeneral ? null : brands.find((b) => b.id === instance.brandId)
+      const brandName = isGeneral ? 'Genel Ajans' : (brand ? brand.name : 'Genel Ajans')
 
       // 1. Search Query Match (Brand name or workflow title or step title)
       const query = searchQuery.toLowerCase().trim()
@@ -311,8 +312,9 @@ export function MyWorkPage() {
       if (!instance) return false
 
       // Find brand
-      const brand = brands.find((b) => b.id === instance.brandId)
-      const brandName = brand ? brand.name : ''
+      const isGeneral = instance.id === 'inst-general-agency-tasks' || instance.brandId === 'general' || instance.brandId === 'general-agency' || instance.brandId === 'general-brand' || !instance.brandId || instance.title.includes('Genel Ajans')
+      const brand = isGeneral ? null : brands.find((b) => b.id === instance.brandId)
+      const brandName = isGeneral ? 'Genel Ajans' : (brand ? brand.name : 'Genel Ajans')
 
       // 1. Search Query Match (Brand name or workflow title)
       const query = searchQuery.toLowerCase().trim()
@@ -549,8 +551,9 @@ export function MyWorkPage() {
             const instance = instances.find((i) => i.id === step.workflowInstanceId)!
             
             // Resolve Brand name
-            const brand = brands.find((b) => b.id === instance.brandId)
-            const brandName = brand ? brand.name : 'Bilinmeyen Marka'
+            const isGeneral = instance.id === 'inst-general-agency-tasks' || instance.brandId === 'general' || instance.brandId === 'general-agency' || instance.brandId === 'general-brand' || !instance.brandId || instance.title.includes('Genel Ajans')
+            const brand = isGeneral ? null : brands.find((b) => b.id === instance.brandId)
+            const brandName = isGeneral ? 'Genel Ajans' : (brand ? brand.name : 'Genel Ajans')
 
             // Resolve Cycle name
             const cycle = cycles.find((c) => c.id === instance.cycleId)

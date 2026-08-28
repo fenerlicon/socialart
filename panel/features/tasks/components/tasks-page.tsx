@@ -348,11 +348,12 @@ export function TasksPage() {
   // Get brand name helper
   const getBrandNameOfInstance = (instanceId: string) => {
     const inst = instances.find((i) => i.id === instanceId)
-    if (!inst) return 'Genel Ajans İşi'
-    if (inst.id === 'inst-general-agency-tasks' || inst.brandId === 'general-brand' || inst.title.includes('Genel')) {
-      return '🏢 Genel Ajans İşi'
+    if (!inst) return 'Genel Ajans'
+    if (inst.id === 'inst-general-agency-tasks' || inst.brandId === 'general' || inst.brandId === 'general-agency' || inst.brandId === 'general-brand' || !inst.brandId || inst.title.includes('Genel Ajans') || inst.title.includes('Genel')) {
+      return 'Genel Ajans'
     }
-    return brands.find((b) => b.id === inst.brandId)?.name || 'Marka'
+    const brand = brands.find((b) => b.id === inst.brandId)
+    return brand ? brand.name : 'Genel Ajans'
   }
 
   const getInstanceTitle = (instanceId: string) => {

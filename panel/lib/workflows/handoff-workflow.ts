@@ -60,7 +60,7 @@ interface RequestHandoffParams {
   workflowInstanceId: string
   stepInstanceId: string
   fromEmployeeId: string
-  toEmployeeId: string
+  toEmployeeId?: string
   reason: string
   note?: string
 }
@@ -73,7 +73,7 @@ export async function requestHandoff(params: RequestHandoffParams): Promise<Work
   const now = new Date().toISOString()
 
   // 1. Validasyonlar
-  if (fromEmployeeId === toEmployeeId) {
+  if (toEmployeeId && fromEmployeeId === toEmployeeId) {
     throw new Error('İşi kendinize paslayamazsınız!')
   }
 
@@ -103,7 +103,7 @@ export async function requestHandoff(params: RequestHandoffParams): Promise<Work
     workflowInstanceId,
     workflowStepInstanceId: stepInstanceId,
     fromEmployeeId,
-    toEmployeeId,
+    toEmployeeId: toEmployeeId || undefined,
     reason,
     note,
     status: 'pending',
@@ -113,7 +113,7 @@ export async function requestHandoff(params: RequestHandoffParams): Promise<Work
   // Talebi kaydet
   await saveHandoff(handoff)
 
-  // 3. Adım güncelle
+  // 3. Adım güncelle (Atama değişmez, sadece handoffStatus pending olur)
   step.handoffStatus = 'pending'
   step.handoffId = handoffId
   await updateWorkflowStepInstance(step)
@@ -139,7 +139,11 @@ export async function requestHandoff(params: RequestHandoffParams): Promise<Work
 /**
  * Bir paslama talebini kabul eder. İşin atanan sorumlusunu değiştirir.
  */
-export async function acceptHandoff(handoffId: string, actorEmployeeId: string): Promise<void> {
+export async function acceptHandoff(
+  handoffId: string,
+  actorEmployeeId: string,
+  destinationEmployeeId?: string
+): Promise<void> {
   const now = new Date().toISOString()
   
   // 1. Talebi bul
@@ -160,15 +164,21 @@ export async function acceptHandoff(handoffId: string, actorEmployeeId: string):
     throw new Error(`Devredilecek iş adımı bulunamadı: ${handoff.workflowStepInstanceId}`)
   }
 
+  const targetAssigneeId = destinationEmployeeId || handoff.toEmployeeId
+  if (!targetAssigneeId) {
+    throw new Error('Paslanacak hedef çalışan seçilmelidir!')
+  }
+
   // 3. Handoff durumunu güncelle
   handoff.status = 'accepted'
+  handoff.toEmployeeId = targetAssigneeId
   handoff.acceptedAt = now
   await updateHandoff(handoff)
 
   // 4. Adımı yeni çalışana devret
   step.previousAssigneeEmployeeId = handoff.fromEmployeeId
-  step.assignedEmployeeId = handoff.toEmployeeId
-  step.assigneeEmployeeId = handoff.toEmployeeId // alias alanını da doldur
+  step.assignedEmployeeId = targetAssigneeId
+  step.assigneeEmployeeId = targetAssigneeId // alias alanını da doldur
   step.handoffStatus = 'accepted'
   step.assignedAt = now
   await updateWorkflowStepInstance(step)
@@ -182,7 +192,7 @@ export async function acceptHandoff(handoffId: string, actorEmployeeId: string):
     action: 'handoff_accepted',
     fromStatus: 'active',
     toStatus: 'active',
-    note: 'Paslama talebi kabul edildi.',
+    note: `Paslama talebi kabul edildi. Yeni sorumlu: ${targetAssigneeId}`,
     createdAt: now,
   }
   await saveWorkflowHistory(historyLog)
