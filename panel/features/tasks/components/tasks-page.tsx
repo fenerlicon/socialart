@@ -44,7 +44,8 @@ import {
   Paperclip,
   Link as LinkIcon,
   Layers,
-  FileText
+  FileText,
+  RotateCcw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -867,10 +868,28 @@ export function TasksPage() {
 
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-sm font-extrabold text-foreground tracking-tight">{step.title}</h3>
+                      {step.handoffStatus === 'pending' && (
+                        <Badge variant="outline" className="bg-amber-500/15 text-amber-300 border-amber-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                          <ArrowRightLeft className="h-3 w-3 text-amber-400" />
+                          Paslama Talebi Bekliyor
+                        </Badge>
+                      )}
                       {step.status === 'waiting_approval' && (
                         <Badge variant="outline" className="bg-purple-500/15 text-purple-300 border-purple-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
                           <Clock className="h-3 w-3 text-purple-400" />
                           REVIEW BEKLİYOR
+                        </Badge>
+                      )}
+                      {step.status === 'active' && step.approvalStatus === 'revision_requested' && (
+                        <Badge variant="outline" className="bg-amber-500/15 text-amber-300 border-amber-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                          <RotateCcw className="h-3 w-3 text-amber-400" />
+                          REVİZYON TALEP EDİLDİ
+                        </Badge>
+                      )}
+                      {step.status === 'completed' && (
+                        <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                          FINAL ONAYLI
                         </Badge>
                       )}
                     </div>
@@ -972,19 +991,31 @@ export function TasksPage() {
                     </div>
 
                     {/* Yönetim Butonları */}
-                    <div className="flex items-center gap-1">
-                      {step.status === 'waiting_approval' && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {step.handoffStatus === 'pending' && (
                         <Button
-                          onClick={() => router.push('/approvals')}
+                          onClick={() => router.push('/approvals?tab=handoffs')}
                           size="sm"
-                          className="h-8 px-3 rounded-lg text-xs flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold shadow-md animate-in fade-in"
-                          title="Onay Merkezinde İncele ve Onayla/Revize İste"
+                          className="h-8 px-3 rounded-lg text-xs flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md animate-in fade-in"
+                          title="Onay Merkezinde Paslama Talebini İncele"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" /> İncele / Onayla
+                          <ArrowRightLeft className="h-3.5 w-3.5" /> Paslama Talebini İncele
                         </Button>
                       )}
 
-                      {canPassTask && (
+                      <Button
+                        onClick={() => {
+                          setDetailStep(step)
+                          setDetailDrawerOpen(true)
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-3 rounded-lg text-xs flex items-center gap-1.5 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 font-bold"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" /> Detayları Gör
+                      </Button>
+
+                      {canPassTask && step.status !== 'completed' && (
                         <Button
                           onClick={() => openAssignModal(step)}
                           variant="ghost"
@@ -996,37 +1027,29 @@ export function TasksPage() {
                         </Button>
                       )}
 
-                      <Button
-                        onClick={() => {
-                          setDetailStep(step)
-                          setDetailDrawerOpen(true)
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2.5 rounded-lg text-xs flex items-center gap-1 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 font-bold"
-                      >
-                        <Sparkles className="h-3 w-3" /> Detay
-                      </Button>
+                      {step.status !== 'completed' && (
+                        <Button
+                          onClick={() => openAssignModal(step)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
+                          title="Atamayı Güncelle"
+                        >
+                          <User className="h-3 w-3" /> Ata
+                        </Button>
+                      )}
 
-                      <Button
-                        onClick={() => openAssignModal(step)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
-                        title="Atamayı Güncelle"
-                      >
-                        <User className="h-3 w-3" /> Ata
-                      </Button>
-
-                      <Button
-                        onClick={() => openDeadlineModal(step)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
-                        title="Deadline Güncelle"
-                      >
-                        <Calendar className="h-3 w-3" /> Tarih
-                      </Button>
+                      {step.status !== 'completed' && (
+                        <Button
+                          onClick={() => openDeadlineModal(step)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 rounded-lg text-xs flex items-center gap-1 hover:bg-muted/10 hover:text-white"
+                          title="Deadline Güncelle"
+                        >
+                          <Calendar className="h-3 w-3" /> Tarih
+                        </Button>
+                      )}
 
                       <Button
                         onClick={() => handleDeleteStep(step)}
@@ -1291,6 +1314,7 @@ export function TasksPage() {
             siblingSteps={siblingSteps}
             employees={employees}
             currentEmployeeId={effectiveActiveEmployee?.id || ''}
+            onActionSuccess={loadData}
           />
         )
       })()}

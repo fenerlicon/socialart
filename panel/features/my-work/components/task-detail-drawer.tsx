@@ -1,8 +1,9 @@
-'use client'
-
 import React, { useState, useEffect } from 'react'
-import type { WorkflowInstance, WorkflowStepInstance, Employee } from '@/types/domain'
+import { useRouter } from 'next/navigation'
+import type { WorkflowInstance, WorkflowStepInstance, Employee, WorkflowApproval } from '@/types/domain'
 import { getStoredApprovals } from '@/lib/storage/local-approval-store'
+import { approveApproval, requestRevision } from '@/lib/workflows/approval-workflow'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -42,6 +43,7 @@ interface TaskDetailDrawerProps {
   siblingSteps: WorkflowStepInstance[]
   employees: Employee[]
   currentEmployeeId: string
+  onActionSuccess?: () => void
 }
 
 export function TaskDetailDrawer({
@@ -54,15 +56,27 @@ export function TaskDetailDrawer({
   siblingSteps,
   employees,
   currentEmployeeId,
+  onActionSuccess,
 }: TaskDetailDrawerProps) {
+  const router = useRouter()
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [latestRevisionNote, setLatestRevisionNote] = useState<string | null>(null)
+  const [pendingApproval, setPendingApproval] = useState<WorkflowApproval | null>(null)
+  const [showRevisionModal, setShowRevisionModal] = useState(false)
+  const [showFinalConfirm, setShowFinalConfirm] = useState(false)
+  const [revisionInput, setRevisionInput] = useState('')
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false)
 
   useEffect(() => {
-    async function loadRevision() {
-      if (step.approvalStatus === 'revision_requested') {
-        try {
-          const allApprovals = await getStoredApprovals()
+    async function loadData() {
+      try {
+        const allApprovals = await getStoredApprovals()
+        const pending = allApprovals.find(
+          (a) => a.workflowStepInstanceId === step.id && a.status === 'pending'
+        )
+        setPendingApproval(pending || null)
+
+        if (step.approvalStatus === 'revision_requested') {
           const revApproval = allApprovals
             .filter((a) => a.workflowStepInstanceId === step.id && a.revisionNote)
             .sort(
@@ -73,13 +87,13 @@ export function TaskDetailDrawer({
           if (revApproval && revApproval.revisionNote) {
             setLatestRevisionNote(revApproval.revisionNote)
           }
-        } catch (err) {
-          console.error('Failed to load revision note in drawer:', err)
         }
+      } catch (err) {
+        console.error('Failed to load approval details in drawer:', err)
       }
     }
-    loadRevision()
-  }, [step.id, step.approvalStatus])
+    loadData()
+  }, [step.id, step.status, step.approvalStatus])
 
   if (!isOpen) return null
 
@@ -392,21 +406,86 @@ export function TaskDetailDrawer({
     )
   }
 
+  const isGeneral =
+    instance.id === 'inst-general-agency-tasks' ||
+    instance.brandId === 'general' ||
+    instance.brandId === 'general-agency' ||
+    instance.brandId === 'general-brand' ||
+    !instance.brandId ||
+    instance.title.includes('Genel Ajans')
+  const displayBrandName = isGeneral ? 'Genel Ajans' : brandName || 'Marka'
+
+  const currentEmp = employees.find((e) => e.id === currentEmployeeId)
+  const isManager =
+    currentEmp?.rolePackageId === 'kreatif-yonetim' ||
+    currentEmp?.rolePackageId === 'kreatif-direktor' ||
+    currentEmp?.rolePackageId === 'art-director' ||
+    currentEmp?.rolePackageId === 'operasyon-yonetimi' ||
+    currentEmp?.rolePackageId === 'ajans-yonetimi' ||
+    currentEmp?.rolePackageId === 'admin'
+
+  const handleFinalApprove = async () => {
+    if (!pendingApproval) {
+      toast.error('Bu adım için aktif bir onay talebi bulunamadı.')
+      setShowFinalConfirm(false)
+      return
+    }
+    setIsSubmittingAction(true)
+    try {
+      await approveApproval(pendingApproval.id, currentEmployeeId)
+      toast.success('Kreatif final olarak onaylandı ve süreç tamamlandı.')
+      setShowFinalConfirm(false)
+      onActionSuccess?.()
+      onClose()
+    } catch (err: any) {
+      toast.error('Onay işlemi gerçekleştirilemedi', { description: err.message })
+    } finally {
+      setIsSubmittingAction(false)
+    }
+  }
+
+  const handleRequestRevision = async () => {
+    if (!pendingApproval) {
+      toast.error('Bu adım için aktif bir onay talebi bulunamadı.')
+      setShowRevisionModal(false)
+      return
+    }
+    if (!revisionInput.trim()) {
+      toast.error('Revize talebi için açıklama notu yazılması zorunludur!')
+      return
+    }
+    setIsSubmittingAction(true)
+    try {
+      await requestRevision(pendingApproval.id, currentEmployeeId, revisionInput.trim())
+      toast.success('Revizyon talebi iletildi ve görev tasarımcıya aktarıldı.')
+      setShowRevisionModal(false)
+      setRevisionInput('')
+      onActionSuccess?.()
+      onClose()
+    } catch (err: any) {
+      toast.error('Revizyon talebi iletilemedi', { description: err.message })
+    } finally {
+      setIsSubmittingAction(false)
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex justify-end animate-in fade-in duration-200"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl h-full bg-neutral-950 border-l border-neutral-800 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-2xl h-full bg-neutral-950 border-l border-neutral-800 shadow-2xl overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-neutral-950/95 backdrop-blur-xl border-b border-neutral-800 px-6 py-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2 min-w-0 flex-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                 <Building className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
-                <span>{brandName}</span>
+                <span>{displayBrandName}</span>
                 <span className="text-neutral-700">•</span>
                 <Layers className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
                 <span>{cycleLabel}</span>
@@ -415,10 +494,24 @@ export function TaskDetailDrawer({
                 <Sparkles className="h-5 w-5 text-indigo-400 shrink-0" />
                 {step.title}
               </h2>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={cn('px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider', statusInfo.bg)}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
+                    statusInfo.bg
+                  )}
+                >
                   {statusInfo.label}
                 </Badge>
+                {step.creativeCount !== undefined && step.creativeCount !== null && (
+                  <Badge
+                    variant="outline"
+                    className="bg-purple-950/40 text-purple-300 border-purple-700/50 text-[10px] font-bold"
+                  >
+                    🎨 {step.creativeCount} Kreatif
+                  </Badge>
+                )}
                 {getPriorityBadge(parsedDesc.priority)}
               </div>
             </div>
@@ -431,8 +524,40 @@ export function TaskDetailDrawer({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-5 space-y-6">
+        {/* Content Body */}
+        <div className="px-6 py-5 space-y-6 flex-1">
+          {/* Paslama Talebi Bannerı */}
+          {step.handoffStatus === 'pending' && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-xs space-y-2 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-amber-300 font-extrabold">
+                  <ArrowRightLeft className="h-4 w-4 text-amber-400" />
+                  <span>PASLAMA TALEBİ BEKLİYOR</span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[10px] font-bold"
+                >
+                  Beklemede
+                </Badge>
+              </div>
+              <p className="text-amber-200/90 text-xs leading-relaxed">
+                Bu görev için çalışan tarafından paslama talebi iletilmiştir. Kararınızı Onay Merkezinden verebilirsiniz.
+              </p>
+              <div className="pt-1">
+                <Button
+                  onClick={() => {
+                    onClose()
+                    router.push('/approvals?tab=handoffs')
+                  }}
+                  className="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg flex items-center gap-1.5 shadow"
+                >
+                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                  Paslama Talebini İncele
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Art Director Revizyon Notu Bannerı */}
           {step.approvalStatus === 'revision_requested' && (
@@ -467,17 +592,30 @@ export function TaskDetailDrawer({
 
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-800">
                 <div>
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">Sorumluluk Rolü</span>
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">
+                    Sorumluluk Rolü
+                  </span>
                   <span className="text-xs font-semibold text-foreground">
                     {step.responsibilityRole ? roleLabels[step.responsibilityRole] || step.responsibilityRole : 'Operasyon'}
                   </span>
                 </div>
                 {assignedEmployee && (
                   <div>
-                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">Atanan Kişi</span>
-                    <span className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      <User className="h-3 w-3 text-neutral-500" />
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">
+                      Atanan Kişi
+                    </span>
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-neutral-500" />
                       {assignedEmployee.fullName}
+                      {assignedEmployee.employmentType === 'freelance' ? (
+                        <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30 text-[9px] font-bold px-1.5 py-0">
+                          Freelance
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 text-[9px] font-bold px-1.5 py-0">
+                          Tam Zamanlı
+                        </Badge>
+                      )}
                     </span>
                   </div>
                 )}
@@ -494,6 +632,65 @@ export function TaskDetailDrawer({
               </h3>
               <div className="bg-gradient-to-br from-indigo-950/20 to-neutral-900/50 border border-indigo-500/20 rounded-xl p-4 shadow-inner">
                 {renderFormattedText(parsedDesc.customDetail)}
+              </div>
+            </section>
+          )}
+
+          {/* --- TESLİMAT AÇIKLAMASI --- */}
+          {parsedDesc.deliveryNote && (
+            <section className="space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Teslim Açıklaması
+              </h3>
+              <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4">
+                <p className="text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap font-medium">
+                  {parsedDesc.deliveryNote}
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* --- TESLİM EDİLEN GÖRSEL VE DOSYA BAĞLANTILARI --- */}
+          {(parsedDesc.photoLinks.length > 0 || parsedDesc.fileLinks.length > 0) && (
+            <section className="space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
+                <LinkIcon className="h-3.5 w-3.5" />
+                Teslim Edilen Bağlantılar ve Dosyalar ({parsedDesc.photoLinks.length + parsedDesc.fileLinks.length})
+              </h3>
+              <div className="space-y-2">
+                {parsedDesc.photoLinks.map((link, idx) => (
+                  <a
+                    key={`photo-${idx}`}
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between bg-emerald-950/20 border border-emerald-500/20 rounded-xl px-4 py-3 text-xs text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ImageIcon className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span className="font-bold text-white truncate">Görsel / Tasarım Bağlantısı #{idx + 1}</span>
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[240px]">({link})</span>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0 group-hover:translate-x-0.5 transition-transform text-emerald-400" />
+                  </a>
+                ))}
+                {parsedDesc.fileLinks.map((link, idx) => (
+                  <a
+                    key={`file-${idx}`}
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between bg-emerald-950/20 border border-emerald-500/20 rounded-xl px-4 py-3 text-xs text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Paperclip className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span className="font-bold text-white truncate">Dosya / Drive / WeTransfer Bağlantısı #{idx + 1}</span>
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[240px]">({link})</span>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0 group-hover:translate-x-0.5 transition-transform text-emerald-400" />
+                  </a>
+                ))}
               </div>
             </section>
           )}
@@ -551,7 +748,7 @@ export function TaskDetailDrawer({
             </section>
           )}
 
-          {/* --- SINIRSIZ REFERANS LİNKLERİ --- */}
+          {/* --- REFERANS LİNKLERİ --- */}
           {parsedDesc.refLinks.length > 0 && (
             <section className="space-y-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5">
@@ -588,18 +785,24 @@ export function TaskDetailDrawer({
             <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-4 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">Başlangıç</span>
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">
+                    Başlangıç
+                  </span>
                   <span className="text-foreground font-medium">{formatDateTime(step.startedAt)}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">Teslim Tarihi & Saati</span>
-                  <span className={cn("font-medium", step.dueDate ? "text-foreground" : "text-red-400")}>
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">
+                    Teslim Tarihi & Saati
+                  </span>
+                  <span className={cn('font-medium', step.dueDate ? 'text-foreground' : 'text-red-400')}>
                     {step.dueDate ? formatDateTime(step.dueDate) : 'Belirtilmedi'}
                     {parsedDesc.dueTime && <span className="text-indigo-400 font-bold ml-1">({parsedDesc.dueTime})</span>}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">Tamamlanma</span>
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold block mb-0.5">
+                    Tamamlanma
+                  </span>
                   <span className="text-foreground font-medium">{formatDateTime(step.completedAt)}</span>
                 </div>
               </div>
@@ -620,24 +823,10 @@ export function TaskDetailDrawer({
                 {step.failureExplanationAt && (
                   <div className="text-[10px] text-muted-foreground border-t border-rose-500/15 pt-2 flex items-center gap-1.5">
                     <Clock className="h-3 w-3 text-rose-400" />
-                    İletilme Tarihi: <span className="font-semibold text-rose-300">{formatDateTime(step.failureExplanationAt)}</span>
+                    İletilme Tarihi:{' '}
+                    <span className="font-semibold text-rose-300">{formatDateTime(step.failureExplanationAt)}</span>
                   </div>
                 )}
-              </div>
-            </section>
-          )}
-
-          {/* --- Teslim Açıklaması --- */}
-          {parsedDesc.deliveryNote && (
-            <section className="space-y-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Teslim Açıklaması
-              </h3>
-              <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4">
-                <p className="text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap">
-                  {parsedDesc.deliveryNote}
-                </p>
               </div>
             </section>
           )}
@@ -653,22 +842,26 @@ export function TaskDetailDrawer({
                 {sortedSiblings.map((s, idx) => {
                   const sStatus = getStatusInfo(s.status)
                   const isCurrentStep = s.id === step.id
-                  const sAssigned = employees.find(e => e.id === s.assignedEmployeeId)
+                  const sAssigned = employees.find((e) => e.id === s.assignedEmployeeId)
                   return (
                     <div
                       key={s.id}
                       className={cn(
-                        "flex items-start gap-3 py-3 border-l-2 pl-4 relative transition-colors",
+                        'flex items-start gap-3 py-3 border-l-2 pl-4 relative transition-colors',
                         isCurrentStep ? 'border-blue-500 bg-blue-500/[0.03]' : 'border-neutral-800',
                         idx < sortedSiblings.length - 1 && 'border-b border-b-neutral-900/50'
                       )}
                     >
-                      <div className={cn(
-                        "absolute -left-[5px] top-4 w-2 h-2 rounded-full ring-2 ring-neutral-950",
-                        s.status === 'completed' ? 'bg-emerald-500' :
-                        s.status === 'active' ? 'bg-blue-500 animate-pulse' :
-                        'bg-neutral-600'
-                      )} />
+                      <div
+                        className={cn(
+                          'absolute -left-[5px] top-4 w-2 h-2 rounded-full ring-2 ring-neutral-950',
+                          s.status === 'completed'
+                            ? 'bg-emerald-500'
+                            : s.status === 'active'
+                            ? 'bg-blue-500 animate-pulse'
+                            : 'bg-neutral-600'
+                        )}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-xs text-white truncate">{s.title}</span>
@@ -688,9 +881,113 @@ export function TaskDetailDrawer({
               </div>
             </section>
           )}
-
         </div>
+
+        {/* Art Director / Manager Karar & Aksiyon Barı (Sadece waiting_approval adımında) */}
+        {step.status === 'waiting_approval' && isManager && pendingApproval && (
+          <div className="sticky bottom-0 bg-neutral-950/95 backdrop-blur-xl border-t border-neutral-800 p-4 px-6 flex items-center justify-between gap-3 z-10">
+            <div className="text-xs text-muted-foreground">
+              <span className="text-purple-300 font-bold block">Art Director Değerlendirmesi</span>
+              <span className="text-[11px]">Teslim edilen kreatifleri inceleyip kararınızı verin.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowRevisionModal(true)}
+                disabled={isSubmittingAction}
+                variant="outline"
+                className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 h-9 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5"
+              >
+                <RotateCcw className="h-4 w-4 text-amber-400" />
+                Revizyon İste
+              </Button>
+              <Button
+                onClick={() => setShowFinalConfirm(true)}
+                disabled={isSubmittingAction}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-lg shadow-emerald-900/30"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Final Onayla
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Final Onaylama Onay Modal / Dialog */}
+      {showFinalConfirm && (
+        <div className="fixed inset-0 z-[10001] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md p-6 rounded-2xl space-y-4 shadow-2xl">
+            <div className="space-y-1.5">
+              <h3 className="text-base font-extrabold text-white">
+                Kreatifi final olarak onaylamak istediğinize emin misiniz?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Bu işlem kreatifi tamamlanmış olarak işaretler ve üretim kaydına esas olur.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowFinalConfirm(false)}
+                disabled={isSubmittingAction}
+                className="h-9 text-xs rounded-xl"
+              >
+                Vazgeç
+              </Button>
+              <Button
+                onClick={handleFinalApprove}
+                disabled={isSubmittingAction}
+                className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl"
+              >
+                {isSubmittingAction ? 'Onaylanıyor...' : 'Evet, Final Onayla'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revizyon Talep Modalı */}
+      {showRevisionModal && (
+        <div className="fixed inset-0 z-[10001] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-neutral-950 border border-neutral-800 w-full max-w-md p-6 rounded-2xl space-y-4 shadow-2xl">
+            <div className="space-y-1.5">
+              <h3 className="text-base font-extrabold text-white flex items-center gap-1.5">
+                <RotateCcw className="h-4 w-4 text-amber-400" />
+                Revizyon Talebi Gönder
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Grafik tasarımcının yapması gereken düzeltmeleri ve revize notunu girin.
+              </p>
+            </div>
+            <textarea
+              value={revisionInput}
+              onChange={(e) => setRevisionInput(e.target.value)}
+              placeholder="Örn: 2. postun yazı tipi bold olsun, ürün görseli biraz daha merkeze çekilsin..."
+              className="w-full min-h-[120px] bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRevisionModal(false)
+                  setRevisionInput('')
+                }}
+                disabled={isSubmittingAction}
+                className="h-9 text-xs rounded-xl"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={handleRequestRevision}
+                disabled={isSubmittingAction}
+                className="h-9 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl"
+              >
+                {isSubmittingAction ? 'Gönderiliyor...' : 'Revizyon Talebini İlet'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Görsel Büyütme Önizleme Modalı */}
       {previewImage && (

@@ -198,30 +198,34 @@ export function MyWorkPage() {
     // Bugünkü İşler: active and assigned to employee (no due date or due today/past)
     const today = steps.filter((s) => {
       const isTodayOrPast = !s.dueDate || new Date(s.dueDate).toDateString() === new Date().toDateString()
-      return s.status === 'active' && isAssignedToMe(s) && isTodayOrPast
+      return (s.status === 'active' || s.approvalStatus === 'revision_requested') && isAssignedToMe(s) && isTodayOrPast
     })
 
-    // Aktif İşler: active and assigned to employee
+    // Aktif İşler: active or revision_requested and assigned to employee
     const active = steps.filter(
-      (s) => s.status === 'active' && isAssignedToMe(s)
+      (s) => (s.status === 'active' || s.approvalStatus === 'revision_requested') && isAssignedToMe(s)
     )
 
-    // Bekleyenler: pending and assigned to employee
+    // Bekleyenler: pending or waiting_approval (Review bekleyenler) and assigned to employee
     const pending = steps.filter(
-      (s) => s.status === 'pending' && isAssignedToMe(s)
+      (s) => (s.status === 'pending' || s.status === 'waiting_approval') && isAssignedToMe(s)
     )
 
-    // Tamamlananlar: bizzat aksiyon aldığı işler
-    const completedStepIds = new Set(
+    // Tamamlananlar: bizzat aksiyon aldığı veya üzerine atanmış tamamlanan işler
+    const completedStepIdsFromHistory = new Set(
       history
         .filter(
           (h) =>
             isActorMe(h.actorEmployeeId) &&
-            ['complete', 'skip', 'cancel'].includes(h.action)
+            ['complete', 'skip', 'cancel', 'approval_approved', 'final_creative'].includes(h.action)
         )
         .map((h) => h.workflowStepInstanceId)
     )
-    const completed = steps.filter((s) => completedStepIds.has(s.id))
+    const completed = steps.filter(
+      (s) =>
+        (s.status === 'completed' || s.status === 'skipped' || s.status === 'cancelled') &&
+        (isAssignedToMe(s) || completedStepIdsFromHistory.has(s.id))
+    )
 
     return { today, active, uncompleted, pending, completed }
   }, [steps, history, currentEmployeeId, currentEmployee])
