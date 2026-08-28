@@ -864,8 +864,14 @@ export function TasksPage() {
                       {getPriorityBadge(details.priority)}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-sm font-extrabold text-foreground tracking-tight">{step.title}</h3>
+                      {step.status === 'waiting_approval' && (
+                        <Badge variant="outline" className="bg-purple-500/15 text-purple-300 border-purple-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                          <Clock className="h-3 w-3 text-purple-400" />
+                          REVIEW BEKLİYOR
+                        </Badge>
+                      )}
                     </div>
 
                     {details.cleanDesc && (
@@ -966,6 +972,17 @@ export function TasksPage() {
 
                     {/* Yönetim Butonları */}
                     <div className="flex items-center gap-1">
+                      {step.status === 'waiting_approval' && (
+                        <Button
+                          onClick={() => router.push('/approvals')}
+                          size="sm"
+                          className="h-8 px-3 rounded-lg text-xs flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold shadow-md animate-in fade-in"
+                          title="Onay Merkezinde İncele ve Onayla/Revize İste"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" /> İncele / Onayla
+                        </Button>
+                      )}
+
                       {canPassTask && (
                         <Button
                           onClick={() => openAssignModal(step)}

@@ -5,6 +5,7 @@ import type { Employee, Brand, WorkflowInstance, WorkflowStepInstance, Responsib
 import { isCreativeProductionResponsibility } from '@/types/domain'
 import { saveWorkflowSteps, saveWorkflowInstances, getStoredWorkflowInstances } from '@/lib/storage/local-workflow-instance-store'
 import { getStoredCycles } from '@/lib/storage/local-cycle-store'
+import { getActiveEmployeeId } from '@/lib/storage/local-employee-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -420,6 +421,8 @@ export function CustomTaskModal({
         }
 
         const dueDateTime = task.dueDate ? task.dueDate + 'T' + (task.dueTime || '18:00') + ':00.000Z' : undefined
+        const isCreative = isCreativeProductionResponsibility(task.responsibilityRole) || task.responsibilityRole === 'graphic_design' || task.responsibilityRole === 'video_editing'
+        const currentActiveId = getActiveEmployeeId()
 
         const newStep: WorkflowStepInstance = {
           id: 'step-custom-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 4),
@@ -429,10 +432,12 @@ export function CustomTaskModal({
           description: structuredDescription.trim(),
           order: 99 + i,
           status: 'active',
-          requiresApproval: false,
+          requiresApproval: isCreative,
+          approvalPurpose: isCreative ? 'final_creative' : 'general',
+          reviewerEmployeeId: isCreative ? (currentActiveId || undefined) : undefined,
           isFinalStep: false,
           responsibilityRole: task.responsibilityRole,
-          creativeCount: isCreativeProductionResponsibility(task.responsibilityRole) ? task.creativeCount : null,
+          creativeCount: isCreative ? (task.creativeCount && task.creativeCount >= 1 ? task.creativeCount : 1) : null,
           assignedEmployeeId: targetEmployeeId,
           dueDate: dueDateTime,
           assignedAt: new Date().toISOString(),

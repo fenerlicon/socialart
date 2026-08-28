@@ -75,22 +75,37 @@ export async function requestApproval(params: {
   let approverEmployeeId: string | undefined = undefined
 
   if (approvalType === 'internal') {
+    const employees = await getStoredEmployees()
+    const brand = await getBrandById(instance.brandId)
+    const isCreative = isCreativeProductionResponsibility(step.responsibilityRole) || step.responsibilityRole === 'graphic_design' || step.responsibilityRole === 'video_editing' || step.approvalPurpose === 'final_creative'
+
     if (step.reviewerEmployeeId) {
       // 1. Explicit Reviewer Routing (Highest Priority)
-      const employees = await getStoredEmployees()
       const reviewer = employees.find((e) => e.id === step.reviewerEmployeeId)
-      if (!reviewer) {
-        throw new Error(`Belirtilen onaylayıcı (reviewerEmployeeId: ${step.reviewerEmployeeId}) sistemde bulunamadı.`)
+      if (reviewer) {
+        approverEmployeeId = step.reviewerEmployeeId
       }
-      approverEmployeeId = step.reviewerEmployeeId
-    } else {
-      // 2. Brand Operation Manager
-      const brand = await getBrandById(instance.brandId)
+    }
+
+    if (!approverEmployeeId && isCreative) {
+      // 2. Creative Art Director from Brand Assignments or Active Creative Leads
+      const adAssignment = brand?.brandAssignments?.find((a: any) => a.responsibility === 'art-director' || a.responsibility === 'kreatif-yonetim')
+      if (adAssignment) {
+        approverEmployeeId = adAssignment.employeeId
+      } else {
+        const artDirector = employees.find((e) => (e.rolePackageId === 'art-director' || e.rolePackageId === 'kreatif-yonetim' || e.rolePackageId === 'kreatif-direktor') && e.employeeStatus === 'active')
+        if (artDirector) {
+          approverEmployeeId = artDirector.id
+        }
+      }
+    }
+
+    if (!approverEmployeeId) {
+      // 3. Brand Operation Manager
       if (brand && brand.operationManagerId) {
         approverEmployeeId = brand.operationManagerId
       } else {
-        // 3. Fallback: First employee with operasyon-yonetimi role package
-        const employees = await getStoredEmployees()
+        // 4. Fallback: First employee with operasyon-yonetimi role package
         const opManager = employees.find((e) => e.rolePackageId === 'operasyon-yonetimi')
         if (opManager) {
           approverEmployeeId = opManager.id
@@ -100,10 +115,12 @@ export async function requestApproval(params: {
   }
 
   // 3. Onay Talebi (WorkflowApproval) Oluştur
-  const approvalPurpose: ApprovalPurpose = step.approvalPurpose || 'general'
-  if (approvalPurpose === 'final_creative' && isCreativeProductionResponsibility(step.responsibilityRole)) {
+  const isCreativeStep = isCreativeProductionResponsibility(step.responsibilityRole) || step.responsibilityRole === 'graphic_design' || step.responsibilityRole === 'video_editing'
+  const approvalPurpose: ApprovalPurpose = step.approvalPurpose || (isCreativeStep ? 'final_creative' : 'general')
+  if (approvalPurpose === 'final_creative' && isCreativeStep) {
     if (step.creativeCount === undefined || step.creativeCount === null || !Number.isInteger(step.creativeCount) || step.creativeCount < 1) {
-      throw new Error('Final kreatif onayı gerektiren kreatif üretim adımında geçerli bir kreatif adedi (en az 1 tam sayı) tanımlanmalıdır.')
+      step.creativeCount = 1
+      await updateWorkflowStepInstance(step)
     }
   }
   const approvalId = uuidv4()

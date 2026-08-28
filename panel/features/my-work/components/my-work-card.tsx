@@ -290,26 +290,45 @@ export function MyWorkCard({
         (links.length > 0 ? `\n[Fotoğraf/Görsel Bağlantıları]: ${links.join(', ')}` : '') +
         (files.length > 0 ? `\n[Dosya Bağlantıları]: ${files.join(', ')}` : '')
 
+      const isCreative = isCreativeProductionResponsibility(step.responsibilityRole) || step.responsibilityRole === 'graphic_design' || step.responsibilityRole === 'video_editing'
+      const shouldRequestApproval = step.requiresApproval || isCreative || step.approvalPurpose === 'final_creative'
+
       const updatedStep = {
         ...step,
-        description: `${step.description}${formattedNote}`
+        description: `${step.description}${formattedNote}`,
+        requiresApproval: shouldRequestApproval ? true : step.requiresApproval,
+        approvalPurpose: shouldRequestApproval ? (step.approvalPurpose || 'final_creative') : step.approvalPurpose,
+        creativeCount: isCreative ? (step.creativeCount && step.creativeCount >= 1 ? step.creativeCount : 1) : step.creativeCount,
       }
       await updateWorkflowStepInstance(updatedStep)
 
-      await progressWorkflowStep({
-        workflowInstanceId: instance.id,
-        stepInstanceId: step.id,
-        action: 'complete',
-        actorEmployeeId: currentEmployeeId,
-      })
+      if (shouldRequestApproval) {
+        await requestApproval({
+          workflowInstanceId: instance.id,
+          stepInstanceId: step.id,
+          requestedByEmployeeId: currentEmployeeId,
+          note: deliveryNote || 'Kreatif teslim edildi, onay talep ediliyor.',
+        })
 
-      toast.success('Görev teslim edildi ve tamamlandı.', {
-        description: `"${brandName}" markasının "${instance.title}" iş akışındaki "${step.title}" adımı güncellendi.`,
-      })
+        toast.success('Görev teslim edildi ve Art Director onayına gönderildi.', {
+          description: `"${brandName}" markasının "${instance.title}" iş akışındaki "${step.title}" adımı onaya sunuldu.`,
+        })
+      } else {
+        await progressWorkflowStep({
+          workflowInstanceId: instance.id,
+          stepInstanceId: step.id,
+          action: 'complete',
+          actorEmployeeId: currentEmployeeId,
+        })
+
+        toast.success('Görev teslim edildi ve tamamlandı.', {
+          description: `"${brandName}" markasının "${instance.title}" iş akışındaki "${step.title}" adımı güncellendi.`,
+        })
+      }
 
       onActionSuccess()
     } catch (err: any) {
-      toast.error('Görev tamamlanamadı', { description: err.message })
+      toast.error('Görev teslim edilemedi', { description: err.message })
     } finally {
       setIsSubmitting(false)
     }
@@ -327,34 +346,7 @@ export function MyWorkCard({
   }
 
   const handleSendToApproval = async () => {
-    if (!isOverdue && hasUnexplainedOverdue) {
-      toast.error('⚠️ Yeni İş Tamamlanamaz!', {
-        description: 'Açıklaması yazılmamış tamamlanamayan işiniz bulunmaktadır. Lütfen önce geciken işinize açıklama yazınız.',
-        duration: 6000,
-      })
-      return
-    }
-    setIsSubmitting(true)
-    try {
-      await requestApproval({
-        workflowInstanceId: instance.id,
-        stepInstanceId: step.id,
-        requestedByEmployeeId: currentEmployeeId,
-        note: 'Onay talep ediliyor.',
-      })
-
-      toast.success('Onay talebi gönderildi.', {
-        description: `"${brandName}" markasının "${instance.title}" iş akışındaki "${step.title}" adımı onaya sunuldu.`,
-      })
-
-      onActionSuccess()
-    } catch (err: any) {
-      toast.error('Onaya gönderilemedi', {
-        description: err.message,
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+    handleCompleteClick()
   }
 
   const handlePasla = () => {
