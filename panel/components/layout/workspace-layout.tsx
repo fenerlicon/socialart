@@ -332,12 +332,15 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     // Tüm Raporlar (if reports.manage)
-    if (hasPermission('reports.manage') && activeEmployee?.rolePackageId !== 'kreatif-direktor' && activeEmployee?.rolePackageId !== 'kreatif-yonetim') {
+    if (hasPermission('reports.manage') && activeEmployee?.rolePackageId !== 'kreatif-direktor' && activeEmployee?.rolePackageId !== 'kreatif-yonetim' && activeEmployee?.rolePackageId !== 'art-director' && activeEmployee?.rolePackageId !== 'grafik-tasarim') {
       menuItems.push({ label: 'Tüm Raporlar', icon: '📊', href: '/reports' })
     }
 
-    // Ödeme Talepleri
-    menuItems.push({ label: 'Ödeme Talepleri', icon: '💳', href: '/payments' })
+    // Ödeme Talepleri (Hidden for Art Director and Graphic Designer)
+    const isCreativeRole = activeEmployee?.rolePackageId === 'art-director' || activeEmployee?.rolePackageId === 'grafik-tasarim'
+    if (!isCreativeRole) {
+      menuItems.push({ label: 'Ödeme Talepleri', icon: '💳', href: '/payments' })
+    }
 
     // Sistem Ayarları
     if (hasPermission('settings.manage')) {
@@ -354,8 +357,14 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       { label: 'Fikir Merkezi', icon: '💡', href: '/ideas' },
     ]
 
-    // Standard Raporlar (if reports.manage is NOT present)
-    if (!resolvePanelAuthority(principal, activeEmployee, 'reports.manage') && activeEmployee?.rolePackageId !== 'kreatif-direktor' && activeEmployee?.rolePackageId !== 'kreatif-yonetim') {
+    // Standard Raporlar (if reports.manage is NOT present and employee is not exempt)
+    const isFreelanceDesigner = activeEmployee?.rolePackageId === 'grafik-tasarim' && activeEmployee?.employmentType === 'freelance'
+    if (
+      !resolvePanelAuthority(principal, activeEmployee, 'reports.manage') &&
+      activeEmployee?.rolePackageId !== 'kreatif-direktor' &&
+      activeEmployee?.rolePackageId !== 'kreatif-yonetim' &&
+      !isFreelanceDesigner
+    ) {
       list.push({ label: 'Raporlar', icon: '📊', href: '/reports' })
     }
 

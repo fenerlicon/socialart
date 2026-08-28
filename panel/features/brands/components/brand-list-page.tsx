@@ -17,7 +17,7 @@ import { Plus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
+import { resolvePanelAuthority, usePrincipal, resolveVisibleBrands } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 
 export function BrandListPage() {
@@ -162,9 +162,14 @@ export function BrandListPage() {
     }
   }
 
+  // Visible Brands based on canonical scope
+  const visibleBrands = useMemo(() => {
+    return resolveVisibleBrands(principal, effectiveActiveEmployee, brands, workflows)
+  }, [principal, effectiveActiveEmployee, brands, workflows])
+
   // Filtered and Sorted Brands
   const filteredAndSortedBrands = useMemo(() => {
-    return brands
+    return visibleBrands
       .filter((b) => {
         // Name Search
         const nameMatch = b.name.toLowerCase().includes(searchQuery.toLowerCase())

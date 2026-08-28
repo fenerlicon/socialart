@@ -9,7 +9,7 @@ import { getStoredWorkflowInstances, getWorkflowStepInstances } from '@/lib/stor
 import { getStoredApprovals } from '@/lib/storage/local-approval-store'
 import { getStoredHandoffs } from '@/lib/storage/local-handoff-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal } from '@/lib/permissions/panel-authority'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal, resolveVisibleBrandIds, resolveVisibleBrands } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -162,40 +162,62 @@ export function OperationsPage() {
     return isManagerOrAdmin(principal, effectiveActiveEmployee)
   }, [principal, effectiveActiveEmployee])
 
+  // Visible brand scope
+  const visibleBrandIds = useMemo(() => {
+    return resolveVisibleBrandIds(principal, effectiveActiveEmployee, brands, instances)
+  }, [principal, effectiveActiveEmployee, brands, instances])
+
+  const visibleBrands = useMemo(() => {
+    return brands.filter(b => visibleBrandIds.has(String(b.id)))
+  }, [brands, visibleBrandIds])
+
   // Team-based visibility filter helper
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
     return isStepInScope(principal, step, effectiveActiveEmployee, employees)
   }
 
-  // Filter lists based on manager's teams
+  // Filter lists based on manager's teams and visible brands
   const filteredSteps = useMemo(() => {
-    return steps.filter(isStepInManagerTeams)
-  }, [steps, isManagerExposed, effectiveActiveEmployee, employees])
+    return steps.filter(s => {
+      if (!isStepInManagerTeams(s)) return false
+      const inst = instances.find(i => i.id === s.workflowInstanceId)
+      if (inst && !visibleBrandIds.has(String(inst.brandId))) return false
+      return true
+    })
+  }, [steps, isStepInManagerTeams, instances, visibleBrandIds])
 
   const filteredInstances = useMemo(() => {
     return instances.filter(i => {
       // İptal edilen instance'lar hiçbir zaman gösterilmez
       if (i.status === 'cancelled') return false
+      // Brand must be in scope
+      if (!visibleBrandIds.has(String(i.brandId))) return false
       if (isManagerExposed) return true
       return steps.some(s => s.workflowInstanceId === i.id && isStepInManagerTeams(s))
     })
-  }, [instances, steps, isManagerExposed, effectiveActiveEmployee, employees])
+  }, [instances, steps, isManagerExposed, visibleBrandIds, isStepInManagerTeams])
 
   const filteredApprovals = useMemo(() => {
     return approvals.filter(a => {
       if (isManagerExposed) return true
       const step = steps.find(s => s.id === a.workflowStepInstanceId)
-      return step ? isStepInManagerTeams(step) : false
+      if (!step || !isStepInManagerTeams(step)) return false
+      const inst = instances.find(i => i.id === a.workflowInstanceId)
+      if (inst && !visibleBrandIds.has(String(inst.brandId))) return false
+      return true
     })
-  }, [approvals, steps, isManagerExposed, effectiveActiveEmployee, employees])
+  }, [approvals, steps, instances, visibleBrandIds, isManagerExposed, isStepInManagerTeams])
 
   const filteredHandoffs = useMemo(() => {
     return handoffs.filter(h => {
       if (isManagerExposed) return true
       const step = steps.find(s => s.id === h.workflowStepInstanceId)
-      return step ? isStepInManagerTeams(step) : false
+      if (!step || !isStepInManagerTeams(step)) return false
+      const inst = instances.find(i => i.id === step.workflowInstanceId)
+      if (inst && !visibleBrandIds.has(String(inst.brandId))) return false
+      return true
     })
-  }, [handoffs, steps, isManagerExposed, effectiveActiveEmployee, employees])
+  }, [handoffs, steps, instances, visibleBrandIds, isManagerExposed, isStepInManagerTeams])
 
   // Helper getters
   const getBrandName = (brandId: string) => {
@@ -664,7 +686,7 @@ export function OperationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tüm Markalar</SelectItem>
-                {brands.map((b) => (
+                {visibleBrands.map((b) => (
                   <SelectItem key={b.id} value={b.id} className="text-xs">
                     {b.name}
                   </SelectItem>

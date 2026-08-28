@@ -96,12 +96,13 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
   }, [handoffs, employee.id])
 
   const hasDailyReportToday = useMemo(() => {
-    const isManager =
+    const isExempt =
       employee.rolePackageId === 'operasyon-yonetimi' ||
       employee.rolePackageId === 'kreatif-yonetim' ||
-      employee.rolePackageId === 'kreatif-direktor'
+      employee.rolePackageId === 'kreatif-direktor' ||
+      (employee.rolePackageId === 'grafik-tasarim' && employee.employmentType === 'freelance')
 
-    if (isManager) return true
+    if (isExempt) return true
 
     const todayDateStr = getLocalDateString()
     return reports.some(
@@ -110,7 +111,7 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
         r.type === 'daily' &&
         r.date === todayDateStr
     )
-  }, [reports, employee.id, employee.rolePackageId])
+  }, [reports, employee.id, employee.rolePackageId, employee.employmentType])
 
   // Filter unread notifications
   const unreadNotifications = useMemo(() => {

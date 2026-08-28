@@ -51,7 +51,7 @@ import { cn } from '@/lib/utils'
 import { BrandWorkflowSection } from '@/features/workflows/components/brand-workflow-section'
 
 import { getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolvePanelAuthority, usePrincipal } from '@/lib/permissions/panel-authority'
+import { resolvePanelAuthority, usePrincipal, isBrandInScope } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { supabase } from '@/lib/supabase/client'
 import { deleteWorkflowInstancesByCycleId, getWorkflowInstancesByCycleId, updateWorkflowInstance } from '@/lib/storage/local-workflow-instance-store'
@@ -496,6 +496,12 @@ export default function BrandDetailPage() {
     return resolvePanelAuthority(principal, effectiveActiveEmployee, 'brand.manage')
   }, [principal, effectiveActiveEmployee])
 
+  const isBrandPermitted = useMemo(() => {
+    if (!hasPermission) return false
+    if (!brand) return true
+    return isBrandInScope(principal, effectiveActiveEmployee, brand)
+  }, [hasPermission, brand, principal, effectiveActiveEmployee])
+
   if (isLoadingAuth || isLoadingBrand) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
@@ -505,7 +511,7 @@ export default function BrandDetailPage() {
     )
   }
 
-  if (!hasPermission) {
+  if (!isBrandPermitted) {
     return <AccessDenied />
   }
 

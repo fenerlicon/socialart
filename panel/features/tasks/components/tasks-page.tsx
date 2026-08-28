@@ -9,7 +9,7 @@ import { getWorkflowStepInstances, updateWorkflowStepInstance, getStoredWorkflow
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredCycles } from '@/lib/storage/local-cycle-store'
 import { supabase } from '@/lib/supabase/client'
-import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal, ROLE_TO_TEAM } from '@/lib/permissions/panel-authority'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal, resolveVisibleBrandIds, resolveVisibleBrands, ROLE_TO_TEAM } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { TaskDetailDrawer } from '@/features/my-work/components/task-detail-drawer'
 import { CustomTaskModal } from '@/components/shared/custom-task-modal'
@@ -244,6 +244,15 @@ export function TasksPage() {
     return resolvePanelAuthority(principal, effectiveActiveEmployee, 'tasks.assign')
   }, [principal, effectiveActiveEmployee])
 
+  // Visible brand scope
+  const visibleBrandIds = useMemo(() => {
+    return resolveVisibleBrandIds(principal, effectiveActiveEmployee, brands, instances)
+  }, [principal, effectiveActiveEmployee, brands, instances])
+
+  const visibleBrands = useMemo(() => {
+    return brands.filter(b => visibleBrandIds.has(String(b.id)))
+  }, [brands, visibleBrandIds])
+
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
     return isStepInScope(principal, step, effectiveActiveEmployee, employees)
   }
@@ -272,7 +281,14 @@ export function TasksPage() {
       const details = parseStepDetails(step.description)
       const instance = instances.find((i) => i.id === step.workflowInstanceId)
 
-      // Brand Filter
+      // Brand Scope Filter: step's instance must belong to a visible brand (unless general agency task)
+      if (instance && instance.brandId && instance.brandId !== 'general-brand' && instance.id !== 'inst-general-agency-tasks') {
+        if (!visibleBrandIds.has(String(instance.brandId))) {
+          return false
+        }
+      }
+
+      // User Brand Filter
       if (brandFilter !== 'all') {
         if (brandFilter === 'general') {
           if (!details.isGeneral && instance?.brandId !== 'general-brand' && instance?.id !== 'inst-general-agency-tasks') {
@@ -637,7 +653,7 @@ export function TasksPage() {
             <SelectContent>
               <SelectItem value="all">Tüm Markalar</SelectItem>
               <SelectItem value="general" className="text-xs font-bold text-purple-400">🏢 Genel Ajans İşleri</SelectItem>
-              {brands.map((b) => (
+              {visibleBrands.map((b) => (
                 <SelectItem key={b.id} value={b.id} className="text-xs">
                   {b.name}
                 </SelectItem>
@@ -721,7 +737,7 @@ export function TasksPage() {
                   <SelectValue placeholder="Marka Seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  {brands.map((b) => (
+                  {visibleBrands.map((b) => (
                     <SelectItem key={b.id} value={b.id} className="text-xs">
                       {b.name}
                     </SelectItem>

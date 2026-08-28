@@ -69,6 +69,87 @@ export function isManagerOrAdmin(principal, employee) {
 }
 
 /**
+ * Pure brand scope resolver.
+ * Evaluates whether a brand is assigned to the employee or accessible to admin.
+ *
+ * @param {object|null} principal
+ * @param {object|null} employee
+ * @param {object|null} brand
+ * @param {object[]} [workflowInstances]
+ * @returns {boolean}
+ */
+export function isBrandInScope(principal, employee, brand, workflowInstances = []) {
+  if (isManagerOrAdmin(principal, employee)) {
+    return true;
+  }
+
+  if (!principal || principal.principalType !== 'employee' || !employee || !brand) {
+    return false;
+  }
+
+  const empId = String(employee.id || '');
+  const db1Id = employee.db1EmployeeId ? String(employee.db1EmployeeId) : null;
+
+  // 1. Direct operationManagerId match
+  if (brand.operationManagerId && (String(brand.operationManagerId) === empId || (db1Id && String(brand.operationManagerId) === db1Id))) {
+    return true;
+  }
+
+  // 2. Canonical brandAssignments match
+  if (Array.isArray(brand.brandAssignments)) {
+    const isAssigned = brand.brandAssignments.some((a) => {
+      const aEmpId = String(a.employeeId || '');
+      return aEmpId === empId || (db1Id && aEmpId === db1Id);
+    });
+    if (isAssigned) return true;
+  }
+
+  // 3. Workflow instance steps assignment match (if workflows provided)
+  if (Array.isArray(workflowInstances) && workflowInstances.length > 0) {
+    const hasAssignedStep = workflowInstances.some((wf) => {
+      if (String(wf.brandId) !== String(brand.id)) return false;
+      const steps = wf.steps || wf.stepInstances || [];
+      return steps.some((s) => {
+        const stepEmpId = String(s.assignedEmployeeId || s.assigneeEmployeeId || '');
+        return stepEmpId === empId || (db1Id && stepEmpId === db1Id);
+      });
+    });
+    if (hasAssignedStep) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Filters an array of brands to only those visible to the principal & employee.
+ *
+ * @param {object|null} principal
+ * @param {object|null} employee
+ * @param {object[]} brands
+ * @param {object[]} [workflowInstances]
+ * @returns {object[]}
+ */
+export function resolveVisibleBrands(principal, employee, brands = [], workflowInstances = []) {
+  if (!Array.isArray(brands)) return [];
+  if (isManagerOrAdmin(principal, employee)) return brands;
+  return brands.filter((b) => isBrandInScope(principal, employee, b, workflowInstances));
+}
+
+/**
+ * Returns a Set of visible brand IDs.
+ *
+ * @param {object|null} principal
+ * @param {object|null} employee
+ * @param {object[]} brands
+ * @param {object[]} [workflowInstances]
+ * @returns {Set<string>}
+ */
+export function resolveVisibleBrandIds(principal, employee, brands = [], workflowInstances = []) {
+  const visibleBrands = resolveVisibleBrands(principal, employee, brands, workflowInstances);
+  return new Set(visibleBrands.map((b) => String(b.id)));
+}
+
+/**
  * Pure step-in-scope checker for Tasks / Operations.
  * NEVER reads browser storage.
  *
@@ -83,16 +164,39 @@ export function isStepInScope(principal, step, employee, allEmployees = []) {
     return true;
   }
 
-  if (!principal || principal.principalType !== 'employee' || !employee) {
+  if (!principal || principal.principalType !== 'employee' || !employee || !step) {
+    return false;
+  }
+
+  const empId = String(employee.id || '');
+  const db1Id = employee.db1EmployeeId ? String(employee.db1EmployeeId) : null;
+  const stepAssignedId = String(step.assignedEmployeeId || step.assigneeEmployeeId || '');
+
+  // Direct assignment to this employee is always in scope for own work
+  if (stepAssignedId && (stepAssignedId === empId || (db1Id && stepAssignedId === db1Id))) {
+    return true;
+  }
+
+  // Graphic Designer is strictly OWN-WORK ONLY
+  if (employee.rolePackageId === 'grafik-tasarim') {
     return false;
   }
 
   const employeeTeams = employee.teamIds || [];
 
+  // Art Director: Creative studio scope only
   if (employee.rolePackageId === 'art-director') {
-    if (step.responsibilityRole === 'graphic_design' || employeeTeams.includes('grafik-studyo')) {
+    if (step.responsibilityRole === 'graphic_design' || step.responsibilityRole === 'video_editing' || step.teamId === 'grafik-studyo') {
       return true;
     }
+    // If step assigned to a designer in creative studio
+    if (stepAssignedId) {
+      const assignee = allEmployees.find((e) => String(e.id) === stepAssignedId || (e.db1EmployeeId && String(e.db1EmployeeId) === stepAssignedId));
+      if (assignee && (assignee.rolePackageId === 'grafik-tasarim' || assignee.teamIds?.includes('grafik-studyo'))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   if (step.responsibilityRole) {
@@ -102,8 +206,8 @@ export function isStepInScope(principal, step, employee, allEmployees = []) {
     }
   }
 
-  if (step.assignedEmployeeId) {
-    const assignee = allEmployees.find((e) => e.id === step.assignedEmployeeId);
+  if (stepAssignedId) {
+    const assignee = allEmployees.find((e) => String(e.id) === stepAssignedId || (e.db1EmployeeId && String(e.db1EmployeeId) === stepAssignedId));
     if (assignee && assignee.teamIds?.some((tId) => employeeTeams.includes(tId))) {
       return true;
     }

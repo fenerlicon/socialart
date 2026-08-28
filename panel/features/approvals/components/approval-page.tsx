@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Employee, WorkflowApproval, WorkflowInstance, WorkflowStepInstance, Brand, WorkflowHandoff, BrandOperationCycle } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal } from '@/lib/permissions/panel-authority'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal, resolveVisibleBrandIds } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { getStoredApprovals } from '@/lib/storage/local-approval-store'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
@@ -182,6 +182,11 @@ export function ApprovalPage() {
     return isManagerOrAdmin(principal, currentEmployee)
   }, [principal, currentEmployee])
 
+  // Visible brand scope
+  const visibleBrandIds = useMemo(() => {
+    return resolveVisibleBrandIds(principal, currentEmployee, brands, instances)
+  }, [principal, currentEmployee, brands, instances])
+
   // Check if step maps to manager's teams
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
     return isStepInScope(principal, step, currentEmployee, employees)
@@ -189,42 +194,61 @@ export function ApprovalPage() {
 
   // Filtreleme Kuralları:
   // 1. Durumu pending olan tüm onaylar
-  // 2. Eğer çalışan operasyon yöneticisi ise (rolePackageId === 'operasyon-yonetimi') veya merkezi operasyonda ise, tüm pending 'internal' onayları görebilir.
-  // 3. Değilse, a.approverEmployeeId === currentEmployeeId olanları VEYA kendi departmanına ait olanları görebilir.
-  // 4. Müşteri onayları (client) simüle edilebilsin diye herkese veya sadece strateji/müşteri yönetimi rolündekilere görünür yapabiliriz. Test kolaylığı için müşteri onaylarını listede herkese gösterelim.
+  // 2. Marka Art Director/Çalışan görünürlük alanında olmalıdır
+  // 3. Art Director için: Yalnızca kreatif / grafik stüdyo teslimleri veya doğrudan onay atanmış talepler
   const allReviewableApprovals = useMemo(() => {
     return approvals.filter((a) => {
       if (a.status !== 'pending') return false
 
-      // Check if step is manageable or if direct approver
       const step = steps.find(s => s.id === a.workflowStepInstanceId)
-      const isMyTeamApproval = step ? isStepInManagerTeams(step) : false
+      const instance = instances.find(i => i.id === a.workflowInstanceId)
+
+      // Brand Scope Filter: instance must belong to a visible brand
+      if (instance && instance.brandId && !visibleBrandIds.has(String(instance.brandId))) {
+        return false
+      }
 
       if (a.approvalType === 'client') {
-        return true // Müşteri onayları simülasyon amacıyla listelenir
+        if (!instance || visibleBrandIds.has(String(instance.brandId))) {
+          return true // Müşteri onayları kendi markalarında simülasyon amacıyla listelenir
+        }
+        return false
       }
 
       if (a.approverEmployeeId === currentEmployeeId) {
         return true
       }
 
-      if (a.approvalType === 'internal' && (isManagerExposed || isMyTeamApproval)) {
+      // Art Director scope: only Graphic Design / Creative studio submissions
+      if (currentEmployee?.rolePackageId === 'art-director') {
+        if (!step) return false
+        const requester = employees.find(e => e.id === a.requestedByEmployeeId || (step.assignedEmployeeId && e.id === step.assignedEmployeeId))
+        const isGraphicDesignStep = step.responsibilityRole === 'graphic_design' || step.responsibilityRole === 'video_editing' || step.teamId === 'grafik-studyo'
+        const isGraphicDesignerRequester = requester?.rolePackageId === 'grafik-tasarim' || requester?.teamIds?.includes('grafik-studyo')
+
+        return isGraphicDesignStep || isGraphicDesignerRequester
+      }
+
+      if (a.approvalType === 'internal' && (isManagerExposed || (step && isStepInManagerTeams(step)))) {
         return true
       }
 
       return false
     })
-  }, [approvals, steps, currentEmployeeId, isManagerExposed, isStepInManagerTeams])
+  }, [approvals, steps, instances, currentEmployee, currentEmployeeId, isManagerExposed, visibleBrandIds, isStepInManagerTeams, employees])
 
   // 1. Raporlar - Sunumlar Onayları
   const reportApprovals = useMemo(() => {
+    // Art Director does not receive report/presentation approvals from unrelated departments
+    if (currentEmployee?.rolePackageId === 'art-director') return []
+
     return allReviewableApprovals.filter((a) => {
       const step = steps.find(s => s.id === a.workflowStepInstanceId)
       const instance = instances.find(i => i.id === a.workflowInstanceId)
       const textToSearch = `${step?.title || ''} ${instance?.title || ''}`.toLowerCase()
       return textToSearch.includes('rapor') || textToSearch.includes('sunum') || textToSearch.includes('report') || textToSearch.includes('presentation')
     })
-  }, [allReviewableApprovals, steps, instances])
+  }, [allReviewableApprovals, steps, instances, currentEmployee])
 
   // 2. Genel Süreç Onayları (Rapor ve Sunum olmayanlar)
   const processApprovals = useMemo(() => {
@@ -241,12 +265,30 @@ export function ApprovalPage() {
   const pendingHandoffs = useMemo(() => {
     return handoffs.filter((h) => {
       if (h.status !== 'pending') return false
-      // Yönetici ise tüm pending paslamaları görebilir/yönetebilir
-      if (hasReviewPermission) return true
-      // Normal çalışan ise sadece kendisine paslananları görebilir
-      return h.toEmployeeId === currentEmployeeId
+
+      const step = steps.find(s => s.id === h.workflowStepInstanceId)
+      const instance = instances.find(i => i.id === step?.workflowInstanceId)
+
+      // Brand must be in scope
+      if (instance && instance.brandId && !visibleBrandIds.has(String(instance.brandId))) {
+        return false
+      }
+
+      // Direct handoff to current employee
+      if (h.toEmployeeId === currentEmployeeId) return true
+
+      // Art Director scope for handoffs
+      if (currentEmployee?.rolePackageId === 'art-director') {
+        if (!step) return false
+        return isStepInManagerTeams(step)
+      }
+
+      // Central management
+      if (hasReviewPermission && isManagerExposed) return true
+
+      return false
     })
-  }, [handoffs, hasReviewPermission, currentEmployeeId])
+  }, [handoffs, steps, instances, visibleBrandIds, currentEmployee, currentEmployeeId, hasReviewPermission, isManagerExposed, isStepInManagerTeams])
 
   const visibleList = useMemo(() => {
     if (activeSubTab === 'approvals') return processApprovals

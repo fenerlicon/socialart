@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import { 
   CreditCard, 
   Plus, 
@@ -52,6 +53,9 @@ interface ToastState {
 }
 
 export default function PaymentsPage() {
+  const { principal, activeEmployee, isLoadingAuth } = usePrincipal()
+  const isAccessDenied = !principal.isDedicatedAdmin && (activeEmployee?.rolePackageId === 'art-director' || activeEmployee?.rolePackageId === 'grafik-tasarim')
+
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([])
   const [brandsList, setBrandsList] = useState<BrandOption[]>([])
   const [selectedBrandOption, setSelectedBrandOption] = useState<string>('')
@@ -241,6 +245,8 @@ export default function PaymentsPage() {
   }
 
   useEffect(() => {
+    if (isLoadingAuth || isAccessDenied) return
+
     fetchPaymentRequests()
     fetchBrands()
 
@@ -255,7 +261,7 @@ export default function PaymentsPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [isLoadingAuth, isAccessDenied])
 
   const handleBrandSelectChange = (val: string) => {
     setSelectedBrandOption(val)
@@ -689,6 +695,20 @@ export default function PaymentsPage() {
       'Ödeme Linki Kopyalandı! 🔗',
       `"${req.client_name}" için direkt 3D Secure kart ödeme bağlantısı panoya kopyalandı:\n${url}`,
       'success'
+    )
+  }
+
+  if (!isLoadingAuth && isAccessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6">
+        <div className="p-3 bg-red-500/10 text-red-500 rounded-full mb-4">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Erişim Reddedildi</h2>
+        <p className="text-sm text-muted-foreground mt-2 max-w-md">
+          Bu sayfayı görüntüleme yetkiniz bulunmamaktadır. Ödeme talepleri sadece yetkili yönetim kadrosuna açıktır.
+        </p>
+      </div>
     )
   }
 

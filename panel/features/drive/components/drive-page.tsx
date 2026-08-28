@@ -5,7 +5,7 @@ import type { Brand, BrandDriveLinks, Employee } from '@/types/domain'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getDriveLinks, saveDriveLinks } from '@/lib/storage/local-drive-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
-import { usePrincipal } from '@/lib/permissions/panel-authority'
+import { usePrincipal, resolveVisibleBrands } from '@/lib/permissions/panel-authority'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,14 +49,14 @@ export function DrivePage() {
       try {
         const storedBrands = await getStoredBrands()
         setBrands(storedBrands)
+
         const storedLinks = await getDriveLinks()
         setDriveLinks(storedLinks)
-        const storedEmps = await getStoredEmployees()
-        setEmployees(storedEmps)
 
-        if (contextActiveEmployee) {
-          setActiveEmployeeId(contextActiveEmployee.id)
-        } else {
+        const storedEmployees = await getStoredEmployees()
+        setEmployees(storedEmployees)
+
+        if (!contextActiveEmployee) {
           const activeId = getActiveEmployeeId()
           if (activeId) setActiveEmployeeId(activeId)
         }
@@ -74,15 +74,20 @@ export function DrivePage() {
 
   const isManager = useMemo(() => {
     if (!activeEmployee) return false
-    return activeEmployee.rolePackageId === 'operasyon-yonetimi' || activeEmployee.permissionOverrides['system.admin'] === true
+    return activeEmployee.rolePackageId === 'operasyon-yonetimi' || activeEmployee.permissionOverrides?.['system.admin'] === true
   }, [activeEmployee])
 
-  // Search filter
+  // Visible brands based on canonical brand scope
+  const visibleBrands = useMemo(() => {
+    return resolveVisibleBrands(principal, activeEmployee, brands)
+  }, [principal, activeEmployee, brands])
+
+  // Search filter applied on top of visible brands
   const filteredBrands = useMemo(() => {
-    return brands.filter(b => 
+    return visibleBrands.filter(b => 
       b.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  }, [brands, searchQuery])
+  }, [visibleBrands, searchQuery])
 
   // Get links helper
   const getBrandLinks = (brandId: string): BrandDriveLinks => {

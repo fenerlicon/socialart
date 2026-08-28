@@ -16,7 +16,8 @@ export async function checkAndGenerateMissingReports(): Promise<number> {
         e.employeeStatus === 'active' &&
         e.rolePackageId !== 'operasyon-yonetimi' &&
         e.rolePackageId !== 'kreatif-yonetim' &&
-        e.rolePackageId !== 'kreatif-direktor'
+        e.rolePackageId !== 'kreatif-direktor' &&
+        !(e.rolePackageId === 'grafik-tasarim' && e.employmentType === 'freelance')
     )
     if (activeEmployees.length === 0) return 0
 

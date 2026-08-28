@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { createContext, useContext } from 'react'
 import type { Employee, WorkflowStepInstance } from '@/types/domain'
@@ -7,10 +7,18 @@ import {
   resolvePanelAuthority as resolvePanelAuthorityCore,
   isManagerOrAdmin as isManagerOrAdminCore,
   isStepInScope as isStepInScopeCore,
+  isBrandInScope as isBrandInScopeCore,
+  resolveVisibleBrands as resolveVisibleBrandsCore,
+  resolveVisibleBrandIds as resolveVisibleBrandIdsCore,
   ROLE_TO_TEAM,
 } from './panel-authority-core.js'
 
-export { ROLE_TO_TEAM }
+export {
+  ROLE_TO_TEAM,
+  isBrandInScopeCore as isBrandInScope,
+  resolveVisibleBrandsCore as resolveVisibleBrands,
+  resolveVisibleBrandIdsCore as resolveVisibleBrandIds,
+}
 
 export interface PanelPrincipal {
   principalType: 'admin' | 'employee' | 'anonymous'
