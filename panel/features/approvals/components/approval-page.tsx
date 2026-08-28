@@ -102,12 +102,13 @@ export function ApprovalPage() {
     const storedHandoffs = await getStoredHandoffs()
     const storedCycles = await getStoredCycles()
 
-    // RETROACTIVE REPAIR: requiresApproval olup active status'te kalmış adımları otomatik onaya gönder (revize veya red aşamasında olmayanlar)
+    // RETROACTIVE REPAIR: Sadece halihazırda teslim açıklaması ve linki olan ancak pending onayı eksik kalmış adımları onarır
     const stuckActiveApprovalSteps = storedSteps.filter(s => 
       s.status === 'active' && 
       s.requiresApproval && 
       s.approvalStatus !== 'revision_requested' && 
-      s.approvalStatus !== 'rejected'
+      s.approvalStatus !== 'rejected' &&
+      (s.description?.includes('[Teslim Açıklaması]:') || s.description?.includes('http'))
     )
     if (stuckActiveApprovalSteps.length > 0) {
       let repairDone = false

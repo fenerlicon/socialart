@@ -54,6 +54,9 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
     stepId: string
     instanceId: string
     title: string
+    stepTitle?: string
+    stepTemplateId?: string
+    requiresApproval?: boolean
   } | null>(null)
   const [reports, setReports] = useState<Report[]>([])
   const [isDailyReportDismissed, setIsDailyReportDismissed] = useState(false)
@@ -139,42 +142,21 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
     return inst ? inst.title : 'İş Akışı'
   }
 
-  // Quick Action handlers on Dashboard
-  const handleCompleteStep = async (stepId: string, instanceId: string, isApproval: boolean) => {
-    setIsSubmitting(true)
-    try {
-      if (isApproval) {
-        requestApproval({
-          workflowInstanceId: instanceId,
-          stepInstanceId: stepId,
-          requestedByEmployeeId: employee.id,
-          note: 'Onay talep ediliyor.',
-        })
-        toast.success('Onay talebi gönderildi.')
-      } else {
-        progressWorkflowStep({
-          workflowInstanceId: instanceId,
-          stepInstanceId: stepId,
-          action: 'complete',
-          actorEmployeeId: employee.id,
-        })
-        toast.success('İş adımı başarıyla tamamlandı.')
-      }
-      loadData()
-    } catch (err: any) {
-      toast.error('İşlem gerçekleştirilemedi', { description: err.message })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const handleDeliveryConfirm = async (deliveryNote: string, links: string[], files: string[]) => {
     if (!deliveryModalData) return
-    const { stepId, instanceId } = deliveryModalData
+    const { stepId, instanceId, requiresApproval } = deliveryModalData
     setDeliveryModalData(null)
     setIsSubmitting(true)
     try {
       const stepObj = steps.find((s) => s.id === stepId)
+      const isCreative = stepObj
+        ? (isCreativeProductionResponsibility(stepObj.responsibilityRole) ||
+           stepObj.responsibilityRole === 'graphic_design' ||
+           stepObj.responsibilityRole === 'video_editing' ||
+           stepObj.approvalPurpose === 'final_creative')
+        : false
+      const shouldRequestApproval = requiresApproval || isCreative || stepObj?.approvalPurpose === 'final_creative'
+
       if (stepObj) {
         const formattedNote = `\n\n[Teslim Açıklaması]: ${deliveryNote}` +
           (links.length > 0 ? `\n[Fotoğraf/Görsel Bağlantıları]: ${links.join(', ')}` : '') +
@@ -182,18 +164,32 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
 
         const updatedStep = {
           ...stepObj,
-          description: `${stepObj.description}${formattedNote}`
+          description: `${stepObj.description}${formattedNote}`,
+          requiresApproval: shouldRequestApproval ? true : stepObj.requiresApproval,
+          approvalPurpose: shouldRequestApproval ? (stepObj.approvalPurpose || 'final_creative') : stepObj.approvalPurpose,
+          creativeCount: isCreative ? (stepObj.creativeCount && stepObj.creativeCount >= 1 ? stepObj.creativeCount : 1) : stepObj.creativeCount,
         }
         await updateWorkflowStepInstance(updatedStep)
       }
 
-      await progressWorkflowStep({
-        workflowInstanceId: instanceId,
-        stepInstanceId: stepId,
-        action: 'complete',
-        actorEmployeeId: employee.id,
-      })
-      toast.success('Görev teslim edildi ve tamamlandı.')
+      if (shouldRequestApproval) {
+        await requestApproval({
+          workflowInstanceId: instanceId,
+          stepInstanceId: stepId,
+          requestedByEmployeeId: employee.id,
+          note: deliveryNote || 'Kreatif teslim edildi, onay talep ediliyor.',
+          deliveryLinks: [...links, ...files],
+        })
+        toast.success('Görev teslim edildi ve onaya gönderildi.')
+      } else {
+        await progressWorkflowStep({
+          workflowInstanceId: instanceId,
+          stepInstanceId: stepId,
+          action: 'complete',
+          actorEmployeeId: employee.id,
+        })
+        toast.success('Görev teslim edildi ve tamamlandı.')
+      }
       loadData()
     } catch (err: any) {
       toast.error('İşlem gerçekleştirilemedi', { description: err.message })
@@ -203,11 +199,15 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
   }
 
   const handleCompleteClick = (stepId: string, instanceId: string, title: string, isApproval: boolean) => {
-    if (isApproval) {
-      handleCompleteStep(stepId, instanceId, true)
-    } else {
-      setDeliveryModalData({ stepId, instanceId, title })
-    }
+    const stepObj = steps.find((s) => s.id === stepId)
+    setDeliveryModalData({
+      stepId,
+      instanceId,
+      title,
+      stepTitle: stepObj?.title || title,
+      stepTemplateId: stepObj?.workflowStepTemplateId || '',
+      requiresApproval: isApproval || stepObj?.requiresApproval || false,
+    })
   }
 
   const renderTaskList = () => {
@@ -662,6 +662,9 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
           onClose={() => setDeliveryModalData(null)}
           onConfirm={handleDeliveryConfirm}
           taskTitle={deliveryModalData.title}
+          stepTitle={deliveryModalData.stepTitle}
+          stepTemplateId={deliveryModalData.stepTemplateId}
+          requiresApproval={deliveryModalData.requiresApproval}
         />
       )}
     </div>

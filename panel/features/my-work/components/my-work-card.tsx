@@ -308,6 +308,7 @@ export function MyWorkCard({
           stepInstanceId: step.id,
           requestedByEmployeeId: currentEmployeeId,
           note: deliveryNote || 'Kreatif teslim edildi, onay talep ediliyor.',
+          deliveryLinks: [...links, ...files],
         })
 
         toast.success('Görev teslim edildi ve Art Director onayına gönderildi.', {
@@ -924,6 +925,7 @@ export function MyWorkCard({
           taskTitle={step.title}
           stepTitle={step.title}
           stepTemplateId={step.workflowStepTemplateId}
+          requiresApproval={step.requiresApproval || step.approvalPurpose === 'final_creative' || isCreativeProductionResponsibility(step.responsibilityRole) || step.responsibilityRole === 'graphic_design' || step.responsibilityRole === 'video_editing'}
         />
       )}
 

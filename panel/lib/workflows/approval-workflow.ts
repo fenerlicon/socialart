@@ -29,6 +29,91 @@ import {
   createApprovalRevisionNotification,
 } from '@/lib/workflows/notification-helper'
 
+export function isValidUrl(urlString: string): boolean {
+  if (!urlString || typeof urlString !== 'string') return false
+  const trimmed = urlString.trim()
+  if (!trimmed) return false
+  try {
+    const url = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`)
+    return Boolean(url.hostname && (url.hostname.includes('.') || url.hostname === 'localhost'))
+  } catch {
+    return false
+  }
+}
+
+export function validateDeliveryEvidence(params: {
+  note?: string
+  description?: string
+  deliveryLinks?: string[]
+}): {
+  deliveryNote: string
+  validUrls: string[]
+} {
+  const { note, description, deliveryLinks } = params
+
+  // 1. Extract and validate description / note
+  let parsedNote = (note || '').trim()
+  if (!parsedNote || parsedNote === 'Onay talep ediliyor.' || parsedNote === 'Kreatif teslim edildi, onay talep ediliyor.') {
+    const deliveryMarker = '[Teslim Açıklaması]:'
+    const idx = (description || '').indexOf(deliveryMarker)
+    if (idx !== -1) {
+      const content = description!.substring(idx + deliveryMarker.length).split('\n[')[0].trim()
+      if (content) {
+        parsedNote = content
+      }
+    }
+  }
+
+  if (!parsedNote || parsedNote.trim().length === 0) {
+    throw new Error('Teslim açıklaması zorunludur.')
+  }
+
+  // 2. Extract and validate URLs
+  const candidateUrls: string[] = []
+  if (deliveryLinks && Array.isArray(deliveryLinks)) {
+    for (const link of deliveryLinks) {
+      if (typeof link === 'string' && link.trim()) {
+        candidateUrls.push(link.trim())
+      }
+    }
+  }
+
+  // Also parse URLs from step description if present
+  if (description) {
+    const urlRegex = /(https?:\/\/[^\s]+)/gi
+    const matches = description.match(urlRegex)
+    if (matches) {
+      for (const m of matches) {
+        const clean = m.replace(/[),;]+$/, '').trim()
+        if (clean && !candidateUrls.includes(clean)) {
+          candidateUrls.push(clean)
+        }
+      }
+    }
+  }
+
+  if (candidateUrls.length === 0) {
+    throw new Error('Onaya göndermek için en az bir teslim linki eklemelisiniz.')
+  }
+
+  const validUrls: string[] = []
+  for (const url of candidateUrls) {
+    if (!isValidUrl(url)) {
+      throw new Error(`Geçersiz bağlantı adresi: "${url}". Lütfen geçerli bir URL giriniz.`)
+    }
+    validUrls.push(url)
+  }
+
+  if (validUrls.length === 0) {
+    throw new Error('Onaya göndermek için en az bir teslim linki eklemelisiniz.')
+  }
+
+  return {
+    deliveryNote: parsedNote,
+    validUrls,
+  }
+}
+
 /**
  * Bir adımı onaya gönderir.
  */
@@ -37,8 +122,9 @@ export async function requestApproval(params: {
   stepInstanceId: string
   requestedByEmployeeId: string
   note?: string
+  deliveryLinks?: string[]
 }): Promise<WorkflowApproval> {
-  const { workflowInstanceId, stepInstanceId, requestedByEmployeeId, note } = params
+  const { workflowInstanceId, stepInstanceId, requestedByEmployeeId, note, deliveryLinks } = params
   const now = new Date().toISOString()
 
   // 1. Validasyonlar
@@ -50,6 +136,21 @@ export async function requestApproval(params: {
 
   if (step.status !== 'active') {
     throw new Error('Sadece aktif durumdaki iş adımları onaya gönderilebilir!')
+  }
+
+  // Canonical Delivery Evidence Validation at Domain Boundary
+  const isCreative = isCreativeProductionResponsibility(step.responsibilityRole) ||
+    step.responsibilityRole === 'graphic_design' ||
+    step.responsibilityRole === 'video_editing' ||
+    step.approvalPurpose === 'final_creative' ||
+    step.requiresApproval
+
+  if (isCreative) {
+    validateDeliveryEvidence({
+      note,
+      description: step.description,
+      deliveryLinks,
+    })
   }
 
   // Aynı step için yayında onay bekleyen talep var mı?

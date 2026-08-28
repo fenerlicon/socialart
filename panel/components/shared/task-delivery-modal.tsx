@@ -5,18 +5,31 @@ import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { X, Link2, Paperclip, Trash, Camera, Film, FileText, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { X, Link2, Paperclip, Trash, Camera, Film, FileText, AlertCircle, CheckCircle2, Send } from 'lucide-react'
+import { toast } from 'sonner'
+
+export function isValidUrl(urlString: string): boolean {
+  if (!urlString || typeof urlString !== 'string') return false
+  const trimmed = urlString.trim()
+  if (!trimmed) return false
+  try {
+    const url = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`)
+    return Boolean(url.hostname && (url.hostname.includes('.') || url.hostname === 'localhost'))
+  } catch {
+    return false
+  }
+}
 
 interface TaskDeliveryModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: (deliveryNote: string, links: string[], files: string[]) => void
   taskTitle: string
-  stepTitle?: string       // Adım başlığı (zorunluluk tespiti için)
-  stepTemplateId?: string  // Template ID (zorunluluk tespiti için)
+  stepTitle?: string
+  stepTemplateId?: string
+  requiresApproval?: boolean
 }
 
-// Görev tipini tanımla
 type RequirementType = 'shooting' | 'editing' | 'report' | 'none'
 
 function detectRequirement(stepTitle: string, stepTemplateId: string): RequirementType {
@@ -91,11 +104,13 @@ export function TaskDeliveryModal({
   taskTitle,
   stepTitle = '',
   stepTemplateId = '',
+  requiresApproval = false,
 }: TaskDeliveryModalProps) {
   const [deliveryNote, setDeliveryNote] = useState('')
   const [requiredLink, setRequiredLink] = useState('')
   const [links, setLinks] = useState<string[]>([''])
   const [files, setFiles] = useState<string[]>([''])
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const requirementType = detectRequirement(stepTitle, stepTemplateId)
@@ -103,30 +118,51 @@ export function TaskDeliveryModal({
 
   if (!isOpen) return null
 
-  const isRequiredLinkMissing = requirementConfig && !requiredLink.trim()
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitAttempted(true)
+    setErrorMessage(null)
 
-    if (isRequiredLinkMissing) return
+    // 1. Description validation
+    if (!deliveryNote.trim()) {
+      setErrorMessage('Teslim açıklaması zorunludur.')
+      toast.error('Teslim açıklaması zorunludur.')
+      return
+    }
 
-    // Zorunlu linki de diğer linklerle birleştir
-    const allLinks = [
+    // 2. Link collection & URL validation
+    const rawLinks = [
       ...(requiredLink.trim() ? [requiredLink.trim()] : []),
-      ...links.filter((l) => l.trim() !== ''),
+      ...links.map((l) => l.trim()).filter(Boolean),
+      ...files.map((f) => f.trim()).filter(Boolean),
     ]
 
-    onConfirm(
-      deliveryNote,
-      allLinks,
-      files.filter((f) => f.trim() !== '')
-    )
+    if (rawLinks.length === 0) {
+      setErrorMessage('Onaya göndermek için en az bir teslim linki eklemelisiniz.')
+      toast.error('Onaya göndermek için en az bir teslim linki eklemelisiniz.')
+      return
+    }
+
+    const invalidLink = rawLinks.find((l) => !isValidUrl(l))
+    if (invalidLink) {
+      setErrorMessage(`Geçersiz bağlantı adresi: "${invalidLink}". Lütfen geçerli bir URL giriniz.`)
+      toast.error('Lütfen geçerli bir bağlantı adresi (URL) giriniz.')
+      return
+    }
+
+    const validLinks = [
+      ...(requiredLink.trim() ? [requiredLink.trim()] : []),
+      ...links.map((l) => l.trim()).filter(Boolean),
+    ]
+    const validFiles = files.map((f) => f.trim()).filter(Boolean)
+
+    onConfirm(deliveryNote.trim(), validLinks, validFiles)
 
     setDeliveryNote('')
     setRequiredLink('')
     setLinks([''])
     setFiles([''])
+    setErrorMessage(null)
     setSubmitAttempted(false)
   }
 
@@ -140,7 +176,9 @@ export function TaskDeliveryModal({
           {/* Header */}
           <div className="p-5 sm:p-6 pb-4 border-b border-neutral-800/80 shrink-0 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-black text-foreground">Görevi Teslim Et ve Tamamla</h2>
+              <h2 className="text-base font-black text-foreground">
+                {requiresApproval ? 'Görevi Teslim Et ve Onaya Gönder' : 'Görevi Teslim Et ve Tamamla'}
+              </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Görev: <span className="text-purple-400 font-semibold">{taskTitle}</span>
               </p>
@@ -156,6 +194,14 @@ export function TaskDeliveryModal({
 
           {/* Scrollable Body */}
           <div className="p-5 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
+            {/* Global Error Banner */}
+            {errorMessage && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 flex items-start gap-2.5 text-xs text-rose-300">
+                <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                <span className="leading-snug">{errorMessage}</span>
+              </div>
+            )}
+
             {/* Zorunlu Link Bölümü (Görev tipine göre) */}
             {requirementConfig && (
               <div className={`rounded-xl border p-4 space-y-3 ${requirementConfig.borderColor} ${requirementConfig.bgColor}`}>
@@ -171,7 +217,6 @@ export function TaskDeliveryModal({
                     {requirementConfig.label} <span className="text-rose-400">*</span>
                   </Label>
                   <Input
-                    required
                     placeholder={requirementConfig.placeholder}
                     value={requiredLink}
                     onChange={(e) => setRequiredLink(e.target.value)}
@@ -179,16 +224,10 @@ export function TaskDeliveryModal({
                       submitAttempted && !requiredLink.trim() ? 'border-red-500/60 ring-1 ring-red-500/30' : ''
                     }`}
                   />
-                  {submitAttempted && !requiredLink.trim() && (
-                    <p className="text-[10px] text-red-400 flex items-center gap-1 mt-1">
-                      <AlertCircle className="h-3 w-3" />
-                      Bu alan zorunludur, görev teslim edilemez!
-                    </p>
-                  )}
-                  {requiredLink.trim() && (
+                  {requiredLink.trim() && isValidUrl(requiredLink) && (
                     <p className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      Link eklendi
+                      Geçerli link eklendi
                     </p>
                   )}
                 </div>
@@ -197,49 +236,58 @@ export function TaskDeliveryModal({
 
             {/* Teslim Notu */}
             <div className="space-y-1.5">
-              <Label htmlFor="deliveryNote" className="text-xs font-bold">
+              <Label htmlFor="deliveryNote" className="text-xs font-bold text-neutral-200">
                 Teslim Açıklaması / Notu <span className="text-rose-400">*</span>
               </Label>
               <textarea
                 id="deliveryNote"
                 rows={3}
-                required
-                placeholder="Görevin teslimi hakkında bilgi verin (Örn. Zara Kış Çekimi tamamlandı, 47 kare ham dosya...)..."
+                placeholder="Görevin teslimi hakkında bilgi verin (Örn. Marka Kampanya Banner Seti tamamlandı, 4 format hazırlandı...)..."
                 value={deliveryNote}
                 onChange={(e) => setDeliveryNote(e.target.value)}
-                className="w-full rounded-xl bg-neutral-900/60 border border-neutral-800 px-3 py-2 text-xs text-neutral-200 focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
+                className={`w-full rounded-xl bg-neutral-900/60 border px-3 py-2 text-xs text-neutral-200 focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none ${
+                  submitAttempted && !deliveryNote.trim() ? 'border-rose-500/60 ring-1 ring-rose-500/30' : 'border-neutral-800'
+                }`}
               />
+              {submitAttempted && !deliveryNote.trim() && (
+                <p className="text-[10px] text-rose-400 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Teslim açıklaması zorunludur.
+                </p>
+              )}
             </div>
 
-            {/* Ek Görsel / Fotoğraf Linkleri */}
+            {/* Teslim / Görsel / Drive Bağlantıları */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-1 text-xs">
+                <Label className="flex items-center gap-1 text-xs text-neutral-200 font-bold">
                   <Link2 className="h-3.5 w-3.5 text-blue-400" />
-                  Ek Görsel / Fotoğraf Linkleri
-                  <span className="text-[9px] text-muted-foreground font-normal">(isteğe bağlı)</span>
+                  Teslim / Görsel / Drive Linki <span className="text-rose-400">*</span>
                 </Label>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setLinks([...links, ''])}
-                  className="h-5 text-[10px] text-purple-400 font-bold px-1.5"
+                  className="h-5 text-[10px] text-purple-400 font-bold px-1.5 hover:bg-neutral-900"
                 >
-                  + Ekle
+                  + Link Ekle
                 </Button>
               </div>
+              <p className="text-[10px] text-muted-foreground">
+                Google Drive, Figma, WeTransfer veya doğrudan dosya linki giriniz.
+              </p>
               <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
                 {links.map((link, idx) => (
                   <div key={`link-${idx}`} className="flex items-center gap-2">
                     <Input
-                      placeholder="https://drive.google.com/..."
+                      placeholder="https://drive.google.com/... veya https://www.figma.com/..."
                       value={link}
                       onChange={(e) => {
                         const updated = [...links]
                         updated[idx] = e.target.value
                         setLinks(updated)
                       }}
-                      className="h-8 text-xs bg-neutral-900/60 border-neutral-800"
+                      className="h-9 text-xs bg-neutral-900/60 border-neutral-800"
                     />
                     {links.length > 1 && (
                       <Button
@@ -247,7 +295,7 @@ export function TaskDeliveryModal({
                         variant="ghost"
                         size="icon"
                         onClick={() => setLinks(links.filter((_, i) => i !== idx))}
-                        className="h-8 w-8 text-red-400 shrink-0"
+                        className="h-8 w-8 text-rose-400 shrink-0 hover:bg-rose-500/10"
                       >
                         <Trash className="h-3.5 w-3.5" />
                       </Button>
@@ -257,21 +305,21 @@ export function TaskDeliveryModal({
               </div>
             </div>
 
-            {/* Dosya Linkleri */}
+            {/* Ek Dosya Linkleri */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-1 text-xs">
+                <Label className="flex items-center gap-1 text-xs text-neutral-300">
                   <Paperclip className="h-3.5 w-3.5 text-purple-400" />
-                  Ek Dosya Linkleri (PDF/Zip vb.)
+                  Ek Dosya Linkleri (WeTransfer / Bulut / Arşiv)
                   <span className="text-[9px] text-muted-foreground font-normal">(isteğe bağlı)</span>
                 </Label>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setFiles([...files, ''])}
-                  className="h-5 text-[10px] text-purple-400 font-bold px-1.5"
+                  className="h-5 text-[10px] text-purple-400 font-bold px-1.5 hover:bg-neutral-900"
                 >
-                  + Ekle
+                  + Dosya Linki Ekle
                 </Button>
               </div>
               <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
@@ -285,7 +333,7 @@ export function TaskDeliveryModal({
                         updated[idx] = e.target.value
                         setFiles(updated)
                       }}
-                      className="h-8 text-xs bg-neutral-900/60 border-neutral-800"
+                      className="h-9 text-xs bg-neutral-900/60 border-neutral-800"
                     />
                     {files.length > 1 && (
                       <Button
@@ -293,7 +341,7 @@ export function TaskDeliveryModal({
                         variant="ghost"
                         size="icon"
                         onClick={() => setFiles(files.filter((_, i) => i !== idx))}
-                        className="h-8 w-8 text-red-400 shrink-0"
+                        className="h-8 w-8 text-rose-400 shrink-0 hover:bg-rose-500/10"
                       >
                         <Trash className="h-3.5 w-3.5" />
                       </Button>
@@ -316,9 +364,10 @@ export function TaskDeliveryModal({
             </Button>
             <Button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 px-5 rounded-xl shadow-md"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 px-5 rounded-xl shadow-md flex items-center gap-1.5"
             >
-              Görevi Teslim Et ve Tamamla
+              <Send className="h-3.5 w-3.5" />
+              {requiresApproval ? 'Görevi Teslim Et ve Onaya Gönder' : 'Görevi Teslim Et ve Tamamla'}
             </Button>
           </div>
         </form>
