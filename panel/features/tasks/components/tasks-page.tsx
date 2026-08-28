@@ -9,7 +9,7 @@ import { getWorkflowStepInstances, updateWorkflowStepInstance, getStoredWorkflow
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredCycles } from '@/lib/storage/local-cycle-store'
 import { supabase } from '@/lib/supabase/client'
-import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal } from '@/lib/permissions/panel-authority'
+import { resolvePanelAuthority, isManagerOrAdmin, isStepInScope, usePrincipal, ROLE_TO_TEAM } from '@/lib/permissions/panel-authority'
 import { AccessDenied } from '@/components/shared/access-denied'
 import { TaskDetailDrawer } from '@/features/my-work/components/task-detail-drawer'
 import { CustomTaskModal } from '@/components/shared/custom-task-modal'
@@ -154,6 +154,7 @@ export function TasksPage() {
   const [activeModal, setActiveModal] = useState<'assign' | 'deadline' | 'reviewer' | 'support' | 'create' | null>(null)
   const [showDeleteStepConfirm, setShowDeleteStepConfirm] = useState(false)
   const [stepToDelete, setStepToDelete] = useState<WorkflowStepInstance | null>(null)
+  const [showBulkAssign, setShowBulkAssign] = useState(false)
 
   // Form Fields
   const [assigneeId, setAssigneeId] = useState('')
@@ -161,7 +162,7 @@ export function TasksPage() {
   const [dueDateText, setDueDateText] = useState('')
   const [dueTimeText, setDueTimeText] = useState('')
   const [reviewerId, setReviewerId] = useState('')
-  const [supportIds, setSupportIds] = useState<string[]>([])
+  const [selectedSupportIds, setSelectedSupportIds] = useState<string[]>([])
   const [supportRole, setSupportRole] = useState('')
 
   // Filters State
@@ -293,7 +294,7 @@ export function TasksPage() {
 
       // Team Filter
       if (teamFilter !== 'all') {
-        const teamIdOfStep = step.responsibilityRole ? ROLE_TO_TEAM[step.responsibilityRole] : undefined
+        const teamIdOfStep = step.responsibilityRole ? (ROLE_TO_TEAM as Record<string, string>)[step.responsibilityRole] : undefined
         if (teamIdOfStep !== teamFilter) return false
       }
 
