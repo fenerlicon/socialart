@@ -58,7 +58,7 @@ export async function requireAdminSession(req, options = {}) {
   // 2. Standard Employee Principal Session
   const { data: employee, error: empErr } = await supabase
     .from('employees')
-    .select('id, full_name, email, title, role_package_id, permission_overrides, employee_status')
+    .select('id, full_name, email, title, role_package_id, team_ids, employment_type, work_location_status, permission_overrides, employee_status')
     .eq('id', session.employee_id)
     .maybeSingle();
 
@@ -124,6 +124,9 @@ export default async function handler(req, res) {
       email: authState.employee.email,
       title: authState.employee.title,
       rolePackageId: authState.employee.role_package_id,
+      teamIds: Array.isArray(authState.employee.team_ids) ? authState.employee.team_ids : [],
+      employmentType: authState.employee.employment_type || null,
+      workLocationStatus: authState.employee.work_location_status || 'office',
       permissionOverrides: authState.employee.permission_overrides || {}
     },
     permissions: authState.permissions,

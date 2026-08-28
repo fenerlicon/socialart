@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { getAdminSupabase, getSecondaryAdminSupabase } from './admin-db.js';
 import { requireAdminSession } from './auth-me.js';
 import { validateOrigin } from './admin-auth.js';
+import { requireAdministrativeAuthority } from './admin-permissions.js';
 
 /**
  * Core engine for mirroring an existing DB1 worker to DB2.
@@ -191,15 +192,11 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  // 2. Authorize operator with employees.manage or system.admin
-  const hasPermission =
-    authState.permissions &&
-    (authState.permissions.includes('employees.manage') ||
-      authState.permissions.includes('system.admin'));
-
-  if (!hasPermission) {
-    return res.status(403).json({
-      error: 'Unauthorized: employees.manage permission required to mirror employees',
+  // 2. Authorize operator with Dedicated Admin or employees.manage / system.admin authority
+  const authCheck = requireAdministrativeAuthority(authState, 'employees.manage');
+  if (!authCheck.authorized) {
+    return res.status(authCheck.status || 403).json({
+      error: authCheck.error || 'Unauthorized: employees.manage permission required to mirror employees',
     });
   }
 

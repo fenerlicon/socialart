@@ -5,6 +5,7 @@ import type { Brand, BrandDriveLinks, Employee } from '@/types/domain'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getDriveLinks, saveDriveLinks } from '@/lib/storage/local-drive-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react'
 
 export function DrivePage() {
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [brands, setBrands] = useState<Brand[]>([])
   const [driveLinks, setDriveLinks] = useState<BrandDriveLinks[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -52,18 +54,23 @@ export function DrivePage() {
         const storedEmps = await getStoredEmployees()
         setEmployees(storedEmps)
 
-        const activeId = getActiveEmployeeId()
-        if (activeId) setActiveEmployeeId(activeId)
+        if (contextActiveEmployee) {
+          setActiveEmployeeId(contextActiveEmployee.id)
+        } else {
+          const activeId = getActiveEmployeeId()
+          if (activeId) setActiveEmployeeId(activeId)
+        }
       } catch (err) {
         console.error('Failed to load drive page data:', err)
       }
     }
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
 
   const activeEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
     return employees.find(e => e.id === activeEmployeeId)
-  }, [employees, activeEmployeeId])
+  }, [contextActiveEmployee, employees, activeEmployeeId])
 
   const isManager = useMemo(() => {
     if (!activeEmployee) return false

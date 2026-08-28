@@ -1,4 +1,4 @@
-﻿const assert = require('assert');
+const assert = require('assert');
 
 async function runTests() {
   console.log('==========================================');
@@ -125,7 +125,69 @@ async function runTests() {
     false,
     'Manipulated storage MUST NOT make anonymous user a manager/admin'
   );
-  console.log(' ✅ PASSED: Client-writable browser storage cannot spoof or elevate panel authority');
+  console.log('\n--- 5. AUTH-MIRROR-EMPLOYEE ENDPOINT AUTHORIZATION TEST ---');
+  const { requireAdministrativeAuthority, resolveServerPermissions } = await import('../api/_lib/admin-permissions.js');
+
+  // Dedicated Admin
+  const adminAuthState = {
+    authenticated: true,
+    principalType: 'admin',
+    isAdmin: true,
+    admin: { id: 'admin-sec-uuid-101', email: 'admin@socialartmedya.com' }
+  };
+  const adminAuthRes = requireAdministrativeAuthority(adminAuthState, 'employees.manage');
+  assert.strictEqual(adminAuthRes.authorized, true, 'Dedicated Admin MUST be authorized for mirror employee endpoint');
+  assert.strictEqual(adminAuthRes.principalType, 'admin');
+
+  // Operations Manager Employee (has employees.manage)
+  const opsManagerAuthState = {
+    authenticated: true,
+    principalType: 'employee',
+    employee: { id: 2, fullName: 'Celal Ünlü', rolePackageId: 'operasyon-yonetimi' },
+    permissions: resolveServerPermissions('operasyon-yonetimi', { 'employees.manage': true })
+  };
+  const opsAuthRes = requireAdministrativeAuthority(opsManagerAuthState, 'employees.manage');
+  assert.strictEqual(opsAuthRes.authorized, true, 'Employee with employees.manage MUST be authorized');
+
+  // Beta Art Director (does NOT have employees.manage)
+  const adAuthState = {
+    authenticated: true,
+    principalType: 'employee',
+    employee: { id: 16, fullName: 'Beta Art Director (Geçici)', rolePackageId: 'art-director' },
+    permissions: resolveServerPermissions('art-director')
+  };
+  const adAuthRes = requireAdministrativeAuthority(adAuthState, 'employees.manage');
+  assert.strictEqual(adAuthRes.authorized, false, 'Beta Art Director MUST NOT be authorized to mirror employees');
+  assert.strictEqual(adAuthRes.status, 403);
+
+  // Beta Graphic Designer (does NOT have employees.manage)
+  const gdAuthState = {
+    authenticated: true,
+    principalType: 'employee',
+    employee: { id: 17, fullName: 'Beta Graphic Designer', rolePackageId: 'grafik-tasarim' },
+    permissions: resolveServerPermissions('grafik-tasarim')
+  };
+  const gdAuthRes = requireAdministrativeAuthority(gdAuthState, 'employees.manage');
+  assert.strictEqual(gdAuthRes.authorized, false, 'Beta Graphic Designer MUST NOT be authorized to mirror employees');
+  assert.strictEqual(gdAuthRes.status, 403);
+
+  // ID 6 (Digital Marketer - does NOT have employees.manage)
+  const id6AuthState = {
+    authenticated: true,
+    principalType: 'employee',
+    employee: { id: 6, fullName: 'Arda Furkan', rolePackageId: 'dijital-pazarlama' },
+    permissions: resolveServerPermissions('dijital-pazarlama')
+  };
+  const id6AuthRes = requireAdministrativeAuthority(id6AuthState, 'employees.manage');
+  assert.strictEqual(id6AuthRes.authorized, false, 'ID 6 MUST NOT be authorized to mirror employees');
+  assert.strictEqual(id6AuthRes.status, 403);
+
+  // Unauthenticated
+  const unauthRes = requireAdministrativeAuthority(null, 'employees.manage');
+  assert.strictEqual(unauthRes.authorized, false, 'Unauthenticated user MUST fail closed');
+  assert.strictEqual(unauthRes.status, 401);
+
+  console.log(' ✅ PASSED: Auth-mirror-employee endpoint authorization strictly enforced (Dedicated Admin allowed, scoped employees enforced, fail closed)');
 
   console.log('\n==========================================');
   console.log('ALL DETERMINISTIC PANEL AUTHORIZATION TESTS PASSED');

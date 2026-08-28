@@ -56,7 +56,7 @@ import { HandoffRequestCard } from '@/features/my-work/components/handoff-reques
 
 export function ApprovalPage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
   const [approvals, setApprovals] = useState<WorkflowApproval[]>([])
@@ -82,13 +82,17 @@ export function ApprovalPage() {
     const employeeList = await getStoredEmployees()
     setEmployees(employeeList)
 
-    const savedId = getActiveEmployeeId()
-    if (savedId && employeeList.some((e) => e.id === savedId)) {
-      if (currentEmployeeId !== savedId) {
-        setCurrentEmployeeId(savedId)
+    if (contextActiveEmployee) {
+      setCurrentEmployeeId(contextActiveEmployee.id)
+    } else {
+      const savedId = getActiveEmployeeId()
+      if (savedId && employeeList.some((e) => e.id === savedId)) {
+        if (currentEmployeeId !== savedId) {
+          setCurrentEmployeeId(savedId)
+        }
+      } else if (employeeList.length > 0 && !currentEmployeeId) {
+        setCurrentEmployeeId(employeeList[0].id)
       }
-    } else if (employeeList.length > 0 && !currentEmployeeId) {
-      setCurrentEmployeeId(employeeList[0].id)
     }
 
     const storedApprovals = await getStoredApprovals()
@@ -146,15 +150,16 @@ export function ApprovalPage() {
     setCycles(storedCycles)
     setHandoffs(storedHandoffs)
     setIsLoadingAuth(false)
-  }, [currentEmployeeId])
+  }, [currentEmployeeId, contextActiveEmployee])
 
   useEffect(() => {
     loadData()
   }, [loadData])
 
   const currentEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
     return employees.find((e) => e.id === currentEmployeeId)
-  }, [employees, currentEmployeeId])
+  }, [contextActiveEmployee, employees, currentEmployeeId])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {

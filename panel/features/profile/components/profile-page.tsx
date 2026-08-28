@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Employee } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId, updateEmployee } from '@/lib/storage/local-employee-store'
-import { getStoredWorkflowInstances, getWorkflowStepInstances } from '@/lib/storage/local-workflow-instance-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
+import { getWorkflowStepInstances } from '@/lib/storage/local-workflow-instance-store'
 import { getStoredNotifications } from '@/lib/storage/local-notification-store'
 import { ROLE_PACKAGES_BY_ID } from '@/features/role-packages/data/role-package-seeds'
 import { PERMISSIONS } from '@/config/permissions'
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react'
 
 export function ProfilePage() {
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [completedSteps, setCompletedSteps] = useState(0)
   const [activeSteps, setActiveSteps] = useState(0)
@@ -51,9 +53,9 @@ export function ProfilePage() {
   const [migrating, setMigrating] = useState(false)
 
   const loadData = async () => {
-    const activeId = getActiveEmployeeId()
     const emps = await getStoredEmployees()
-    const me = emps.find((e) => e.id === activeId) ?? emps[0]
+    const activeId = getActiveEmployeeId()
+    const me = contextActiveEmployee || emps.find((e) => e.id === activeId) || emps[0] || null
     if (!me) return
 
     setEmployee(me)

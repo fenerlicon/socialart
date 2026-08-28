@@ -32,7 +32,7 @@ const ROLE_PACKAGE_LABELS: Record<string, string> = {
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -51,22 +51,33 @@ export default function SettingsPage() {
     const list = await getStoredEmployees()
     setEmployees(list)
 
-    const activeId = getActiveEmployeeId()
-    const current = list.find((e) => e.id === activeId)
-    if (current) {
-      setActiveEmployee(current)
+    if (contextActiveEmployee) {
+      setActiveEmployee(contextActiveEmployee)
+    } else {
+      const activeId = getActiveEmployeeId()
+      const current = list.find((e) => e.id === activeId)
+      if (current) {
+        setActiveEmployee(current)
+      }
     }
     setIsLoadingAuth(false)
   }
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'settings.manage')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'settings.manage')
+  }, [principal, effectiveActiveEmployee])
 
   // Filtered employees
   const filteredEmployees = useMemo(() => {

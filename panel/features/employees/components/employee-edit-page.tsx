@@ -33,13 +33,14 @@ interface EmployeeEditPageProps {
 }
 
 export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null)
   const [isLoadingEmployee, setIsLoadingEmployee] = useState(true)
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const [employees, setEmployees] = useState<Employee[]>([])
 
   // Credential states
   const [credentialLoading, setCredentialLoading] = useState(true)
@@ -71,10 +72,15 @@ export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
       setIsLoadingEmployee(true)
       
       const storedEmps = await getStoredEmployees()
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      setEmployees(storedEmps)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
 
@@ -86,7 +92,14 @@ export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
       setIsLoadingEmployee(false)
     }
     loadData()
-  }, [id])
+  }, [id, contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   const handleCreatePanelAccess = async () => {
     if (!employeeToEdit) return
@@ -127,19 +140,19 @@ export function EmployeeEditPage({ id }: EmployeeEditPageProps) {
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, [
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, [
       'employees.manage',
       'system.admin',
       'team.manage',
     ])
-  }, [principal, activeEmployee])
+  }, [principal, effectiveActiveEmployee])
 
   const canManageEmployment = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, [
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, [
       'employees.manage',
       'system.admin',
     ])
-  }, [principal, activeEmployee])
+  }, [principal, effectiveActiveEmployee])
 
   if (isLoadingAuth || isLoadingEmployee) {
     return (

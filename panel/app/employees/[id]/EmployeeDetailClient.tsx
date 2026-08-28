@@ -62,10 +62,11 @@ export default function EmployeeDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
 
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [brands, setBrands] = useState<Brand[]>([])
+  const [storedEmployees, setStoredEmployees] = useState<Employee[]>([])
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -117,10 +118,15 @@ export default function EmployeeDetailPage() {
       }
       
       const storedEmps = await getStoredEmployees()
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      setStoredEmployees(storedEmps)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
 
@@ -128,33 +134,40 @@ export default function EmployeeDetailPage() {
       setBrands(storedBrands)
     }
     loadData()
-  }, [id])
+  }, [id, contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return storedEmployees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, storedEmployees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, [
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, [
       'employees.manage',
       'employees.view',
       'system.admin',
       'team.manage',
       'task.manage',
     ])
-  }, [principal, activeEmployee])
+  }, [principal, effectiveActiveEmployee])
 
   const canManageEmployment = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, [
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, [
       'employees.manage',
       'system.admin',
     ])
-  }, [principal, activeEmployee])
+  }, [principal, effectiveActiveEmployee])
 
   // Check if they share teams
   const canViewDetail = useMemo(() => {
-    if (isManagerOrAdmin(principal, activeEmployee)) return true
-    if (!activeEmployee || !employee) return false
-    if (activeEmployee.id === employee.id) return true
-    return employee.teamIds?.some((tId) => activeEmployee.teamIds?.includes(tId))
-  }, [principal, activeEmployee, employee])
+    if (isManagerOrAdmin(principal, effectiveActiveEmployee)) return true
+    if (!effectiveActiveEmployee || !employee) return false
+    if (effectiveActiveEmployee.id === employee.id) return true
+    return employee.teamIds?.some((tId) => effectiveActiveEmployee.teamIds?.includes(tId))
+  }, [principal, effectiveActiveEmployee, employee])
 
   // Get brands where employee is assigned
   const assignedBrands = useMemo(() => {

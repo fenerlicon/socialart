@@ -132,7 +132,7 @@ const parseStepDetails = (description: string) => {
 
 export function TasksPage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -194,10 +194,14 @@ export function TasksPage() {
     const storedEmps = await getStoredEmployees()
     setEmployees(storedEmps)
 
-    const activeId = getActiveEmployeeId()
-    const current = storedEmps.find((e) => e.id === activeId)
-    if (current) {
-      setActiveEmployee(current)
+    if (contextActiveEmployee) {
+      setActiveEmployee(contextActiveEmployee)
+    } else {
+      const activeId = getActiveEmployeeId()
+      const current = storedEmps.find((e) => e.id === activeId)
+      if (current) {
+        setActiveEmployee(current)
+      }
     }
     setIsLoadingAuth(false)
 
@@ -216,38 +220,46 @@ export function TasksPage() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'task.manage')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'task.manage')
+  }, [principal, effectiveActiveEmployee])
 
   // Central Operations or full admin check
   const isManagerExposed = useMemo(() => {
-    return isManagerOrAdmin(principal, activeEmployee)
-  }, [principal, activeEmployee])
+    return isManagerOrAdmin(principal, effectiveActiveEmployee)
+  }, [principal, effectiveActiveEmployee])
 
   // Can pass/reassign tasks to others (tasks.assign permission)
   const canPassTask = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'tasks.assign')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'tasks.assign')
+  }, [principal, effectiveActiveEmployee])
 
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
-    return isStepInScope(principal, step, activeEmployee, employees)
+    return isStepInScope(principal, step, effectiveActiveEmployee, employees)
   }
 
   // Filter lists based on manager's teams
   const manageableEmployees = useMemo(() => {
     return employees.filter(emp => {
+      if (emp.employeeStatus && emp.employeeStatus !== 'active') return false
       if (isManagerExposed) return true
-      if (!activeEmployee) return false
-      if (activeEmployee.rolePackageId === 'art-director' || activeEmployee.teamIds?.includes('grafik-studyo')) {
-        return emp.teamIds?.includes('grafik-studyo') || emp.rolePackageId === 'grafik-tasarim' || emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
+      if (!effectiveActiveEmployee) return false
+      if (effectiveActiveEmployee.rolePackageId === 'art-director' || effectiveActiveEmployee.teamIds?.includes('grafik-studyo')) {
+        return emp.teamIds?.includes('grafik-studyo') || emp.rolePackageId === 'grafik-tasarim' || emp.teamIds?.some(tId => effectiveActiveEmployee.teamIds?.includes(tId))
       }
-      return emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
+      return emp.teamIds?.some(tId => effectiveActiveEmployee.teamIds?.includes(tId))
     })
-  }, [employees, isManagerExposed, activeEmployee])
+  }, [employees, isManagerExposed, effectiveActiveEmployee])
 
   const unassignedCount = useMemo(() => {
     return steps.filter(s => s.status === 'active' && !s.assignedEmployeeId).length
@@ -308,7 +320,7 @@ export function TasksPage() {
 
       return true
     })
-  }, [steps, brandFilter, priorityFilter, assigneeFilter, statusFilter, teamFilter, searchQuery, instances, activeEmployee])
+  }, [steps, brandFilter, priorityFilter, assigneeFilter, statusFilter, teamFilter, searchQuery, instances, effectiveActiveEmployee])
 
   // Get brand name helper
   const getBrandNameOfInstance = (instanceId: string) => {
@@ -1237,7 +1249,7 @@ export function TasksPage() {
             cycleLabel={cycleLabel}
             siblingSteps={siblingSteps}
             employees={employees}
-            currentEmployeeId={activeEmployee?.id || ''}
+            currentEmployeeId={effectiveActiveEmployee?.id || ''}
           />
         )
       })()}

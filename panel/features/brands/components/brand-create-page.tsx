@@ -22,7 +22,7 @@ import { AlertTriangle } from 'lucide-react'
 
 export function BrandCreatePage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const form = useBrandForm()
   const {
     isSubmitting,
@@ -35,25 +35,38 @@ export function BrandCreatePage() {
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const [employees, setEmployees] = useState<Employee[]>([])
 
   useEffect(() => {
     async function checkAuth() {
       setIsLoadingAuth(true)
       const storedEmps = await getStoredEmployees()
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      setEmployees(storedEmps)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
     }
     checkAuth()
-  }, [])
+  }, [contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'brand.manage')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'brand.manage')
+  }, [principal, effectiveActiveEmployee])
 
   if (isLoadingAuth) {
     return (

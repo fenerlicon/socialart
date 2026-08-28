@@ -139,7 +139,7 @@ export function CalendarPage() {
         setEvents(storedEvents)
 
         const activeId = typeof window !== 'undefined' ? getActiveEmployeeId() : null
-        let active = activeId ? emps.find((e) => e.id === activeId) : undefined
+        let active = contextActiveEmployee || (activeId ? emps.find((e) => e.id === activeId) : undefined)
         if (!active && emps.length > 0) {
           active = emps[0]
         }

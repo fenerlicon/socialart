@@ -22,7 +22,7 @@ import { AccessDenied } from '@/components/shared/access-denied'
 
 export function BrandListPage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -56,10 +56,14 @@ export function BrandListPage() {
       const storedEmps = await getStoredEmployees()
       setEmployees(storedEmps)
 
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
 
@@ -71,12 +75,19 @@ export function BrandListPage() {
       setWorkflowSteps(storedSteps)
     }
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'brand.manage')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'brand.manage')
+  }, [principal, effectiveActiveEmployee])
 
   // Helper to compute live progress for a brand from workflow steps and operation plan
   const getBrandProgress = (b: Brand) => {

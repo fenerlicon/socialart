@@ -14,6 +14,7 @@ import type {
 } from '@/types/domain'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredEmployees, getActiveEmployeeId, setActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import { getStoredCycles } from '@/lib/storage/local-cycle-store'
 import { getStoredHandoffs } from '@/lib/storage/local-handoff-store'
 import { getStoredNotifications } from '@/lib/storage/local-notification-store'
@@ -53,6 +54,7 @@ import {
 
 export function MyWorkPage() {
   const router = useRouter()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   
   // 1. Data States
   const [brands, setBrands] = useState<Brand[]>([])
@@ -66,7 +68,7 @@ export function MyWorkPage() {
 
   // 2. Active Employee & Tab Selection
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'today' | 'active' | 'uncompleted' | 'pending' | 'completed'>('today')
+  const [activeTab, setActiveTab] = useState<'today' | 'active' | 'uncompleted' | 'pending' | 'handoffs' | 'completed'>('active')
 
   // 3. Filter States
   const [searchQuery, setSearchQuery] = useState('')
@@ -96,16 +98,20 @@ export function MyWorkPage() {
     setNotifications(notificationList)
 
     // Set default selected employee if not set
-    const savedId = getActiveEmployeeId()
-    if (savedId && employeeList.some((e) => e.id === savedId)) {
-      if (currentEmployeeId !== savedId) {
-        setCurrentEmployeeId(savedId)
+    if (contextActiveEmployee) {
+      setCurrentEmployeeId(contextActiveEmployee.id)
+    } else {
+      const savedId = getActiveEmployeeId()
+      if (savedId && employeeList.some((e) => e.id === savedId)) {
+        if (currentEmployeeId !== savedId) {
+          setCurrentEmployeeId(savedId)
+        }
+      } else if (employeeList.length > 0 && !currentEmployeeId) {
+        setCurrentEmployeeId(employeeList[0].id)
+        setActiveEmployeeId(employeeList[0].id)
       }
-    } else if (employeeList.length > 0 && !currentEmployeeId) {
-      setCurrentEmployeeId(employeeList[0].id)
-      setActiveEmployeeId(employeeList[0].id)
     }
-  }, [currentEmployeeId])
+  }, [currentEmployeeId, contextActiveEmployee])
 
   const handleEmployeeChange = (id: string) => {
     setCurrentEmployeeId(id)
@@ -123,8 +129,9 @@ export function MyWorkPage() {
 
   // Get current active employee object
   const currentEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
     return employees.find((e) => e.id === currentEmployeeId)
-  }, [employees, currentEmployeeId])
+  }, [contextActiveEmployee, employees, currentEmployeeId])
 
   // 5. Dynamic filter lists
   const brandsList = useMemo(() => {
@@ -163,35 +170,53 @@ export function MyWorkPage() {
 
   // 6. Tab based filtration & metrics for the selected employee
   const employeeSteps = useMemo(() => {
-    if (!currentEmployeeId) return { today: [], active: [], uncompleted: [], pending: [], completed: [] }
+    if (!currentEmployeeId && !currentEmployee) return { today: [], active: [], uncompleted: [], pending: [], completed: [] }
+
+    const isAssignedToMe = (s: WorkflowStepInstance) => {
+      if (!currentEmployee) return s.assignedEmployeeId === currentEmployeeId
+      const targetIds = new Set<string>()
+      if (currentEmployee.id) targetIds.add(String(currentEmployee.id))
+      if (currentEmployee.db1EmployeeId) targetIds.add(String(currentEmployee.db1EmployeeId))
+      if (currentEmployeeId) targetIds.add(String(currentEmployeeId))
+      return s.assignedEmployeeId ? targetIds.has(String(s.assignedEmployeeId)) : false
+    }
+
+    const isActorMe = (actorId?: string | null) => {
+      if (!actorId || !currentEmployee) return actorId === currentEmployeeId
+      const targetIds = new Set<string>()
+      if (currentEmployee.id) targetIds.add(String(currentEmployee.id))
+      if (currentEmployee.db1EmployeeId) targetIds.add(String(currentEmployee.db1EmployeeId))
+      if (currentEmployeeId) targetIds.add(String(currentEmployeeId))
+      return targetIds.has(String(actorId))
+    }
 
     // Tamamlanmayan / Geciken İşler: overdue or failed
     const uncompleted = steps.filter(
-      (s) => s.assignedEmployeeId === currentEmployeeId && isStepOverdue(s)
+      (s) => isAssignedToMe(s) && isStepOverdue(s)
     )
 
     // Bugünkü İşler: active and assigned to employee (no due date or due today/past)
     const today = steps.filter((s) => {
       const isTodayOrPast = !s.dueDate || new Date(s.dueDate).toDateString() === new Date().toDateString()
-      return s.status === 'active' && s.assignedEmployeeId === currentEmployeeId && isTodayOrPast
+      return s.status === 'active' && isAssignedToMe(s) && isTodayOrPast
     })
 
     // Aktif İşler: active and assigned to employee
     const active = steps.filter(
-      (s) => s.status === 'active' && s.assignedEmployeeId === currentEmployeeId
+      (s) => s.status === 'active' && isAssignedToMe(s)
     )
 
     // Bekleyenler: pending and assigned to employee
     const pending = steps.filter(
-      (s) => s.status === 'pending' && s.assignedEmployeeId === currentEmployeeId
+      (s) => s.status === 'pending' && isAssignedToMe(s)
     )
 
-    // Tamamlananlar: bizzat aksiyon aldığı işler (actorEmployeeId = selectedEmployeeId)
+    // Tamamlananlar: bizzat aksiyon aldığı işler
     const completedStepIds = new Set(
       history
         .filter(
           (h) =>
-            h.actorEmployeeId === currentEmployeeId &&
+            isActorMe(h.actorEmployeeId) &&
             ['complete', 'skip', 'cancel'].includes(h.action)
         )
         .map((h) => h.workflowStepInstanceId)
@@ -199,7 +224,7 @@ export function MyWorkPage() {
     const completed = steps.filter((s) => completedStepIds.has(s.id))
 
     return { today, active, uncompleted, pending, completed }
-  }, [steps, history, currentEmployeeId])
+  }, [steps, history, currentEmployeeId, currentEmployee])
 
   const hasUnexplainedOverdue = useMemo(() => {
     return employeeSteps.uncompleted.some((s) => !s.failureReason?.trim())

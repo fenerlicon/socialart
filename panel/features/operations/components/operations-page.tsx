@@ -44,7 +44,7 @@ import {
 
 export function OperationsPage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -121,10 +121,14 @@ export function OperationsPage() {
       const storedEmps = await getStoredEmployees()
       setEmployees(storedEmps)
 
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
 
@@ -140,26 +144,33 @@ export function OperationsPage() {
       setHandoffs(storedHandoffs)
     }
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permissions
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'operations.view')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'operations.view')
+  }, [principal, effectiveActiveEmployee])
 
   const isManagerExposed = useMemo(() => {
-    return isManagerOrAdmin(principal, activeEmployee)
-  }, [principal, activeEmployee])
+    return isManagerOrAdmin(principal, effectiveActiveEmployee)
+  }, [principal, effectiveActiveEmployee])
 
   // Team-based visibility filter helper
   const isStepInManagerTeams = (step: WorkflowStepInstance) => {
-    return isStepInScope(principal, step, activeEmployee, employees)
+    return isStepInScope(principal, step, effectiveActiveEmployee, employees)
   }
 
   // Filter lists based on manager's teams
   const filteredSteps = useMemo(() => {
     return steps.filter(isStepInManagerTeams)
-  }, [steps, isManagerExposed, activeEmployee, employees])
+  }, [steps, isManagerExposed, effectiveActiveEmployee, employees])
 
   const filteredInstances = useMemo(() => {
     return instances.filter(i => {
@@ -168,7 +179,7 @@ export function OperationsPage() {
       if (isManagerExposed) return true
       return steps.some(s => s.workflowInstanceId === i.id && isStepInManagerTeams(s))
     })
-  }, [instances, steps, isManagerExposed, activeEmployee, employees])
+  }, [instances, steps, isManagerExposed, effectiveActiveEmployee, employees])
 
   const filteredApprovals = useMemo(() => {
     return approvals.filter(a => {
@@ -176,7 +187,7 @@ export function OperationsPage() {
       const step = steps.find(s => s.id === a.workflowStepInstanceId)
       return step ? isStepInManagerTeams(step) : false
     })
-  }, [approvals, steps, isManagerExposed, activeEmployee, employees])
+  }, [approvals, steps, isManagerExposed, effectiveActiveEmployee, employees])
 
   const filteredHandoffs = useMemo(() => {
     return handoffs.filter(h => {
@@ -184,7 +195,7 @@ export function OperationsPage() {
       const step = steps.find(s => s.id === h.workflowStepInstanceId)
       return step ? isStepInManagerTeams(step) : false
     })
-  }, [handoffs, steps, isManagerExposed, activeEmployee, employees])
+  }, [handoffs, steps, isManagerExposed, effectiveActiveEmployee, employees])
 
   // Helper getters
   const getBrandName = (brandId: string) => {

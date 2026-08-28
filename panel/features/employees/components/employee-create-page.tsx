@@ -30,7 +30,7 @@ import {
 
 export function EmployeeCreatePage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [givePanelAccess, setGivePanelAccess] = useState(false)
   const [provisionedData, setProvisionedData] = useState<ProvisionedCredentialData | null>(null)
   const [showProvisionDialog, setShowProvisionDialog] = useState(false)
@@ -78,46 +78,55 @@ export function EmployeeCreatePage() {
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
   const [employeeCount, setEmployeeCount] = useState<number | null>(null)
+  const [employees, setEmployees] = useState<Employee[]>([])
 
   useEffect(() => {
     async function checkAuth() {
       setIsLoadingAuth(true)
       const storedEmps = await getStoredEmployees()
+      setEmployees(storedEmps)
       setEmployeeCount(storedEmps.length)
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
     }
     checkAuth()
-  }, [])
+  }, [contextActiveEmployee])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const qTitle = params.get('title')
-      const qRole = params.get('role')
-      if (qTitle) {
-        form.updateField('title', decodeURIComponent(qTitle))
-      }
-      if (qRole) {
-        form.updateField('rolePackageId', qRole as any)
+      if (qTitle && !form.title) {
+        form.setTitle(qTitle)
       }
     }
-  }, [])
+  }, [form])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
     if (employeeCount === 0) return true
-    return resolvePanelAuthority(principal, activeEmployee, [
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, [
       'employees.create',
       'employees.manage',
       'system.admin',
       'team.manage',
     ])
-  }, [principal, activeEmployee, employeeCount])
+  }, [principal, effectiveActiveEmployee, employeeCount])
 
   if (isLoadingAuth) {
     return (

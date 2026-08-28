@@ -289,7 +289,7 @@ export const EmployeeRepository = {
     if (!authEmployeeId || !Array.isArray(db2Employees)) return null
     const authIdStr = String(authEmployeeId)
     return db2Employees.find(
-      (e) => e.db1EmployeeId && String(e.db1EmployeeId) === authIdStr
+      (e) => (e.db1EmployeeId && String(e.db1EmployeeId) === authIdStr) || e.id === authIdStr
     ) || null
   }
 }

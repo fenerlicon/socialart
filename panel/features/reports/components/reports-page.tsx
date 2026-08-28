@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import type { Employee } from '@/types/domain'
 import { cn } from '@/lib/utils'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import { getStoredReports, createReport, updateReport, type Report } from '@/lib/storage/local-reports-store'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -40,6 +41,7 @@ function getLocalDateString() {
 }
 
 export function ReportsPage() {
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   // Data States
   const [reports, setReports] = useState<Report[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -67,19 +69,24 @@ export function ReportsPage() {
       const emps = await getStoredEmployees()
       setEmployees(emps)
 
-      const activeId = getActiveEmployeeId()
-      if (activeId) {
-        setActiveEmployeeId(activeId)
-      } else if (emps.length > 0) {
-        setActiveEmployeeId(emps[0].id)
+      if (contextActiveEmployee) {
+        setActiveEmployeeId(contextActiveEmployee.id)
+      } else {
+        const activeId = getActiveEmployeeId()
+        if (activeId) {
+          setActiveEmployeeId(activeId)
+        } else if (emps.length > 0) {
+          setActiveEmployeeId(emps[0].id)
+        }
       }
     }
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
 
   const activeEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
     return employees.find((e) => e.id === activeEmployeeId)
-  }, [employees, activeEmployeeId])
+  }, [contextActiveEmployee, employees, activeEmployeeId])
 
   const getEmployeeName = (id: string) => {
     return employees.find((e) => e.id === id)?.fullName || 'Bilinmeyen'

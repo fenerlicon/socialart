@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { getActiveEmployeeId, getStoredEmployees } from '@/lib/storage/local-employee-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import { Employee } from '@/types/domain'
 import { PersonalTodo, TodoPriority, TodoCategory } from '../types/todo-types'
 import { TodoRepository } from '@/lib/repositories/TodoRepository'
@@ -39,9 +40,14 @@ const CATEGORY_CONFIG: Record<TodoCategory, { label: string; icon: string; bg: s
 }
 
 export function TodoPage() {
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
   const [todos, setTodos] = useState<PersonalTodo[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const effectiveActiveEmployee = useMemo(() => {
+    return contextActiveEmployee || activeEmployee
+  }, [contextActiveEmployee, activeEmployee])
 
   // Filters & Form State
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed' | 'high'>('all')
@@ -64,8 +70,7 @@ export function TodoPage() {
     async function init() {
       try {
         const employees = await getStoredEmployees()
-        const activeId = getActiveEmployeeId()
-        const current = employees.find((e) => e.id === activeId) || employees[0] || null
+        const current = contextActiveEmployee || employees.find((e) => e.id === getActiveEmployeeId()) || employees[0] || null
         setActiveEmployee(current)
 
         if (current) {
@@ -79,24 +84,24 @@ export function TodoPage() {
       }
     }
     init()
-  }, [])
+  }, [contextActiveEmployee])
 
   // Save changes wrapper
   const persistTodos = async (updatedList: PersonalTodo[]) => {
     setTodos(updatedList)
-    if (activeEmployee) {
-      await TodoRepository.saveTodos(activeEmployee.id, updatedList)
+    if (effectiveActiveEmployee) {
+      await TodoRepository.saveTodos(effectiveActiveEmployee.id, updatedList)
     }
   }
 
   // Handle Quick Add
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!quickTitle.trim() || !activeEmployee) return
+    if (!quickTitle.trim() || !effectiveActiveEmployee) return
 
     const newTodo: PersonalTodo = {
       id: `todo-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      employeeId: activeEmployee.id,
+      employeeId: effectiveActiveEmployee.id,
       title: quickTitle.trim(),
       priority: 'medium',
       category: 'general',
@@ -113,11 +118,11 @@ export function TodoPage() {
   // Handle Full Form Add
   const handleFullAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTitle.trim() || !activeEmployee) return
+    if (!newTitle.trim() || !effectiveActiveEmployee) return
 
     const newTodo: PersonalTodo = {
       id: `todo-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      employeeId: activeEmployee.id,
+      employeeId: effectiveActiveEmployee.id,
       title: newTitle.trim(),
       notes: newNotes.trim() || undefined,
       dueDate: newDueDate || undefined,
@@ -171,8 +176,8 @@ export function TodoPage() {
   const handleDelete = async (id: string) => {
     const updated = todos.filter((t) => t.id !== id)
     setTodos(updated)
-    if (activeEmployee) {
-      await TodoRepository.deleteTodo(activeEmployee.id, id, updated)
+    if (effectiveActiveEmployee) {
+      await TodoRepository.deleteTodo(effectiveActiveEmployee.id, id, updated)
     }
     toast.success('Görev silindi.')
   }
@@ -261,7 +266,7 @@ export function TodoPage() {
             <div className="inline-flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
               <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span>
-                <strong>Gizlilik Güvencesi:</strong> Bu liste sadece <u>{activeEmployee?.fullName || 'Size'}</u> özeldir. Diğer ekip üyeleri göremez.
+                <strong>Gizlilik Güvencesi:</strong> Bu liste sadece <u>{effectiveActiveEmployee?.fullName || 'Size'}</u> özeldir. Diğer ekip üyeleri göremez.
               </span>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Employee, Notification } from '@/types/domain'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import {
   getNotificationsByEmployeeId,
   markAllNotificationsAsRead,
@@ -25,6 +26,7 @@ import { toast } from 'sonner'
 
 export function NotificationPage() {
   const router = useRouter()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string>('')
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -39,19 +41,15 @@ export function NotificationPage() {
     setEmployees(employeeList)
 
     const savedId = getActiveEmployeeId()
-    if (savedId && employeeList.some((e) => e.id === savedId)) {
-      if (currentEmployeeId !== savedId) {
-        setCurrentEmployeeId(savedId)
+    const targetId = contextActiveEmployee?.id || (savedId && employeeList.some((e) => e.id === savedId) ? savedId : (employeeList[0]?.id || ''))
+    if (targetId) {
+      if (currentEmployeeId !== targetId) {
+        setCurrentEmployeeId(targetId)
       }
-      const list = await getNotificationsByEmployeeId(savedId)
-      setNotifications(list)
-    } else if (employeeList.length > 0) {
-      const defaultId = employeeList[0].id
-      setCurrentEmployeeId(defaultId)
-      const list = await getNotificationsByEmployeeId(defaultId)
+      const list = await getNotificationsByEmployeeId(targetId)
       setNotifications(list)
     }
-  }, [currentEmployeeId])
+  }, [currentEmployeeId, contextActiveEmployee])
 
   useEffect(() => {
     loadData()

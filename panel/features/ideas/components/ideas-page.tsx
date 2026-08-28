@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import type { Brand, Employee } from '@/types/domain'
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-employee-store'
+import { usePrincipal } from '@/lib/permissions/panel-authority'
 import { getStoredIdeas, createIdea, updateIdea, toggleVoteIdea, deleteIdea, type Idea } from '@/lib/storage/local-ideas-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +30,8 @@ import {
 } from 'lucide-react'
 
 export function IdeasPage() {
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
+  
   // Data States
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
@@ -60,19 +63,24 @@ export function IdeasPage() {
       const emps = await getStoredEmployees()
       setEmployees(emps)
       
-      const activeId = getActiveEmployeeId()
-      if (activeId) {
-        setActiveEmployeeId(activeId)
-      } else if (emps.length > 0) {
-        setActiveEmployeeId(emps[0].id)
+      if (contextActiveEmployee) {
+        setActiveEmployeeId(contextActiveEmployee.id)
+      } else {
+        const activeId = getActiveEmployeeId()
+        if (activeId) {
+          setActiveEmployeeId(activeId)
+        } else if (emps.length > 0) {
+          setActiveEmployeeId(emps[0].id)
+        }
       }
     }
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
 
   const activeEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
     return employees.find((e) => e.id === activeEmployeeId)
-  }, [employees, activeEmployeeId])
+  }, [contextActiveEmployee, employees, activeEmployeeId])
 
   const getBrandName = (id: string) => {
     return brands.find((b) => b.id === id)?.name || 'Genel'

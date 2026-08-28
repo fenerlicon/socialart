@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 
 export function EmployeeListPage() {
   const router = useRouter()
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
 
   // Auth states
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
@@ -47,10 +47,14 @@ export function EmployeeListPage() {
       setIsLoadingAuth(true)
       const storedEmps = await getStoredEmployees()
       
-      const activeId = getActiveEmployeeId()
-      const current = storedEmps.find((e) => e.id === activeId)
-      if (current) {
-        setActiveEmployee(current)
+      if (contextActiveEmployee) {
+        setActiveEmployee(contextActiveEmployee)
+      } else {
+        const activeId = getActiveEmployeeId()
+        const current = storedEmps.find((e) => e.id === activeId)
+        if (current) {
+          setActiveEmployee(current)
+        }
       }
       setIsLoadingAuth(false)
 
@@ -59,35 +63,42 @@ export function EmployeeListPage() {
       setEmployees(storedEmps)
     }
     loadData()
-  }, [])
+  }, [contextActiveEmployee])
+
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
 
   // Resolve permission guard
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, [
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, [
       'employees.manage',
       'employees.view',
       'system.admin',
       'team.manage',
       'task.manage',
     ])
-  }, [principal, activeEmployee])
+  }, [principal, effectiveActiveEmployee])
 
   // Central Operations or full admin
   const isManagerExposed = useMemo(() => {
-    return isManagerOrAdmin(principal, activeEmployee)
-  }, [principal, activeEmployee])
+    return isManagerOrAdmin(principal, effectiveActiveEmployee)
+  }, [principal, effectiveActiveEmployee])
 
   // Filter employees list by team overlap
   const manageableEmployees = useMemo(() => {
     return employees.filter(emp => {
       if (isManagerExposed) return true
-      if (!activeEmployee) return false
+      if (!effectiveActiveEmployee) return false
       // Self is always visible
-      if (emp.id === activeEmployee.id) return true
+      if (emp.id === effectiveActiveEmployee.id) return true
       // Overlap of teamIds
-      return emp.teamIds?.some(tId => activeEmployee.teamIds?.includes(tId))
+      return emp.teamIds?.some(tId => effectiveActiveEmployee.teamIds?.includes(tId))
     })
-  }, [employees, isManagerExposed, activeEmployee])
+  }, [employees, isManagerExposed, effectiveActiveEmployee])
 
   // Helper to count brand assignments for an employee ID
   const getBrandAssignmentCount = (empId: string) => {

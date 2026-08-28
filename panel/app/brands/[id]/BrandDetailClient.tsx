@@ -60,7 +60,7 @@ export default function BrandDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
-  const { principal } = usePrincipal()
+  const { principal, activeEmployee: contextActiveEmployee } = usePrincipal()
 
   const [brand, setBrand] = useState<Brand | null>(null)
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -159,10 +159,14 @@ export default function BrandDetailPage() {
         const storedEmps = await getStoredEmployees()
         setEmployees(storedEmps)
 
-        const activeId = getActiveEmployeeId()
-        const current = storedEmps.find((e) => e.id === activeId)
-        if (current) {
-          setActiveEmployee(current)
+        if (contextActiveEmployee) {
+          setActiveEmployee(contextActiveEmployee)
+        } else {
+          const activeId = getActiveEmployeeId()
+          const current = storedEmps.find((e) => e.id === activeId)
+          if (current) {
+            setActiveEmployee(current)
+          }
         }
         setIsLoadingAuth(false)
 
@@ -481,9 +485,16 @@ export default function BrandDetailPage() {
     })
   }
 
+  const effectiveActiveEmployee = useMemo(() => {
+    if (contextActiveEmployee) return contextActiveEmployee
+    if (activeEmployee) return activeEmployee
+    const activeId = getActiveEmployeeId()
+    return employees.find((e) => e.id === activeId) || null
+  }, [contextActiveEmployee, activeEmployee, employees])
+
   const hasPermission = useMemo(() => {
-    return resolvePanelAuthority(principal, activeEmployee, 'brand.manage')
-  }, [principal, activeEmployee])
+    return resolvePanelAuthority(principal, effectiveActiveEmployee, 'brand.manage')
+  }, [principal, effectiveActiveEmployee])
 
   if (isLoadingAuth || isLoadingBrand) {
     return (
