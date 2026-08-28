@@ -49,6 +49,7 @@ import {
   ArrowRightLeft,
   FileText,
 } from 'lucide-react'
+import { isCreativeProductionResponsibility } from '@/types/domain'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -66,6 +67,7 @@ export function ApprovalPage() {
   const [cycles, setCycles] = useState<BrandOperationCycle[]>([])
   const [handoffs, setHandoffs] = useState<WorkflowHandoff[]>([])
   const [activeSubTab, setActiveSubTab] = useState<'approvals' | 'reports' | 'handoffs'>('approvals')
+  const [targetHandoffId, setTargetHandoffId] = useState<string | null>(null)
 
   // Modal / Input states for Revision and Rejection
   const [actioningApprovalId, setActioningApprovalId] = useState<string | null>(null)
@@ -171,6 +173,32 @@ export function ApprovalPage() {
     return resolvePanelAuthority(principal, currentEmployee, 'approval.review')
   }, [principal, currentEmployee])
 
+  // URL Search Params check for deep links (?tab=handoffs&handoffRequestId=...)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const reqId = params.get('handoffRequestId')
+      const tab = params.get('tab')
+      if (reqId || tab === 'handoffs') {
+        setActiveSubTab('handoffs')
+        if (reqId) setTargetHandoffId(reqId)
+      }
+    }
+  }, [])
+
+  // Auto-scroll to target handoff card if deep-linked
+  useEffect(() => {
+    if (targetHandoffId && activeSubTab === 'handoffs') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`handoff-${targetHandoffId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [targetHandoffId, activeSubTab, handoffs])
+
   // Set default tab for regular employees
   useEffect(() => {
     if (currentEmployee && !hasReviewPermission) {
@@ -268,10 +296,21 @@ export function ApprovalPage() {
       if (h.status !== 'pending') return false
 
       const step = steps.find(s => s.id === h.workflowStepInstanceId)
-      const instance = instances.find(i => i.id === step?.workflowInstanceId)
+      const instance =
+        instances.find(i => i.id === h.workflowInstanceId) ||
+        (step ? instances.find(inst => inst.id === step.workflowInstanceId) : null)
 
-      // Brand must be in scope
-      if (instance && instance.brandId && !visibleBrandIds.has(String(instance.brandId))) {
+      // Brand must be in scope (or General Agency)
+      const isGeneral =
+        !instance ||
+        instance.id === 'inst-general-agency-tasks' ||
+        instance.brandId === 'general' ||
+        instance.brandId === 'general-agency' ||
+        instance.brandId === 'general-brand' ||
+        !instance.brandId ||
+        instance.title.includes('Genel Ajans')
+
+      if (!isGeneral && instance && instance.brandId && !visibleBrandIds.has(String(instance.brandId))) {
         return false
       }
 
@@ -279,9 +318,24 @@ export function ApprovalPage() {
       if (h.toEmployeeId === currentEmployeeId) return true
 
       // Art Director scope for handoffs
-      if (currentEmployee?.rolePackageId === 'art-director') {
-        if (!step) return false
-        return isStepInManagerTeams(step)
+      if (
+        currentEmployee?.rolePackageId === 'art-director' ||
+        currentEmployee?.rolePackageId === 'kreatif-yonetim' ||
+        currentEmployee?.rolePackageId === 'kreatif-direktor'
+      ) {
+        if (!step) return true
+        const requester = employees.find(
+          (e) => e.id === h.fromEmployeeId || (step.assignedEmployeeId && e.id === step.assignedEmployeeId)
+        )
+        const isGraphicDesignStep =
+          step.responsibilityRole === 'graphic_design' ||
+          step.responsibilityRole === 'video_editing' ||
+          step.teamId === 'grafik-studyo' ||
+          isCreativeProductionResponsibility(step.responsibilityRole)
+        const isGraphicDesignerRequester =
+          requester?.rolePackageId === 'grafik-tasarim' || requester?.teamIds?.includes('grafik-studyo')
+
+        return isGraphicDesignStep || isGraphicDesignerRequester || isStepInManagerTeams(step)
       }
 
       // Central management
@@ -289,7 +343,18 @@ export function ApprovalPage() {
 
       return false
     })
-  }, [handoffs, steps, instances, visibleBrandIds, currentEmployee, currentEmployeeId, hasReviewPermission, isManagerExposed, isStepInManagerTeams])
+  }, [
+    handoffs,
+    steps,
+    instances,
+    visibleBrandIds,
+    currentEmployee,
+    currentEmployeeId,
+    hasReviewPermission,
+    isManagerExposed,
+    isStepInManagerTeams,
+    employees,
+  ])
 
   const visibleList = useMemo(() => {
     if (activeSubTab === 'approvals') return processApprovals
@@ -487,33 +552,67 @@ export function ApprovalPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {pendingHandoffs.map((handoff) => {
               const step = steps.find((s) => s.id === handoff.workflowStepInstanceId)
-              const instance = instances.find((i) => i.id === handoff.workflowInstanceId)
-              if (!step || !instance) return null
+              const instance =
+                instances.find((i) => i.id === handoff.workflowInstanceId) ||
+                (step ? instances.find((inst) => inst.id === step.workflowInstanceId) : null) || {
+                  id: handoff.workflowInstanceId,
+                  brandId: 'general-agency',
+                  title: step?.title || 'Genel Ajans Görevi',
+                }
+              if (!step) return null
 
-              const brand = brands.find((b) => b.id === instance.brandId)
-              const brandName = brand ? brand.name : 'Bilinmeyen Marka'
+              const isGeneral =
+                instance.id === 'inst-general-agency-tasks' ||
+                instance.brandId === 'general' ||
+                instance.brandId === 'general-agency' ||
+                instance.brandId === 'general-brand' ||
+                !instance.brandId ||
+                instance.title.includes('Genel Ajans')
+
+              const brand = !isGeneral && instance.brandId ? brands.find((b) => b.id === instance.brandId) : null
+              const brandName = isGeneral ? 'Genel Ajans' : brand ? brand.name : 'Genel Ajans'
 
               const cycle = brand ? cycles.find((c) => c.brandId === brand.id && c.id === instance.cycleId) : null
               const months = [
-                'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-                'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+                'Ocak',
+                'Şubat',
+                'Mart',
+                'Nisan',
+                'Mayıs',
+                'Haziran',
+                'Temmuz',
+                'Ağustos',
+                'Eylül',
+                'Ekim',
+                'Kasım',
+                'Aralık',
               ]
-              const cycleLabel = cycle
-                ? `${months[cycle.month - 1]} ${cycle.year}`
-                : 'Genel Dönem'
+              const cycleLabel = cycle ? `${months[cycle.month - 1]} ${cycle.year}` : 'Genel Dönem'
+
+              const isTargetHandoff =
+                targetHandoffId &&
+                (handoff.id === targetHandoffId || handoff.workflowStepInstanceId === targetHandoffId)
 
               return (
-                <HandoffRequestCard
+                <div
                   key={handoff.id}
-                  handoff={handoff}
-                  step={step}
-                  instance={instance}
-                  brandName={brandName}
-                  cycleLabel={cycleLabel}
-                  employees={employees}
-                  currentEmployeeId={currentEmployeeId}
-                  onActionSuccess={loadData}
-                />
+                  id={`handoff-${handoff.id}`}
+                  className={cn(
+                    'rounded-2xl transition-all duration-300',
+                    isTargetHandoff && 'ring-2 ring-amber-500 shadow-xl shadow-amber-500/10'
+                  )}
+                >
+                  <HandoffRequestCard
+                    handoff={handoff}
+                    step={step}
+                    instance={instance as WorkflowInstance}
+                    brandName={brandName}
+                    cycleLabel={cycleLabel}
+                    employees={employees}
+                    currentEmployeeId={currentEmployeeId}
+                    onActionSuccess={loadData}
+                  />
+                </div>
               )
             })}
           </div>

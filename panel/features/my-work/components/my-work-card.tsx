@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { WorkflowInstance, WorkflowStepInstance, Employee } from '@/types/domain'
+import { isCreativeProductionResponsibility } from '@/types/domain'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { progressWorkflowStep } from '@/lib/workflows/progress-workflow'

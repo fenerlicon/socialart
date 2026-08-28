@@ -548,7 +548,7 @@ export function TaskDetailDrawer({
                 <Button
                   onClick={() => {
                     onClose()
-                    router.push('/approvals?tab=handoffs')
+                    router.push(`/approvals?tab=handoffs&handoffRequestId=${step.handoffId || ''}`)
                   }}
                   className="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg flex items-center gap-1.5 shadow"
                 >

@@ -994,7 +994,7 @@ export function TasksPage() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {step.handoffStatus === 'pending' && (
                         <Button
-                          onClick={() => router.push('/approvals?tab=handoffs')}
+                          onClick={() => router.push(`/approvals?tab=handoffs&handoffRequestId=${step.handoffId || ''}`)}
                           size="sm"
                           className="h-8 px-3 rounded-lg text-xs flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md animate-in fade-in"
                           title="Onay Merkezinde Paslama Talebini İncele"
