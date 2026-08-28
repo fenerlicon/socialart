@@ -796,3 +796,47 @@ export interface BrandDriveLinks {
   customLinks?: { label: string; url: string }[]
 }
 
+// ---------------------------------------------------------------------------
+// Creative Production Credit (Kreatif Üretim Muhasebesi / Ledger)
+// ---------------------------------------------------------------------------
+
+export interface CreativeProductionCredit {
+  id: string
+  workflowStepInstanceId: string
+  workflowInstanceId?: string
+  finalApprovalId?: string
+  designerEmployeeId: string
+  db1EmployeeId?: string | number
+  brandId?: string | null
+  creativeCount: number
+  creditedAt: string
+  createdAt: string
+  taskTitle?: string
+  workflowTitle?: string
+  reviewerEmployeeId?: string
+}
+
+export interface CreativeProductionFilter {
+  employeeId?: string
+  startDate?: string // YYYY-MM-DD
+  startTime?: string // HH:mm
+  endDate?: string   // YYYY-MM-DD
+  endTime?: string   // HH:mm
+  preset?: 'today' | 'this_week' | 'this_month' | 'prev_month' | 'all_time' | 'custom'
+  brandId?: string
+}
+
+export interface CreativeProductionSummary {
+  completedJobCount: number
+  completedCreativeCount: number
+  employeeBreakdown: {
+    employeeId: string
+    employeeName: string
+    employmentType?: string
+    completedJobCount: number
+    completedCreativeCount: number
+  }[]
+  credits: CreativeProductionCredit[]
+}
+
+

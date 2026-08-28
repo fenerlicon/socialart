@@ -336,6 +336,19 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       menuItems.push({ label: 'Tüm Raporlar', icon: '📊', href: '/reports' })
     }
 
+    // Kreatif Üretim (Creative Production Ledger & Reporting)
+    const isCreativeStaff =
+      activeEmployee?.rolePackageId === 'grafik-tasarim' ||
+      activeEmployee?.rolePackageId === 'art-director' ||
+      activeEmployee?.rolePackageId === 'kreatif-yonetim' ||
+      activeEmployee?.rolePackageId === 'kreatif-direktor' ||
+      activeEmployee?.rolePackageId === 'operasyon-yonetimi' ||
+      activeEmployee?.rolePackageId === 'ajans-yonetimi' ||
+      principal.isDedicatedAdmin
+    if (isCreativeStaff) {
+      menuItems.push({ label: 'Kreatif Üretim', icon: '🎨', href: '/creative-production' })
+    }
+
     // Ödeme Talepleri (Hidden for Art Director and Graphic Designer)
     const isCreativeRole = activeEmployee?.rolePackageId === 'art-director' || activeEmployee?.rolePackageId === 'grafik-tasarim'
     if (!isCreativeRole) {
@@ -420,6 +433,8 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       segments.push({ label: 'Takvim', href: '/calendar' })
     } else if (pathname === '/reports') {
       segments.push({ label: 'Raporlar', href: '/reports' })
+    } else if (pathname === '/creative-production') {
+      segments.push({ label: 'Kreatif Üretim', href: '/creative-production' })
     } else if (pathname === '/profile') {
       segments.push({ label: 'Profilim', href: '/profile' })
     } else if (pathname === '/brands') {

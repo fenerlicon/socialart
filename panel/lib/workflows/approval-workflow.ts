@@ -8,6 +8,7 @@ import type {
   ApprovalPurpose,
 } from '@/types/domain'
 import { isCreativeProductionResponsibility } from '@/types/domain'
+import { CreativeProductionCreditRepository } from '@/lib/repositories/CreativeProductionCreditRepository'
 import {
   saveApproval,
   getStoredApprovals,
@@ -350,6 +351,20 @@ export async function approveApproval(approvalId: string, approverEmployeeId: st
   approval.approvedAt = now
   approval.approverEmployeeId = approverEmployeeId // if empty
   await saveApproval(approval)
+
+  // 3.5. Final Kreatif Onayı ise Üretim Kredisini (Production Credit) değişmez şekilde kaydet
+  if (approval.approvalPurpose === 'final_creative') {
+    try {
+      await CreativeProductionCreditRepository.recordCreditFromApproval(
+        step,
+        instance,
+        approval,
+        approverEmployeeId
+      )
+    } catch (err) {
+      console.warn('[approveApproval] Production credit recording error:', err)
+    }
+  }
 
   // 4. Adımın durumunu geçici olarak active yapıp onay bilgisini set et
   step.status = 'active'
