@@ -131,13 +131,14 @@ export function TaskDeliveryModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <Card className="w-full max-w-lg rounded-2xl border border-neutral-800 bg-neutral-950 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+      <Card className="w-full max-w-lg max-h-[calc(100dvh-2rem)] flex flex-col rounded-2xl border border-neutral-800 bg-neutral-950 shadow-2xl relative overflow-hidden my-auto">
         {/* Top accent */}
-        <div className="h-1 w-full bg-gradient-to-r from-purple-600 via-blue-500 to-emerald-500" />
+        <div className="h-1 w-full shrink-0 bg-gradient-to-r from-purple-600 via-blue-500 to-emerald-500" />
 
-        <div className="p-6 space-y-5">
-          <div className="flex items-start justify-between gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          {/* Header */}
+          <div className="p-5 sm:p-6 pb-4 border-b border-neutral-800/80 shrink-0 flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-black text-foreground">Görevi Teslim Et ve Tamamla</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -145,6 +146,7 @@ export function TaskDeliveryModal({
               </p>
             </div>
             <button
+              type="button"
               onClick={onClose}
               className="p-1.5 rounded-xl hover:bg-neutral-800 text-neutral-400 shrink-0 transition-colors"
             >
@@ -152,8 +154,8 @@ export function TaskDeliveryModal({
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-
+          {/* Scrollable Body */}
+          <div className="p-5 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
             {/* Zorunlu Link Bölümü (Görev tipine göre) */}
             {requirementConfig && (
               <div className={`rounded-xl border p-4 space-y-3 ${requirementConfig.borderColor} ${requirementConfig.bgColor}`}>
@@ -226,7 +228,7 @@ export function TaskDeliveryModal({
                   + Ekle
                 </Button>
               </div>
-              <div className="space-y-2 max-h-24 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
                 {links.map((link, idx) => (
                   <div key={`link-${idx}`} className="flex items-center gap-2">
                     <Input
@@ -272,7 +274,7 @@ export function TaskDeliveryModal({
                   + Ekle
                 </Button>
               </div>
-              <div className="space-y-2 max-h-24 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
                 {files.map((file, idx) => (
                   <div key={`file-${idx}`} className="flex items-center gap-2">
                     <Input
@@ -300,25 +302,26 @@ export function TaskDeliveryModal({
                 ))}
               </div>
             </div>
+          </div>
 
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="h-9 text-xs rounded-xl font-semibold border-neutral-800 hover:bg-neutral-900"
-              >
-                Vazgeç
-              </Button>
-              <Button
-                type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 px-5 rounded-xl shadow-md"
-              >
-                Görevi Teslim Et ve Tamamla
-              </Button>
-            </div>
-          </form>
-        </div>
+          {/* Sticky Footer / Actions */}
+          <div className="p-4 sm:px-6 border-t border-neutral-800/80 bg-neutral-950/90 shrink-0 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="h-9 text-xs rounded-xl font-semibold border-neutral-800 hover:bg-neutral-900"
+            >
+              Vazgeç
+            </Button>
+            <Button
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 px-5 rounded-xl shadow-md"
+            >
+              Görevi Teslim Et ve Tamamla
+            </Button>
+          </div>
+        </form>
       </Card>
     </div>
   )
