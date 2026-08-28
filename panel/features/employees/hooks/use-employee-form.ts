@@ -157,80 +157,89 @@ export function useEmployeeForm(
     try {
       const input = mapFormToCreateInput(parsed.data)
 
-      let targetEmployeeId: string | null = null
+      const isDb1PlainId = (id?: string | null) => {
+        if (!id) return false
+        if (id.startsWith('emp-')) return false
+        // Exclude UUID format (which is DB2 employee ID)
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return false
+        return true
+      }
+
+      const canonicalDb1Id =
+        initialEmployee?.db1EmployeeId ||
+        (isDb1PlainId(initialEmployee?.id) ? String(initialEmployee?.id) : null)
+
+      let updatedEmployee: Employee | null = null
+      let createdEmployee: Employee | null = null
 
       if (initialEmployee) {
-        targetEmployeeId = initialEmployee.id
-        const updated = await updateEmployee(initialEmployee.id, input)
-        console.log('Güncellenen çalışan:', updated)
-
-        toast.success('Çalışan güncellendi', {
-          description: `"${updated?.fullName || values.fullName}" başarıyla güncellendi.`,
-        })
+        updatedEmployee = await updateEmployee(initialEmployee.id, input)
+        console.log('Güncellenen çalışan:', updatedEmployee)
       } else {
-        const employee = await createAndStoreEmployee(input)
-        targetEmployeeId = employee.id
-        console.log('Kaydedilen çalışan:', employee)
-
-        toast.success('Çalışan kaydedildi', {
-          description: `${employee.fullName} başarıyla oluşturuldu.`,
-        })
+        createdEmployee = await createAndStoreEmployee(input)
+        console.log('Kaydedilen çalışan:', createdEmployee)
         setValues(defaultEmployeeFormValues)
       }
 
+      const syncErrors: string[] = []
+
       // Orchestrate protected server updates for authorization-sensitive fields:
-      if (targetEmployeeId) {
-        // 1. Role Package Update
-        const initialRole = initialEmployee?.rolePackageId || null
-        const newRole = values.rolePackageId || null
-        if (newRole && newRole !== initialRole) {
+      const targetSyncId = canonicalDb1Id || (createdEmployee?.id && !createdEmployee.id.startsWith('emp-') ? String(createdEmployee.id) : null)
+
+      // 1. Role Package Update (only if role was explicitly changed to a new valid role)
+      const initialRole = initialEmployee?.rolePackageId || null
+      const newRole = values.rolePackageId || null
+      const roleChanged = Boolean(newRole && newRole !== initialRole)
+
+      if (roleChanged) {
+        if (!targetSyncId) {
+          syncErrors.push('Rol güncellemesi için geçerli DB1 çalışan kimliği bulunamadı.')
+        } else {
           try {
             const roleRes = await fetch('/api/auth-update-employee-role', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ employeeId: targetEmployeeId, rolePackageId: newRole }),
+              body: JSON.stringify({ employeeId: targetSyncId, rolePackageId: newRole }),
             })
             if (!roleRes.ok) {
               const rData = await roleRes.json().catch(() => ({}))
-              toast.error('Rol paketi sunucuda güncellenemedi', {
-                description: rData.error || 'Rol güncellemesi için yönetici yetkisi gereklidir.',
-              })
+              syncErrors.push(rData.error || 'Rol güncellemesi sunucuda uygulanamadı.')
             }
           } catch (e: any) {
-            toast.error('Rol paketi sunucu bağlantı hatası', { description: e.message })
+            syncErrors.push(`Rol sunucu bağlantı hatası: ${e.message}`)
           }
         }
+      }
 
-        // 2. Identity & Status & Auth-Metadata Update (email, username, employeeStatus, teamIds, hasAdvancedCalendarAccess)
-        const initialEmail = (initialEmployee?.email || '').trim().toLowerCase()
-        const newEmail = (values.email || '').trim().toLowerCase()
-        const initialUsername = (initialEmployee?.username || '').trim().toLowerCase()
-        const newUsername = (values.username || '').trim().toLowerCase()
-        const initialStatus = initialEmployee?.employeeStatus || 'active'
-        const newStatus = values.employeeStatus || 'active'
-        const initialTeams = JSON.stringify(initialEmployee?.teamIds || [])
-        const newTeams = JSON.stringify(values.teamIds || [])
-        const initialCalendar = Boolean(initialEmployee?.hasAdvancedCalendarAccess)
-        const newCalendar = Boolean(values.hasAdvancedCalendarAccess)
+      // 2. Identity & Status & Auth-Metadata Update (email, employeeStatus, teamIds, hasAdvancedCalendarAccess)
+      const initialEmail = (initialEmployee?.email || '').trim().toLowerCase()
+      const newEmail = (values.email || '').trim().toLowerCase()
+      const initialStatus = initialEmployee?.employeeStatus || 'active'
+      const newStatus = values.employeeStatus || 'active'
+      const initialTeams = JSON.stringify(initialEmployee?.teamIds || [])
+      const newTeams = JSON.stringify(values.teamIds || [])
+      const initialCalendar = Boolean(initialEmployee?.hasAdvancedCalendarAccess)
+      const newCalendar = Boolean(values.hasAdvancedCalendarAccess)
 
-        const identityChanged =
-          !initialEmployee ||
-          (newEmail && newEmail !== initialEmail) ||
-          (newUsername && newUsername !== initialUsername) ||
-          newStatus !== initialStatus ||
-          newTeams !== initialTeams ||
-          newCalendar !== initialCalendar
+      const identityChanged =
+        !initialEmployee ||
+        (newEmail && newEmail !== initialEmail) ||
+        newStatus !== initialStatus ||
+        newTeams !== initialTeams ||
+        newCalendar !== initialCalendar
 
-        if (identityChanged) {
+      if (identityChanged && initialEmployee) {
+        if (!targetSyncId) {
+          syncErrors.push('Kimlik/durum güncellemesi için geçerli DB1 çalışan kimliği bulunamadı.')
+        } else {
           try {
             const payload: any = {
-              employeeId: targetEmployeeId,
+              employeeId: targetSyncId,
               employeeStatus: newStatus,
               teamIds: values.teamIds,
               hasAdvancedCalendarAccess: newCalendar,
             }
             if (newEmail) payload.email = newEmail
-            if (newUsername) payload.username = newUsername
 
             const idRes = await fetch('/api/auth-update-employee-identity', {
               method: 'POST',
@@ -239,58 +248,72 @@ export function useEmployeeForm(
             })
             if (!idRes.ok) {
               const idData = await idRes.json().catch(() => ({}))
-              toast.error('Kimlik/yetki bilgileri sunucuda güncellenemedi', {
-                description: idData.error || 'Kimlik güncellemesi için yetki gereklidir.',
-              })
+              syncErrors.push(idData.error || 'Kimlik/yetki bilgileri sunucuda güncellenemedi.')
             }
           } catch (e: any) {
-            toast.error('Kimlik güncellemesi sunucu bağlantı hatası', { description: e.message })
+            syncErrors.push(`Kimlik sunucu bağlantı hatası: ${e.message}`)
           }
         }
+      }
 
-        // 3. Sensitive Permission Overrides Update
-        const sensitiveKeys = [
-          'team.manage',
-          'employees.manage',
-          'employees.create',
-          'system.permissions',
-          'system.admin',
-          'settings.manage',
-          'system.settings',
-        ]
+      // 3. Sensitive Permission Overrides Update
+      const sensitiveKeys = [
+        'team.manage',
+        'employees.manage',
+        'employees.create',
+        'system.permissions',
+        'system.admin',
+        'settings.manage',
+        'system.settings',
+      ]
 
-        for (const key of sensitiveKeys) {
-          const initialVal = initialEmployee?.permissionOverrides?.[key] === true
-          const newVal = values.permissionOverrides?.[key] === true
-          const keySpecified = Object.prototype.hasOwnProperty.call(values.permissionOverrides || {}, key)
+      for (const key of sensitiveKeys) {
+        const initialVal = initialEmployee?.permissionOverrides?.[key] === true
+        const newVal = values.permissionOverrides?.[key] === true
+        const keySpecified = Object.prototype.hasOwnProperty.call(values.permissionOverrides || {}, key)
 
-          if (keySpecified && newVal !== initialVal) {
+        if (keySpecified && newVal !== initialVal) {
+          if (!targetSyncId) {
+            syncErrors.push(`"${key}" yetkisi için geçerli DB1 çalışan kimliği bulunamadı.`)
+          } else {
             try {
               const permRes = await fetch('/api/auth-update-permission-override', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employeeId: targetEmployeeId, permissionKey: key, grant: newVal }),
+                body: JSON.stringify({ employeeId: targetSyncId, permissionKey: key, grant: newVal }),
               })
               if (!permRes.ok) {
                 const pData = await permRes.json().catch(() => ({}))
-                toast.error(`"${key}" yetkisi sunucuda güncellenemedi`, {
-                  description: pData.error || 'Yetki delegasyonu için system.permissions/admin yetkisi gereklidir.',
-                })
+                syncErrors.push(pData.error || `"${key}" yetkisi sunucuda güncellenemedi.`)
               }
             } catch (e: any) {
-              toast.error(`"${key}" sunucu bağlantı hatası`, { description: e.message })
+              syncErrors.push(`"${key}" sunucu bağlantı hatası: ${e.message}`)
             }
           }
+        }
+      }
+
+      if (syncErrors.length > 0) {
+        toast.error('Kısmi Güncelleme Yapıldı', {
+          description: `Profil kaydedildi ancak yetki/kimlik senkronizasyonu tamamlanamadı: ${syncErrors.join(' • ')}`,
+        })
+      } else {
+        if (initialEmployee) {
+          toast.success('Çalışan güncellendi', {
+            description: `"${updatedEmployee?.fullName || values.fullName}" başarıyla güncellendi.`,
+          })
+        } else {
+          toast.success('Çalışan kaydedildi', {
+            description: `${createdEmployee?.fullName || values.fullName} başarıyla oluşturuldu.`,
+          })
         }
       }
 
       if (initialEmployee) {
         router.push('/employees')
       } else {
-        if (options?.onEmployeeCreated) {
-          // targetEmployeeId already exists
-          const createdEmp = await EmployeeRepository.getById(targetEmployeeId!)
-          await options.onEmployeeCreated(createdEmp || ({ ...input, id: targetEmployeeId! } as Employee))
+        if (options?.onEmployeeCreated && createdEmployee) {
+          await options.onEmployeeCreated(createdEmployee)
         } else {
           router.push('/employees')
         }

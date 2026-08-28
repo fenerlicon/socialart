@@ -115,7 +115,7 @@ export const EmployeeRepository = {
 
     return {
       id: row.id,
-      db1EmployeeId: row.db1_employee_id || null,
+      db1EmployeeId: row.db1_employee_id ? String(row.db1_employee_id) : null,
       fullName: row.full_name,
       email: row.email,
       title: row.title,
