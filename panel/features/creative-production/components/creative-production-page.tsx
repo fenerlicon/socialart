@@ -275,7 +275,7 @@ export function CreativeProductionPage() {
                 selectedPreset === 'all_time' && 'bg-purple-600 hover:bg-purple-700 text-white'
               )}
             >
-              Tüm Zamanlar
+              Tüm Zamanlar (Aktivasyondan İtibaren)
             </Button>
             <Button
               type="button"
@@ -289,6 +289,12 @@ export function CreativeProductionPage() {
             >
               Özel Tarih Aralığı
             </Button>
+          </div>
+
+          {/* Historical Coverage Disclosure */}
+          <div className="flex items-center gap-2 p-2.5 px-3 rounded-xl bg-purple-950/20 border border-purple-800/30 text-[11px] text-purple-300">
+            <span className="font-bold">ℹ️ Kapsam Bilgisi:</span>
+            <span>Üretim kayıtları kesinleşmiş sistem aktivasyon tarihinden itibaren tutulmaktadır. Eski tamamlanan işler için geriye dönük mutabakat planlanmaktadır.</span>
           </div>
 
           {/* Detailed Filters Grid */}
