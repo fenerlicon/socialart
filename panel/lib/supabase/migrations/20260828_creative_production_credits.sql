@@ -23,3 +23,20 @@ CREATE TABLE IF NOT EXISTS public.creative_production_credits (
 CREATE INDEX IF NOT EXISTS idx_creative_credits_designer ON public.creative_production_credits(designer_employee_id);
 CREATE INDEX IF NOT EXISTS idx_creative_credits_credited_at ON public.creative_production_credits(credited_at);
 CREATE INDEX IF NOT EXISTS idx_creative_credits_brand ON public.creative_production_credits(brand_id);
+
+-- Row Level Security (RLS)
+ALTER TABLE public.creative_production_credits ENABLE ROW LEVEL SECURITY;
+
+-- Read policy: authenticated sessions and server clients can query ledger
+CREATE POLICY "Allow read access to authenticated users"
+ON public.creative_production_credits FOR SELECT
+TO authenticated, anon
+USING (true);
+
+-- Write policy: mutations restricted to service_role / server authority
+CREATE POLICY "Allow service_role full management"
+ON public.creative_production_credits FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+

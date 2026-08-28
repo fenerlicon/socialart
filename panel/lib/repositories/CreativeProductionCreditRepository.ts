@@ -1,10 +1,20 @@
 import { supabase } from '@/lib/supabase/client'
-import type { CreativeProductionCredit, WorkflowStepInstance, WorkflowInstance, WorkflowApproval } from '@/types/domain'
+import type {
+  CreativeProductionCredit,
+  CreativeProductionFilter,
+  CreativeProductionSummary,
+  WorkflowStepInstance,
+  WorkflowInstance,
+  WorkflowApproval,
+  Employee,
+} from '@/types/domain'
 import { v4 as uuidv4 } from 'uuid'
+import { getCreativeProductionReport } from '@/lib/services/creative-production-reporting'
 
-const CREDIT_COLUMNS = 'id,workflow_step_instance_id,workflow_instance_id,final_approval_id,designer_employee_id,db1_employee_id,brand_id,creative_count,credited_at,created_at,task_title,workflow_title,reviewer_employee_id'
+const CREDIT_COLUMNS =
+  'id,workflow_step_instance_id,workflow_instance_id,final_approval_id,designer_employee_id,db1_employee_id,brand_id,creative_count,credited_at,created_at,task_title,workflow_title,reviewer_employee_id'
 
-// In-memory persistent cache for testing / runtime safety
+// In-memory persistent cache for testing / offline fallback
 const inMemoryCredits = new Map<string, CreativeProductionCredit>()
 
 export const CreativeProductionCreditRepository = {
@@ -35,7 +45,8 @@ export const CreativeProductionCreditRepository = {
     if (credit.designerEmployeeId !== undefined) row.designer_employee_id = credit.designerEmployeeId
     if (credit.db1EmployeeId !== undefined) row.db1_employee_id = String(credit.db1EmployeeId)
     if (credit.brandId !== undefined) row.brand_id = credit.brandId
-    if (credit.creativeCount !== undefined) row.creative_count = credit.creativeCount >= 1 ? credit.creativeCount : 1
+    if (credit.creativeCount !== undefined)
+      row.creative_count = credit.creativeCount >= 1 ? Math.floor(credit.creativeCount) : 1
     if (credit.creditedAt !== undefined) row.credited_at = credit.creditedAt
     if (credit.createdAt !== undefined) row.created_at = credit.createdAt
     if (credit.taskTitle !== undefined) row.task_title = credit.taskTitle
@@ -52,14 +63,12 @@ export const CreativeProductionCreditRepository = {
         .order('credited_at', { ascending: false })
 
       if (error) {
-        // If table doesn't exist yet or connection error, return in-memory cache
         return Array.from(inMemoryCredits.values()).sort(
           (a, b) => new Date(b.creditedAt).getTime() - new Date(a.creditedAt).getTime()
         )
       }
 
       const dbCredits = (data || []).map(this.mapRowToCredit)
-      // Sync into inMemoryCredits
       dbCredits.forEach((c) => inMemoryCredits.set(c.workflowStepInstanceId, c))
       return dbCredits
     } catch {
@@ -102,7 +111,6 @@ export const CreativeProductionCreditRepository = {
       throw new Error('designerEmployeeId is required for creative credit')
     }
 
-    // Idempotency: Check if already credited
     const existing = await this.getByStepId(creditInput.workflowStepInstanceId)
     if (existing) {
       return existing
@@ -117,7 +125,8 @@ export const CreativeProductionCreditRepository = {
       designerEmployeeId: creditInput.designerEmployeeId,
       db1EmployeeId: creditInput.db1EmployeeId,
       brandId: creditInput.brandId || null,
-      creativeCount: creditInput.creativeCount && creditInput.creativeCount >= 1 ? Math.floor(creditInput.creativeCount) : 1,
+      creativeCount:
+        creditInput.creativeCount && creditInput.creativeCount >= 1 ? Math.floor(creditInput.creativeCount) : 1,
       creditedAt: creditInput.creditedAt || now,
       createdAt: creditInput.createdAt || now,
       taskTitle: creditInput.taskTitle,
@@ -125,15 +134,11 @@ export const CreativeProductionCreditRepository = {
       reviewerEmployeeId: creditInput.reviewerEmployeeId,
     }
 
-    // Save to in-memory cache
     inMemoryCredits.set(credit.workflowStepInstanceId, credit)
 
-    // Persist to DB2 table
     try {
       const row = this.mapCreditToRow(credit)
-      await supabase
-        .from('creative_production_credits')
-        .upsert(row, { onConflict: 'workflow_step_instance_id' })
+      await supabase.from('creative_production_credits').upsert(row, { onConflict: 'workflow_step_instance_id' })
     } catch (err) {
       console.warn('[CreativeProductionCreditRepository] DB2 persistence notice:', err)
     }
@@ -141,6 +146,10 @@ export const CreativeProductionCreditRepository = {
     return credit
   },
 
+  /**
+   * Final Creative Approval Ledger Hook
+   * Calls serverless authority endpoint first, falls back to direct DB2 upsert
+   */
   async recordCreditFromApproval(
     step: WorkflowStepInstance,
     instance: WorkflowInstance,
@@ -151,6 +160,28 @@ export const CreativeProductionCreditRepository = {
       return null
     }
 
+    // Try server endpoint if in browser environment
+    if (typeof window !== 'undefined' && typeof fetch === 'function') {
+      try {
+        const res = await fetch('/api/creative-production-router?action=record-credit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approvalId: approval.id }),
+        })
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.credit) {
+            const mapped = this.mapRowToCredit(json.credit)
+            inMemoryCredits.set(mapped.workflowStepInstanceId, mapped)
+            return mapped
+          }
+        }
+      } catch (e) {
+        console.warn('[recordCreditFromApproval] Server API call notice, falling back to direct:', e)
+      }
+    }
+
+    // Fallback: direct server/in-process execution
     const designerId = step.assignedEmployeeId || approval.requestedByEmployeeId
     if (!designerId) {
       return null
@@ -182,5 +213,35 @@ export const CreativeProductionCreditRepository = {
       workflowTitle: instance.title,
       reviewerEmployeeId: approverEmployeeId,
     })
-  }
+  },
+
+  /**
+   * Fetch Scoped Creative Production Report
+   */
+  async fetchReport(
+    filter: CreativeProductionFilter,
+    allowedDesignerIds?: Set<string> | string[],
+    allEmployees: Employee[] = []
+  ): Promise<CreativeProductionSummary> {
+    if (typeof window !== 'undefined' && typeof fetch === 'function') {
+      try {
+        const res = await fetch('/api/creative-production-router?action=report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(filter),
+        })
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.summary) {
+            return json.summary
+          }
+        }
+      } catch (e) {
+        console.warn('[fetchReport] Server API call notice, falling back to in-process:', e)
+      }
+    }
+
+    // Direct in-process fallback
+    return getCreativeProductionReport(filter, allowedDesignerIds, allEmployees)
+  },
 }

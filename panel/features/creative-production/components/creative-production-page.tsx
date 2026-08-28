@@ -12,6 +12,7 @@ import { getStoredEmployees, getActiveEmployeeId } from '@/lib/storage/local-emp
 import { getStoredBrands } from '@/lib/storage/local-brand-store'
 import { usePrincipal, isManagerOrAdmin, resolveVisibleBrandIds } from '@/lib/permissions/panel-authority'
 import { getCreativeProductionReport } from '@/lib/services/creative-production-reporting'
+import { CreativeProductionCreditRepository } from '@/lib/repositories/CreativeProductionCreditRepository'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -138,7 +139,7 @@ export function CreativeProductionPage() {
       endTime: selectedPreset === 'custom' ? endTime : undefined,
     }
 
-    const report = await getCreativeProductionReport(
+    const report = await CreativeProductionCreditRepository.fetchReport(
       filter,
       isGraphicDesigner && currentEmployee ? [currentEmployee.id] : allowedDesignerIds,
       employees
