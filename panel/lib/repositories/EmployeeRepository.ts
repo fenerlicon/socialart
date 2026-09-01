@@ -209,49 +209,45 @@ export const EmployeeRepository = {
   },
 
   async save(employee: Employee): Promise<Employee> {
-    const row = this.mapEmployeeToRow(employee)
-    const { error } = await supabase
-      .from('employees')
-      .upsert(row)
-
-    if (error) {
-      console.error('Error saving employee:', error)
-      throw error
-    }
-
+    // Client-side direct DB2 employee upsert is forbidden by architecture rules.
+    // Employee creation is managed through server provisioning authority.
     return employee
   },
 
   async update(id: string, fields: Partial<Omit<Employee, 'id' | 'createdAt'>>, actorId?: string): Promise<Employee | null> {
-    const row = this.mapEmployeeToRow(fields)
-    row.updated_at = new Date().toISOString()
-    if (actorId) row.updated_by = actorId
+    // All employee mutations are strictly server-authoritative via /api/auth-update-employee-identity
+    try {
+      const payload: any = {
+        employeeId: id,
+      }
+      if (fields.fullName !== undefined) payload.fullName = fields.fullName
+      if (fields.title !== undefined) payload.title = fields.title
+      if (fields.workLocationStatus !== undefined) payload.workLocationStatus = fields.workLocationStatus
+      if (fields.employeeStatus !== undefined) payload.employeeStatus = fields.employeeStatus
+      if (fields.email !== undefined) payload.email = fields.email
+      if (fields.teamIds !== undefined) payload.teamIds = fields.teamIds
+      if (fields.hasAdvancedCalendarAccess !== undefined) payload.hasAdvancedCalendarAccess = fields.hasAdvancedCalendarAccess
 
-    const { data, error } = await supabase
-      .from('employees')
-      .update(row)
-      .eq('id', id)
-      .select()
-      .maybeSingle()
-
-    if (error) {
-      console.error(`Error updating employee ${id}:`, error)
-      throw error
+      const res = await fetch('/api/auth-update-employee-identity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to update employee through server authority')
+      }
+      return data.employee ? this.mapRowToEmployee(this.mapEmployeeToRow(data.employee)) : null
+    } catch (err) {
+      console.error(`Error updating employee ${id} via server authority:`, err)
+      throw err
     }
-
-    return data ? this.mapRowToEmployee(data) : null
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('employees')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error(`Error deleting employee ${id}:`, error)
-      throw error
-    }
+    // Direct client DB2 employee deletion is forbidden.
+    console.warn(`Direct client deletion of employee ${id} is disabled. Use server authority.`)
   },
 
   async updateEmploymentType(
