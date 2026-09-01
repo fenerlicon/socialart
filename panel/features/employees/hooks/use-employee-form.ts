@@ -155,8 +155,63 @@ export function useEmployeeForm(
     }
 
     try {
-      const input = mapFormToCreateInput(parsed.data)
+      // ========================================================
+      // 1. CREATE MODE: Server-Authoritative New Employee Creation
+      // ========================================================
+      if (!initialEmployee) {
+        const createRes = await fetch('/api/auth-create-employee', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            fullName: values.fullName,
+            title: values.title,
+            email: values.email || undefined,
+            username: values.username || undefined,
+            rolePackageId: values.rolePackageId || undefined,
+            teamIds: values.teamIds,
+            workLocationStatus: values.workLocationStatus,
+            employeeStatus: values.employeeStatus,
+            permissionOverrides: values.permissionOverrides,
+            hasAdvancedCalendarAccess: values.hasAdvancedCalendarAccess,
+          }),
+        })
 
+        const createData = await createRes.json().catch(() => ({}))
+
+        if (!createRes.ok || !createData.ok || !createData.employeeId) {
+          const stageDesc = createData.metadata?.stage ? ` (${createData.metadata.stage})` : ''
+          toast.error('Çalışan kaydedilemedi', {
+            description: (createData.error || 'Çalışan oluşturulamadı.') + stageDesc,
+          })
+          return
+        }
+
+        const newEmp: Employee = createData.employee
+
+        if (createData.warning === 'PARTIAL_CREATE') {
+          toast.warning('Kısmi Senkronizasyon', {
+            description: createData.message || 'Kanonik çalışan oluşturuldu ancak operasyon aynası senkronize edilemedi.',
+          })
+        } else {
+          toast.success('Çalışan kaydedildi', {
+            description: `"${newEmp.fullName}" başarıyla oluşturuldu.`,
+          })
+        }
+
+        setValues(defaultEmployeeFormValues)
+
+        if (options?.onEmployeeCreated) {
+          await options.onEmployeeCreated(newEmp)
+        } else {
+          router.push('/employees')
+        }
+        return
+      }
+
+      // ========================================================
+      // 2. EDIT MODE: Canonical DB1 Updates on Dirty Fields
+      // ========================================================
       const isDb1PlainId = (id?: string | null) => {
         if (!id) return false
         if (id.startsWith('emp-')) return false
@@ -166,27 +221,14 @@ export function useEmployeeForm(
       }
 
       const canonicalDb1Id =
-        initialEmployee?.db1EmployeeId ||
-        (isDb1PlainId(initialEmployee?.id) ? String(initialEmployee?.id) : null)
+        initialEmployee.db1EmployeeId ||
+        (isDb1PlainId(initialEmployee.id) ? String(initialEmployee.id) : null)
 
-      let createdEmployee: Employee | null = null
-
-      // In create mode (no initialEmployee), persist through standard creation
-      if (!initialEmployee) {
-        createdEmployee = await createAndStoreEmployee(input)
-        setValues(defaultEmployeeFormValues)
-      }
-
+      const targetSyncId = canonicalDb1Id || initialEmployee.id
       const syncErrors: string[] = []
 
-      // Orchestrate protected server updates for authorization-sensitive fields:
-      const targetSyncId =
-        canonicalDb1Id ||
-        initialEmployee?.id ||
-        (createdEmployee?.id && !createdEmployee.id.startsWith('emp-') ? String(createdEmployee.id) : null)
-
       // 1. Role Package Update (only if role was explicitly changed to a new valid role)
-      const initialRole = initialEmployee?.rolePackageId || null
+      const initialRole = initialEmployee.rolePackageId || null
       const newRole = values.rolePackageId || null
       const roleChanged = Boolean(newRole && newRole !== initialRole)
 
@@ -198,6 +240,7 @@ export function useEmployeeForm(
             const roleRes = await fetch('/api/auth-update-employee-role', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
               body: JSON.stringify({ employeeId: targetSyncId, rolePackageId: newRole }),
             })
             if (!roleRes.ok) {
@@ -211,23 +254,22 @@ export function useEmployeeForm(
       }
 
       // 2. Identity & Status & Auth-Metadata Update (fullName, title, email, username, employeeStatus, workLocationStatus, teamIds, hasAdvancedCalendarAccess)
-      const initialFullName = (initialEmployee?.fullName || '').trim()
+      const initialFullName = (initialEmployee.fullName || '').trim()
       const newFullName = (values.fullName || '').trim()
-      const initialTitle = (initialEmployee?.title || '').trim()
+      const initialTitle = (initialEmployee.title || '').trim()
       const newTitle = (values.title || '').trim()
-      const initialLocation = initialEmployee?.workLocationStatus || 'office'
+      const initialLocation = initialEmployee.workLocationStatus || 'office'
       const newLocation = values.workLocationStatus || 'office'
-      const initialEmail = (initialEmployee?.email || '').trim().toLowerCase()
+      const initialEmail = (initialEmployee.email || '').trim().toLowerCase()
       const newEmail = (values.email || '').trim().toLowerCase()
-      const initialStatus = initialEmployee?.employeeStatus || 'active'
+      const initialStatus = initialEmployee.employeeStatus || 'active'
       const newStatus = values.employeeStatus || 'active'
-      const initialTeams = JSON.stringify(initialEmployee?.teamIds || [])
+      const initialTeams = JSON.stringify(initialEmployee.teamIds || [])
       const newTeams = JSON.stringify(values.teamIds || [])
-      const initialCalendar = Boolean(initialEmployee?.hasAdvancedCalendarAccess)
+      const initialCalendar = Boolean(initialEmployee.hasAdvancedCalendarAccess)
       const newCalendar = Boolean(values.hasAdvancedCalendarAccess)
 
       const identityChanged =
-        !initialEmployee ||
         newFullName !== initialFullName ||
         newTitle !== initialTitle ||
         newLocation !== initialLocation ||
@@ -238,7 +280,7 @@ export function useEmployeeForm(
 
       let partialSyncWarning: string | null = null
 
-      if (identityChanged && initialEmployee) {
+      if (identityChanged) {
         if (!targetSyncId) {
           syncErrors.push('Kimlik/durum güncellemesi için geçerli DB1 çalışan kimliği bulunamadı.')
         } else {
@@ -297,7 +339,7 @@ export function useEmployeeForm(
       ]
 
       for (const key of sensitiveKeys) {
-        const initialVal = initialEmployee?.permissionOverrides?.[key] === true
+        const initialVal = initialEmployee.permissionOverrides?.[key] === true
         const newVal = values.permissionOverrides?.[key] === true
         const keySpecified = Object.prototype.hasOwnProperty.call(values.permissionOverrides || {}, key)
 
@@ -309,6 +351,7 @@ export function useEmployeeForm(
               const permRes = await fetch('/api/auth-update-permission-override', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({ employeeId: targetSyncId, permissionKey: key, grant: newVal }),
               })
               if (!permRes.ok) {
@@ -329,27 +372,16 @@ export function useEmployeeForm(
         return
       }
 
-      if (initialEmployee) {
-        if (partialSyncWarning) {
-          toast.warning('Kısmi Senkronizasyon', {
-            description: partialSyncWarning,
-          })
-        } else {
-          toast.success('Çalışan güncellendi', {
-            description: `"${values.fullName}" başarıyla güncellendi.`,
-          })
-        }
-        router.push('/employees')
-      } else {
-        toast.success('Çalışan kaydedildi', {
-          description: `${createdEmployee?.fullName || values.fullName} başarıyla oluşturuldu.`,
+      if (partialSyncWarning) {
+        toast.warning('Kısmi Senkronizasyon', {
+          description: partialSyncWarning,
         })
-        if (options?.onEmployeeCreated && createdEmployee) {
-          await options.onEmployeeCreated(createdEmployee)
-        } else {
-          router.push('/employees')
-        }
+      } else {
+        toast.success('Çalışan güncellendi', {
+          description: `"${values.fullName}" başarıyla güncellendi.`,
+        })
       }
+      router.push('/employees')
     } catch (err: any) {
       console.error('Error saving employee:', err)
       toast.error('Çalışan kaydedilemedi', {
