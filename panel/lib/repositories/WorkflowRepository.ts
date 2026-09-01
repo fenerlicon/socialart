@@ -372,14 +372,19 @@ export const WorkflowRepository = {
     row.updated_at = new Date().toISOString()
     if (actorId) row.updated_by = actorId
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('workflow_instances')
       .update(row)
       .eq('id', instance.id)
+      .select('id')
 
     if (error) {
       console.error(`Error updating workflow instance ${instance.id}:`, error)
       throw error
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error(`ZERO_ROWS_UPDATED: Workflow instance "${instance.id}" bulunamadı veya güncellenemedi.`)
     }
   },
 
@@ -387,14 +392,19 @@ export const WorkflowRepository = {
     const row = this.mapStepToRow(step)
     if (actorId) row.updated_by = actorId
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('workflow_step_instances')
       .update(row)
       .eq('id', step.id)
+      .select('id')
 
     if (error) {
       console.error(`Error updating workflow step ${step.id}:`, error)
       throw error
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error(`ZERO_ROWS_UPDATED: Workflow step "${step.id}" bulunamadı veya güncellenemedi.`)
     }
 
     // Trigger onboarding task generation/sync if meeting step is updated
