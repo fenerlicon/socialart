@@ -57,9 +57,10 @@ export default async function handler(req, res) {
   }
 
   // 3. Strict Permission Delegation Rules
+  const isDedicatedAdmin = authState.principalType === 'admin' || authState.isAdmin === true || (Array.isArray(authState.permissions) && authState.permissions.includes('*'));
   const operatorPermissions = authState.permissions || [];
-  const isSystemAdmin = operatorPermissions.includes('system.admin');
-  const hasPermissionDelegation = operatorPermissions.includes('system.permissions') || isSystemAdmin;
+  const isSystemAdmin = isDedicatedAdmin || operatorPermissions.includes('system.admin');
+  const hasPermissionDelegation = isDedicatedAdmin || operatorPermissions.includes('system.permissions') || isSystemAdmin;
 
   // Rule 1: Normal sensitive delegation requires system.permissions OR system.admin
   if (!hasPermissionDelegation) {

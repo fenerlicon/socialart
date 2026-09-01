@@ -61,7 +61,7 @@ export function requireAdministrativeAuthority(authState, requiredPermission = '
   }
 
   // 1. Dedicated Admin Principal (Intrinsic administrative authority)
-  if (authState.principalType === 'admin' || authState.isAdmin === true) {
+  if (authState.principalType === 'admin' || authState.isAdmin === true || (Array.isArray(authState.permissions) && authState.permissions.includes('*'))) {
     return {
       authorized: true,
       principalType: 'admin',

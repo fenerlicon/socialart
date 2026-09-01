@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { hashPassword, validateOrigin } from './admin-auth.js';
 import { getAdminSupabase } from './admin-db.js';
 import { requireAdminSession } from './auth-me.js';
+import { requireAdministrativeAuthority } from './admin-permissions.js';
 
 /**
  * /api/auth-provision-credential
@@ -26,14 +27,12 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  // 2. Authorize operator with exact employees.manage or system.admin permission
-  const hasPermission = authState.permissions && (
-    authState.permissions.includes('employees.manage') ||
-    authState.permissions.includes('system.admin')
-  );
-
-  if (!hasPermission) {
-    return res.status(403).json({ error: 'Unauthorized: employees.manage permission required' });
+  // 2. Authorize operator with canonical administrative authority guard
+  const authCheck = requireAdministrativeAuthority(authState, 'employees.manage');
+  if (!authCheck.authorized) {
+    return res.status(authCheck.status || 403).json({
+      error: authCheck.error || 'Unauthorized: employees.manage permission required',
+    });
   }
 
   const supabase = getAdminSupabase();
