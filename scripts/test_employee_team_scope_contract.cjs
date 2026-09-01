@@ -99,8 +99,8 @@ async function runTests() {
   const adUsers = (allDb1 || []).filter(e => e.role_package_id === 'art-director');
 
   assert.strictEqual(cosoUsers.length, 0, 'coso must have 0 assigned users');
-  assert.ok(adUsers.length <= 1, 'art-director must have at most 1 assigned user (Beta Art Director)');
-  console.log(' ✅ PASSED: Role assignments verified');
+  assert.strictEqual(adUsers.length, 0, 'art-director must have 0 assigned users');
+  console.log(' ✅ PASSED: Exactly 0 users assigned to coso and art-director');
 
   console.log('\n--- 4. SCOPE ISOLATION LOGICAL CHECKS ---');
   // ID 1 must only have social-media team

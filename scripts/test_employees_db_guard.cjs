@@ -172,11 +172,11 @@ async function runTests() {
   // ----------------------------------------------------
   console.log('\n--- 3. PRODUCTION DB MUTATION CHECK ---');
 
-  await asyncTest('DB INTEGRITY: Active employee records intact, 0 unauthorized mutations', async () => {
+  await asyncTest('DB INTEGRITY: 13 employees, 5 credentials, 0 mutations', async () => {
     const { data: emps } = await supabase.from('employees').select('id');
     const { data: creds } = await supabase.from('employee_auth_credentials').select('employee_id');
-    assert.ok(emps && emps.length >= 13, 'Must have at least 13 canonical employees');
-    assert.ok(creds && creds.length >= 5, 'Must have at least 5 credentials');
+    assert.strictEqual(emps.length, 13, 'Must have exactly 13 employees');
+    assert.strictEqual(creds.length, 5, 'Must have exactly 5 credentials');
   });
 
   console.log('\n==========================================');
