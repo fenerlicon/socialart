@@ -211,7 +211,13 @@ export function useEmployeeForm(
         }
       }
 
-      // 2. Identity & Status & Auth-Metadata Update (email, employeeStatus, teamIds, hasAdvancedCalendarAccess)
+      // 2. Identity & Status & Auth-Metadata Update (fullName, title, email, username, employeeStatus, workLocationStatus, teamIds, hasAdvancedCalendarAccess)
+      const initialFullName = (initialEmployee?.fullName || '').trim()
+      const newFullName = (values.fullName || '').trim()
+      const initialTitle = (initialEmployee?.title || '').trim()
+      const newTitle = (values.title || '').trim()
+      const initialLocation = initialEmployee?.workLocationStatus || 'office'
+      const newLocation = values.workLocationStatus || 'office'
       const initialEmail = (initialEmployee?.email || '').trim().toLowerCase()
       const newEmail = (values.email || '').trim().toLowerCase()
       const initialStatus = initialEmployee?.employeeStatus || 'active'
@@ -223,6 +229,9 @@ export function useEmployeeForm(
 
       const identityChanged =
         !initialEmployee ||
+        newFullName !== initialFullName ||
+        newTitle !== initialTitle ||
+        newLocation !== initialLocation ||
         (newEmail && newEmail !== initialEmail) ||
         newStatus !== initialStatus ||
         newTeams !== initialTeams ||
@@ -235,6 +244,9 @@ export function useEmployeeForm(
           try {
             const payload: any = {
               employeeId: targetSyncId,
+              fullName: newFullName,
+              title: newTitle,
+              workLocationStatus: newLocation,
               employeeStatus: newStatus,
               teamIds: values.teamIds,
               hasAdvancedCalendarAccess: newCalendar,
@@ -244,11 +256,20 @@ export function useEmployeeForm(
             const idRes = await fetch('/api/auth-update-employee-identity', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
               body: JSON.stringify(payload),
             })
-            if (!idRes.ok) {
-              const idData = await idRes.json().catch(() => ({}))
+            const idData = await idRes.json().catch(() => ({}))
+            if (!idRes.ok || !idData.ok) {
               syncErrors.push(idData.error || 'Kimlik/yetki bilgileri sunucuda güncellenemedi.')
+            } else if (idData.employee) {
+              // Canonical readback assertion
+              if (idData.employee.fullName && idData.employee.fullName !== newFullName) {
+                syncErrors.push(`READBACK_MISMATCH: Kaydedilen isim ("${idData.employee.fullName}") ile talep edilen ("${newFullName}") eşleşmedi.`)
+              }
+              if (idData.employee.title !== undefined && idData.employee.title !== newTitle) {
+                syncErrors.push(`READBACK_MISMATCH: Kaydedilen unvan ("${idData.employee.title}") ile talep edilen ("${newTitle}") eşleşmedi.`)
+              }
             }
           } catch (e: any) {
             syncErrors.push(`Kimlik sunucu bağlantı hatası: ${e.message}`)
@@ -294,24 +315,21 @@ export function useEmployeeForm(
       }
 
       if (syncErrors.length > 0) {
-        toast.error('Kısmi Güncelleme Yapıldı', {
-          description: `Profil kaydedildi ancak yetki/kimlik senkronizasyonu tamamlanamadı: ${syncErrors.join(' • ')}`,
+        toast.error('Çalışan kaydedilemedi', {
+          description: syncErrors.join(' • '),
         })
-      } else {
-        if (initialEmployee) {
-          toast.success('Çalışan güncellendi', {
-            description: `"${updatedEmployee?.fullName || values.fullName}" başarıyla güncellendi.`,
-          })
-        } else {
-          toast.success('Çalışan kaydedildi', {
-            description: `${createdEmployee?.fullName || values.fullName} başarıyla oluşturuldu.`,
-          })
-        }
+        return
       }
 
       if (initialEmployee) {
+        toast.success('Çalışan güncellendi', {
+          description: `"${values.fullName}" başarıyla güncellendi.`,
+        })
         router.push('/employees')
       } else {
+        toast.success('Çalışan kaydedildi', {
+          description: `${createdEmployee?.fullName || values.fullName} başarıyla oluşturuldu.`,
+        })
         if (options?.onEmployeeCreated && createdEmployee) {
           await options.onEmployeeCreated(createdEmployee)
         } else {
