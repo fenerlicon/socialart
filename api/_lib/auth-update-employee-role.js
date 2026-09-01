@@ -40,9 +40,11 @@ export default async function handler(req, res) {
 
   // 3. Validate request payload
   const { employeeId, rolePackageId } = req.body || {};
-  if (!employeeId || typeof employeeId !== 'string') {
-    return res.status(400).json({ error: 'Invalid payload: employeeId (string) is required' });
+  if (!employeeId || (typeof employeeId !== 'string' && typeof employeeId !== 'number')) {
+    return res.status(400).json({ error: 'Invalid payload: employeeId is required' });
   }
+
+  const cleanEmployeeId = String(employeeId).trim();
 
   const cleanRole = rolePackageId === null || rolePackageId === undefined || rolePackageId === '' ? null : String(rolePackageId).trim();
   if (cleanRole !== null && !VALID_ROLE_PACKAGES.has(cleanRole)) {
@@ -53,7 +55,7 @@ export default async function handler(req, res) {
   const { data: targetEmp, error: fetchErr } = await supabaseAdmin
     .from('employees')
     .select('id, full_name, role_package_id')
-    .eq('id', String(employeeId).trim())
+    .eq('id', cleanEmployeeId)
     .maybeSingle();
 
   if (fetchErr || !targetEmp) {

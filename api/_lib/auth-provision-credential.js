@@ -83,11 +83,12 @@ export default async function handler(req, res) {
     }
 
     const { employeeId } = req.body || {};
-    if (!employeeId || typeof employeeId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(employeeId.trim())) {
+    const rawId = (typeof employeeId === 'number' || typeof employeeId === 'string') ? String(employeeId).trim() : '';
+    if (!rawId || !/^[a-zA-Z0-9_-]+$/.test(rawId)) {
       return res.status(400).json({ error: 'Valid employeeId is required' });
     }
 
-    const cleanId = employeeId.trim();
+    const cleanId = rawId;
 
     // Fetch target employee
     const { data: targetEmp, error: empErr } = await supabase

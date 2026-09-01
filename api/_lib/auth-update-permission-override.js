@@ -39,15 +39,17 @@ export default async function handler(req, res) {
   const { employeeId, permissionKey, grant } = req.body || {};
   if (
     !employeeId ||
-    typeof employeeId !== 'string' ||
+    (typeof employeeId !== 'string' && typeof employeeId !== 'number') ||
     !permissionKey ||
     typeof permissionKey !== 'string' ||
     typeof grant !== 'boolean'
   ) {
     return res.status(400).json({
-      error: 'Invalid payload: employeeId (string), permissionKey (string), and grant (boolean) are required',
+      error: 'Invalid payload: employeeId, permissionKey (string), and grant (boolean) are required',
     });
   }
+
+  const cleanEmployeeId = String(employeeId).trim();
 
   const cleanKey = permissionKey.trim();
   if (!ALLOWED_SENSITIVE_OVERRIDE_KEYS.has(cleanKey)) {
@@ -80,7 +82,7 @@ export default async function handler(req, res) {
   const { data: targetEmp, error: fetchErr } = await supabaseAdmin
     .from('employees')
     .select('id, full_name, permission_overrides')
-    .eq('id', String(employeeId).trim())
+    .eq('id', cleanEmployeeId)
     .maybeSingle();
 
   if (fetchErr || !targetEmp) {

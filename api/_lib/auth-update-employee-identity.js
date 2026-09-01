@@ -85,7 +85,7 @@ export default async function handler(req, res) {
   // 4. Fetch target employee from DB1 (canonical authority)
   let { data: targetEmp, error: fetchErr } = await supabaseAdmin
     .from('employees')
-    .select('id, full_name, email, title, permission_overrides, employee_status, team_ids, has_advanced_calendar_access, work_location_status')
+    .select('id, full_name, email, title, role_package_id, team_ids, employment_type, work_location_status, permission_overrides, employee_status')
     .eq('id', cleanEmployeeId)
     .maybeSingle();
 
@@ -103,19 +103,20 @@ export default async function handler(req, res) {
         if (db2Emp?.db1_employee_id) {
           const { data: resolvedDb1 } = await supabaseAdmin
             .from('employees')
-            .select('id, full_name, email, title, permission_overrides, employee_status, team_ids, has_advanced_calendar_access, work_location_status')
+            .select('id, full_name, email, title, role_package_id, team_ids, employment_type, work_location_status, permission_overrides, employee_status')
             .eq('id', db2Emp.db1_employee_id)
             .maybeSingle();
 
           if (resolvedDb1) {
             targetEmp = resolvedDb1;
+            fetchErr = null;
           }
         }
       }
     } catch (_) {}
   }
 
-  if (fetchErr || !targetEmp) {
+  if (!targetEmp) {
     return res.status(404).json({
       ok: false,
       error: 'Target employee not found',
@@ -295,8 +296,16 @@ export default async function handler(req, res) {
         metadata: { code: 'EMPLOYEE_SAVE_FAILED', stage: 'DB1_CALENDAR_VALIDATION', target: 'DB1', operation: 'VALIDATE' }
       });
     }
-    if (hasAdvancedCalendarAccess !== Boolean(targetEmp.has_advanced_calendar_access)) {
-      updateFields.has_advanced_calendar_access = hasAdvancedCalendarAccess;
+    const currentCalendarAccess = Boolean(currentOverrides['calendar.manage'] || currentOverrides['calendar.view']);
+    if (hasAdvancedCalendarAccess !== currentCalendarAccess) {
+      if (hasAdvancedCalendarAccess) {
+        currentOverrides['calendar.manage'] = true;
+        currentOverrides['calendar.view'] = true;
+      } else {
+        delete currentOverrides['calendar.manage'];
+        delete currentOverrides['calendar.view'];
+      }
+      overridesModified = true;
     }
   }
 
@@ -320,7 +329,7 @@ export default async function handler(req, res) {
         employeeStatus: targetEmp.employee_status,
         workLocationStatus: targetEmp.work_location_status || 'office',
         teamIds: targetEmp.team_ids || [],
-        hasAdvancedCalendarAccess: Boolean(targetEmp.has_advanced_calendar_access),
+        hasAdvancedCalendarAccess: Boolean(currentOverrides['calendar.manage'] || currentOverrides['calendar.view']),
       },
       message: 'No changes requested',
     });
@@ -333,7 +342,7 @@ export default async function handler(req, res) {
     .from('employees')
     .update(updateFields)
     .eq('id', targetEmp.id)
-    .select('id, full_name, email, title, permission_overrides, employee_status, team_ids, has_advanced_calendar_access, work_location_status')
+    .select('id, full_name, email, title, role_package_id, team_ids, employment_type, work_location_status, permission_overrides, employee_status')
     .maybeSingle();
 
   if (updateErr || !updatedDb1) {
@@ -424,7 +433,6 @@ export default async function handler(req, res) {
             work_location_status: updatedDb1.work_location_status,
             employee_status: updatedDb1.employee_status,
             team_ids: updatedDb1.team_ids,
-            has_advanced_calendar_access: updatedDb1.has_advanced_calendar_access,
             permission_overrides: updatedDb1.permission_overrides,
             updated_at: new Date().toISOString(),
           })
@@ -485,7 +493,7 @@ export default async function handler(req, res) {
       employeeStatus: updatedDb1.employee_status,
       workLocationStatus: updatedDb1.work_location_status || 'office',
       teamIds: updatedDb1.team_ids || [],
-      hasAdvancedCalendarAccess: Boolean(updatedDb1.has_advanced_calendar_access),
+      hasAdvancedCalendarAccess: Boolean(updatedDb1.permission_overrides?.['calendar.manage'] || updatedDb1.permission_overrides?.['calendar.view']),
     },
   };
 
