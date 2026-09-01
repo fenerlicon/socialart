@@ -236,6 +236,8 @@ export function useEmployeeForm(
         newTeams !== initialTeams ||
         newCalendar !== initialCalendar
 
+      let partialSyncWarning: string | null = null
+
       if (identityChanged && initialEmployee) {
         if (!targetSyncId) {
           syncErrors.push('Kimlik/durum güncellemesi için geçerli DB1 çalışan kimliği bulunamadı.')
@@ -243,14 +245,14 @@ export function useEmployeeForm(
           try {
             const payload: any = {
               employeeId: targetSyncId,
-              fullName: newFullName,
-              title: newTitle,
-              workLocationStatus: newLocation,
-              employeeStatus: newStatus,
-              teamIds: values.teamIds,
-              hasAdvancedCalendarAccess: newCalendar,
             }
-            if (newEmail) payload.email = newEmail
+            if (newFullName !== initialFullName) payload.fullName = newFullName
+            if (newTitle !== initialTitle) payload.title = newTitle
+            if (newLocation !== initialLocation) payload.workLocationStatus = newLocation
+            if (newStatus !== initialStatus) payload.employeeStatus = newStatus
+            if (newTeams !== initialTeams) payload.teamIds = values.teamIds
+            if (newCalendar !== initialCalendar) payload.hasAdvancedCalendarAccess = newCalendar
+            if (newEmail !== initialEmail) payload.email = newEmail
 
             const idRes = await fetch('/api/auth-update-employee-identity', {
               method: 'POST',
@@ -260,14 +262,21 @@ export function useEmployeeForm(
             })
             const idData = await idRes.json().catch(() => ({}))
             if (!idRes.ok || !idData.ok) {
-              syncErrors.push(idData.error || 'Kimlik/yetki bilgileri sunucuda güncellenemedi.')
-            } else if (idData.employee) {
-              // Canonical readback assertion
-              if (idData.employee.fullName && idData.employee.fullName !== newFullName) {
-                syncErrors.push(`READBACK_MISMATCH: Kaydedilen isim ("${idData.employee.fullName}") ile talep edilen ("${newFullName}") eşleşmedi.`)
+              const stageDesc = idData.metadata?.stage ? ` (${idData.metadata.stage} / ${idData.metadata.operation || 'MUTATION'} / ${idData.metadata.postgresCode || 'ERR'})` : ''
+              syncErrors.push((idData.error || 'Kimlik/yetki bilgileri sunucuda güncellenemedi.') + stageDesc)
+            } else {
+              if (idData.warning === 'PARTIAL_SYNC' || idData.warning === 'MIRROR_FAILED') {
+                const stageDesc = idData.metadata?.stage ? ` (${idData.metadata.stage})` : ''
+                partialSyncWarning = (idData.message || 'Kanonik çalışan bilgisi kaydedildi ancak operasyon aynası güncellenemedi.') + stageDesc
               }
-              if (idData.employee.title !== undefined && idData.employee.title !== newTitle) {
-                syncErrors.push(`READBACK_MISMATCH: Kaydedilen unvan ("${idData.employee.title}") ile talep edilen ("${newTitle}") eşleşmedi.`)
+              if (idData.employee) {
+                // Canonical readback assertion
+                if (payload.fullName && idData.employee.fullName && idData.employee.fullName !== newFullName) {
+                  syncErrors.push(`READBACK_MISMATCH: Kaydedilen isim ("${idData.employee.fullName}") ile talep edilen ("${newFullName}") eşleşmedi.`)
+                }
+                if (payload.title !== undefined && idData.employee.title !== undefined && idData.employee.title !== newTitle) {
+                  syncErrors.push(`READBACK_MISMATCH: Kaydedilen unvan ("${idData.employee.title}") ile talep edilen ("${newTitle}") eşleşmedi.`)
+                }
               }
             }
           } catch (e: any) {
@@ -321,9 +330,15 @@ export function useEmployeeForm(
       }
 
       if (initialEmployee) {
-        toast.success('Çalışan güncellendi', {
-          description: `"${values.fullName}" başarıyla güncellendi.`,
-        })
+        if (partialSyncWarning) {
+          toast.warning('Kısmi Senkronizasyon', {
+            description: partialSyncWarning,
+          })
+        } else {
+          toast.success('Çalışan güncellendi', {
+            description: `"${values.fullName}" başarıyla güncellendi.`,
+          })
+        }
         router.push('/employees')
       } else {
         toast.success('Çalışan kaydedildi', {
