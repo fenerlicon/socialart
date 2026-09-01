@@ -27,20 +27,23 @@ try {
   const envContent = `NEXT_PUBLIC_SUPABASE_URL=${supabaseUrl}\nNEXT_PUBLIC_SUPABASE_ANON_KEY=${supabaseAnonKey}\n`;
   fs.writeFileSync(path.join(__dirname, '../panel/.env.local'), envContent);
 
-  // 1. Build panel app
+  // 1. Build panel app with fresh cache
+  console.log('--- Cleaning previous panel build caches... ---');
+  const panelNextDir = path.join(__dirname, '../panel/.next');
+  const panelOutDir = path.join(__dirname, '../panel/out');
+  robustCleanDir(panelNextDir);
+  robustCleanDir(panelOutDir);
+
   console.log('--- Building Next.js crm panel (social-art-base)... ---');
   execSync(`${npmCmd} run build`, { cwd: path.join(__dirname, '../panel'), stdio: 'inherit' });
 
   // 2. Clean and create public/admin
   const publicAdminDir = path.join(__dirname, '../public/admin');
   console.log('--- Cleaning public/admin directory... ---');
-  if (fs.existsSync(publicAdminDir)) {
-    fs.rmSync(publicAdminDir, { recursive: true, force: true });
-  }
+  robustCleanDir(publicAdminDir);
   fs.mkdirSync(publicAdminDir, { recursive: true });
 
   // 3. Copy panel/out to public/admin
-  const panelOutDir = path.join(__dirname, '../panel/out');
   console.log('--- Copying Next.js static build to public/admin... ---');
   copyDirSync(panelOutDir, publicAdminDir);
 
@@ -79,6 +82,20 @@ try {
 } catch (error) {
   console.error('Build process failed:', error);
   process.exit(1);
+}
+
+function robustCleanDir(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  if (process.platform === 'win32') {
+    try {
+      execSync(`cmd /c "if exist "${dirPath}" rmdir /s /q "${dirPath}""`, { stdio: 'ignore' });
+    } catch (_) {}
+  }
+  if (fs.existsSync(dirPath)) {
+    try {
+      fs.rmSync(dirPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    } catch (_) {}
+  }
 }
 
 function copyDirSync(src, dest) {
