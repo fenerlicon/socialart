@@ -35,9 +35,7 @@ export function getAdminSupabase() {
 export function getSecondaryAdminSupabase() {
   const secondaryServiceRoleKey =
     process.env.SUPABASE_SECONDARY_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.VITE_SUPABASE_ANON_KEY;
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!secondaryServiceRoleKey || typeof secondaryServiceRoleKey !== 'string' || !secondaryServiceRoleKey.trim()) {
     throw new Error('SECONDARY_ADMIN_SERVICE_ROLE_REQUIRED: Secondary database service role key is not configured.');
