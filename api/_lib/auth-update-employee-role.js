@@ -70,6 +70,23 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Database update failed' });
   }
 
+  // 5.5. DB2 MIRROR SYNC (Role Package)
+  try {
+    const { getSecondaryAdminSupabase } = await import('./admin-db.js');
+    const db2 = getSecondaryAdminSupabase();
+    if (db2) {
+      await db2
+        .from('employees')
+        .update({
+          role_package_id: cleanRole || '',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('db1_employee_id', String(targetEmp.id));
+    }
+  } catch (db2Err) {
+    console.warn('[DB2 Role Mirror Sync Warning]:', db2Err.message);
+  }
+
   return res.status(200).json({
     ok: true,
     employeeId: targetEmp.id,

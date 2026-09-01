@@ -262,27 +262,50 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'READBACK_MISMATCH: Kaydedilen çalışma konumu ile talep edilen eşleşmiyor.' });
   }
 
-  // 15. DB2 MIRROR SYNC (Non-blocking secondary sync)
+  // 15. DB2 MIRROR SYNC (Server-authoritative secondary sync)
   try {
     const { getSecondaryAdminSupabase } = await import('./admin-db.js');
     const db2 = getSecondaryAdminSupabase();
     if (db2) {
-      await db2
+      const { data: db2Rows } = await db2
         .from('employees')
-        .update({
-          full_name: updatedDb1.full_name,
-          title: updatedDb1.title,
-          email: updatedDb1.email,
-          work_location_status: updatedDb1.work_location_status,
-          employee_status: updatedDb1.employee_status,
-          team_ids: updatedDb1.team_ids,
-          has_advanced_calendar_access: updatedDb1.has_advanced_calendar_access,
-          permission_overrides: updatedDb1.permission_overrides,
-        })
+        .select('id')
         .eq('db1_employee_id', String(targetEmp.id));
+
+      if (db2Rows && db2Rows.length === 1) {
+        const db2Id = db2Rows[0].id;
+        const { error: db2UpdateErr } = await db2
+          .from('employees')
+          .update({
+            full_name: updatedDb1.full_name,
+            title: updatedDb1.title,
+            email: updatedDb1.email,
+            work_location_status: updatedDb1.work_location_status,
+            employee_status: updatedDb1.employee_status,
+            team_ids: updatedDb1.team_ids,
+            has_advanced_calendar_access: updatedDb1.has_advanced_calendar_access,
+            permission_overrides: updatedDb1.permission_overrides,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', db2Id);
+
+        if (db2UpdateErr) {
+          console.warn('[DB2 Mirror Update Warning]:', db2UpdateErr.message);
+        }
+      } else if (!db2Rows || db2Rows.length === 0) {
+        const { mirrorEmployeeToDb2 } = await import('./auth-mirror-employee.js');
+        const mirrorRes = await mirrorEmployeeToDb2({
+          db1EmployeeId: targetEmp.id,
+          db1: supabaseAdmin,
+          db2,
+        });
+        if (!mirrorRes.success) {
+          console.warn('[DB2 Mirror Create Warning]:', mirrorRes.error);
+        }
+      }
     }
   } catch (db2Err) {
-    console.warn('[DB2 Mirror Sync Warning]:', db2Err.message);
+    console.warn('[DB2 Mirror Sync Exception]:', db2Err.message);
   }
 
   // 16. RETURN VERIFIED CANONICAL RESPONSE

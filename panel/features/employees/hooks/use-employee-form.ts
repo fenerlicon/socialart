@@ -169,22 +169,21 @@ export function useEmployeeForm(
         initialEmployee?.db1EmployeeId ||
         (isDb1PlainId(initialEmployee?.id) ? String(initialEmployee?.id) : null)
 
-      let updatedEmployee: Employee | null = null
       let createdEmployee: Employee | null = null
 
-      if (initialEmployee) {
-        updatedEmployee = await updateEmployee(initialEmployee.id, input)
-        console.log('Güncellenen çalışan:', updatedEmployee)
-      } else {
+      // In create mode (no initialEmployee), persist through standard creation
+      if (!initialEmployee) {
         createdEmployee = await createAndStoreEmployee(input)
-        console.log('Kaydedilen çalışan:', createdEmployee)
         setValues(defaultEmployeeFormValues)
       }
 
       const syncErrors: string[] = []
 
       // Orchestrate protected server updates for authorization-sensitive fields:
-      const targetSyncId = canonicalDb1Id || (createdEmployee?.id && !createdEmployee.id.startsWith('emp-') ? String(createdEmployee.id) : null)
+      const targetSyncId =
+        canonicalDb1Id ||
+        initialEmployee?.id ||
+        (createdEmployee?.id && !createdEmployee.id.startsWith('emp-') ? String(createdEmployee.id) : null)
 
       // 1. Role Package Update (only if role was explicitly changed to a new valid role)
       const initialRole = initialEmployee?.rolePackageId || null
