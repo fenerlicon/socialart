@@ -5,7 +5,7 @@ import { validateOrigin, hashPassword } from './admin-auth.js';
 import { ROLE_PACKAGE_DEFINITIONS } from './role-package-seeds.js';
 
 const VALID_ROLE_PACKAGES = new Set(ROLE_PACKAGE_DEFINITIONS.map((pkg) => pkg.id));
-const VALID_STATUSES = new Set(['active', 'passive']);
+const VALID_STATUSES = new Set(['active', 'inactive', 'passive', 'probation', 'intern', 'part_time', 'freelance']);
 const VALID_WORK_LOCATIONS = new Set(['office', 'remote', 'hybrid']);
 const VALID_EMPLOYMENT_TYPES = new Set(['full_time', 'freelance', 'contractor', 'part_time']);
 
@@ -156,7 +156,8 @@ export default async function handler(req, res) {
   // 3.8. Validate employeeStatus
   let cleanEmployeeStatus = 'active';
   if (employeeStatus !== undefined && employeeStatus !== null) {
-    const st = String(employeeStatus).trim().toLowerCase();
+    let st = String(employeeStatus).trim().toLowerCase();
+    if (st === 'passive') st = 'inactive';
     if (!VALID_STATUSES.has(st)) {
       return res.status(400).json({
         ok: false,
