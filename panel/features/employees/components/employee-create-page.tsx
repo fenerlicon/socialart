@@ -104,11 +104,11 @@ export function EmployeeCreatePage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const qTitle = params.get('title')
-      if (qTitle && !form.title) {
-        form.setTitle(qTitle)
+      if (qTitle && !form.values.title) {
+        form.updateField('title', qTitle)
       }
     }
-  }, [form])
+  }, [])
 
   const effectiveActiveEmployee = useMemo(() => {
     if (contextActiveEmployee) return contextActiveEmployee

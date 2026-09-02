@@ -16,14 +16,74 @@ import type { RolePackageId, TeamId, Employee } from '@/types/domain'
 import { setPermissionOverride } from '@/lib/permissions/permission-form-utils'
 import { buildDefaultPermissionSet } from '@/lib/permissions/resolve-permissions'
 
+const DRAFT_STORAGE_KEY = 'employee-create-draft-v1'
+
+function getSavedCreateDraft(): Partial<CreateEmployeeFormValues> | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') {
+      return {
+        fullName: typeof parsed.fullName === 'string' ? parsed.fullName : '',
+        email: typeof parsed.email === 'string' ? parsed.email : '',
+        username: typeof parsed.username === 'string' ? parsed.username : '',
+        title: typeof parsed.title === 'string' ? parsed.title : '',
+        avatarUrl: typeof parsed.avatarUrl === 'string' ? parsed.avatarUrl : '',
+        employeeStatus: parsed.employeeStatus === 'passive' ? 'passive' : 'active',
+        workLocationStatus: ['office', 'remote', 'hybrid'].includes(parsed.workLocationStatus) ? parsed.workLocationStatus : 'office',
+        rolePackageId: typeof parsed.rolePackageId === 'string' ? parsed.rolePackageId : null,
+        teamIds: Array.isArray(parsed.teamIds) ? parsed.teamIds : [],
+        permissionOverrides: parsed.permissionOverrides && typeof parsed.permissionOverrides === 'object' ? parsed.permissionOverrides : {},
+        hasAdvancedCalendarAccess: Boolean(parsed.hasAdvancedCalendarAccess),
+      }
+    }
+  } catch (_) {}
+  return null
+}
+
+function saveCreateDraft(values: CreateEmployeeFormValues) {
+  if (typeof window === 'undefined') return
+  try {
+    const safeDraft = {
+      fullName: values.fullName,
+      email: values.email,
+      username: values.username,
+      title: values.title,
+      avatarUrl: values.avatarUrl,
+      employeeStatus: values.employeeStatus,
+      workLocationStatus: values.workLocationStatus,
+      rolePackageId: values.rolePackageId,
+      teamIds: values.teamIds,
+      permissionOverrides: values.permissionOverrides,
+      hasAdvancedCalendarAccess: values.hasAdvancedCalendarAccess,
+    }
+    window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(safeDraft))
+  } catch (_) {}
+}
+
+function clearCreateDraft() {
+  if (typeof window === 'undefined') return
+  try {
+    window.sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+  } catch (_) {}
+}
+
 export function useEmployeeForm(
   initialEmployee?: Employee,
   options?: { onEmployeeCreated?: (employee: Employee) => Promise<void> | void }
 ) {
   const router = useRouter()
-  const [values, setValues] = useState<CreateEmployeeFormValues>(
-    defaultEmployeeFormValues,
-  )
+  const [values, setValues] = useState<CreateEmployeeFormValues>(() => {
+    if (!initialEmployee) {
+      const draft = getSavedCreateDraft()
+      if (draft && (draft.fullName || draft.email || draft.title || draft.username || (draft.teamIds && draft.teamIds.length > 0))) {
+        return { ...defaultEmployeeFormValues, ...draft }
+      }
+    }
+    return defaultEmployeeFormValues
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -42,6 +102,37 @@ export function useEmployeeForm(
         permissionOverrides: initialEmployee.permissionOverrides || {},
         hasAdvancedCalendarAccess: initialEmployee.hasAdvancedCalendarAccess || false,
       })
+    } else {
+      const draft = getSavedCreateDraft()
+      if (draft && (draft.fullName || draft.email || draft.title || draft.username || (draft.teamIds && draft.teamIds.length > 0))) {
+        setValues((prev) => ({ ...prev, ...draft }))
+      }
+    }
+  }, [initialEmployee])
+
+  // Automatically save draft on changes in CREATE MODE
+  useEffect(() => {
+    if (!initialEmployee) {
+      const isDirty = Boolean(
+        values.fullName.trim() ||
+        values.email.trim() ||
+        values.username.trim() ||
+        values.title.trim() ||
+        values.rolePackageId ||
+        (values.teamIds && values.teamIds.length > 0) ||
+        Object.keys(values.permissionOverrides || {}).length > 0
+      )
+      if (isDirty) {
+        saveCreateDraft(values)
+      }
+    }
+  }, [values, initialEmployee])
+
+  const clearDraftAndForm = useCallback(() => {
+    if (!initialEmployee) {
+      clearCreateDraft()
+      setValues(defaultEmployeeFormValues)
+      setErrors({})
     }
   }, [initialEmployee])
 
@@ -181,9 +272,10 @@ export function useEmployeeForm(
 
         if (!createRes.ok || !createData.ok || !createData.employeeId) {
           const stageDesc = createData.metadata?.stage ? ` (${createData.metadata.stage})` : ''
-          toast.error('Çalışan kaydedilemedi', {
+          toast.error('Çalışan kaydedilemedi. Girdiğiniz bilgiler korunmuştur.', {
             description: (createData.error || 'Çalışan oluşturulamadı.') + stageDesc,
           })
+          setIsSubmitting(false)
           return
         }
 
@@ -199,6 +291,7 @@ export function useEmployeeForm(
           })
         }
 
+        clearCreateDraft()
         setValues(defaultEmployeeFormValues)
 
         if (options?.onEmployeeCreated) {
@@ -366,9 +459,10 @@ export function useEmployeeForm(
       }
 
       if (syncErrors.length > 0) {
-        toast.error('Çalışan kaydedilemedi', {
+        toast.error('Çalışan kaydedilemedi. Girdiğiniz bilgiler korunmuştur.', {
           description: syncErrors.join(' • '),
         })
+        setIsSubmitting(false)
         return
       }
 
@@ -384,7 +478,7 @@ export function useEmployeeForm(
       router.push('/employees')
     } catch (err: any) {
       console.error('Error saving employee:', err)
-      toast.error('Çalışan kaydedilemedi', {
+      toast.error('Çalışan kaydedilemedi. Girdiğiniz bilgiler korunmuştur.', {
         description: err.message || 'Veritabanı bağlantı hatası oluştu.',
       })
     } finally {
@@ -407,6 +501,7 @@ export function useEmployeeForm(
     toggleTeam,
     togglePermission,
     resetOverrides,
+    clearDraftAndForm,
     submit,
   }
 }
