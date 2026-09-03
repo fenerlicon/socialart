@@ -45,8 +45,8 @@ export async function saveEmployee(employee: Employee): Promise<Employee[]> {
   return EmployeeRepository.getAll()
 }
 
-export async function deleteEmployee(id: string): Promise<Employee[]> {
-  await EmployeeRepository.delete(id)
+export async function deleteEmployee(id: string, releaseResponsibilities: boolean = false): Promise<Employee[]> {
+  await EmployeeRepository.delete(id, releaseResponsibilities)
   return EmployeeRepository.getAll()
 }
 

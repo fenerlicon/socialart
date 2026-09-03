@@ -129,6 +129,8 @@ export function EmployeeListPage() {
     }
   }
 
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // Delete Click handler
   const handleDeleteClick = (emp: Employee) => {
     const count = getBrandAssignmentCount(emp.id)
@@ -138,15 +140,24 @@ export function EmployeeListPage() {
   }
 
   // Confirm delete handler
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (releaseResponsibilities: boolean = false) => {
     if (!deleteEmp) return
-    const updated = await deleteEmployee(deleteEmp.id)
-    setEmployees(updated)
-    toast.success('Çalışan silindi', {
-      description: `"${deleteEmp.fullName}" sistemden başarıyla kaldırıldı.`,
-    })
-    setShowDeleteDialog(false)
-    setDeleteEmp(null)
+    setIsDeleting(true)
+    try {
+      const updated = await deleteEmployee(deleteEmp.id, releaseResponsibilities)
+      setEmployees(updated)
+      toast.success('Çalışan silindi', {
+        description: `"${deleteEmp.fullName}" sistemden başarıyla kaldırıldı.`,
+      })
+      setShowDeleteDialog(false)
+      setDeleteEmp(null)
+    } catch (err: any) {
+      toast.error('Çalışan silinemedi', {
+        description: err.message || 'Silme işlemi sırasında sunucu hatası oluştu.',
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // Reset filters handler
@@ -299,6 +310,7 @@ export function EmployeeListPage() {
         employeeName={deleteEmp?.fullName || ''}
         isAssignedToBrands={assignedBrandsCount > 0}
         assignedBrandsCount={assignedBrandsCount}
+        isDeleting={isDeleting}
         onClose={() => {
           setShowDeleteDialog(false)
           setDeleteEmp(null)

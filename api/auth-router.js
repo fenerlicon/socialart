@@ -10,6 +10,7 @@ import updateEmployeeIdentityHandler from './_lib/auth-update-employee-identity.
 import updateEmployeeEmploymentTypeHandler from './_lib/auth-update-employee-employment-type.js';
 import mirrorEmployeeHandler from './_lib/auth-mirror-employee.js';
 import createEmployeeHandler from './_lib/auth-create-employee.js';
+import deleteEmployeeHandler from './_lib/auth-delete-employee.js';
 import { validateOrigin } from './_lib/admin-auth.js';
 
 const ALLOWED_ROUTES = new Set([
@@ -25,6 +26,7 @@ const ALLOWED_ROUTES = new Set([
   'update-employee-employment-type',
   'mirror-employee',
   'create-employee',
+  'delete-employee',
 ]);
 
 export default async function handler(req, res) {
@@ -59,6 +61,7 @@ export default async function handler(req, res) {
     else if (rawUrl.includes('/api/auth-update-employee-employment-type')) route = 'update-employee-employment-type';
     else if (rawUrl.includes('/api/auth-mirror-employee')) route = 'mirror-employee';
     else if (rawUrl.includes('/api/auth-create-employee')) route = 'create-employee';
+    else if (rawUrl.includes('/api/auth-delete-employee')) route = 'delete-employee';
   }
 
   // 3. Strict Allowlist Guard: Reject path traversal, arbitrary modules, malformed objects/arrays
@@ -85,6 +88,7 @@ export default async function handler(req, res) {
     if (route === 'update-employee-employment-type') return await updateEmployeeEmploymentTypeHandler(req, res);
     if (route === 'mirror-employee') return await mirrorEmployeeHandler(req, res);
     if (route === 'create-employee') return await createEmployeeHandler(req, res);
+    if (route === 'delete-employee') return await deleteEmployeeHandler(req, res);
   } catch (err) {
     if (!res.headersSent && typeof res.status === 'function') {
       return res.status(500).json({ error: 'Internal server error' });

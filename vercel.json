@@ -167,6 +167,10 @@
       "destination": "/api/auth-router?route=create-employee"
     },
     {
+      "source": "/api/auth-delete-employee",
+      "destination": "/api/auth-router?route=delete-employee"
+    },
+    {
       "source": "/api/gpt/:path*",
       "destination": "/api/gpt-router"
     },

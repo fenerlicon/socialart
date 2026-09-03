@@ -245,9 +245,23 @@ export const EmployeeRepository = {
     }
   },
 
-  async delete(id: string): Promise<void> {
-    // Direct client DB2 employee deletion is forbidden.
-    console.warn(`Direct client deletion of employee ${id} is disabled. Use server authority.`)
+  async delete(id: string, releaseResponsibilities: boolean = false): Promise<boolean> {
+    try {
+      const res = await fetch('/api/auth-delete-employee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ employeeId: id, releaseResponsibilities }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to delete employee through server authority')
+      }
+      return true
+    } catch (err) {
+      console.error(`Error deleting employee ${id} via server authority:`, err)
+      throw err
+    }
   },
 
   async updateEmploymentType(
