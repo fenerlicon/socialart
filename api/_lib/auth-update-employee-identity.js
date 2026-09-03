@@ -408,9 +408,11 @@ export default async function handler(req, res) {
   try {
     const db2 = getSecondaryAdminSupabase();
     if (db2) {
-      const { data: db2Rows, error: db2SelectErr } = await db2
+      // 15.1. Resolve DB2 mirror row: first by db1_employee_id, fallback to id, fallback to email
+      let db2Row = null;
+      const { data: byDb1IdRows, error: db2SelectErr } = await db2
         .from('employees')
-        .select('id')
+        .select('id, db1_employee_id, email')
         .eq('db1_employee_id', String(targetEmp.id));
 
       if (db2SelectErr) {
@@ -422,48 +424,100 @@ export default async function handler(req, res) {
           operation: 'SELECT',
           postgresCode: db2SelectErr.code || 'UNKNOWN',
         };
-      } else if (db2Rows && db2Rows.length === 1) {
-        const db2Id = db2Rows[0].id;
-        const { error: db2UpdateErr } = await db2
+      } else if (byDb1IdRows && byDb1IdRows.length === 1) {
+        db2Row = byDb1IdRows[0];
+      } else if (!byDb1IdRows || byDb1IdRows.length === 0) {
+        // Fallback A: lookup by primary id match
+        const { data: byIdRows } = await db2
           .from('employees')
-          .update({
-            full_name: updatedDb1.full_name,
-            title: updatedDb1.title,
-            email: updatedDb1.email,
-            work_location_status: updatedDb1.work_location_status,
-            employee_status: updatedDb1.employee_status,
-            team_ids: updatedDb1.team_ids,
-            permission_overrides: updatedDb1.permission_overrides,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', db2Id);
+          .select('id, db1_employee_id, email')
+          .eq('id', String(targetEmp.id));
 
-        if (db2UpdateErr) {
-          mirrorWarning = 'PARTIAL_SYNC';
-          mirrorMetadata = {
-            code: 'MIRROR_FAILED',
-            stage: 'DB2_MIRROR_UPDATE',
-            target: 'DB2',
-            operation: 'UPDATE',
-            postgresCode: db2UpdateErr.code || 'UNKNOWN',
-          };
+        if (byIdRows && byIdRows.length === 1) {
+          db2Row = byIdRows[0];
+        } else if (targetEmp.email) {
+          // Fallback B: lookup by canonical email match
+          const { data: byEmailRows } = await db2
+            .from('employees')
+            .select('id, db1_employee_id, email')
+            .eq('email', String(targetEmp.email).trim().toLowerCase());
+
+          if (byEmailRows && byEmailRows.length === 1) {
+            db2Row = byEmailRows[0];
+          }
         }
-      } else if (!db2Rows || db2Rows.length === 0) {
-        const { mirrorEmployeeToDb2 } = await import('./auth-mirror-employee.js');
-        const mirrorRes = await mirrorEmployeeToDb2({
-          db1EmployeeId: targetEmp.id,
-          db1: supabaseAdmin,
-          db2,
-        });
-        if (!mirrorRes.success) {
-          mirrorWarning = 'PARTIAL_SYNC';
-          mirrorMetadata = {
-            code: 'MIRROR_FAILED',
-            stage: 'DB2_MIRROR_CREATE',
-            target: 'DB2',
-            operation: 'INSERT',
-            postgresCode: mirrorRes.status || 'UNKNOWN',
+      }
+
+      if (!mirrorWarning) {
+        if (db2Row) {
+          // 15.2. UPDATE existing DB2 mirror row with explicitly mapped DB2 schema fields only
+          const db2Payload = {
+            db1_employee_id: String(targetEmp.id),
+            full_name: updatedDb1.full_name,
+            title: updatedDb1.title || '',
+            work_location_status: updatedDb1.work_location_status || 'office',
+            employee_status: updatedDb1.employee_status || 'active',
+            updated_at: new Date().toISOString(),
           };
+          if (updatedDb1.email) {
+            db2Payload.email = updatedDb1.email.trim().toLowerCase();
+          }
+          if (updatedDb1.role_package_id !== undefined) {
+            db2Payload.role_package_id = updatedDb1.role_package_id || '';
+          }
+          if (updatedDb1.employment_type !== undefined) {
+            db2Payload.employment_type = updatedDb1.employment_type;
+          }
+          if (updatedDb1.team_ids !== undefined) {
+            db2Payload.team_ids = Array.isArray(updatedDb1.team_ids) ? updatedDb1.team_ids : [];
+          }
+          if (updatedDb1.permission_overrides !== undefined) {
+            db2Payload.permission_overrides = updatedDb1.permission_overrides && typeof updatedDb1.permission_overrides === 'object' ? updatedDb1.permission_overrides : {};
+          }
+
+          const { data: updatedDb2Rows, error: db2UpdateErr } = await db2
+            .from('employees')
+            .update(db2Payload)
+            .eq('id', db2Row.id)
+            .select('id, db1_employee_id, full_name, title, employee_status');
+
+          if (db2UpdateErr) {
+            mirrorWarning = 'PARTIAL_SYNC';
+            mirrorMetadata = {
+              code: 'MIRROR_FAILED',
+              stage: 'DB2_MIRROR_UPDATE',
+              target: 'DB2',
+              operation: 'UPDATE',
+              postgresCode: db2UpdateErr.code || 'UNKNOWN',
+            };
+          } else if (!updatedDb2Rows || updatedDb2Rows.length === 0) {
+            mirrorWarning = 'PARTIAL_SYNC';
+            mirrorMetadata = {
+              code: 'MIRROR_FAILED',
+              stage: 'DB2_MIRROR_UPDATE_ZERO_ROWS',
+              target: 'DB2',
+              operation: 'UPDATE',
+              postgresCode: 'ZERO_ROWS_AFFECTED',
+            };
+          }
+        } else {
+          // 15.3. If no DB2 mirror row exists anywhere, safely create one
+          const { mirrorEmployeeToDb2 } = await import('./auth-mirror-employee.js');
+          const mirrorRes = await mirrorEmployeeToDb2({
+            db1EmployeeId: targetEmp.id,
+            db1: supabaseAdmin,
+            db2,
+          });
+          if (!mirrorRes.success) {
+            mirrorWarning = 'PARTIAL_SYNC';
+            mirrorMetadata = {
+              code: 'MIRROR_FAILED',
+              stage: 'DB2_MIRROR_CREATE',
+              target: 'DB2',
+              operation: 'INSERT',
+              postgresCode: mirrorRes.status || 'UNKNOWN',
+            };
+          }
         }
       }
     }
